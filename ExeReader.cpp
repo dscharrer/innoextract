@@ -67,11 +67,7 @@ bool ExeReader::loadSectionTable(std::istream & ifs, size_t peOffset, const Coff
 	}
 	
 	for(CoffSectionTable::const_iterator i = table.begin(); i != table.end(); ++i) {
-		
-		const CoffSection & section = *i;
-		
-		cout << "[section] \"" << safestring(section.name) << "\" virtual=" << hex << section.virtualAddress << '+' << section.virtualSize << " raw=" << section.rawAddress << '+' << section.rawSize << dec << endl;
-		
+		cout << "[section] \"" << safestring(i->name) << "\" virtual=" << hex << i->virtualAddress << '+' << i->virtualSize << " raw=" << i->rawAddress << '+' << i->rawSize << dec << endl;
 	}
 	
 	return true;

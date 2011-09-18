@@ -82,13 +82,13 @@ struct SetupLoaderOffsetTable41 {
 //! added version
 struct SetupLoaderOffsetTable51 {
 	u32 version; //!< = 1
-	u32 totalSize; // Minimum expected size of setup.exe
-	u32 exeOffset; // Offset of compressed setup.e32
-	u32 exeUncompressedSize; // Size of setup.e32 before compression
-	s32 exeCrc; // CRC of setup.e32 before compression
-	u32 offset0; // Offset of embedded setup-0.bin data
-	u32 offset1; // Offset of embedded setup-1.bin data, or 0 when DiskSpanning=yes
-	s32 tableCrc; // CRC of all prior fields in this record
+	u32 totalSize; //!< Minimum expected size of setup.exe
+	u32 exeOffset; //!< Offset of compressed setup.e32
+	u32 exeUncompressedSize; //!< Size of setup.e32 before compression
+	s32 exeCrc; //!< CRC of setup.e32 before compression
+	u32 offset0; //!< Offset of embedded setup-0.bin data
+	u32 offset1; //!< Offset of embedded setup-1.bin data, or 0 when DiskSpanning=yes
+	s32 tableCrc; //!< CRC of all prior fields in this record
 };
 
 //  2.0.8, 2.0.11, 2.0.17, 2.0.18

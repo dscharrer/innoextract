@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "SetupLoader.h"
+#include "Types.h"
 #include "Utils.h"
 
 using std::cout;
@@ -27,7 +28,7 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 	
-	std::ifstream ifs(argv[0], strm::in | strm::binary | strm::ate);
+	std::ifstream ifs(argv[1], strm::in | strm::binary | strm::ate);
 	
 	if(!ifs.is_open()) {
 		cerr << "error opening file" << endl;

@@ -3,12 +3,17 @@
 #include <bzlib.h>
 #include <lzma.h>
 
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <string>
 #include <sstream>
 #include <algorithm>
+
+#include "liblzmadec/lzmadec.h"
+
+#include "Types.h"
 
 using std::cout;
 using std::cerr;
@@ -99,10 +104,18 @@ int main(int argc, const char * argv[]) {
 	size_t zcandidates = 0, zhits = 0;
 	size_t bzcandidates = 0, bzhits = 0;
 	size_t lzmacandidates = 0, lzmahits = 0;
+	size_t xzcandidates = 0, xzhits = 0;
 	
-	for(size_t offset = 0; offset < size - 5; offset++) {
+#define SEEK
+#ifdef SEEK
+	for(size_t offset = 0; offset < size - 6; offset++)
+#else
+	size_t expected_pos = 0x2094f0f1 + 64;
+	for(size_t offset = expected_pos - 8; offset < expected_pos + 8; offset++)
+#endif
+	{
 		
-		if(offset % 100000 == 0) {
+		if(offset % 1000 == 0) {
 			Progress << setfill(' ') << setw(10) << offset << " / " << setfill(' ') << setw(10) << size << " (" << (offset * 100 / size) << "%)";
 		}
 		
@@ -119,7 +132,7 @@ int main(int argc, const char * argv[]) {
 			}
 			
 			unsigned short flg = (unsigned char)block[1];
-			if((cmf * 256 + flg) % 31) {
+			if((cmf * 256 + flg) % 31 != 0) {
 				// invalid CMF or FLAG byte
 				break;
 			}
@@ -154,12 +167,12 @@ int main(int argc, const char * argv[]) {
 					case Z_BUF_ERROR: {
 						
 						size_t filesize = bufsize - stream.avail_out;
-						Info << "found " << setfill(' ') << setw(10) << filesize << " bytes @ " << hex << setfill(' ') << setw(8) << offset;
+						Info << "[zlib] found " << setfill(' ') << setw(10) << filesize << " bytes @ " << hex << setfill(' ') << setw(8) << offset;
 						
 						if(!ofs.is_open()) {
 							zhits++;
 							std::ostringstream filename;
-					filename << "file@" << hex << setfill('0') << setw(8) << offset << ".zlib.txt";
+							filename << "file@" << hex << setfill('0') << setw(8) << offset << ".zlib.txt";
 							ofs.open(filename.str().c_str(), strm::trunc | strm::binary | strm::out);
 						}
 						
@@ -196,6 +209,173 @@ int main(int argc, const char * argv[]) {
 			}
 			
 			bzcandidates++;
+			
+		} while(false);
+		
+		// Try to interpret as LZMA1 datastream.
+		do {
+			
+			u8 properties = u8(data[offset]);
+			
+			if(properties > (4 * 5 + 4) * 9 + 8) { // must be in range [0x00, 0xE0]
+				// invalid lzma format
+				break;
+			}
+			
+			u8 lc, lp, pb;
+			pb = properties / (9 * 5), properties -= pb * 9 * 5;
+			lp = properties / 9, properties -= lp * 9;
+			lc = properties;
+			
+			//cout << "[lzma] lc=" << int(lc) << "  lp=" << int(lp) << "  pb=" << int(pb) << endl;
+			
+			if(int(lc) + int(lp) > 8) {
+				continue;
+			}
+			
+			u32 dictSize = *reinterpret_cast<u32 *>(data + offset + sizeof(u8));
+			
+			//cout << "dict size: " << dictSize << endl;
+			
+			u64 uncompressedSize = *reinterpret_cast<u64 *>(data + offset + sizeof(u8) + sizeof(u32));
+			
+			if(uncompressedSize == 0xFFFFFFFFFFFFFFFFl) {
+				//cout << "uncompressed size unknown" << endl;
+			} else {
+				//cout << "uncompressed size: " << uncompressedSize << " = " << (uncompressedSize >> 20) << " MiB" << endl;
+			}
+			
+			lzmacandidates++;
+			
+			lzmadec_stream stream;
+			
+			stream.lzma_alloc = NULL;
+			stream.lzma_free = NULL;
+			stream.opaque = NULL;
+			
+			stream.avail_in = blocksize;
+			stream.next_in = (Bytef*)block;
+			
+			int_fast8_t ret = lzmadec_init(&stream);
+			if(ret != LZMADEC_OK) {
+				cout << endl;
+				cerr << "error initializing lzma stream";
+				return 1;
+			}
+			
+			lzma_raw_decoder();
+			
+			do {
+				
+				stream.avail_out = bufsize;
+				stream.next_out = (Bytef*)buffer;
+				
+				ret = lzmadec_decode(&stream, stream.avail_in == 0);
+				
+				do {
+				/* switch (ret) {
+					
+					case LZMADEC_OK:
+					case LZMADEC_STREAM_END:
+					case LZMADEC_BUF_ERROR: { */
+						
+						size_t filesize = bufsize - stream.avail_out;
+						
+						if(filesize < 1024) {
+							break;
+						}
+						
+						Info << "[lzma] found " << setfill(' ') << setw(10) << filesize << " bytes @ " << hex << setfill(' ') << setw(8) << offset;
+						
+						if(!ofs.is_open()) {
+							lzmahits++;
+							std::ostringstream filename;
+							filename << "file@" << hex << setfill('0') << setw(8) << offset << ".lzma.txt";
+							ofs.open(filename.str().c_str(), strm::trunc | strm::binary | strm::out);
+						}
+						
+						ofs.write(buffer, filesize);
+						
+					/* }
+					
+				} */
+				} while(false);
+				
+			} while((ret == LZMADEC_BUF_ERROR || ret == LZMADEC_OK) &&  stream.avail_in);
+			
+			//cout << "lzma ret: " << int(ret) << endl;
+			
+			ofs.close();
+			
+			lzmadec_end(&stream);
+			
+		} while(false);
+		
+		// Try to interpret as XZ datastream.
+		do {
+			
+			const uint8_t xz_magic[6] = { 0xFD, '7', 'z', 'X', 'Z', 0x00 };
+			if(memcmp(xz_magic, data + offset, sizeof(xz_magic))) {
+				break;
+			}
+			
+			xzcandidates++;
+			
+			lzma_stream stream = LZMA_STREAM_INIT;
+			
+			stream.allocator = NULL;
+			
+			stream.avail_in = blocksize;
+			stream.next_in = (Bytef*)block;
+			
+			lzma_ret ret = lzma_stream_decoder(&stream, UINT64_MAX, 0);
+			if(ret != LZMA_OK) {
+				cout << endl;
+				cerr << "error initializing xz stream";
+				return 1;
+			}
+			
+			do {
+				
+				stream.avail_out = bufsize;
+				stream.next_out = (Bytef*)buffer;
+				
+				ret = lzma_code(&stream, LZMA_RUN);
+				
+				do {
+				/* switch (ret) {
+					
+					case LZMA_OK:
+					case LZMA_STREAM_END:
+					case LZMA_BUF_ERROR: { */
+						
+						size_t filesize = bufsize - stream.avail_out;
+						
+						if(filesize == 0) {
+							break;
+						}
+						
+						Info << "[xz] found " << setfill(' ') << setw(10) << filesize << " bytes @ " << hex << setfill(' ') << setw(8) << offset;
+						
+						if(!ofs.is_open()) {
+							xzhits++;
+							std::ostringstream filename;
+							filename << "file@" << hex << setfill('0') << setw(8) << offset << ".xz.txt";
+							ofs.open(filename.str().c_str(), strm::trunc | strm::binary | strm::out);
+						}
+						
+						ofs.write(buffer, filesize);
+						
+					/* }
+					
+				} */
+				} while(false);
+				
+			} while(ret == LZMA_BUF_ERROR || ret == LZMA_OK);
+			
+			ofs.close();
+			
+			lzma_end(&stream);
 			
 		} while(false);
 		
@@ -259,6 +439,6 @@ int main(int argc, const char * argv[]) {
 		
 	}
 	
-	Info << "Done: zlib: " << zhits << " / " << zcandidates << "  bzip: " << bzhits << " / " << bzcandidates << "  lzma: " << lzmahits << " / " << lzmacandidates;
+	Info << "Done: zlib: " << zhits << " / " << zcandidates << "  bzip: " << bzhits << " / " << bzcandidates << "  lzma: " << lzmahits << " / " << lzmacandidates << "  xz: " << xzhits << " / " << xzcandidates;
 	
 }
