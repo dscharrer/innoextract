@@ -1,15 +1,13 @@
 
-#include "SetupLoader.h"
+#include "SetupLoader.hpp"
 
 #include <iomanip>
 
-#ifdef HAVE_ZLIB
 #include <zlib.h>
-#endif
 
-#include "ExeReader.h"
-#include "SetupLoaderFormat.h"
-#include "Utils.h"
+#include "ExeReader.hpp"
+#include "SetupLoaderFormat.hpp"
+#include "Utils.hpp"
 
 using std::cout;
 using std::cerr;
@@ -78,12 +76,10 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 		return false;
 	}
 	
-#ifdef HAVE_ZLIB
 	u32 actual = crc32(0l, NULL, 0);
 	actual = crc32(actual, reinterpret_cast<const Bytef *>(&magic), sizeof(magic));
 	actual = crc32(actual, reinterpret_cast<const Bytef *>(&bigversion), sizeof(bigversion));
 	u32 expected;
-#endif
 	
 	switch(bigversion) {
 		
@@ -145,7 +141,6 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 			offsets.offset0 = offsets40b.offset0;
 			offsets.offset1 = offsets40b.offset1;
 			
-#ifdef HAVE_ZLIB
 			if(bigversion == SetupLoaderOffsetTableID_40c) {
 				if(read(is, expected).fail()) {
 					cerr << "error reading crc checksum" << endl;
@@ -154,7 +149,6 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 				actual = crc32(actual, reinterpret_cast<const Bytef *>(&offsets40b), sizeof(offsets40b));
 				break;
 			}
-#endif
 			
 			return true;
 		}
@@ -176,13 +170,9 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 			offsets.offset0 = offsets41.offset0;
 			offsets.offset1 = offsets41.offset1;
 			
-#ifdef HAVE_ZLIB
 			expected = offsets41.tableCrc;
 			actual = crc32(actual, reinterpret_cast<const Bytef *>(&offsets41), sizeof(offsets41) - sizeof(s32));
 			break;
-#else
-			return true;
-#endif
 		}
 		
 		case SetupLoaderOffsetTableID_51: {
@@ -206,13 +196,9 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 			offsets.offset0 = offsets51.offset0;
 			offsets.offset1 = offsets51.offset1;
 			
-#ifdef HAVE_ZLIB
 			expected = offsets51.tableCrc;
 			actual = crc32(actual, reinterpret_cast<const Bytef *>(&offsets51), sizeof(offsets51) - sizeof(s32));
 			break;
-#else
-			return true;
-#endif
 		}
 		
 		default: {
@@ -222,14 +208,14 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 		
 	}
 	
-#ifdef HAVE_ZLIB
 	if(actual != expected) {
 		cerr << "CRC32 mismatch in setup loader offsets" << endl;
 		return false;
+	} else {
+		cout << "setup loader offset table CRC32 match" << endl;
 	}
 	
 	return true;
-#endif
 }
 
 bool SetupLoader::getOffsets(std::istream & is, Offsets & offsets) {

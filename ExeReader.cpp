@@ -1,15 +1,14 @@
 
-#include "ExeReader.h"
+#include "ExeReader.hpp"
 
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
 #include <cstring>
 
-#include "ExeFormat.h"
 #include "Types.h"
-#include "Utils.h"
-#include "../shady/transform.hpp"
+#include "ExeFormat.hpp"
+#include "Utils.hpp"
 
 using std::cout;
 using std::cerr;

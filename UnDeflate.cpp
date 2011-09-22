@@ -111,12 +111,12 @@ int main(int argc, const char * argv[]) {
 	for(size_t offset = 0; offset < size - 6; offset++)
 #else
 	size_t expected_pos = 0x2094f0f1 + 64;
-	for(size_t offset = expected_pos - 8; offset < expected_pos + 8; offset++)
+	for(size_t offset = expected_pos - 64; offset < expected_pos + 256; offset++)
 #endif
 	{
 		
 		if(offset % 1000 == 0) {
-			Progress << setfill(' ') << setw(10) << offset << " / " << setfill(' ') << setw(10) << size << " (" << (offset * 100 / size) << "%)";
+			Progress << setfill(' ') << setw(10) << hex << offset << " / " << setfill(' ') << setw(10) << size << " (" << (offset * 100 / size) << "%)";
 		}
 		
 		char * block = data + offset;
@@ -177,6 +177,8 @@ int main(int argc, const char * argv[]) {
 						}
 						
 						ofs.write(buffer, filesize);
+						
+						offset = reinterpret_cast<const char *>(stream.next_in) - data - 1;
 						
 					}
 					
@@ -253,9 +255,6 @@ int main(int argc, const char * argv[]) {
 			stream.lzma_free = NULL;
 			stream.opaque = NULL;
 			
-			stream.avail_in = blocksize;
-			stream.next_in = (Bytef*)block;
-			
 			int_fast8_t ret = lzmadec_init(&stream);
 			if(ret != LZMADEC_OK) {
 				cout << endl;
@@ -263,7 +262,10 @@ int main(int argc, const char * argv[]) {
 				return 1;
 			}
 			
-			lzma_raw_decoder();
+			stream.avail_in = blocksize;
+			stream.next_in = (Bytef*)block;
+			
+			//lzma_raw_decoder();
 			
 			do {
 				
@@ -285,7 +287,7 @@ int main(int argc, const char * argv[]) {
 							break;
 						}
 						
-						Info << "[lzma] found " << setfill(' ') << setw(10) << filesize << " bytes @ " << hex << setfill(' ') << setw(8) << offset;
+						Info << "[lzma] found " << setfill(' ') << setw(10) << filesize << " bytes @ " << hex << setfill(' ') << setw(8) << offset << " ret=" << int(ret);
 						
 						if(!ofs.is_open()) {
 							lzmahits++;
@@ -295,6 +297,8 @@ int main(int argc, const char * argv[]) {
 						}
 						
 						ofs.write(buffer, filesize);
+						
+						offset = reinterpret_cast<const char *>(stream.next_in) - data - 1;
 						
 					/* }
 					
@@ -365,6 +369,8 @@ int main(int argc, const char * argv[]) {
 						}
 						
 						ofs.write(buffer, filesize);
+						
+						offset = reinterpret_cast<const char *>(stream.next_in) - data - 1;
 						
 					/* }
 					
