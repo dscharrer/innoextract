@@ -20,8 +20,8 @@ namespace io = boost::iostreams;
 #pragma pack(push,1)
 
 struct BlockHeader {
-	u32 storedSize; // Total bytes written, including the CRCs
-	u8 compressed; // True if data is compressed, False if not
+	u32 storedSize; //!< Total bytes written, including the CRCs.
+	u8 compressed; //!< True if data is compressed, false if not.
 };
 
 #pragma pack(pop)
@@ -51,7 +51,6 @@ std::istream * BlockReader::get(std::istream & base) {
 	fis->push(inno_chunk_filter(), 4096);
 	
 	fis->push(io::restrict(base, 0, block.storedSize));
-	//fis->push(base);
 	
 	return fis;
 }

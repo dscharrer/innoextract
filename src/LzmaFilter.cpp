@@ -101,9 +101,9 @@ bool inno_lzma_decompressor_impl::filter(const char * & begin_in, const char * e
 
 void inno_lzma_decompressor_impl::close() {
 	
-	cout << "[lzma] close" << endl;
-	
 	if(stream) {
+		
+		cout << "[lzma] close" << endl;
 		
 		lzma_stream * strm = reinterpret_cast<lzma_stream *>(stream);
 		

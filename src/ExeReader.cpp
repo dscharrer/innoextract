@@ -21,7 +21,7 @@ using std::dec;
 
 size_t ExeReader::findResourceEntry(std::istream & ifs, int id) {
 	
-	ResourceTable table;
+	CoffResourceTable table;
 	if(read(ifs, table).fail()) {
 		cerr << "error reading resource table" << endl;
 		return 0;
@@ -29,13 +29,13 @@ size_t ExeReader::findResourceEntry(std::istream & ifs, int id) {
 	
 	cout << "[table] char: " << table.characteristics << "  time: " << table.timestamp << "  version: " << table.majorVersion << '.' << table.minorVersion << "  names: " << table.nbnames << "  ids: " << table.nbids << endl;
 	
-	ifs.seekg(table.nbnames * sizeof(ResourceEntry), strm::cur);
+	ifs.seekg(table.nbnames * sizeof(CoffResourceEntry), strm::cur);
 	
 	size_t offset = 0;
 	
 	for(size_t i = 0; i < table.nbids; i++) {
 		
-		ResourceEntry entry;
+		CoffResourceEntry entry;
 		if(read(ifs, entry).fail()) {
 			cerr << "error reading resource table entry" << endl;
 			return 0;
@@ -140,7 +140,7 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 		return result;
 	}
 	
-	DataDirectory resources;
+	CoffDataDirectory resources;
 	if(read(is.seekg(16, strm::cur), resources).fail()) {
 		cerr << "error reading resource directory offset";
 		return result;
@@ -207,7 +207,7 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 	
 	cout << "final resource entry is @ " << hex << finalOffset << dec << endl;
 	
-	ResourceLeaf leaf;
+	CoffResourceLeaf leaf;
 	if(read(is.seekg(finalOffset), leaf).fail()) {
 		cerr << "error loading final resource entry" << endl;
 		return result;

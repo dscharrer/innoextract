@@ -3,7 +3,7 @@
 
 #include <iomanip>
 
-#include <zlib.h>
+#include <lzma.h>
 
 #include "ExeReader.hpp"
 #include "SetupLoaderFormat.hpp"
@@ -76,9 +76,8 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 		return false;
 	}
 	
-	u32 actual = crc32(0l, NULL, 0);
-	actual = crc32(actual, reinterpret_cast<const Bytef *>(&magic), sizeof(magic));
-	actual = crc32(actual, reinterpret_cast<const Bytef *>(&bigversion), sizeof(bigversion));
+	u32 actual = lzma_crc32(reinterpret_cast<const uint8_t *>(&magic), sizeof(magic), 0);
+	actual = lzma_crc32(reinterpret_cast<const uint8_t *>(&bigversion), sizeof(bigversion), actual);
 	u32 expected;
 	
 	switch(bigversion) {
@@ -146,7 +145,7 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 					cerr << "error reading crc checksum" << endl;
 					return false;
 				}
-				actual = crc32(actual, reinterpret_cast<const Bytef *>(&offsets40b), sizeof(offsets40b));
+				actual = lzma_crc32(reinterpret_cast<const uint8_t *>(&offsets40b), sizeof(offsets40b), actual);
 				break;
 			}
 			
@@ -171,7 +170,7 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 			offsets.offset1 = offsets41.offset1;
 			
 			expected = offsets41.tableCrc;
-			actual = crc32(actual, reinterpret_cast<const Bytef *>(&offsets41), sizeof(offsets41) - sizeof(s32));
+			actual = lzma_crc32(reinterpret_cast<const uint8_t *>(&offsets41), sizeof(offsets41) - sizeof(s32), actual);
 			break;
 		}
 		
@@ -197,7 +196,7 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 			offsets.offset1 = offsets51.offset1;
 			
 			expected = offsets51.tableCrc;
-			actual = crc32(actual, reinterpret_cast<const Bytef *>(&offsets51), sizeof(offsets51) - sizeof(s32));
+			actual = lzma_crc32(reinterpret_cast<const uint8_t *>(&offsets51), sizeof(offsets51) - sizeof(s32), actual);
 			break;
 		}
 		

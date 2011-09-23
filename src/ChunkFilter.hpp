@@ -7,7 +7,6 @@
 #include <boost/iostreams/read.hpp>
 
 #include "Types.h"
-#include "../shady/transform.hpp"
 
 class inno_chunk_filter : public boost::iostreams::multichar_input_filter {
 	
