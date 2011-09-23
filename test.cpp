@@ -11,6 +11,8 @@ using std::setw;
 using std::hex;
 using std::dec;
 
+/*
+
 template <size_t N>
 void testlog() {
 	cout << "  lnpot: " << setfill(' ') << setw(3)  << log_next_power_of_two<N>::value;
@@ -130,46 +132,47 @@ STORED_ENUM_MAP(TestEnumMap, A,
 	Y, // 2
 	Z, // 2
 );
-
-void test2(size_t i) {
-	
-	StoredFlags<TestEnumMap> test(i);
-	
-	cout << i << " = " << std::bitset<4>(i) << " -> " << test.get() << endl;
-	
-}
+*/
 
 volatile size_t i;
 
-typedef MapList
-	::add<0, 0>::list
-	::add<1, 1>::list
-	::add<2, 2>::list
-	::add<3, 3>::list
-	::add<4, 4>::list
-	::add<5, 5>::list
-	::add<6, 6>::list
-	::add<7, 7>::list
-	::add<8, 8>::list
-	::add<9, 9>::list
-	::add<10, 10>::list
-	::add<11, 11>::list
-	::add<12, 12>::list
-	::add<13, 13>::list
-	::add<14, 14>::list
-	::add<15, 15>::list
-	::add<16, 16>::list
-	::add<17, 17>::list
-	::add<18, 18>::list
-	::add<19, 19>::list
-	::add<20, 20>::list
-	IdentityList;
+typedef BitsetConverter
+	::add::map<0, 0>
+	::add::map<1, 1>
+	::add::map<2, 2>
+	::add::map<3, 3>
+	::add::map<4, 4>
+	::add::map<5, 5>
+	::add::map<6, 6>
+	::add::map<7, 7>
+	::add::map<8, 8>
+	::add::map<9, 9>
+	::add::map<10, 10>
+	::add::map<11, 11>
+	::add::map<12, 12>
+	::add::map<13, 13>
+	::add::map<14, 14>
+	::add::map<15, 15>
+	::add::map<16, 16>
+	::add::map<17, 17>
+	::add::map<18, 18>
+	::add::map<19, 19>
+	::add::map<20, 20>
+	IdentityConverter;
+
+static void test2(size_t i) {
+	
+	size_t out = IdentityConverter::convert(i);
+	
+	cout << i << " = " << std::bitset<64>(i) << " -> " << out << " = " << std::bitset<64>(out) << endl;
+	
+}
 
 int main() {
 	
 	 //TEST3()
-	/*
 	
+	/*
 	test2(0);
 	test2(1);
 	test2(2);
@@ -178,9 +181,9 @@ int main() {
 	test2(5);
 	test2(6);
 	test2(7);
-	test2(8); */
+	test2(8);*/
 	
 	
-	return Evaluator<IdentityList>::map(i);
+	return IdentityConverter::convert(i);
 }
 

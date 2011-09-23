@@ -9,6 +9,7 @@
 #include <boost/integer.hpp>
 #include <boost/integer/static_log2.hpp>
 #include <boost/integer/static_min_max.hpp>
+#include <boost/integer_traits.hpp>
 
 #pragma pack(push,1)
 
@@ -144,6 +145,7 @@ struct SetupHeader_20008 {
 	
 }; */
 
+/*
 #define ARRAY_SIZE(array) (sizeof(array)/sizeof(*(array)))
 
 
@@ -235,113 +237,163 @@ struct EnumValueMap<EnumSet<Enum> > {
 	typedef Enum enum_type;
 	typedef EnumSet<Enum> flag_type;
 	
+};*/
+
+namespace boost {
+	template <class T>
+	class integer_traits<const T> : public integer_traits<T> { };
+}
+
+template <size_t N, class Type = void, class Enable = void>
+struct is_power_of_two {
+	static const bool value = false;
+};
+template <size_t N, class Type>
+struct is_power_of_two<N, Type, typename boost::enable_if_c<(N & (N - 1)) == 0>::type> {
+	static const bool value = true;
+	typedef Type type;
 };
 
+template <size_t N, class Enable = void>
+struct log_next_power_of_two {
+	static const size_t value = boost::static_log2<N>::value + 1;
+};
+template <size_t N>
+struct log_next_power_of_two<N, typename boost::enable_if<is_power_of_two<N> >::type> {
+	static const size_t value = boost::static_log2<N>::value;
+};
 
-template<size_t From, size_t To, class Next = void>
-struct Map {
+template <size_t N, class Enable = void>
+struct next_power_of_two {
+	static const size_t value = size_t(1) << (boost::static_log2<N>::value + 1);
+};
+template <size_t N>
+struct next_power_of_two<N, typename boost::enable_if<is_power_of_two<N> >::type> {
+	static const size_t value = N;
+};
+
+template <size_t Bits> struct fast_type_impl { };
+
+template <> struct fast_type_impl<8> { typedef uint_fast8_t type; };
+template <> struct fast_type_impl<16> { typedef uint_fast16_t type; };
+template <> struct fast_type_impl<32> { typedef uint_fast32_t type; };
+template <> struct fast_type_impl<64> { typedef uint_fast64_t type; };
+template <> struct fast_type_impl<128> { typedef __uint128_t type; };
+
+template <size_t Bits>
+struct fast_type : public fast_type_impl< boost::static_unsigned_max<8, next_power_of_two<Bits>::value>::value > { };
+
+struct BitsetConverter {
 	
-	static const size_t from = From;
-	static const size_t to = To;
-	typedef Next next;
+private:
 	
-	template<size_t From2, size_t To2>
-	struct add {
-		typedef Map<From2, To2, Map<From, To, Next> > list; 
+	typedef ptrdiff_t shift_type;
+	typedef size_t index_type;
+	
+	template <class Combiner, class Entry>
+	struct IterateEntries {
+		static const typename Combiner::type value = Combiner::template combine<Entry, (IterateEntries<Combiner, typename Entry::next>::value)>::value;
+	};
+	template <class Combiner> struct IterateEntries<Combiner, void> { static const typename Combiner::type value = Combiner::base; };
+	template <class Type, Type Base> struct Combiner { typedef Type type; static const Type base = Base; };
+	
+	template<class Getter, class Type>
+	struct MaxCombiner : public Combiner<Type, boost::integer_traits<Type>::const_min> {
+		template <class Entry, Type accumulator>
+		struct combine { static const Type value = boost::static_signed_max<Getter::template get<Entry>::value, accumulator>::value; };
 	};
 	
-};
-
-struct MapList {
-	
-	template<size_t From, size_t To>
-	struct add {
-		typedef Map<From, To> list;
+	template<class Getter, class Type>
+	struct MinCombiner : public Combiner<Type, boost::integer_traits<Type>::const_max> {
+		template <class Entry, Type accumulator>
+		struct combine { static const Type value = boost::static_signed_min<Getter::template get<Entry>::value, accumulator>::value; };
 	};
 	
-};
-
-template <size_t Shift, class Map, class Enable = void>
-struct ShiftRightMask {
-	static const size_t value = ShiftRightMask<Shift, typename Map::next>::value;
-};
-template <size_t Shift, class Enable>
-struct ShiftRightMask<Shift, void, Enable> {
-	static const size_t value = 0;
-};
-template <size_t Shift, class Map>
-struct ShiftRightMask<Shift, Map, typename boost::enable_if_c<Map::from - Shift == Map::to>::type> {
-	static const size_t value = ShiftRightMask<Shift, typename Map::next>::value | (size_t(1) << Map::from);
-};
-
-template <size_t Shift, class Map, class Enable = void>
-struct ShiftLeftMask {
-	static const size_t value = ShiftRightMask<Shift, typename Map::next>::value;
-};
-template <size_t Shift, class Enable>
-struct ShiftLeftMask<Shift, void, Enable> {
-	static const size_t value = 0;
-};
-template <size_t Shift, class Map>
-struct ShiftLeftMask<Shift, Map, typename boost::enable_if_c<Map::from == Map::to - Shift>::type> {
-	static const size_t value = ShiftRightMask<Shift, typename Map::next>::value | (size_t(1) << Map::from);
-};
-
-template <class Map>
-struct MaxShiftLeft {
-	static const size_t value = boost::static_unsigned_max<
-		((Map::to > Map::from) ? Map::to - Map::from : 0),
-		MaxShiftLeft<typename Map::next>::value>::value;
-};
-template <>
-struct MaxShiftLeft<void> {
-	static const size_t value = 0;
-};
-
-template <class Map>
-struct MaxShiftRight {
-	static const size_t value = boost::static_unsigned_max<
-		((Map::from > Map::to) ? Map::from - Map::to : 0),
-		MaxShiftRight<typename Map::next>::value>::value;
-};
-template <>
-struct MaxShiftRight<void> {
-	static const size_t value = 0;
-};
-
-template<class Map, size_t Shift>
-struct ShiftRightEvaluator {
-	static size_t map(size_t value) {
-		return ((value & ShiftRightMask<Shift, Map>::value) >> Shift) | ShiftRightEvaluator<Map, Shift - 1>::map(value);
-	}
-};
-template<class Map>
-struct ShiftRightEvaluator<Map, 0> {
-	static size_t map(size_t value) {
-		return value & ShiftRightMask<0, Map>::value;
-	}
-};
-
-template<class Map, size_t Shift>
-struct ShiftLeftEvaluator {
-	static size_t map(size_t value) {
-		return ((value & ShiftLeftMask<Shift, Map>::value) << Shift) | ShiftLeftEvaluator<Map, Shift - 1>::map(value);
-	}
-};
-template<class Map>
-struct ShiftLeftEvaluator<Map, 0> {
-	static size_t map(size_t value) {
-		return 0;
-	}
-};
-
-template<class Map>
-struct Evaluator {
+	struct ShiftGetter { template<class Entry> struct get { static const shift_type value = Entry::shift; }; };
+	struct FromGetter { template<class Entry> struct get { static const index_type value = Entry::from; }; };
+	struct ToGetter { template<class Entry> struct get { static const index_type value = Entry::to; }; };
 	
-	static size_t map(size_t value) {
-		return ShiftLeftEvaluator<Map, MaxShiftLeft<Map>::value>::map(value)
-		       | ShiftRightEvaluator<Map, MaxShiftRight<Map>::value>::map(value);
-	}
+	template<shift_type Shift, class Type>
+	struct ShiftMaskCombiner : public Combiner<Type, Type(0)> {
+		template <class Entry, Type mask>
+		struct combine { static const Type value = mask | ( (Entry::shift == Shift) ? (Type(1) << Entry::from) : Type(0) ); };
+	};
+	
+	template<class List>
+	struct Builder;
+	
+	template<index_type From, index_type To, class Next = void>
+	struct Entry {
+		
+		typedef Entry<From, To, Next> This;
+		
+		static const index_type from = From;
+		static const index_type to = To;
+		typedef Next next;
+		
+		static const shift_type shift = shift_type(from) - shift_type(to);
+		
+		static const shift_type max_shift = IterateEntries<MaxCombiner<ShiftGetter, shift_type>, This>::value;
+		static const shift_type min_shift = IterateEntries<MinCombiner<ShiftGetter, shift_type>, This>::value;
+		
+		static const index_type max_from = IterateEntries<MaxCombiner<FromGetter, index_type>, This>::value;
+		typedef typename fast_type<max_from + 1>::type in_type;
+		
+		static const index_type max_to = IterateEntries<MaxCombiner<ToGetter, index_type>, This>::value;
+		typedef typename fast_type<max_to + 1>::type out_type;
+		
+		template<shift_type Shift> struct ShiftMask { static const in_type value = IterateEntries<ShiftMaskCombiner<Shift, in_type>, This>::value; };
+		
+		template <shift_type Shift> inline static typename boost::enable_if_c<(Shift >= shift_type(0)), out_type>::type evaluate(in_type value) {
+			return out_type((value & ShiftMask<Shift>::value) >> Shift);
+		}
+		template <shift_type Shift> inline static typename boost::enable_if_c<(Shift < shift_type(0)), out_type>::type evaluate(in_type value) {
+			return out_type(value & ShiftMask<Shift>::value) << (-Shift); 
+		}
+		
+		template<shift_type Shift, class Enable = void> struct NextShift { static const shift_type value = Shift + 1; };
+		template<shift_type Shift>
+		struct NextShift<Shift, typename boost::enable_if_c<Shift != max_shift && ShiftMask<Shift + 1>::value == in_type(0)>::type > {
+			static const shift_type value = NextShift<Shift + 1>::value;
+		};
+		
+		template <shift_type Shift>
+		inline static typename boost::enable_if_c<(NextShift<Shift>::value != max_shift + 1), out_type>::type map(in_type value) {
+			return evaluate<Shift>(value) | (map<NextShift<Shift>::value>(value));
+		}
+		template <shift_type Shift>
+		inline static typename boost::enable_if_c<(NextShift<Shift>::value == max_shift + 1), out_type>::type map(in_type value) {
+			return evaluate<Shift>(value);
+		}
+		
+	public:
+		
+		typedef Builder<This> add;
+		
+		static out_type convert(in_type value) {
+			return map<min_shift>(value);
+		}
+		
+	};
+	
+	template<class List>
+	struct Builder {
+		
+		template<index_type From, index_type To>
+		struct map : public Entry<From, To, List> { };
+		
+		template<index_type To, class Current = List>
+		struct value : public Entry<Current::from + 1, To, Current> { };
+		
+		template<index_type To>
+		struct value<To, void> : public Entry<0, To> { };
+		
+	};
+	
+	
+public:
+	
+	typedef Builder<void> add;
 	
 };
 
@@ -350,6 +402,7 @@ struct Evaluator {
 
 
 
+/*
 
 
 
@@ -385,34 +438,6 @@ ENUM_NAMES(DirExistsWarning, "Auto", "No", "Yes");
 
 STORED_ENUM_MAP(UninstallLogModeMapper, lmUnknown, lmAppend, lmNew, lmOverwrite);
 STORED_ENUM_MAP(DirExistsWarningMapper, ddUnknown, ddAuto, ddNo, ddYes);
-
-template <size_t N, class Type = void, class Enable = void>
-struct is_power_of_two {
-	static const bool value = false;
-};
-template <size_t N, class Type>
-struct is_power_of_two<N, Type, typename boost::enable_if_c<(N & (N - 1)) == 0>::type> {
-	static const bool value = true;
-	typedef Type type;
-};
-
-template <size_t N, class Enable = void>
-struct log_next_power_of_two {
-	static const size_t value = boost::static_log2<N>::value + 1;
-};
-template <size_t N>
-struct log_next_power_of_two<N, typename boost::enable_if<is_power_of_two<N> >::type> {
-	static const size_t value = boost::static_log2<N>::value;
-};
-
-template <size_t N, class Enable = void>
-struct next_power_of_two {
-	static const size_t value = size_t(1) << (boost::static_log2<N>::value + 1);
-};
-template <size_t N>
-struct next_power_of_two<N, typename boost::enable_if<is_power_of_two<N> >::type> {
-	static const size_t value = N;
-};
 
 template <size_t N>
 struct StoredEnumType {
@@ -452,7 +477,7 @@ struct StoredFlagType<N, typename boost::enable_if_c<(StoredFlagBits<N>::value >
 	
 	typedef typename std::bitset<bits> type;
 	
-};
+};*/
 
 /*
 template <class EnumValueMap, class Type = typename StoredEnumType<EnumValueMap::count>::type>
@@ -483,7 +508,7 @@ struct StoredEnum {
 	}
 	
 };*/
-
+/*
 template <class EnumValueMap, class Type = typename StoredFlagType<EnumValueMap::count>::type>
 struct StoredFlags {
 	
@@ -547,7 +572,7 @@ struct StoredFlags {
 		return omask;
 	}
 	
-};
+};*/
 
 /*
 //   5.2.3
