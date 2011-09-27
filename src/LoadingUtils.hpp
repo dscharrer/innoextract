@@ -6,7 +6,7 @@
 #include <string>
 #include <limits>
 #include <boost/detail/endian.hpp>
-#include "Types.h"
+#include "Types.hpp"
 
 inline u8 fromLittleEndian(u8 value) { return value; }
 inline s8 fromLittleEndian(s8 value) { return value; }

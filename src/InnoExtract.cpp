@@ -11,12 +11,12 @@
 
 #include <lzma.h>
 
-#include "Types.h"
 #include "SetupHeader.hpp"
 #include "SetupLoader.hpp"
 #include "Utils.hpp"
 #include "Output.hpp"
 #include "BlockReader.hpp"
+#include "LanguageEntry.hpp"
 
 using std::cout;
 using std::string;
@@ -217,6 +217,40 @@ int main(int argc, char * argv[]) {
 	cout << "Options: " << color::green << header.options << color::reset << endl;
 	
 	cout << color::reset;
+	
+	if(header.numLanguageEntries) {
+		cout << "Language entries:" << endl;
+	}
+	for(size_t i = 0; i < header.numLanguageEntries; i++) {
+		
+		LanguageEntry entry;
+		entry.load(is, version);
+		if(is.fail()) {
+			error << "error reading language entry #" << i;
+		}
+		
+		cout << " - " << Quoted(entry.name) << ':' << endl;
+		cout << IfNotEmpty("  Language name", entry.languageName);
+		cout << IfNotEmpty("  Dialog font", entry.dialogFontName);
+		cout << IfNotEmpty("  Title font", entry.titleFontName);
+		cout << IfNotEmpty("  Welcome font", entry.welcomeFontName);
+		cout << IfNotEmpty("  Copyright font", entry.copyrightFontName);
+		cout << IfNotEmpty("  Data", entry.data);
+		cout << IfNotEmpty("  License", entry.licenseText);
+		cout << IfNotEmpty("  Info before text", entry.infoBeforeText);
+		cout << IfNotEmpty("  Info after text", entry.infoAfterText);
+		
+		cout << "  Language id: " << hex << entry.languageId << dec << endl;
+		
+		cout << IfNotZero("  Codepage", entry.languageCodePage);
+		cout << IfNotZero("  Dialog font size", entry.dialogFontSize);
+		cout << IfNotZero("  Dialog font standard height", entry.dialogFontStandardHeight);
+		cout << IfNotZero("  Title font size", entry.titleFontSize);
+		cout << IfNotZero("  Welcome font size", entry.welcomeFontSize);
+		cout << IfNotZero("  Copyright font size", entry.copyrightFontSize);
+		cout << IfNot("  Right to left", entry.rightToLeft, false);
+		
+	};
 	
 	return 0;
 }

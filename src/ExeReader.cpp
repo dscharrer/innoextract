@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <cstring>
 
-#include "Types.h"
+#include "Types.hpp"
 #include "ExeFormat.hpp"
 #include "Utils.hpp"
 #include "Output.hpp"

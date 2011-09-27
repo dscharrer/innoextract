@@ -6,7 +6,7 @@
 #include <bitset>
 #include <string>
 #include <iostream>
-#include "Types.h"
+#include "Types.hpp"
 #include "Flags.hpp"
 #include "Enum.hpp"
 #include "Version.hpp"

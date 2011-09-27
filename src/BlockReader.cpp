@@ -8,7 +8,6 @@
 #include <boost/iostreams/filter/zlib.hpp>
 #include <lzma.h>
 
-#include "Types.h"
 #include "Utils.hpp"
 #include "ChunkFilter.hpp"
 #include "LzmaFilter.hpp"

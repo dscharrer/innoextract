@@ -1,4 +1,7 @@
 
+#ifndef INNOEXTRACT_EXEREADER_HPP
+#define INNOEXTRACT_EXEREADER_HPP
+
 #include <stddef.h>
 #include <istream>
 #include <vector>
@@ -44,3 +47,5 @@ private:
 	static size_t memoryAddressToFileOffset(const CoffSectionTable & sections, size_t memory);
 	
 };
+
+#endif // INNOEXTRACT_EXEREADER_HPP

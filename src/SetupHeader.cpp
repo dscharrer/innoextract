@@ -32,7 +32,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	options = 0;
 	
 	if(version <= INNO_VERSION(1, 2, 16)) {
-		loadNumber<u32>(is); // uncompressed size of the setup header structure
+		::load<u32>(is); // uncompressed size of the setup header structure
 	}
 	
 	is >> WideString(appName, version.unicode);

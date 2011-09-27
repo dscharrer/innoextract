@@ -5,7 +5,7 @@
 #include <iostream>
 #include <utility>
 
-#include "Types.h"
+#include "Types.hpp"
 
 typedef u32 InnoVersionConstant;
 #define INNO_VERSION_EXT(a, b, c, d) ((u32(a) << 24) | (u32(b) << 16) | (u32(c) << 8) | u32(d))

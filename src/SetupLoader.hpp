@@ -1,8 +1,11 @@
 
+#ifndef INNOEXTRACT_SETUPLOADER_HPP
+#define INNOEXTRACT_SETUPLOADER_HPP
+
 #include <stddef.h>
 #include <iostream>
 
-#include "Types.h"
+#include "Types.hpp"
 
 enum ChecksumMode {
 	ChecksumAdler32,
@@ -45,3 +48,5 @@ private:
 	static bool getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos);
 	
 };
+
+#endif // INNOEXTRACT_SETUPLOADER_HPP

@@ -9,7 +9,7 @@
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/read.hpp>
 
-#include "Types.h"
+#include "Types.hpp"
 #include "Output.hpp"
 
 class inno_chunk_filter : public boost::iostreams::multichar_input_filter {

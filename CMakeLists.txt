@@ -31,6 +31,7 @@ set(INNOEXTRACT_SOURCES
 	src/ChunkFilter.cpp
 	src/ExeReader.cpp
 	src/InnoExtract.cpp
+	src/LanguageEntry.cpp
 	src/LoadingUtils.cpp
 	src/LzmaFilter.cpp
 	src/Output.cpp

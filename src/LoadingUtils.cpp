@@ -20,7 +20,7 @@ void BinaryString::loadInto(std::istream & is, std::string & target) {
 	is.read(&target[0], length);
 }
 
-static void convert(iconv_t converter, const std::string & from, std::string & to) {
+void convert(iconv_t converter, const std::string & from, std::string & to) {
 	
 	const char * inbuf = from.data();
 	size_t insize = from.size();
@@ -36,7 +36,7 @@ static void convert(iconv_t converter, const std::string & from, std::string & t
 	
 	while(insize) {
 		
-		to.resize(outbase + insize);
+		to.resize(outbase + insize + 4);
 		
 		char * outbuf = &to[0] + outbase;
 		size_t outsize = to.size() - outbase;
@@ -50,6 +50,8 @@ static void convert(iconv_t converter, const std::string & from, std::string & t
 		
 		outbase = to.size() - outsize;
 	}
+	
+	to.resize(outbase);
 	
 }
 

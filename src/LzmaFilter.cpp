@@ -5,7 +5,7 @@
 
 #include <lzma.h>
 
-#include "Types.h"
+#include "Types.hpp"
 
 using std::cout;
 using std::endl;
