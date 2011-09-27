@@ -8,9 +8,9 @@
 #include "ExeReader.hpp"
 #include "SetupLoaderFormat.hpp"
 #include "Utils.hpp"
+#include "Output.hpp"
 
 using std::cout;
-using std::cerr;
 using std::string;
 using std::endl;
 using std::setw;
@@ -22,17 +22,17 @@ bool SetupLoader::getOldOffsets(std::istream & is, Offsets & offsets) {
 	
 	SetupLoaderHeader locator;
 	if(read(is.seekg(0x30), locator).fail()) {
-		cerr << "error reading exe header" << endl;
+		error << "error reading exe header";
 		return false;
 	}
 	
 	if(locator.id != SetupLoaderHeaderMagic) {
-		cerr << "invalid exe header id: " << hex << locator.id << dec << endl;
+		cout << "invalid exe header id: " << hex << locator.id << dec << endl;
 		return false;
 	}
 	
 	if(locator.offsetTableOffset != ~locator.notOffsetTableOffset) {
-		cerr << "offset table offset mismatch" << endl;
+		cout << "offset table offset mismatch" << endl;
 		return false;
 	}
 	
@@ -56,23 +56,23 @@ bool SetupLoader::getNewOffsets(std::istream & is, Offsets & offsets) {
 bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos) {
 	
 	if(is.seekg(pos).fail()) {
-		cerr << "invalid offset table offset" << endl;
+		error << "invalid offset table offset";
 		return false;
 	}
 	
 	u32 magic;
 	if(read(is, magic).fail()) {
-		cerr << "error reading setup loader offset magic" << endl;
+		error << "error reading setup loader offset magic";
 		return false;
 	}
 	if(magic != SetupLoaderOffsetTableMagic) {
-		cerr << "invalid setup loader offset id: " << hex << magic << dec << endl;
+		error << "invalid setup loader offset id: " << hex << magic << dec;
 		return false;
 	}
 	
 	u64 bigversion;
 	if(read(is, bigversion).fail()) {
-		cerr << "error reading setup loader offset bigversion" << endl;
+		error << "error reading setup loader offset bigversion";
 		return false;
 	}
 	
@@ -82,11 +82,11 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 	
 	switch(bigversion) {
 		
-		case SetupLoaderOffsetTableID_20: {
+		case SetupLoaderOffsetTableID_10: {
 			
-			SetupLoaderOffsetTable20 offsets20;
+			SetupLoaderOffsetTable10 offsets20;
 			if(read(is, offsets20).fail()) {
-				cerr << "error reading setup loader offsets v20" << endl;
+				error << "error reading setup loader offsets v20";
 				return false;
 			}
 			
@@ -106,7 +106,7 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 			
 			SetupLoaderOffsetTable40 offsets40;
 			if(read(is, offsets40).fail()) {
-				cerr << "error reading setup loader offsets v40" << endl;
+				error << "error reading setup loader offsets v40";
 				return false;
 			}
 			
@@ -127,7 +127,7 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 			
 			SetupLoaderOffsetTable40b offsets40b;
 			if(read(is, offsets40b).fail()) {
-				cerr << "error reading setup loader offsets v40" << endl;
+				error << "error reading setup loader offsets v40";
 				return false;
 			}
 			
@@ -142,7 +142,7 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 			
 			if(bigversion == SetupLoaderOffsetTableID_40c) {
 				if(read(is, expected).fail()) {
-					cerr << "error reading crc checksum" << endl;
+					error << "error reading crc checksum";
 					return false;
 				}
 				actual = lzma_crc32(reinterpret_cast<const uint8_t *>(&offsets40b), sizeof(offsets40b), actual);
@@ -156,7 +156,7 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 			
 			SetupLoaderOffsetTable41 offsets41;
 			if(read(is, offsets41).fail()) {
-				cerr << "error reading setup loader offsets v40" << endl;
+				error << "error reading setup loader offsets v40";
 				return false;
 			}
 			
@@ -178,12 +178,12 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 			
 			SetupLoaderOffsetTable51 offsets51;
 			if(read(is, offsets51).fail()) {
-				cerr << "error reading setup loader offsets v40" << endl;
+				error << "error reading setup loader offsets v40";
 				return false;
 			}
 			
 			if(offsets51.version != 1) {
-				cerr << "warning: unexpected setup loader offset table version: " << offsets51.version << endl;
+				error << "warning: unexpected setup loader offset table version: " << offsets51.version;
 			}
 			
 			offsets.totalSize = offsets51.totalSize;
@@ -201,14 +201,14 @@ bool SetupLoader::getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos)
 		}
 		
 		default: {
-			cerr << "unsupported setup loader offset table version: " << hex << bigversion << dec << endl;
+			error << "unsupported setup loader offset table version: " << hex << bigversion << dec;
 			return false;
 		}
 		
 	}
 	
 	if(actual != expected) {
-		cerr << "CRC32 mismatch in setup loader offsets" << endl;
+		error << "CRC32 mismatch in setup loader offsets";
 		return false;
 	} else {
 		cout << "setup loader offset table CRC32 match" << endl;

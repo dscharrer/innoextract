@@ -1,4 +1,7 @@
 
+#ifndef INNOEXTRACT_CHUNKFILTER_HPP
+#define INNOEXTRACT_CHUNKFILTER_HPP
+
 #include <string>
 #include <algorithm>
 #include <iostream>
@@ -7,6 +10,7 @@
 #include <boost/iostreams/read.hpp>
 
 #include "Types.h"
+#include "Output.hpp"
 
 class inno_chunk_filter : public boost::iostreams::multichar_input_filter {
 	
@@ -26,25 +30,23 @@ public:
 	template<typename Source>
 	bool readChunk(Source & src) {
 		
-		std::cout << "[chunk] big read" << std::endl;
-		
 		u32 chunkCrc32 = *reinterpret_cast<u32 *>(buffer);
 		std::streamsize nread = boost::iostreams::read(src, reinterpret_cast<char *>(&chunkCrc32), 4);
 		if(nread == -1) {
 			std::cout << "[chunk] end" << std::endl;
 			return false;
 		}	else if(nread != 4) {
-			std::cout << "[chunk] unexpected block end" << std::endl;
+			error << "[chunk] unexpected block end";
 			throw std::string("unexpected block end");
 		}
 		
 		length = boost::iostreams::read(src, buffer, sizeof(buffer));
 		if(length == (size_t)-1) {
-			std::cout << "[chunk] unexpected chunk end" << std::endl;
+			error << "[chunk] unexpected chunk end";
 			throw std::string("unexpected chunk end");
 		}
 		
-		std::cout << "[chunk] -> length=" << length << std::endl;
+		std::cout << "[chunk] read chunk: " << length << " bytes" << std::endl;
 		
 		checkCrc(chunkCrc32);
 		
@@ -55,8 +57,6 @@ public:
 	
 	template<typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n) {
-		
-		std::cout << "[chunk] small read " << n << std::endl;
 		
 		size_t read = 0;
 		while(n) {
@@ -72,8 +72,6 @@ public:
 			dest += size, n -= size;
 			read += size;
 			
-			std::cout << "[chunk] +" << size << "  remaining: " << (length - pos) << std::endl;
-			
 		}
 		
 		return read;
@@ -86,3 +84,5 @@ private:
 	char buffer[4096];
 	
 };
+
+#endif // INNOEXTRACT_CHUNKFILTER_HPP

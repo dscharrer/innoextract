@@ -15,18 +15,18 @@ public:
 	
 	struct Offsets {
 		
-		size_t totalSize;
+		size_t totalSize; //!< Minimum expected size of the setup file
 		
-		size_t exeOffset;
-		size_t exeCompressedSize;
-		size_t exeUncompressedSize;
-		s32 exeChecksum;
-		ChecksumMode exeChecksumMode;
+		size_t exeOffset; //!< Offset of compressed setup.e32
+		size_t exeCompressedSize; //!< Size of setup.e32 after compression
+		size_t exeUncompressedSize; //!< Size of setup.e32 before compression
+		s32 exeChecksum; //!< Checksum of setup.e32 before compression
+		ChecksumMode exeChecksumMode;  //! Type of the checksum in exeChecksum
 		
-		size_t messageOffset;
+		size_t messageOffset; // TODO document
 		
-		size_t offset0;
-		size_t offset1;
+		size_t offset0; //!< Offset of embedded setup-0.bin data
+		size_t offset1; //!< Offset of embedded setup-1.bin data, or 0 when DiskSpanning=yes
 		
 	};
 	

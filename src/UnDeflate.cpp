@@ -11,7 +11,7 @@
 #include <sstream>
 #include <algorithm>
 
-#include "liblzmadec/lzmadec.h"
+//#include "liblzmadec/lzmadec.h"
 
 #include "Types.h"
 
@@ -215,7 +215,7 @@ int main(int argc, const char * argv[]) {
 		} while(false);
 		
 		// Try to interpret as LZMA1 datastream.
-		do {
+		/*do {
 			
 			u8 properties = u8(data[offset]);
 			
@@ -279,7 +279,7 @@ int main(int argc, const char * argv[]) {
 					
 					case LZMADEC_OK:
 					case LZMADEC_STREAM_END:
-					case LZMADEC_BUF_ERROR: { */
+					case LZMADEC_BUF_ERROR: { 
 						
 						size_t filesize = bufsize - stream.avail_out;
 						
@@ -302,7 +302,7 @@ int main(int argc, const char * argv[]) {
 						
 					/* }
 					
-				} */
+				} 
 				} while(false);
 				
 			} while((ret == LZMADEC_BUF_ERROR || ret == LZMADEC_OK) &&  stream.avail_in);
@@ -313,7 +313,7 @@ int main(int argc, const char * argv[]) {
 			
 			lzmadec_end(&stream);
 			
-		} while(false);
+		} while(false);*/
 		
 		// Try to interpret as XZ datastream.
 		do {

@@ -17,7 +17,7 @@ inno_lzma_decompressor_impl::~inno_lzma_decompressor_impl() { close(); }
 bool inno_lzma_decompressor_impl::filter(const char * & begin_in, const char * end_in, char * & begin_out, char * end_out, bool flush) {
 	(void)flush;
 	
-	cout << "[lzma] filter " << (end_in - begin_in) << " -> " << (end_out - begin_out) << endl;
+	size_t bufsize_in = (end_in - begin_in), bufsize_out = (end_out - begin_out);
 	
 	// Read enough bytes to decode the header.
 	while(nread != 5) {
@@ -81,7 +81,7 @@ bool inno_lzma_decompressor_impl::filter(const char * & begin_in, const char * e
 	
 	lzma_ret ret = lzma_code(strm, LZMA_RUN);
 	
-	cout << "[lzma] consumed " << (reinterpret_cast<const char *>(strm->next_in) - begin_in) << " -> " << (reinterpret_cast<char *>(strm->next_out) - begin_out) << "  ret=" << ret << endl;
+	cout << "[lzma] decompressed " << (reinterpret_cast<const char *>(strm->next_in) - begin_in) << " / " << bufsize_in << " -> " << (reinterpret_cast<char *>(strm->next_out) - begin_out) << " / " << bufsize_out << "  ret=" << ret << endl;
 	
 	begin_in = reinterpret_cast<const char *>(strm->next_in);
 	

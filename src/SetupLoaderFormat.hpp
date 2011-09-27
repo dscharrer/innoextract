@@ -9,7 +9,7 @@ const u32 SetupLoaderOffsetTableMagic = 0x506c4472;
 const u32 SetupLoaderHeaderMagic = 0x6f6e6e49;
 
 enum SetupLoaderOffsetTableID {
-	SetupLoaderOffsetTableID_20  = 0x7856658732305374l,
+	SetupLoaderOffsetTableID_10  = 0x7856658732305374l,
 	SetupLoaderOffsetTableID_40  = 0x7856658734305374l,
 	SetupLoaderOffsetTableID_40b = 0x7856658735305374l,
 	SetupLoaderOffsetTableID_40c = 0x7856658736305374l,
@@ -19,7 +19,7 @@ enum SetupLoaderOffsetTableID {
 
 //  2.0.8, 2.0.11, 2.0.17, 2.0.18
 //  3.0.0, 3.0.1, 3.0.2, 3.0.3, 3.0.4, 3.0.5, 3.0.6, 3.0.7, 3.0.8
-struct SetupLoaderOffsetTable20 {
+struct SetupLoaderOffsetTable10 {
 	s32 totalSize;
 	s32 exeOffset;
 	s32 exeCompressedSize;
@@ -58,7 +58,7 @@ struct SetupLoaderOffsetTable40b {
 //  4.1.0, 4.1.1, 4.1.2, 4.1.3, 4.1.4, 4.1.5
 //! added tableCrc
 struct SetupLoaderOffsetTable40c : public SetupLoaderOffsetTable40b {
-	s32 tableCrc;
+	s32 tableCrc; //!< CRC32 of all prior fields in this structure
 };
 
 //  4.1.6, 4.1.7, 4.1.8
@@ -73,7 +73,7 @@ struct SetupLoaderOffsetTable41 {
 	s32 exeCrc;
 	s32 offset0;
 	s32 offset1;
-	s32 tableCrc;
+	s32 tableCrc; //!< CRC32 of all prior fields in this structure
 };
 
 //  5.1.5, 5.1.7, 5.1.10, 5.1.13
@@ -82,13 +82,13 @@ struct SetupLoaderOffsetTable41 {
 //! added version
 struct SetupLoaderOffsetTable51 {
 	u32 version; //!< = 1
-	u32 totalSize; //!< Minimum expected size of setup.exe
-	u32 exeOffset; //!< Offset of compressed setup.e32
-	u32 exeUncompressedSize; //!< Size of setup.e32 before compression
-	s32 exeCrc; //!< CRC of setup.e32 before compression
-	u32 offset0; //!< Offset of embedded setup-0.bin data
-	u32 offset1; //!< Offset of embedded setup-1.bin data, or 0 when DiskSpanning=yes
-	s32 tableCrc; //!< CRC of all prior fields in this record
+	u32 totalSize;
+	u32 exeOffset;
+	u32 exeUncompressedSize;
+	s32 exeCrc;
+	u32 offset0;
+	u32 offset1;
+	s32 tableCrc; //!< CRC32 of all prior fields in this structure
 };
 
 //  2.0.8, 2.0.11, 2.0.17, 2.0.18

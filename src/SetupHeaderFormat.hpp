@@ -1,46 +1,245 @@
 
-#include "Types.h"
-
-#include <string>
-#include <bitset>
-#include <iostream>
-
+#include <vector>
 #include <boost/utility/enable_if.hpp>
-#include <boost/integer.hpp>
-#include <boost/integer/static_log2.hpp>
-#include <boost/integer/static_min_max.hpp>
-#include <boost/integer_traits.hpp>
+#include <boost/static_assert.hpp>
 
-#pragma pack(push,1)
+#include "Types.h"
+#include "SetupHeader.hpp"
+#include "LoadingUtils.hpp"
+#include "Enum.hpp"
+#include "Output.hpp"
+
+template <class Enum>
+struct EnumValueMap {
+	
+	typedef Enum enum_type;
+	typedef Enum flag_type;
+	
+};
+
+#define STORED_ENUM_MAP(MapName, Default, ...) \
+struct MapName : public EnumValueMap<typeof(Default)> { \
+	static const flag_type default_value; \
+	static const flag_type values[]; \
+	static const size_t count; \
+}; \
+const MapName::flag_type MapName::default_value = Default; \
+const MapName::flag_type MapName::values[] = { __VA_ARGS__ }; \
+const size_t MapName::count = ARRAY_SIZE(MapName::values)
+
+#define STORED_FLAGS_MAP(MapName, Flag0, ...) STORED_ENUM_MAP(MapName, Flag0, Flag0, ## __VA_ARGS__)
+
+template <class Mapping>
+struct StoredEnum {
+	
+	u32 value;
+	
+public:
+	
+	typedef Mapping mapping_type;
+	typedef typename Mapping::enum_type enum_type;
+	
+	static const size_t size = Mapping::count;
+	
+	inline StoredEnum(std::istream & is) {
+		value = loadNumber<u8>(is); // TODO use larger types for larger enums
+	}
+	
+	enum_type get() {
+		
+		if(value < size) {
+			return Mapping::values[value];
+		}
+		
+		warning << "warning: unexpected " << EnumNames<enum_type>::name << " value: " << value;
+		
+		return Mapping::default_value;
+	}
+	
+};
+
+template <size_t Bits>
+class StoredBitfield {
+	
+	typedef u8 base_type;
+	
+	static const size_t base_size = sizeof(base_type) * 8;
+	static const size_t count = (Bits + (base_size - 1)) / base_size; // ceildiv
+	
+	base_type bits[count];
+	
+public:
+	
+	static const size_t size = Bits;
+	
+	inline StoredBitfield(std::istream & is) {
+		for(size_t i = 0; i < count; i++) {
+			bits[i] = loadNumber<base_type>(is);
+		}
+	}
+	
+	inline u64 getLowerBits() const {
+		
+		BOOST_STATIC_ASSERT(sizeof(u64) % sizeof(base_type) == 0);
+		
+		u64 result = 0;
+		
+		for(size_t i = 0; i < std::min(sizeof(u64) / sizeof(base_type), count); i++) {
+			result |= (u64(bits[i]) << (i * base_size));
+		}
+		
+		return result;
+	}
+	
+	inline std::bitset<size> getBitSet() const {
+		
+		static const size_t ulong_size = sizeof(unsigned long) * 8;
+		
+		BOOST_STATIC_ASSERT(base_size % ulong_size == 0 || base_size < ulong_size);
+		
+		std::bitset<size> result(0);
+		for(size_t i = 0; i < count; i++) {
+			for(size_t j = 0; j < ceildiv(base_size, ulong_size); j++) {
+				result |= std::bitset<size>(static_cast<unsigned long>(bits[i] >> (j * ulong_size)))
+				          << ((i * base_size) + (j * ulong_size));
+			}
+		}
+		return result;
+	}
+	
+};
+
+template <class Mapping>
+class StoredFlags : private StoredBitfield<Mapping::count> {
+	
+public:
+	
+	typedef Mapping mapping_type;
+	typedef typename Mapping::enum_type enum_type;
+	typedef Flags<enum_type> flag_type;
+	
+	inline StoredFlags(std::istream & is) : StoredBitfield<Mapping::count>(is) { }
+	
+	flag_type get() {
+		
+		u64 bits = this->getLowerBits();
+		flag_type result = 0;
+		
+		for(size_t i = 0; i < this->size; i++) {
+			if(bits & (u64(1) << i)) {
+				result |= Mapping::values[i];
+				bits &= ~(u64(1) << i);
+			}
+		}
+		
+		if(bits) {
+			warning << "unexpected " << EnumNames<enum_type>::name << " flags: " << std::hex << bits << std::dec;
+		}
+		
+		return result;
+	}
+	
+};
+
+template <class Enum>
+class StoredFlagReader {
+	
+public:
+	
+	typedef Enum enum_type;
+	typedef Flags<enum_type> flag_type;
+	
+	std::vector<enum_type> mappings;
+	
+	void add(enum_type flag) {
+		mappings.push_back(flag);
+	}
+	
+	
+	flag_type get(std::istream & is) {
+		
+		u64 bits = 0;
+		
+		/*
+		if(mappings.size() <= 32) {
+			bits = loadNumber<u32>(is);
+		} else if(mappings.size() <= 256) {
+			bits = loadNumber<u64>(is);
+			for(size_t i = 1; i < 4; i++) {
+				u64 temp = loadNumber<u64>(is);
+				if(temp) {
+					warning << "unexpected " << EnumNames<enum_type>::name << " flags: " << std::hex << bits << std::dec << " @ " << i;
+				}
+			}
+		} else {
+			error << "error reading " << EnumNames<enum_type>::name << ": too many flags: " << mappings.size();
+			bits = 0;
+		}*/
+		
+		typedef u8 stored_type;
+		static const size_t stored_bits = sizeof(stored_type) * 8;
+		for(size_t i = 0; i < ceildiv(mappings.size(), stored_bits); i++) {
+			bits |= u64(load<stored_type>(is)) << (i * stored_bits);
+		}
+		
+		std::cout << "read " << mappings.size() << " flags: " << std::hex << bits << std::dec << std::endl;
+		
+		flag_type result = 0;
+		
+		for(size_t i = 0; i < mappings.size(); i++) {
+			if(bits & (u64(1) << i)) {
+				result |= mappings[i];
+				bits &= ~(u64(1) << i);
+			}
+		}
+		
+		if(bits) {
+			warning << "unexpected " << EnumNames<enum_type>::name << " flags: " << std::hex << bits << std::dec;
+		}
+		
+		return result;
+	}
+	
+};
+
+template <class Enum>
+class StoredFlagReader<Flags<Enum> > : public StoredFlagReader<Enum> { };
 
 /*
-//   2.0.8, 2.0.11
-enum SetupHeaderOption_20008 {
+enum _SetupHeaderOption {
+	
 	shDisableStartupPrompt,
-	shUninstallable,
+	shUninstallable, // TODO removed in 5.3.10
 	shCreateAppDir,
-	shDisableDirPage,
-	shDisableProgramGroupPage,
+	shDisableDirPage, // TODO removed in 5.3.3
+	shDisableDirExistsWarning, // TODO only in 1.2.10, not in 1.3.25
+	shDisableProgramGroupPage, // TODO removed in 5.3.3
 	shAllowNoIcons,
-	shAlwaysRestart,
+	shAlwaysRestart, // TODO missing in [3.0.0, 3.0.3)
+	shBackSolid, // TODO only in 1.2.10, not in 1.3.25
 	shAlwaysUsePersonalGroup,
 	shWindowVisible,
 	shWindowShowCaption,
 	shWindowResizable,
 	shWindowStartMaximized,
 	shEnableDirDoesntExistWarning,
-	shDisableAppendDir,
+	shDisableAppendDir, // TODO removed in 4.1.2
 	shPassword,
 	shAllowRootDirectory,
 	shDisableFinishedPage,
-	shAdminPrivilegesRequired,
-	shAlwaysCreateUninstallIcon,
-	shChangesAssociations,
-	shCreateUninstallRegKey,
+	shAdminPrivilegesRequired, // TODO removed in 3.0.4, 1.2.10: win32-only
+	shAlwaysCreateUninstallIcon, // TODO removed in 3.0.0, 1.2.10: win32-only
+	shOverwriteUninstRegEntries, // TODO only in 1.2.10, win32-only, not in 1.3.25
+	shChangesAssociations, // TODO 1.2.10: win32-only
+	
+	// new after 1.2.16, in 1.3.25
+	shCreateUninstallRegKey, // TODO removed in 5.3.8
 	shUsePreviousAppDir,
 	shBackColorHorizontal,
 	shUsePreviousGroup,
 	shUpdateUninstallLogAppName,
+	
+	// new after 1.3.26
 	shUsePreviousSetupType,
 	shDisableReadyMemo,
 	shAlwaysShowComponentsList,
@@ -50,104 +249,276 @@ enum SetupHeaderOption_20008 {
 	shDisableReadyPage,
 	shAlwaysShowDirOnReadyPage,
 	shAlwaysShowGroupOnReadyPage,
-};
-
-//   5.2.3
-enum SetupHeaderOption_50203 {
-	shDisableStartupPrompt,
-	shUninstallable,
-	shCreateAppDir,
-	shDisableDirPage,
-	shDisableProgramGroupPage,
-	shAllowNoIcons,
-	shAlwaysRestart,
-	shAlwaysUsePersonalGroup,
-	shWindowVisible,
-	shWindowShowCaption,
-	shWindowResizable,
-	shWindowStartMaximized,
-	shEnableDirDoesntExistWarning,
-	// -shDisableAppendDir
-	shPassword,
-	shAllowRootDirectory,
-	shDisableFinishedPage,
-	// -shAdminPrivilegesRequired
-	// -shAlwaysCreateUninstallIcon
-	shChangesAssociations,
-	shCreateUninstallRegKey,
-	shUsePreviousAppDir,
-	shBackColorHorizontal,
-	shUsePreviousGroup,
-	shUpdateUninstallLogAppName,
-	shUsePreviousSetupType,
-	shDisableReadyMemo,
-	shAlwaysShowComponentsList,
-	shFlatComponentsList,
-	shShowComponentSizes,
-	shUsePreviousTasks,
-	shDisableReadyPage,
-	shAlwaysShowDirOnReadyPage,
-	shAlwaysShowGroupOnReadyPage,
-	// New:
+	
+	// only in [2.0.17, 4.1.5)
+	shBzipUsed,
+	
+	// new in 2.0.18
 	shAllowUNCPath,
+	
+	// new in 3.0.0
 	shUserInfoPage,
 	shUsePreviousUserInfo,
+	
+	// new in 3.0.1
 	shUninstallRestartComputer,
+	
+	// new in 3.0.3
 	shRestartIfNeededByRun,
+	
+	// new in 3.0.6.1
 	shShowTasksTreeLines,
+	
+	// only in [4.0.0, 4.0.10)
+	shShowLanguageDialog,
+	
+	// only in [4.0.1, 4.0.10)
+	shDetectLanguageUsingLocale,
+	
+	// new in 4.0.9
 	shAllowCancelDuringInstall,
+	
+	// new in 4.1.3
 	shWizardImageStretch,
+	
+	// new in 4.1.8
 	shAppendDefaultDirName,
 	shAppendDefaultGroupName,
+	
+	// new in 4.2.2
 	shEncryptionUsed,
+	
+	// new in 5.0.4
 	shChangesEnvironment,
-	shShowUndisplayableLanguages,
+	
+	// new in 5.1.7
+	shShowUndisplayableLanguages, // TODO 5.2.5+: only if not unicode
+	
+	// new in 5.1.13
 	shSetupLogging,
+	
+	// new in 5.2.1
 	shSignedUninstaller,
-};
+	
+	// new in 5.3.8
+	shUsePreviousLanguage,
+	
+	// new in 5.3.9
+	shDisableWelcomePage,
+	
+};*/
 
-typedef u8 MD5Digest[16];
-typedef u8 SetupSalt[8];
+typedef StoredBitfield<256> CharSet;
 
-//   2.0.8, 2.0.11
-struct SetupVersionData {
-	s32 WinVersion, NTVersion; // Cardinal
-	s16 NTServicePack; // Word
-};
+STORED_ENUM_MAP(StoredInstallMode, SetupHeader::NormalInstallMode,
+	SetupHeader::NormalInstallMode,
+	SetupHeader::SilentInstallMode,
+	SetupHeader::VerySilentInstallMode
+);
 
-//   2.0.8, 2.0.11
-struct SetupHeader_20008 {
+STORED_ENUM_MAP(StoredUninstallLogMode, SetupHeader::AppendLog,
+	SetupHeader::AppendLog,
+	SetupHeader::NewLog,
+	SetupHeader::OverwriteLog
+);
+
+STORED_ENUM_MAP(StoredUninstallStyle, SetupHeader::ClassicStyle,
+	SetupHeader::ClassicStyle,
+	SetupHeader::ModernStyle
+);
+
+STORED_ENUM_MAP(StoredDirExistsWarning, SetupHeader::Auto,
+	SetupHeader::Auto,
+	SetupHeader::No,
+	SetupHeader::Yes
+);
+
+// pre- 5.3.7
+STORED_ENUM_MAP(StoredPrivileges0, SetupHeader::NoPrivileges,
+	SetupHeader::NoPrivileges,
+	SetupHeader::PowerUserPrivileges,
+	SetupHeader::AdminPriviliges,
+);
+
+// post- 5.3.7
+STORED_ENUM_MAP(StoredPrivileges1, SetupHeader::NoPrivileges,
+	SetupHeader::NoPrivileges,
+	SetupHeader::PowerUserPrivileges,
+	SetupHeader::AdminPriviliges,
+	SetupHeader::LowestPrivileges
+);
+
+STORED_ENUM_MAP(StoredShowLanguageDialog, SetupHeader::Yes,
+	SetupHeader::Yes,
+	SetupHeader::No,
+	SetupHeader::Auto
+);
+
+STORED_ENUM_MAP(StoredLanguageDetectionMethod, SetupHeader::UILanguage,
+	SetupHeader::UILanguage,
+	SetupHeader::LocaleLanguage,
+	SetupHeader::NoLanguageDetection
+);
+
+STORED_FLAGS_MAP(StoredArchitectures,
+	ArchitectureUnknown,
+	ArchitectureX86,
+	ArchitectureAmd64,
+	ArchitectureIA64
+);
+
+STORED_ENUM_MAP(StoredRestartComputer, SetupHeader::Auto,
+	SetupHeader::Auto,
+	SetupHeader::No,
+	SetupHeader::Yes
+);
+
+// pre-4.2.5
+STORED_ENUM_MAP(StoredCompressionMethod0, SetupHeader::Unknown,
+	SetupHeader::Zlib,
+	SetupHeader::BZip2,
+	SetupHeader::LZMA1
+);
+
+// 4.2.5
+STORED_ENUM_MAP(StoredCompressionMethod1, SetupHeader::Unknown,
+	SetupHeader::Stored,
+	SetupHeader::BZip2,
+	SetupHeader::LZMA1
+);
+
+// [4.2.6 5.3.9)
+STORED_ENUM_MAP(StoredCompressionMethod2, SetupHeader::Unknown,
+	SetupHeader::Stored,
+	SetupHeader::Zlib,
+	SetupHeader::BZip2,
+	SetupHeader::LZMA1
+);
+
+// 5.3.9+
+STORED_ENUM_MAP(StoredCompressionMethod3, SetupHeader::Unknown,
+	SetupHeader::Stored,
+	SetupHeader::Zlib,
+	SetupHeader::BZip2,
+	SetupHeader::LZMA1,
+	SetupHeader::LZMA2
+);
+
+STORED_ENUM_MAP(StoredDisablePage, SetupHeader::Auto,
+	SetupHeader::Auto,
+	SetupHeader::No,
+	SetupHeader::Yes
+);
+
+/*
+struct SetupHeader {
 	
-	const size_t numstrings;
+	union {
 	
-	std::string AppName, AppVerName, AppId, AppCopyright, AppPublisher, AppPublisherURL,
-		AppSupportURL, AppUpdatesURL, AppVersion, DefaultDirName,
-		DefaultGroupName, UninstallIconName, BaseFilename, LicenseText,
-		InfoBeforeText, InfoAfterText, UninstallFilesDir, UninstallDisplayName,
-		UninstallDisplayIcon, AppMutex; // String
+	struct {
 	
-	CharSet LeadBytes;
+	std::string AppName, AppVerName, AppId, AppCopyright; // String TODO 1.2.10: PChar
+	std::string AppPublisher, AppPublisherURL; // String TODO not in 1.2.10
+	std::string AppSupportPhone; // String TODO new in 5.1.13
+	std::string AppSupportURL, AppUpdatesURL, AppVersion; // String TODO not in 1.2.10
+	std::string DefaultDirName, DefaultGroupName; // String
+	std::string UninstallIconName; // String TODO removed in 3.0.0
+	std::string BaseFilename; //String
+	std::string LicenseText, InfoBeforeText, InfoAfterText, UninstallFilesDir,
+		UninstallDisplayName, UninstallDisplayIcon, AppMutex; // String TODO not in 1.2.10
+	std::string DefaultUserInfoName, DefaultUserInfoOrg; // String TODO new in 3.0.0
+	std::string DefaultUserInfoSerial, CompiledCodeText; // String TODO new in 3.0.6.1
+	std::string AppReadmeFile, AppContact, AppComments, AppModifyPath; // String TODO new in 4.2.4
+	std::string SignedUninstallerSignature; // String TODO new in 5.2.1
 	
-	s32 NumTypeEntries, NumComponentEntries, NumTaskEntries; // Integer
+	};
+	
+	struct { // TODO 5.2.5+
+	
+	std::wstring AppName, AppVerName, AppId, AppCopyright, AppPublisher, AppPublisherURL,
+		AppSupportPhone, AppSupportURL, AppUpdatesURL, AppVersion, DefaultDirName,
+		DefaultGroupName, BaseFilename, UninstallFilesDir, UninstallDisplayName,
+		UninstallDisplayIcon, AppMutex, DefaultUserInfoName, DefaultUserInfoOrg,
+		DefaultUserInfoSerial, AppReadmeFile, AppContact, AppComments,
+		AppModifyPath; // String / WideString
+	
+	std::string CreateUninstallRegKey; // String / WideString TODO new in 5.3.8
+	std::string Uninstallable; // String / WideString TODO new in 5.3.10
+	
+	std::string LicenseText, InfoBeforeText, InfoAfterText; // AnsiString
+	std::string SignedUninstallerSignature; // AnsiString TODO removed in 5.3.10
+	std::string CompiledCodeText; // AnsiString
+	
+	};
+	
+	};
+	
+	CharSet LeadBytes; // set of Char TODO 5.2.5+: set of AnsiChar, only exists if not unicode
+	
+	s32 NumLanguageEntries; // Integer TODO new in 4.0.0
+	s32 NumCustomMessageEntries; // Integer TODO new in 4.2.1
+	s32 NumPermissionEntries; // Integer TODO new in 4.1.0
+	s32 NumTypeEntries, NumComponentEntries, NumTaskEntries; // Integer TODO not in 1.2.10, not in 1.3.25
 	s32 NumDirEntries, NumFileEntries, NumFileLocationEntries, NumIconEntries,
 		NumIniEntries, NumRegistryEntries, NumInstallDeleteEntries,
 		NumUninstallDeleteEntries, NumRunEntries, NumUninstallRunEntries; // Integer
-	SetupVersionData MinVersion, OnlyBelowVersion;
-	s32 BackColor, BackColor2, WizardImageBackColor; // LongInt
-	s32 WizardSmallImageBackColor; // LongInt
-	s32 Password; // LongInt
-	s32 ExtraDiskSpaceRequired; // LongInt
-	u8 InstallMode; // (imNormal, imSilent, imVerySilent);
-	u8 UninstallLogMode; // (lmAppend, lmNew, lmOverwrite);
-	u8 UninstallStyle; // (usClassic, usModern);
-	u8 DirExistsWarning; // (ddAuto, ddNo, ddYes);
-	u64 Options; // set of SetupHeaderOption_20008
 	
-}; */
+	u32 LicenseSize, InfoBeforeSize, InfoAfterSize; // Cardinal TODO only in 1.2.10
+	
+	union {
+		LegacySetupVersionData MinVersion, OnlyBelowVersion; // TODO only in 1.2.10
+		SetupVersionData MinVersion, OnlyBelowVersion;
+	};
+	
+	s32 BackColor; // LongInt
+	s32 BackColor2; // LongInt TODO not in 1.2.10
+	s32 WizardImageBackColor; // LongInt
+	s32 WizardSmallImageBackColor; // LongInt TODO removed in 4.0.4, not in 1.2.10, not in 1.3.25
+	union {
+		s32 Password; // LongInt TODO removed in 4.2.0
+		MD5Digest PasswordHash; // TODO only in [4.2.0, 5.3.9)
+		SHA1Digest PasswordHash; // TODO new in 5.3.9
+	};
+	SetupSalt PasswordSalt; // TODO new in 4.2.2
+	s32 ExtraDiskSpaceRequired; // LongInt TODO from 4.0.0: Integer64
+	s32 SlicesPerDisk; // Integer TODO new in 4.0.0
+	
+	StoredEnum<InstallMode> installMode; // (imNormal, imSilent, imVerySilent) TODO removed in 5.0.0, not in 1.2.10, not in 1.3.25
+	StoredEnum<UninstallLogMode> uninstallLogMode; // (lmAppend, lmNew, lmOverwrite) TODO not in 1.2.10
+	StoredEnum<UninstallStyle> uninstallStyle; // (usClassic, usModern) TODO removed in 5.0.0, not in 1.2.10, not in 1.3.25
+	StoredEnum<DirExistsWarning> dirExistsWarning; // (ddAuto, ddNo, ddYes) TODO not in 1.2.10
+	StoredEnum<RestartComputer> restartComputer; // (rcAuto, rcNo, rcYes) TODO only in [3.0.0, 3.0.3)?
+	StoredEnum<PrivilegesRequired> privilegesRequired; // (prNone, prPowerUser, prAdmin) TODO new in 3.0.4
+	StoredEnum<ShowLanguageDialog> showLanguageDialog; // (slYes, slNo, slAuto) TODO new in 4.0.10
+	StoredEnum<LanguageDetectionMethod> languageDetectionMethod; // (ldUILanguage, ldLocale, ldNone) TODO new in 4.0.10
+	StoredEnum<CompressMethod> compressMethod; // CompressionMethod TODO new in 4.1.5
+	StoredFlags<SetupProcessorArchitecture> architecturesAllowed, architecturesInstallIn64BitMode; // set of SetupProcessorArchitecture TODO new in 5.1.0
+	
+	s32 signedUninstallerOrigSize; // LongWord TODO only in [5.2.1, 5.3.10)
+	u32 signedUninstallerHdrChecksum; // DWORD TODO only in [5.2.1, 5.3.10)
+	
+	StoredEnum<SetupDisablePage> disableDirPage, disableProgramGroupPage; // new in 5.3.3
+	
+	u32 UninstallDisplaySize; // Cardinal TODO new in 5.3.6
+	
+	StoredFlags<SetupHeaderOption> options; // set of SetupHeaderOption
+	
+};
+*/
+
+// ---------------------------------------------------------------------------------------
+
+/* TODO remove:
+ * - TSetupHeader
+ * - TSetupVersionData
+ * - TSetupHeaderOption
+ * - TSetupProcessorArchitecture
+ * - SetupHeaderStrings
+ * - SetupID
+ * - TSetupID
+ */
 
 /*
-#define ARRAY_SIZE(array) (sizeof(array)/sizeof(*(array)))
-
 
 template <class Enum>
 struct enum_size { };
@@ -223,218 +594,9 @@ static std::ostream & operator<<(std::ostream & os, EnumSet<Enum> rhs) {
 	return os << rhs.bitset();
 }
 
-template <class Enum>
-struct EnumValueMap {
-	
-	typedef Enum enum_type;
-	typedef Enum flag_type;
-	
-};
-
-template <class Enum>
-struct EnumValueMap<EnumSet<Enum> > {
-	
-	typedef Enum enum_type;
-	typedef EnumSet<Enum> flag_type;
-	
-};*/
-
-namespace boost {
-	template <class T>
-	class integer_traits<const T> : public integer_traits<T> { };
-}
-
-template <size_t N, class Type = void, class Enable = void>
-struct is_power_of_two {
-	static const bool value = false;
-};
-template <size_t N, class Type>
-struct is_power_of_two<N, Type, typename boost::enable_if_c<(N & (N - 1)) == 0>::type> {
-	static const bool value = true;
-	typedef Type type;
-};
-
-template <size_t N, class Enable = void>
-struct log_next_power_of_two {
-	static const size_t value = boost::static_log2<N>::value + 1;
-};
-template <size_t N>
-struct log_next_power_of_two<N, typename boost::enable_if<is_power_of_two<N> >::type> {
-	static const size_t value = boost::static_log2<N>::value;
-};
-
-template <size_t N, class Enable = void>
-struct next_power_of_two {
-	static const size_t value = size_t(1) << (boost::static_log2<N>::value + 1);
-};
-template <size_t N>
-struct next_power_of_two<N, typename boost::enable_if<is_power_of_two<N> >::type> {
-	static const size_t value = N;
-};
-
-template <size_t Bits> struct fast_type_impl { };
-
-template <> struct fast_type_impl<8> { typedef uint_fast8_t type; };
-template <> struct fast_type_impl<16> { typedef uint_fast16_t type; };
-template <> struct fast_type_impl<32> { typedef uint_fast32_t type; };
-template <> struct fast_type_impl<64> { typedef uint_fast64_t type; };
-template <> struct fast_type_impl<128> { typedef __uint128_t type; };
-
-template <size_t Bits>
-struct fast_type : public fast_type_impl< boost::static_unsigned_max<8, next_power_of_two<Bits>::value>::value > { };
-
-struct BitsetConverter {
-	
-private:
-	
-	typedef ptrdiff_t shift_type;
-	typedef size_t index_type;
-	
-	template <class Combiner, class Entry>
-	struct IterateEntries {
-		static const typename Combiner::type value = Combiner::template combine<Entry, (IterateEntries<Combiner, typename Entry::next>::value)>::value;
-	};
-	template <class Combiner> struct IterateEntries<Combiner, void> { static const typename Combiner::type value = Combiner::base; };
-	template <class Type, Type Base> struct Combiner { typedef Type type; static const Type base = Base; };
-	
-	template<class Getter, class Type>
-	struct MaxCombiner : public Combiner<Type, boost::integer_traits<Type>::const_min> {
-		template <class Entry, Type accumulator>
-		struct combine { static const Type value = boost::static_signed_max<Getter::template get<Entry>::value, accumulator>::value; };
-	};
-	
-	template<class Getter, class Type>
-	struct MinCombiner : public Combiner<Type, boost::integer_traits<Type>::const_max> {
-		template <class Entry, Type accumulator>
-		struct combine { static const Type value = boost::static_signed_min<Getter::template get<Entry>::value, accumulator>::value; };
-	};
-	
-	struct ShiftGetter { template<class Entry> struct get { static const shift_type value = Entry::shift; }; };
-	struct FromGetter { template<class Entry> struct get { static const index_type value = Entry::from; }; };
-	struct ToGetter { template<class Entry> struct get { static const index_type value = Entry::to; }; };
-	
-	template<shift_type Shift, class Type>
-	struct ShiftMaskCombiner : public Combiner<Type, Type(0)> {
-		template <class Entry, Type mask>
-		struct combine { static const Type value = mask | ( (Entry::shift == Shift) ? (Type(1) << Entry::from) : Type(0) ); };
-	};
-	
-	template<class List>
-	struct Builder;
-	
-	template<index_type From, index_type To, class Next = void>
-	struct Entry {
-		
-		typedef Entry<From, To, Next> This;
-		
-		static const index_type from = From;
-		static const index_type to = To;
-		typedef Next next;
-		
-		static const shift_type shift = shift_type(from) - shift_type(to);
-		
-		static const shift_type max_shift = IterateEntries<MaxCombiner<ShiftGetter, shift_type>, This>::value;
-		static const shift_type min_shift = IterateEntries<MinCombiner<ShiftGetter, shift_type>, This>::value;
-		
-		static const index_type max_from = IterateEntries<MaxCombiner<FromGetter, index_type>, This>::value;
-		typedef typename fast_type<max_from + 1>::type in_type;
-		
-		static const index_type max_to = IterateEntries<MaxCombiner<ToGetter, index_type>, This>::value;
-		typedef typename fast_type<max_to + 1>::type out_type;
-		
-		template<shift_type Shift> struct ShiftMask { static const in_type value = IterateEntries<ShiftMaskCombiner<Shift, in_type>, This>::value; };
-		
-		template <shift_type Shift> inline static typename boost::enable_if_c<(Shift >= shift_type(0)), out_type>::type evaluate(in_type value) {
-			return out_type((value & ShiftMask<Shift>::value) >> Shift);
-		}
-		template <shift_type Shift> inline static typename boost::enable_if_c<(Shift < shift_type(0)), out_type>::type evaluate(in_type value) {
-			return out_type(value & ShiftMask<Shift>::value) << (-Shift); 
-		}
-		
-		template<shift_type Shift, class Enable = void> struct NextShift { static const shift_type value = Shift + 1; };
-		template<shift_type Shift>
-		struct NextShift<Shift, typename boost::enable_if_c<Shift != max_shift && ShiftMask<Shift + 1>::value == in_type(0)>::type > {
-			static const shift_type value = NextShift<Shift + 1>::value;
-		};
-		
-		template <shift_type Shift>
-		inline static typename boost::enable_if_c<(NextShift<Shift>::value != max_shift + 1), out_type>::type map(in_type value) {
-			return evaluate<Shift>(value) | (map<NextShift<Shift>::value>(value));
-		}
-		template <shift_type Shift>
-		inline static typename boost::enable_if_c<(NextShift<Shift>::value == max_shift + 1), out_type>::type map(in_type value) {
-			return evaluate<Shift>(value);
-		}
-		
-	public:
-		
-		typedef Builder<This> add;
-		
-		static out_type convert(in_type value) {
-			return map<min_shift>(value);
-		}
-		
-	};
-	
-	template<class List>
-	struct Builder {
-		
-		template<index_type From, index_type To>
-		struct map : public Entry<From, To, List> { };
-		
-		template<index_type To, class Current = List>
-		struct value : public Entry<Current::from + 1, To, Current> { };
-		
-		template<index_type To>
-		struct value<To, void> : public Entry<0, To> { };
-		
-	};
-	
-	
-public:
-	
-	typedef Builder<void> add;
-	
-};
 
 
 
-
-
-
-/*
-
-
-
-
-#define STORED_ENUM_MAP(MapName, Default, ...) \
-struct MapName : public EnumValueMap<typeof(Default)> { \
-	static const flag_type default_value; \
-	static const flag_type values[]; \
-	static const size_t count; \
-}; \
-const MapName::flag_type MapName::default_value = Default; \
-const MapName::flag_type MapName::values[] = { __VA_ARGS__ }; \
-const size_t MapName::count = ARRAY_SIZE(MapName::values)
-
-template <class Enum>
-struct EnumNames {
-	
-	const size_t count;
-	
-	const char * name;
-	
-	const char * names[0];
-	
-};
-
-#define ENUM_NAMES(Enum, Default, ...)
-
-enum UninstallLogMode { lmAppend, lmNew, lmOverwrite, lmUnknown };
-ENUM_NAMES(UninstallLogMode, "Append", "New", "Overwrite");
-
-enum DirExistsWarning { ddAuto, ddNo, ddYes, ddUnknown };
-ENUM_NAMES(DirExistsWarning, "Auto", "No", "Yes");
 
 STORED_ENUM_MAP(UninstallLogModeMapper, lmUnknown, lmAppend, lmNew, lmOverwrite);
 STORED_ENUM_MAP(DirExistsWarningMapper, ddUnknown, ddAuto, ddNo, ddYes);
@@ -574,42 +736,4 @@ struct StoredFlags {
 	
 };*/
 
-/*
-//   5.2.3
-struct SetupHeader_50203 {
-	
-	std::string AppName, AppVerName, AppId, AppCopyright, AppPublisher, AppPublisherURL,
-		AppSupportPhone, AppSupportURL, AppUpdatesURL, AppVersion, DefaultDirName,
-		DefaultGroupName, BaseFilename, LicenseText,
-		InfoBeforeText, InfoAfterText, UninstallFilesDir, UninstallDisplayName,
-		UninstallDisplayIcon, AppMutex, DefaultUserInfoName,
-		DefaultUserInfoOrg, DefaultUserInfoSerial, CompiledCodeText,
-		AppReadmeFile, AppContact, AppComments, AppModifyPath,
-		SignedUninstallerSignature;
-		
-	CharSet LeadBytes;
-	
-	s32 NumLanguageEntries, NumCustomMessageEntries, NumPermissionEntries,
-		NumTypeEntries, NumComponentEntries, NumTaskEntries, NumDirEntries,
-		NumFileEntries, NumFileLocationEntries, NumIconEntries, NumIniEntries,
-		NumRegistryEntries, NumInstallDeleteEntries, NumUninstallDeleteEntries,
-		NumRunEntries, NumUninstallRunEntries; // Integer
-	SetupVersionData MinVersion, OnlyBelowVersion;
-	s32 BackColor, BackColor2, WizardImageBackColor; // LongInt
-	MD5Digest PasswordHash;
-	u64 PasswordSalt; // array[0..7] of Byte
-	s64 ExtraDiskSpaceRequired; // Integer64
-	s32 SlicesPerDisk; // Integer
-	StoredEnum<UninstallLogModeMapper> uninstallLogMode; // (lmAppend, lmNew, lmOverwrite)
-	u8 DirExistsWarning; // (ddAuto, ddNo, ddYes)
-	u8 PrivilegesRequired; // (prNone, prPowerUser, prAdmin)
-	u8 ShowLanguageDialog; // (slYes, slNo, slAuto)
-	LanguageDetectionMethod: (ldUILanguage, ldLocale, ldNone);
-	CompressMethod: TSetupCompressMethod;
-	ArchitecturesAllowed, ArchitecturesInstallIn64BitMode: TSetupProcessorArchitectures;
-	SignedUninstallerOrigSize: LongWord;
-	SignedUninstallerHdrChecksum: DWORD;
-	u64 Options; // set of SetupHeaderOption_50203;
-}; */
-
-#pragma pack(pop)
+//#pragma pack(pop)

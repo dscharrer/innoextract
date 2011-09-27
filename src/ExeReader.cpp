@@ -9,9 +9,9 @@
 #include "Types.h"
 #include "ExeFormat.hpp"
 #include "Utils.hpp"
+#include "Output.hpp"
 
 using std::cout;
-using std::cerr;
 using std::string;
 using std::endl;
 using std::setw;
@@ -23,7 +23,7 @@ size_t ExeReader::findResourceEntry(std::istream & ifs, int id) {
 	
 	CoffResourceTable table;
 	if(read(ifs, table).fail()) {
-		cerr << "error reading resource table" << endl;
+		error << "error reading resource table";
 		return 0;
 	}
 	
@@ -37,7 +37,7 @@ size_t ExeReader::findResourceEntry(std::istream & ifs, int id) {
 		
 		CoffResourceEntry entry;
 		if(read(ifs, entry).fail()) {
-			cerr << "error reading resource table entry" << endl;
+			error << "error reading resource table entry";
 			return 0;
 		}
 		
@@ -61,7 +61,7 @@ bool ExeReader::loadSectionTable(std::istream & ifs, size_t peOffset, const Coff
 	
 	ifs.seekg(sectionTableOffset);
 	if(ifs.read(reinterpret_cast<char *>(table.data()), sizeof(CoffSection) * table.size()).fail()) {
-		cerr << "error coff loading section table";
+		error << "error coff loading section table";
 		return false;
 	}
 	
@@ -94,31 +94,31 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 	
 	u16 peOffset;
 	if(read(is.seekg(0x3c), peOffset).fail()) {
-		cerr << "error reading PE signature offset";
+		error << "error reading PE signature offset";
 		return result;
 	}
 	cout << "PE signature is @ " << hex << peOffset << dec << endl;
 	
 	char magic[4];
 	if(is.seekg(peOffset).read(magic, 4).fail()) {
-		cerr << "error reading PE signature" << endl;
+		error << "error reading PE signature";
 		return result;
 	}
 	static const char expectedMagic[] = { 'P', 'E', 0, 0 };
 	if(std::memcmp(magic, expectedMagic, 4)) {
-		cerr << "wrong PE signature - not an exe file" << endl;
+		error << "wrong PE signature - not an exe file";
 		return result;
 	}
 	
 	CoffFileHeader coff;
 	if(read(is, coff).fail()) {
-		cerr << "error reading COFF file header" << endl;
+		error << "error reading COFF file header";
 		return result;
 	}
 	
 	u16 optionalHeaderMagic;
 	if(read(is, optionalHeaderMagic).fail()) {
-		cerr << "error reading the optional header magic number" << endl;
+		error << "error reading the optional header magic number";
 		return result;
 	}
 	
@@ -131,22 +131,22 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 	
 	u32 ndirectories;
 	if(read(is, ndirectories).fail()) {
-		cerr << "error reading number of data directories" << endl;
+		error << "error reading number of data directories";
 		return result;
 	}
 	cout << "number of directories is " << ndirectories << endl;
 	if(ndirectories < 3) {
-		cerr << "no resource directory found" << endl;
+		error << "no resource directory found";
 		return result;
 	}
 	
 	CoffDataDirectory resources;
 	if(read(is.seekg(16, strm::cur), resources).fail()) {
-		cerr << "error reading resource directory offset";
+		error << "error reading resource directory offset";
 		return result;
 	}
 	if(!resources.address || !resources.size) {
-		cerr << "missing resource directory" << endl;
+		error << "missing resource directory";
 		return result;
 	}
 	
@@ -157,7 +157,7 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 	
 	size_t resourceOffset = memoryAddressToFileOffset(sections, resources.address);
 	if(!resourceOffset) {
-		cerr << "error mapping virtual resource address " << hex << resources.address << dec << " to file offset" << endl;
+		error << "error mapping virtual resource address " << hex << resources.address << dec << " to file offset";
 		return result;
 	}
 	cout << "resource table is @ RVA " << hex << resources.address << " -> @ " << resourceOffset << dec << endl;
@@ -166,11 +166,11 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 	
 	u32 typeOffset = findResourceEntry(is, type);
 	if(!typeOffset) {
-		cerr << "missing data resource entry" << endl;
+		error << "missing data resource entry";
 		return result;
 	}
 	if(!(typeOffset & (1 << 31))) {
-		cerr << "unexpected resource leaf for data" << endl;
+		error << "unexpected resource leaf for data";
 		return result;
 	}
 	typeOffset &= ~(1 << 31), typeOffset += resourceOffset;
@@ -181,11 +181,11 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 	
 	u32 nameOffset = findResourceEntry(is, name);
 	if(!nameOffset) {
-		cerr << "missing installer resource entry" << endl;
+		error << "missing installer resource entry";
 		return result;
 	}
 	if(!(nameOffset & (1 << 31))) {
-		cerr << "unexpected resource leaf for installer" << endl;
+		error << "unexpected resource leaf for installer";
 		return result;
 	}
 	nameOffset &= ~(1 << 31), nameOffset += resourceOffset;
@@ -196,11 +196,11 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 	
 	u32 finalOffset = findResourceEntry(is, language);
 	if(!finalOffset) {
-		cerr << "missing final resource entry" << endl;
+		error << "missing final resource entry";
 		return result;
 	}
 	if(finalOffset & (1 << 31)) {
-		cerr << "unexpected table for final resource entry" << endl;
+		error << "unexpected table for final resource entry";
 		return result;
 	}
 	finalOffset += resourceOffset;
@@ -209,7 +209,7 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 	
 	CoffResourceLeaf leaf;
 	if(read(is.seekg(finalOffset), leaf).fail()) {
-		cerr << "error loading final resource entry" << endl;
+		error << "error loading final resource entry";
 		return result;
 	}
 	
@@ -217,7 +217,7 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 	
 	size_t dataOffset = memoryAddressToFileOffset(sections, leaf.address);
 	if(!dataOffset) {
-		cerr << "error mapping final virtual resource address " << hex << leaf.address << dec << " to file offset" << endl;
+		error << "error mapping final virtual resource address " << hex << leaf.address << dec << " to file offset";
 		return result;
 	}
 	

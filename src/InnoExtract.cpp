@@ -12,13 +12,13 @@
 #include <lzma.h>
 
 #include "Types.h"
+#include "SetupHeader.hpp"
 #include "SetupLoader.hpp"
 #include "Utils.hpp"
-
+#include "Output.hpp"
 #include "BlockReader.hpp"
 
 using std::cout;
-using std::cerr;
 using std::string;
 using std::endl;
 using std::setw;
@@ -38,93 +38,185 @@ struct BlockHeader {
 int main(int argc, char * argv[]) {
 	
 	if(argc <= 1) {
-		cerr << "usage: innoextract <Inno Setup installer>" << endl;
+		std::cout << "usage: innoextract <Inno Setup installer>" << endl;
 		return 1;
 	}
 	
 	std::ifstream ifs(argv[1], strm::in | strm::binary | strm::ate);
 	
 	if(!ifs.is_open()) {
-		cerr << "error opening file" << endl;
+		error << "error opening file";
 		return 1;
 	}
 	
 	u64 fileSize = ifs.tellg();
 	if(!fileSize) {
-		cerr << "cannot read file or empty file" << endl;
+		error << "cannot read file or empty file";
 		return 1;
 	}
 	
 	SetupLoader::Offsets offsets;
 	if(!SetupLoader::getOffsets(ifs, offsets)) {
-		cerr << "failed to load setup loader offsets" << endl;
+		error << "failed to load setup loader offsets";
+		// TODO try offset0 = 0
 		return 1;
 	}
 	
+	cout << color::white;
 	cout << "loaded offsets:" << endl;
 	cout << "- total size: " << offsets.totalSize << endl;
 	cout << "- exe: @ " << hex << offsets.exeOffset << dec << "  compressed: " << offsets.exeCompressedSize << "  uncompressed: " << offsets.exeUncompressedSize << endl;
 	cout << "- exe checksum: " << hex << setfill('0') << setw(8) << offsets.exeChecksum << dec << " (" << (offsets.exeChecksumMode == ChecksumAdler32 ? "Alder32" : "CRC32") << ')' << endl;
 	cout << "- messageOffset: " << hex << offsets.messageOffset << dec << endl;
 	cout << "- offset:  0: " << hex << offsets.offset0 << "  1: " << offsets.messageOffset << dec << endl;
+	cout << color::reset;
 	
 	ifs.seekg(offsets.offset0);
 	
-	char version[64];
-	if(read(ifs, version).fail()) {
-		cerr << "error reading version!" << endl;
+	InnoVersion version;
+	version.load(ifs);
+	if(ifs.fail()) {
+		error << "error reading setup data version!";
 		return 1;
 	}
-	cout << "version: \"" << safestring(version) << '"' << endl;
 	
-	std::istream * _is = BlockReader::get(ifs);
+	cout << "version: " << color::white << version << color::reset << endl;
+	
+	std::istream * _is = BlockReader::get(ifs, version);
 	if(!_is) {
-		cerr << "error reading block" << endl;
+		error << "error reading block";
 		return 1;
 	}
 	std::istream & is = *_is;
 	
-	std::string strings[29];
+	is.exceptions(strm::badbit | strm::failbit);
 	
-	for(size_t i = 0; i < sizeof(strings)/sizeof(*strings); i++) {
-		
-		u32 size;
-		if(read(is, size).fail()) {
-			cerr << "error reading string size #" << i << endl;
-			return 1;
-		}
-		
-		strings[i].resize(size);
-		
-		if(is.read(&strings[i][0], size).fail()) {
-			cerr << "error reading string #" << i << endl;
-			return 1;
-		}
-		
+	/*
+	std::ofstream ofs("dump.bin", strm::trunc | strm::out | strm::binary);
+	
+	do {
+		char buf[4096];
+		size_t in = is.read(buf, ARRAY_SIZE(buf)).gcount();
+		cout << in << endl;
+		ofs.write(buf, in);
+	} while(!is.eof());
+	
+	if(is.bad()) {
+		error << "read error";
+	} else if(!is.eof()) {
+		warning << "not eof";
 	}
 	
-	const char * names[29] = {
-		"App Name", "App Ver Name", "App Id", "Copyright", "Publisher", "Publisher URL",
-		"SupportPhone", "Support URL", "Updates URL", "Version", "Default Dir Name",
-		"Default Group Name", "Base Filename", "License Text",
-		"Info Before Text", "Info After Text", "Uninstall Files Dir", "Uninstall Display Name",
-		"Uninstall Display Icon", "App Mutex", "Default User Info Name",
-		"Default User Info Org", "Default User Info Serial", "Compiled Code Text",
-		"Readme", "Contact", "Comments", "App Modify Path",
-		"Signed Uninstaller Signature"
-	};
+	return 0;*/
 	
-	for(size_t i = 0; i < sizeof(strings)/sizeof(*strings); i++) {
-		if(i != 23) {
-			cout << "- " << names[i] << ": \"" << strings[i] << '"' << endl;
-		} else {
-			cout << "- " << names[i] << ": " << strings[i].length() << " bytes" << endl;
-		}
+	SetupHeader header;
+	header.load(is, version);
+	if(is.fail()) {
+		error << "error reading setup data header!";
+		return 1;
 	}
 	
+	cout << IfNotEmpty("App name", header.appName);
+	cout << IfNotEmpty("App ver name", header.appVerName);
+	cout << IfNotEmpty("App id", header.appId);
+	cout << IfNotEmpty("Copyright", header.appCopyright);
+	cout << IfNotEmpty("Publisher", header.appPublisher);
+	cout << IfNotEmpty("Publisher URL", header.appPublisherURL);
+	cout << IfNotEmpty("Support phone", header.appSupportPhone);
+	cout << IfNotEmpty("Support URL", header.appSupportURL);
+	cout << IfNotEmpty("Updates URL", header.appUpdatesURL);
+	cout << IfNotEmpty("Version", header.appVersion);
+	cout << IfNotEmpty("Default dir name", header.defaultDirName);
+	cout << IfNotEmpty("Default group name", header.defaultGroupName);
+	cout << IfNotEmpty("Uninstall icon name", header.uninstallIconName);
+	cout << IfNotEmpty("Base filename", header.baseFilename);
+	cout << IfNotEmpty("Uninstall files dir", header.uninstallFilesDir);
+	cout << IfNotEmpty("Uninstall display name", header.uninstallDisplayName);
+	cout << IfNotEmpty("Uninstall display icon", header.uninstallDisplayIcon);
+	cout << IfNotEmpty("App mutex", header.appMutex);
+	cout << IfNotEmpty("Default user name", header.defaultUserInfoName);
+	cout << IfNotEmpty("Default user org", header.defaultUserInfoOrg);
+	cout << IfNotEmpty("Default user serial", header.defaultUserInfoSerial);
+	cout << IfNotEmpty("Readme", header.appReadmeFile);
+	cout << IfNotEmpty("Contact", header.appContact);
+	cout << IfNotEmpty("Comments", header.appComments);
+	cout << IfNotEmpty("Modify path", header.appModifyPath);
+	cout << IfNotEmpty("Uninstall reg key", header.createUninstallRegKey);
+	cout << IfNotEmpty("Uninstallable", header.uninstallable);
+	cout << IfNotEmpty("License", header.licenseText);
+	cout << IfNotEmpty("Info before text", header.infoBeforeText);
+	cout << IfNotEmpty("Info after text", header.infoAfterText);
+	cout << IfNotEmpty("Uninstaller signature", header.signedUninstallerSignature);
+	cout << IfNotEmpty("Compiled code", header.compiledCodeText);
 	
-	delete _is;
+	cout << IfNotZero("Lead bytes", header.leadBytes);
 	
+	cout << IfNotZero("Language entries", header.numLanguageEntries);
+	cout << IfNotZero("Custom message entries", header.numCustomMessageEntries);
+	cout << IfNotZero("Permission entries", header.numPermissionEntries);
+	cout << IfNotZero("Type entries", header.numTypeEntries);
+	cout << IfNotZero("Component entries", header.numComponentEntries);
+	cout << IfNotZero("Task entries", header.numTaskEntries);
+	cout << IfNotZero("Dir entries", header.numDirEntries);
+	cout << IfNotZero("File entries", header.numFileEntries);
+	cout << IfNotZero("File location entries", header.numFileLocationEntries);
+	cout << IfNotZero("Icon entries", header.numIconEntries);
+	cout << IfNotZero("Ini entries", header.numIniEntries);
+	cout << IfNotZero("Registry entries", header.numRegistryEntries);
+	cout << IfNotZero("Delete entries", header.numInstallDeleteEntries);
+	cout << IfNotZero("Uninstall delete entries", header.numUninstallDeleteEntries);
+	cout << IfNotZero("Run entries", header.numRunEntries);
+	cout << IfNotZero("Uninstall run entries", header.numUninstallRunEntries);
+	
+	cout << IfNotZero("License size", header.licenseSize);
+	cout << IfNotZero("Info before size", header.infoBeforeSize);
+	cout << IfNotZero("Info after size", header.infoAfterSize);
+	
+	cout << "Min version: " << header.minVersion << endl;
+	if(header.onlyBelowVersion.winVersion || header.onlyBelowVersion.ntVersion || header.onlyBelowVersion.ntServicePack) {
+		cout << "Only below version: " << header.onlyBelowVersion << endl;
+	}
+	
+	cout << hex;
+	cout << IfNotZero("Back color", header.backColor);
+	cout << IfNotZero("Back color2", header.backColor2);
+	cout << IfNotZero("Wizard image back color", header.wizardImageBackColor);
+	cout << IfNotZero("Wizard small image back color", header.wizardSmallImageBackColor);
+	cout << dec;
+	
+	if(header.options & (shPassword|shEncryptionUsed)) {
+		cout << "Password type: " << color::cyan << header.passwordType << color::reset << endl;
+		// TODO print password
+		// TODO print salt
+	}
+	
+	cout << IfNotZero("Extra disk space required", header.extraDiskSpaceRequired);
+	cout << IfNotZero("Slices per disk", header.slicesPerDisk);
+	
+	cout << IfNot("Install mode", header.installMode, SetupHeader::NormalInstallMode);
+	cout << "Uninstall log mode: " << color::cyan << header.uninstallLogMode << color::reset << endl;
+	cout << "Uninstall style: " << color::cyan << header.uninstallStyle << color::reset << endl;
+	cout << "Dir exists warning: " << color::cyan << header.dirExistsWarning << color::reset << endl;
+	cout << IfNot("Privileges required", header.privilegesRequired, SetupHeader::NoPrivileges);
+	cout << "Show language dialog: " << color::cyan << header.showLanguageDialog << color::reset << endl;
+	cout << IfNot("Danguage detection", header.languageDetectionMethod, SetupHeader::NoLanguageDetection);
+	cout << "Compression: " << color::cyan << header.compressMethod << color::reset << endl;
+	cout << "Architectures allowed: " << color::cyan << header.architecturesAllowed << color::reset << endl;
+	cout << "Architectures installed in 64-bit mode: " << color::cyan << header.architecturesInstallIn64BitMode << color::reset << endl;
+	
+	if(header.options & shSignedUninstaller) {
+		cout << IfNotZero("Size before signing uninstaller", header.signedUninstallerOrigSize);
+		cout << IfNotZero("Uninstaller header checksum", header.signedUninstallerHdrChecksum);
+	}
+	
+	cout << "Disable dir page: " << color::cyan << header.disableDirPage << color::reset << endl;
+	cout << "Disable program group page: " << color::cyan << header.disableProgramGroupPage << color::reset << endl;
+	
+	cout << IfNotZero("Uninstall display size", header.uninstallDisplaySize);
+	
+	cout << "Options: " << color::green << header.options << color::reset << endl;
+	
+	cout << color::reset;
 	
 	return 0;
 }

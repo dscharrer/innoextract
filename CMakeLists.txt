@@ -31,9 +31,13 @@ set(INNOEXTRACT_SOURCES
 	src/ChunkFilter.cpp
 	src/ExeReader.cpp
 	src/InnoExtract.cpp
+	src/LoadingUtils.cpp
 	src/LzmaFilter.cpp
+	src/Output.cpp
+	src/SetupHeader.cpp
 	src/SetupLoader.cpp
 	src/Utils.cpp
+	src/Version.cpp
 )
 
 add_executable(innoextract ${INNOEXTRACT_SOURCES})
