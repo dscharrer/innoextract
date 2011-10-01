@@ -10,7 +10,11 @@ void convert(iconv_t converter, const std::string & from, std::string & to);
 
 void LanguageEntry::load(std::istream & is, const InnoVersion & version) {
 	
-	is >> EncodedString(name, version.codepage());
+	if(version >= INNO_VERSION(4, 0, 0)) {
+		is >> EncodedString(name, version.codepage());
+	} else {
+		name = "default";
+	}
 	
 	is >> EncodedString(languageName, (version >= INNO_VERSION(4, 2, 2)) ? 1200 : 1252);
 	
@@ -19,7 +23,9 @@ void LanguageEntry::load(std::istream & is, const InnoVersion & version) {
 	is >> EncodedString(welcomeFontName, version.codepage());
 	is >> EncodedString(copyrightFontName, version.codepage());
 	
-	is >> BinaryString(data);
+	if(version >= INNO_VERSION(4, 0, 0)) {
+		is >> BinaryString(data);
+	}
 	
 	if(version >= INNO_VERSION(4, 0, 1)) {
 		is >> AnsiString(licenseText);

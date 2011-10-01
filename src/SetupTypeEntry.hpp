@@ -26,7 +26,7 @@ struct SetupTypeEntry {
 	
 	std::string name;
 	std::string description;
-	std::string langauges;
+	std::string languages;
 	std::string check;
 	
 	SetupVersionData minVersion;

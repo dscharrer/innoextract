@@ -21,6 +21,7 @@
 #include "LoadingUtils.hpp"
 #include "PermissionEntry.hpp"
 #include "SetupTypeEntry.hpp"
+#include "SetupComponentEntry.hpp"
 
 using std::cout;
 using std::string;
@@ -119,6 +120,8 @@ int main(int argc, char * argv[]) {
 		error << "error reading setup data header!";
 		return 1;
 	}
+	
+	cout << endl;
 	
 	cout << IfNotEmpty("App name", header.appName);
 	cout << IfNotEmpty("App ver name", header.appVerName);
@@ -223,7 +226,7 @@ int main(int argc, char * argv[]) {
 	cout << color::reset;
 	
 	if(header.numLanguageEntries) {
-		cout << "Language entries:" << endl;
+		cout << endl << "Language entries:" << endl;
 	}
 	std::vector<LanguageEntry> languages;
 	languages.resize(header.numLanguageEntries);
@@ -258,8 +261,38 @@ int main(int argc, char * argv[]) {
 		
 	};
 	
+	if(version < INNO_VERSION(4, 0, 0)) {
+		
+		cout << endl;
+		
+		std::string wizardImage;
+		is >> BinaryString(wizardImage);
+		cout << "Wizard image: " << wizardImage.length() << " bytes" << endl;
+		
+		if(version > INNO_VERSION(1, 3, 26)) {
+			// TODO header.wizardSmallImageBackColor is missing after 5.0.4
+			std::string wizardSmallImage;
+			is >> BinaryString(wizardSmallImage);
+			cout << "Wizard small image: " << wizardSmallImage.length() << " bytes" << endl;
+		}
+		
+		if(header.compressMethod == SetupHeader::BZip2
+		   || (header.compressMethod == SetupHeader::LZMA1 && version == INNO_VERSION(4, 1, 5))
+		   || (header.compressMethod == SetupHeader::Zlib && version >= INNO_VERSION(4, 2, 6))) {
+			
+			std::string decompressorDll;
+			is >> BinaryString(decompressorDll);
+			cout << "Decompressor dll: " << decompressorDll.length() << " bytes" << endl;
+		}
+		
+		if(is.fail()) {
+			error << "error reading misc setup data";
+		}
+		
+	}
+	
 	if(header.numCustomMessageEntries) {
-		cout << "Custom message entries:" << endl;
+		cout << endl << "Custom message entries:" << endl;
 	}
 	for(size_t i = 0; i < header.numCustomMessageEntries; i++) {
 		
@@ -294,7 +327,7 @@ int main(int argc, char * argv[]) {
 	};
 	
 	if(header.numPermissionEntries) {
-		cout << "Permission entries:" << endl;
+		cout << endl << "Permission entries:" << endl;
 	}
 	for(size_t i = 0; i < header.numPermissionEntries; i++) {
 		
@@ -309,7 +342,7 @@ int main(int argc, char * argv[]) {
 	};
 	
 	if(header.numTypeEntries) {
-		cout << "Type entries:" << endl;
+		cout << endl << "Type entries:" << endl;
 	}
 	for(size_t i = 0; i < header.numTypeEntries; i++) {
 		
@@ -321,7 +354,7 @@ int main(int argc, char * argv[]) {
 		
 		cout << " - " << Quoted(entry.name) << ':' << endl;
 		cout << IfNotEmpty("  Description", entry.description);
-		cout << IfNotEmpty("  Languages", entry.langauges);
+		cout << IfNotEmpty("  Languages", entry.languages);
 		cout << IfNotEmpty("  Check", entry.check);
 		
 		cout << "  Min version: " << entry.minVersion << endl;
@@ -331,6 +364,37 @@ int main(int argc, char * argv[]) {
 		
 		cout << IfNotZero("  Options", entry.options);
 		cout << IfNot("  Type", entry.type, SetupTypeEntry::User);
+		cout << IfNotZero("  Size", entry.size);
+		
+	};
+	
+	if(header.numComponentEntries) {
+		cout << endl << "Component entries:" << endl;
+	}
+	for(size_t i = 0; i < header.numComponentEntries; i++) {
+		
+		SetupComponentEntry entry;
+		entry.load(is, version);
+		if(is.fail()) {
+			error << "error reading type entry #" << i;
+		}
+		
+		cout << " - " << Quoted(entry.name) << ':' << endl;
+		cout << IfNotEmpty("  Types", entry.types);
+		cout << IfNotEmpty("  Description", entry.description);
+		cout << IfNotEmpty("  Languages", entry.languages);
+		cout << IfNotEmpty("  Check", entry.check);
+		
+		cout << IfNotZero("  Extra disk space required", entry.extraDiskSpaceRequired);
+		cout << IfNotZero("  Level", entry.level);
+		cout << IfNot("  Used", entry.used, true);
+		
+		cout << "  Min version: " << entry.minVersion << endl;
+		if(entry.onlyBelowVersion.winVersion || entry.onlyBelowVersion.ntVersion || entry.onlyBelowVersion.ntServicePack) {
+			cout << "  Only below version: " << entry.onlyBelowVersion << endl;
+		}
+		
+		cout << IfNotZero("  Options", entry.options);
 		cout << IfNotZero("  Size", entry.size);
 		
 	};

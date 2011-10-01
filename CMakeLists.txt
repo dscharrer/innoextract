@@ -37,6 +37,7 @@ set(INNOEXTRACT_SOURCES
 	src/LzmaFilter.cpp
 	src/Output.cpp
 	src/PermissionEntry.cpp
+	src/SetupComponentEntry.cpp
 	src/SetupHeader.cpp
 	src/SetupLoader.cpp
 	src/SetupTypeEntry.cpp

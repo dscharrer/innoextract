@@ -138,7 +138,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	if(version >= INNO_VERSION(4, 0, 0)) {
 		numLanguageEntries = loadNumber<u32>(is);
 	} else {
-		numLanguageEntries = 0;
+		numLanguageEntries = (version > INNO_VERSION(1, 3, 26)) ? 1 : 0;
 	}
 	
 	if(version >= INNO_VERSION(4, 2, 1)) {

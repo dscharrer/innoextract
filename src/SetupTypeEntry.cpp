@@ -20,9 +20,9 @@ void SetupTypeEntry::load(std::istream & is, const InnoVersion & version) {
 	is >> EncodedString(name, version.codepage());
 	is >> EncodedString(description, version.codepage());
 	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> EncodedString(langauges, version.codepage());
+		is >> EncodedString(languages, version.codepage());
 	} else {
-		langauges.clear();
+		languages.clear();
 	}
 	if(version >= INNO_VERSION(3, 0, 8)) {
 		is >> EncodedString(check, version.codepage());
