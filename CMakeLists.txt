@@ -27,25 +27,34 @@ list(APPEND LIBRARIES -llzma)
 list(APPEND CMAKE_CXX_FLAGS "-ggdb -O3 -march=native -Wl,--as-needed")
 
 set(INNOEXTRACT_SOURCES
-	src/BlockReader.cpp
-	src/ChunkFilter.cpp
-	src/CustomMessageEntry.cpp
-	src/ExeReader.cpp
+	
+	src/loader/ExeReader.cpp
+	src/loader/SetupLoader.cpp
+	
+	src/setup/CustomMessageEntry.cpp
+	src/setup/DirectoryEntry.cpp
+	src/setup/FileEntry.cpp
+	src/setup/LanguageEntry.cpp
+	src/setup/PermissionEntry.cpp
+	src/setup/SetupComponentEntry.cpp
+	src/setup/SetupHeader.cpp
+	src/setup/SetupTaskEntry.cpp
+	src/setup/SetupTypeEntry.cpp
+	src/setup/Version.cpp
+	src/setup/WindowsVersion.cpp
+	
+	src/stream/BlockReader.cpp
+	src/stream/ChunkFilter.cpp
+	src/stream/Lzma1Filter.cpp
+	
+	src/util/LoadingUtils.cpp
+	src/util/Output.cpp
+	src/util/Utils.cpp
+	
 	src/InnoExtract.cpp
-	src/LanguageEntry.cpp
-	src/LoadingUtils.cpp
-	src/LzmaFilter.cpp
-	src/Output.cpp
-	src/PermissionEntry.cpp
-	src/SetupComponentEntry.cpp
-	src/SetupHeader.cpp
-	src/SetupLoader.cpp
-	src/SetupTaskEntry.cpp
-	src/SetupTypeEntry.cpp
-	src/Utils.cpp
-	src/Version.cpp
-	src/WindowsVersion.cpp
 )
+
+include_directories(src)
 
 add_executable(innoextract ${INNOEXTRACT_SOURCES})
 target_link_libraries(innoextract ${LIBRARIES})

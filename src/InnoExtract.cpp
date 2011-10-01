@@ -11,18 +11,24 @@
 
 #include <lzma.h>
 
-#include "SetupHeader.hpp"
-#include "SetupLoader.hpp"
-#include "Utils.hpp"
-#include "Output.hpp"
-#include "BlockReader.hpp"
-#include "LanguageEntry.hpp"
-#include "CustomMessageEntry.hpp"
-#include "LoadingUtils.hpp"
-#include "PermissionEntry.hpp"
-#include "SetupTypeEntry.hpp"
-#include "SetupComponentEntry.hpp"
-#include "SetupTaskEntry.hpp"
+#include "loader/SetupLoader.hpp"
+
+#include "setup/CustomMessageEntry.hpp"
+#include "setup/DirectoryEntry.hpp"
+#include "setup/FileEntry.hpp"
+#include "setup/LanguageEntry.hpp"
+#include "setup/PermissionEntry.hpp"
+#include "setup/SetupComponentEntry.hpp"
+#include "setup/SetupHeader.hpp"
+#include "setup/SetupTaskEntry.hpp"
+#include "setup/SetupTypeEntry.hpp"
+#include "setup/Version.hpp"
+
+#include "stream/BlockReader.hpp"
+
+#include "util/LoadingUtils.hpp"
+#include "util/Output.hpp"
+#include "util/Utils.hpp"
 
 using std::cout;
 using std::string;
@@ -167,7 +173,7 @@ int main(int argc, char * argv[]) {
 	cout << IfNotZero("Type entries", header.numTypeEntries);
 	cout << IfNotZero("Component entries", header.numComponentEntries);
 	cout << IfNotZero("Task entries", header.numTaskEntries);
-	cout << IfNotZero("Dir entries", header.numDirEntries);
+	cout << IfNotZero("Dir entries", header.numDirectoryEntries);
 	cout << IfNotZero("File entries", header.numFileEntries);
 	cout << IfNotZero("File location entries", header.numFileLocationEntries);
 	cout << IfNotZero("Icon entries", header.numIconEntries);
@@ -421,6 +427,80 @@ int main(int argc, char * argv[]) {
 		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
 		
 		cout << IfNotZero("  Options", entry.options);
+		
+	};
+	
+	if(header.numDirectoryEntries) {
+		cout << endl << "Directory entries:" << endl;
+	}
+	for(size_t i = 0; i < header.numDirectoryEntries; i++) {
+		
+		DirectoryEntry entry;
+		entry.load(is, version);
+		if(is.fail()) {
+			error << "error reading directory entry #" << i;
+		}
+		
+		cout << " - " << Quoted(entry.name) << ':' << endl;
+		cout << IfNotEmpty("  Components", entry.components);
+		cout << IfNotEmpty("  Tasks", entry.tasks);
+		cout << IfNotEmpty("  Languages", entry.languages);
+		cout << IfNotEmpty("  Check", entry.check);
+		if(!entry.permissions.empty()) {
+			cout << "  Permissions: " << entry.permissions.length() << " bytes";
+		}
+		cout << IfNotEmpty("  After install", entry.afterInstall);
+		cout << IfNotEmpty("  Before install", entry.beforeInstall);
+		
+		cout << IfNotZero("  Attributes", entry.attributes);
+		
+		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
+		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
+		
+		cout << IfNot("  Permission entry", entry.permission, -1);
+		
+		cout << IfNotZero("  Options", entry.options);
+		
+	};
+	
+	if(header.numFileEntries) {
+		cout << endl << "File entries:" << endl;
+	}
+	for(size_t i = 0; i < header.numFileEntries; i++) {
+		
+		FileEntry entry;
+		entry.load(is, version);
+		if(is.fail()) {
+			error << "error reading file entry #" << i;
+		}
+		
+		if(entry.destination.empty()) {
+			cout << " - File #" << i << ':' << endl;
+		} else {
+			cout << " - " << Quoted(entry.destination) << ':' << endl;
+		}
+		cout << IfNotEmpty("  Source", entry.source);
+		cout << IfNotEmpty("  Install font name", entry.installFontName);
+		cout << IfNotEmpty("  Strong assembly name", entry.strongAssemblyName);
+		cout << IfNotEmpty("  Components", entry.components);
+		cout << IfNotEmpty("  Tasks", entry.tasks);
+		cout << IfNotEmpty("  Languages", entry.languages);
+		cout << IfNotEmpty("  Check", entry.check);
+		cout << IfNotEmpty("  After install", entry.afterInstall);
+		cout << IfNotEmpty("  Before install", entry.beforeInstall);
+		
+		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
+		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
+		
+		cout << IfNot("  Location entry", entry.location, -1);
+		cout << IfNotZero("  Attributes", entry.attributes);
+		cout << IfNotZero("  Size", entry.externalSize);
+		
+		cout << IfNot("  Permission entry", entry.permission, -1);
+		
+		cout << IfNotZero("  Options", entry.options);
+		
+		cout << IfNot("  Type", entry.type, FileEntry::UserFile);
 		
 	};
 	
