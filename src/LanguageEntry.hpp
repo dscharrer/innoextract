@@ -7,6 +7,8 @@
 
 struct LanguageEntry {
 	
+	// introduced in version 4.0.0
+	
 	std::string name;
 	std::string languageName;
 	std::string dialogFontName;

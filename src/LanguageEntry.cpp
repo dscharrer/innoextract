@@ -10,8 +10,6 @@ void convert(iconv_t converter, const std::string & from, std::string & to);
 
 void LanguageEntry::load(std::istream & is, const InnoVersion & version) {
 	
-	// introduced in version 4.0.0
-	
 	is >> EncodedString(name, version.codepage());
 	
 	is >> EncodedString(languageName, (version >= INNO_VERSION(4, 2, 2)) ? 1200 : 1252);

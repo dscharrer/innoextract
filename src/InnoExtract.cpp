@@ -20,6 +20,7 @@
 #include "CustomMessageEntry.hpp"
 #include "LoadingUtils.hpp"
 #include "PermissionEntry.hpp"
+#include "SetupTypeEntry.hpp"
 
 using std::cout;
 using std::string;
@@ -304,6 +305,33 @@ int main(int argc, char * argv[]) {
 		}
 		
 		cout << " - " << entry.permissions.length() << " bytes";
+		
+	};
+	
+	if(header.numTypeEntries) {
+		cout << "Type entries:" << endl;
+	}
+	for(size_t i = 0; i < header.numTypeEntries; i++) {
+		
+		SetupTypeEntry entry;
+		entry.load(is, version);
+		if(is.fail()) {
+			error << "error reading type entry #" << i;
+		}
+		
+		cout << " - " << Quoted(entry.name) << ':' << endl;
+		cout << IfNotEmpty("  Description", entry.description);
+		cout << IfNotEmpty("  Languages", entry.langauges);
+		cout << IfNotEmpty("  Check", entry.check);
+		
+		cout << "  Min version: " << entry.minVersion << endl;
+		if(entry.onlyBelowVersion.winVersion || entry.onlyBelowVersion.ntVersion || entry.onlyBelowVersion.ntServicePack) {
+			cout << "  Only below version: " << entry.onlyBelowVersion << endl;
+		}
+		
+		cout << IfNotZero("  Options", entry.options);
+		cout << IfNot("  Type", entry.type, SetupTypeEntry::User);
+		cout << IfNotZero("  Size", entry.size);
 		
 	};
 	

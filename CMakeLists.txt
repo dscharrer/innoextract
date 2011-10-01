@@ -39,6 +39,7 @@ set(INNOEXTRACT_SOURCES
 	src/PermissionEntry.cpp
 	src/SetupHeader.cpp
 	src/SetupLoader.cpp
+	src/SetupTypeEntry.cpp
 	src/Utils.cpp
 	src/Version.cpp
 )
