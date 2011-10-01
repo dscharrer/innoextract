@@ -9,24 +9,6 @@
 #include "SetupHeaderFormat.hpp"
 #include "Utils.hpp"
 
-void SetupVersionData::load(std::istream & is, const InnoVersion & version) {
-	
-	if(version <= INNO_VERSION(1, 2, 16)) { // in 1.2.16, not in 1.3.25
-		winVersion = loadNumber<u16>(is);
-		ntVersion = loadNumber<u16>(is);
-		ntServicePack = 0;
-	} else {
-		winVersion = loadNumber<u32>(is);
-		ntVersion = loadNumber<u32>(is);
-		ntServicePack = loadNumber<u16>(is);
-	}
-	
-}
-
-std::ostream & operator<<(std::ostream & os, const SetupVersionData & svd) {
-	return os << " win " << svd.winVersion << "  nt " << svd.ntVersion << " service pack " << svd.ntServicePack;
-}
-
 void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	
 	options = 0;

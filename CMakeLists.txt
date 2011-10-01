@@ -40,9 +40,11 @@ set(INNOEXTRACT_SOURCES
 	src/SetupComponentEntry.cpp
 	src/SetupHeader.cpp
 	src/SetupLoader.cpp
+	src/SetupTaskEntry.cpp
 	src/SetupTypeEntry.cpp
 	src/Utils.cpp
 	src/Version.cpp
+	src/WindowsVersion.cpp
 )
 
 add_executable(innoextract ${INNOEXTRACT_SOURCES})

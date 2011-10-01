@@ -22,6 +22,7 @@
 #include "PermissionEntry.hpp"
 #include "SetupTypeEntry.hpp"
 #include "SetupComponentEntry.hpp"
+#include "SetupTaskEntry.hpp"
 
 using std::cout;
 using std::string;
@@ -66,6 +67,8 @@ int main(int argc, char * argv[]) {
 		// TODO try offset0 = 0
 		return 1;
 	}
+	
+	cout << std::boolalpha;
 	
 	cout << color::white;
 	cout << "loaded offsets:" << endl;
@@ -179,10 +182,8 @@ int main(int argc, char * argv[]) {
 	cout << IfNotZero("Info before size", header.infoBeforeSize);
 	cout << IfNotZero("Info after size", header.infoAfterSize);
 	
-	cout << "Min version: " << header.minVersion << endl;
-	if(header.onlyBelowVersion.winVersion || header.onlyBelowVersion.ntVersion || header.onlyBelowVersion.ntServicePack) {
-		cout << "Only below version: " << header.onlyBelowVersion << endl;
-	}
+	cout << IfNot("Min version", header.minVersion, WindowsVersion::none);
+	cout << IfNot("Only below version", header.onlyBelowVersion, WindowsVersion::none);
 	
 	cout << hex;
 	cout << IfNotZero("Back color", header.backColor);
@@ -357,10 +358,8 @@ int main(int argc, char * argv[]) {
 		cout << IfNotEmpty("  Languages", entry.languages);
 		cout << IfNotEmpty("  Check", entry.check);
 		
-		cout << "  Min version: " << entry.minVersion << endl;
-		if(entry.onlyBelowVersion.winVersion || entry.onlyBelowVersion.ntVersion || entry.onlyBelowVersion.ntServicePack) {
-			cout << "  Only below version: " << entry.onlyBelowVersion << endl;
-		}
+		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
+		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
 		
 		cout << IfNotZero("  Options", entry.options);
 		cout << IfNot("  Type", entry.type, SetupTypeEntry::User);
@@ -376,7 +375,7 @@ int main(int argc, char * argv[]) {
 		SetupComponentEntry entry;
 		entry.load(is, version);
 		if(is.fail()) {
-			error << "error reading type entry #" << i;
+			error << "error reading component entry #" << i;
 		}
 		
 		cout << " - " << Quoted(entry.name) << ':' << endl;
@@ -389,13 +388,39 @@ int main(int argc, char * argv[]) {
 		cout << IfNotZero("  Level", entry.level);
 		cout << IfNot("  Used", entry.used, true);
 		
-		cout << "  Min version: " << entry.minVersion << endl;
-		if(entry.onlyBelowVersion.winVersion || entry.onlyBelowVersion.ntVersion || entry.onlyBelowVersion.ntServicePack) {
-			cout << "  Only below version: " << entry.onlyBelowVersion << endl;
-		}
+		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
+		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
 		
 		cout << IfNotZero("  Options", entry.options);
 		cout << IfNotZero("  Size", entry.size);
+		
+	};
+	
+	if(header.numTaskEntries) {
+		cout << endl << "Task entries:" << endl;
+	}
+	for(size_t i = 0; i < header.numTaskEntries; i++) {
+		
+		SetupTaskEntry entry;
+		entry.load(is, version);
+		if(is.fail()) {
+			error << "error reading task entry #" << i;
+		}
+		
+		cout << " - " << Quoted(entry.name) << ':' << endl;
+		cout << IfNotEmpty("  Description", entry.description);
+		cout << IfNotEmpty("  Group description", entry.groupDescription);
+		cout << IfNotEmpty("  Components", entry.components);
+		cout << IfNotEmpty("  Languages", entry.languages);
+		cout << IfNotEmpty("  Check", entry.check);
+		
+		cout << IfNotZero("  Level", entry.level);
+		cout << IfNot("  Used", entry.used, true);
+		
+		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
+		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
+		
+		cout << IfNotZero("  Options", entry.options);
 		
 	};
 	

@@ -4,8 +4,9 @@
 
 #include <iostream>
 #include "Version.hpp"
-#include "SetupHeader.hpp"
+#include "WindowsVersion.hpp"
 #include "Flags.hpp"
+#include "Enum.hpp"
 
 FLAGS(SetupComponentOptions,
 	coFixed,
@@ -30,10 +31,10 @@ struct SetupComponentEntry {
 	u64 extraDiskSpaceRequired;
 	
 	int level;
-	
 	bool used;
 	
-	SetupVersionData minVersion, onlyBelowVersion;
+	WindowsVersion minVersion;
+	WindowsVersion onlyBelowVersion;
 	
 	SetupComponentOptions options;
 	

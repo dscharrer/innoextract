@@ -49,8 +49,12 @@ void SetupComponentEntry::load(std::istream & is, const InnoVersion & version) {
 		extraDiskSpaceRequired = loadNumber<u32>(is);
 	}
 	
-	level = loadNumber<s32>(is);
-	used = loadNumber<u8>(is);
+	if(version >= INNO_VERSION(3, 0, 8)) {
+		level = loadNumber<s32>(is);
+		used = loadNumber<u8>(is);
+	} else {
+		level = 0, used = true;
+	}
 	
 	minVersion.load(is, version);
 	onlyBelowVersion.load(is, version);

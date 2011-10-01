@@ -4,8 +4,9 @@
 
 #include <iostream>
 #include "Version.hpp"
-#include "SetupHeader.hpp"
+#include "WindowsVersion.hpp"
 #include "Flags.hpp"
+#include "Enum.hpp"
 
 FLAGS(SetupTypeOptions,
 	CustomSetupType,
@@ -29,8 +30,8 @@ struct SetupTypeEntry {
 	std::string languages;
 	std::string check;
 	
-	SetupVersionData minVersion;
-	SetupVersionData onlyBelowVersion;
+	WindowsVersion minVersion;
+	WindowsVersion onlyBelowVersion;
 	
 	SetupTypeOptions options;
 	

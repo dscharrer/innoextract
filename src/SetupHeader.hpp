@@ -10,17 +10,7 @@
 #include "Flags.hpp"
 #include "Enum.hpp"
 #include "Version.hpp"
-
-struct SetupVersionData {
-	
-	s32 winVersion, ntVersion; // Cardinal
-	s16 ntServicePack; // Word
-	
-	void load(std::istream & is, const InnoVersion & version);
-	
-};
-
-std::ostream & operator<<(std::ostream & os, const SetupVersionData & svd);
+#include "WindowsVersion.hpp"
 
 typedef char MD5Digest[16];
 typedef char SHA1Digest[20];
@@ -192,8 +182,8 @@ struct SetupHeader {
 	size_t infoBeforeSize;
 	size_t infoAfterSize;
 	
-	SetupVersionData minVersion;
-	SetupVersionData onlyBelowVersion;
+	WindowsVersion minVersion;
+	WindowsVersion onlyBelowVersion;
 	
 	Color backColor;
 	Color backColor2;
