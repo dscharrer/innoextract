@@ -19,7 +19,7 @@ struct LanguageEntry {
 	std::string infoAfterText;
 	
 	u32 languageId;
-	u32 languageCodePage;
+	u32 codepage;
 	size_t dialogFontSize;
 	size_t dialogFontStandardHeight;
 	size_t titleFontSize;

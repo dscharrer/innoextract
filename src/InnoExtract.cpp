@@ -17,6 +17,9 @@
 #include "Output.hpp"
 #include "BlockReader.hpp"
 #include "LanguageEntry.hpp"
+#include "CustomMessageEntry.hpp"
+#include "LoadingUtils.hpp"
+#include "PermissionEntry.hpp"
 
 using std::cout;
 using std::string;
@@ -221,9 +224,11 @@ int main(int argc, char * argv[]) {
 	if(header.numLanguageEntries) {
 		cout << "Language entries:" << endl;
 	}
+	std::vector<LanguageEntry> languages;
+	languages.resize(header.numLanguageEntries);
 	for(size_t i = 0; i < header.numLanguageEntries; i++) {
 		
-		LanguageEntry entry;
+		LanguageEntry & entry = languages[i];
 		entry.load(is, version);
 		if(is.fail()) {
 			error << "error reading language entry #" << i;
@@ -240,15 +245,65 @@ int main(int argc, char * argv[]) {
 		cout << IfNotEmpty("  Info before text", entry.infoBeforeText);
 		cout << IfNotEmpty("  Info after text", entry.infoAfterText);
 		
-		cout << "  Language id: " << hex << entry.languageId << dec << endl;
+		cout << "  Language id: " << color::cyan << hex << entry.languageId << dec << color::reset << endl;
 		
-		cout << IfNotZero("  Codepage", entry.languageCodePage);
+		cout << IfNotZero("  Codepage", entry.codepage);
 		cout << IfNotZero("  Dialog font size", entry.dialogFontSize);
 		cout << IfNotZero("  Dialog font standard height", entry.dialogFontStandardHeight);
 		cout << IfNotZero("  Title font size", entry.titleFontSize);
 		cout << IfNotZero("  Welcome font size", entry.welcomeFontSize);
 		cout << IfNotZero("  Copyright font size", entry.copyrightFontSize);
 		cout << IfNot("  Right to left", entry.rightToLeft, false);
+		
+	};
+	
+	if(header.numCustomMessageEntries) {
+		cout << "Custom message entries:" << endl;
+	}
+	for(size_t i = 0; i < header.numCustomMessageEntries; i++) {
+		
+		CustomMessageEntry entry;
+		entry.load(is, version);
+		if(is.fail()) {
+			error << "error reading custom message entry #" << i;
+		}
+		
+		if(entry.language >= 0 ? size_t(entry.language) >= languages.size() : entry.language != -1) {
+			warning << "unexpected language index: " << entry.language;
+		}
+		
+		int codepage;
+		if(entry.language == -1) {
+			codepage = version.codepage();
+		} else {
+			codepage = languages[entry.language].codepage;
+		}
+		
+		string decoded;
+		toUtf8(entry.value, decoded, codepage);
+		
+		cout << " - " << Quoted(entry.name);
+		if(entry.language == -1) {
+			cout << " (default) = ";
+		} else {
+			cout << " (" << color::cyan << languages[entry.language].name << color::reset << ") = ";
+		}
+		cout << Quoted(decoded) << endl;
+		
+	};
+	
+	if(header.numPermissionEntries) {
+		cout << "Permission entries:" << endl;
+	}
+	for(size_t i = 0; i < header.numPermissionEntries; i++) {
+		
+		PermissionEntry entry;
+		entry.load(is, version);
+		if(is.fail()) {
+			error << "error reading permission entry #" << i;
+		}
+		
+		cout << " - " << entry.permissions.length() << " bytes";
 		
 	};
 	

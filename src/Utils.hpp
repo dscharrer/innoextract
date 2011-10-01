@@ -32,7 +32,18 @@ struct Quoted {
 };
 inline std::ostream & operator<<(std::ostream & os, const Quoted & q) {
 	color::shell_command prev = color::current;
-	return os << '"' << color::green << q.str << prev << '"';
+	os << '"' << color::green;
+	for(std::string::const_iterator i = q.str.begin(); i != q.str.end(); ++i) {
+		unsigned char c = (unsigned char)*i;
+		if(c < ' ' && c != '\t' && c != '\r' && c != '\n') {
+			std::ios_base::fmtflags old = os.flags();
+			os << color::red << '<' << std::hex << std::setfill('0') << std::setw(2) << int(c) << '>' << color::green;
+			os.setf(old, std::ios_base::basefield);
+		} else {
+			os << *i;
+		}
+	}
+	return os << prev << '"';
 }
 
 struct IfNotEmpty {

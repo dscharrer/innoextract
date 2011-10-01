@@ -12,14 +12,14 @@ void LanguageEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	// introduced in version 4.0.0
 	
-	is >> WideString(name, version.unicode);
+	is >> EncodedString(name, version.codepage());
 	
-	is >> WideString(languageName, version >= INNO_VERSION(4, 2, 2));
+	is >> EncodedString(languageName, (version >= INNO_VERSION(4, 2, 2)) ? 1200 : 1252);
 	
-	is >> WideString(dialogFontName, version.unicode);
-	is >> WideString(titleFontName, version.unicode);
-	is >> WideString(welcomeFontName, version.unicode);
-	is >> WideString(copyrightFontName, version.unicode);
+	is >> EncodedString(dialogFontName, version.codepage());
+	is >> EncodedString(titleFontName, version.codepage());
+	is >> EncodedString(welcomeFontName, version.codepage());
+	is >> EncodedString(copyrightFontName, version.codepage());
 	
 	is >> BinaryString(data);
 	
@@ -34,9 +34,12 @@ void LanguageEntry::load(std::istream & is, const InnoVersion & version) {
 	languageId = loadNumber<u32>(is);
 	
 	if(version >= INNO_VERSION(4, 2, 2) && (version < INNO_VERSION(5, 3, 0) || !version.unicode)) {
-		languageCodePage = loadNumber<u32>(is);
+		codepage = loadNumber<u32>(is);
 	} else {
-		languageCodePage = 0;
+		codepage = 0;
+	}
+	if(!codepage) {
+		codepage = version.codepage();
 	}
 	
 	dialogFontSize = loadNumber<u32>(is);

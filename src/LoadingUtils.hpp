@@ -41,36 +41,29 @@ inline std::istream & operator>>(std::istream & is, const BinaryString & str) {
 	return is;
 }
 
-struct AnsiString {
+void toUtf8(const std::string & from, std::string & to, u32 codepage = 1252);
+
+struct EncodedString {
 	
 	std::string & data;
+	u32 codepage;
 	
-	inline AnsiString(std::string & target) : data(target) { }
+	inline EncodedString(std::string & target, u32 _codepage) : data(target), codepage(_codepage) { }
 	
-	static void loadInto(std::istream & is, std::string & target);
+	static void loadInto(std::istream & is, std::string & target, u32 codepage);
 	
 };
 
-inline std::istream & operator>>(std::istream & is, const AnsiString & str) {
-	AnsiString::loadInto(is, str.data);
+inline std::istream & operator>>(std::istream & is, const EncodedString & str) {
+	EncodedString::loadInto(is, str.data, str.codepage);
 	return is;
 }
 
-struct WideString {
+struct AnsiString : EncodedString {
 	
-	std::string & data;
-	bool wide;
-	
-	inline WideString(std::string & target, bool _wide /*= true*/) : data(target), wide(_wide) { }
-	
-	static void loadInto(std::istream & is, std::string & target);
+	inline AnsiString(std::string & target) : EncodedString(target, 1252) { }
 	
 };
-
-inline std::istream & operator>>(std::istream & is, const WideString & str) {
-	str.wide ? WideString::loadInto(is, str.data) : AnsiString::loadInto(is, str.data);
-	return is;
-}
 
 template <class T>
 inline T load(std::istream & is) {

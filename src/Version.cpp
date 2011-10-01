@@ -105,9 +105,9 @@ using std::endl;
 
 std::ostream & operator<<(std::ostream & os, const InnoVersion & v) {
 	
-	os << (v.version >> 24) << '.' << ((v.version >> 16) & 0xff) << '.' << ((v.version >> 8) & 0xff);
-	if(v.version & 0xff) {
-		os << '.' << (v.version & 0xff);
+	os << v.a() << '.' << v.b() << '.' << v.c();
+	if(v.d()) {
+		os << '.' << v.d();
 	}
 	
 	if(v.unicode) {
@@ -178,4 +178,19 @@ void InnoVersion::load(std::istream & is) {
 	
 	cout << "-> unknown version" << endl;
 	throw new string("bad version");
+}
+
+bool InnoVersion::isSuspicious() const {
+	
+	if(version == INNO_VERSION(3, 0, 3)) {
+		// might be either 3.0.3 or 3.0.4
+		return true;
+	}
+	
+	if(version == INNO_VERSION(4, 2, 3)) {
+		// might be either 4.2.3 or 4.2.4
+		return true;
+	}
+	
+	return false;
 }

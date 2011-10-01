@@ -35,83 +35,83 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		::load<u32>(is); // uncompressed size of the setup header structure
 	}
 	
-	is >> WideString(appName, version.unicode);
-	is >> WideString(appVerName, version.unicode);
+	is >> EncodedString(appName, version.codepage());
+	is >> EncodedString(appVerName, version.codepage());
 	if(version > INNO_VERSION(1, 2, 16)) { // not in 1.2.16, in 1.3.25
-		is >> WideString(appId, version.unicode);
+		is >> EncodedString(appId, version.codepage());
 	}
-	is >> WideString(appCopyright, version.unicode);
+	is >> EncodedString(appCopyright, version.codepage());
 	if(version > INNO_VERSION(1, 2, 16)) { // not in 1.2.16, in 1.3.25
-		is >> WideString(appPublisher, version.unicode);
-		is >> WideString(appPublisherURL, version.unicode);
+		is >> EncodedString(appPublisher, version.codepage());
+		is >> EncodedString(appPublisherURL, version.codepage());
 	} else {
 		appPublisher.clear(), appPublisherURL.clear();
 	}
 	if(version >= INNO_VERSION(5, 1, 13)) {
-		is >> WideString(appSupportPhone, version.unicode);
+		is >> EncodedString(appSupportPhone, version.codepage());
 	} else {
 		appSupportPhone.clear();
 	}
 	if(version > INNO_VERSION(1, 2, 16)) { // not in 1.2.16, in 1.3.25
-		is >> WideString(appSupportURL, version.unicode);
-		is >> WideString(appUpdatesURL, version.unicode);
-		is >> WideString(appVersion, version.unicode);
+		is >> EncodedString(appSupportURL, version.codepage());
+		is >> EncodedString(appUpdatesURL, version.codepage());
+		is >> EncodedString(appVersion, version.codepage());
 	} else {
 		appSupportURL.clear(), appUpdatesURL.clear(), appVersion.clear();
 	}
-	is >> WideString(defaultDirName, version.unicode);
-	is >> WideString(defaultGroupName, version.unicode);
+	is >> EncodedString(defaultDirName, version.codepage());
+	is >> EncodedString(defaultGroupName, version.codepage());
 	if(version < INNO_VERSION(3, 0, 0)) {
 		is >> AnsiString(uninstallIconName);
 	} else {
 		uninstallIconName.clear();
 	}
-	is >> WideString(baseFilename, version.unicode);
+	is >> EncodedString(baseFilename, version.codepage());
 	if(version > INNO_VERSION(1, 2, 16)) { // not in 1.2.16, in 1.3.25
 		if(version < INNO_VERSION(5, 2, 5)) {
 			is >> AnsiString(licenseText);
 			is >> AnsiString(infoBeforeText);
 			is >> AnsiString(infoAfterText);
 		}
-		is >> WideString(uninstallFilesDir, version.unicode);
-		is >> WideString(uninstallDisplayName, version.unicode);
-		is >> WideString(uninstallDisplayIcon, version.unicode);
-		is >> WideString(appMutex, version.unicode);
+		is >> EncodedString(uninstallFilesDir, version.codepage());
+		is >> EncodedString(uninstallDisplayName, version.codepage());
+		is >> EncodedString(uninstallDisplayIcon, version.codepage());
+		is >> EncodedString(appMutex, version.codepage());
 	} else {
 		licenseText.clear(), infoBeforeText.clear(), infoAfterText.clear();
 		uninstallFilesDir.clear(), uninstallDisplayName.clear();
 		uninstallDisplayIcon.clear(), appMutex.clear();
 	}
 	if(version >= INNO_VERSION(3, 0, 0)) {
-		is >> WideString(defaultUserInfoName, version.unicode);
-		is >> WideString(defaultUserInfoOrg, version.unicode);
+		is >> EncodedString(defaultUserInfoName, version.codepage());
+		is >> EncodedString(defaultUserInfoOrg, version.codepage());
 	} else {
 		defaultUserInfoName.clear(), defaultUserInfoOrg.clear();
 	}
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
-		is >> WideString(defaultUserInfoSerial, version.unicode);
+		is >> EncodedString(defaultUserInfoSerial, version.codepage());
 		if(version < INNO_VERSION(5, 2, 5)) {
 			is >> BinaryString(compiledCodeText);
 		}
 	} else {
 		defaultUserInfoSerial.clear(), compiledCodeText.clear();
 	}
-	if(version >= INNO_VERSION(4, 2, 4)) {
-		is >> WideString(appReadmeFile, version.unicode);
-		is >> WideString(appContact, version.unicode);
-		is >> WideString(appComments, version.unicode);
-		is >> WideString(appModifyPath, version.unicode);
+	if(version >= INNO_VERSION(4, 2, 4)) { // TODO 4.2.4 setup files incorrectly specify the version as 4.2.3
+		is >> EncodedString(appReadmeFile, version.codepage());
+		is >> EncodedString(appContact, version.codepage());
+		is >> EncodedString(appComments, version.codepage());
+		is >> EncodedString(appModifyPath, version.codepage());
 	} else {
 		appReadmeFile.clear(), appContact.clear();
 		appComments.clear(), appModifyPath.clear();
 	}
 	if(version >= INNO_VERSION(5, 3, 8)) {
-		is >> WideString(createUninstallRegKey, version.unicode);
+		is >> EncodedString(createUninstallRegKey, version.codepage());
 	} else {
 		createUninstallRegKey.clear();
 	}
 	if(version >= INNO_VERSION(5, 3, 10)) {
-		is >> WideString(uninstallable, version.unicode);
+		is >> EncodedString(uninstallable, version.codepage());
 	} else {
 		uninstallable.clear();
 	}
@@ -253,7 +253,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	
 	if(version >= INNO_VERSION(5, 3, 7)) {
 		privilegesRequired = StoredEnum<StoredPrivileges1>(is).get();
-	} else if(version >= INNO_VERSION(3, 0, 4)) {
+	} else if(version >= INNO_VERSION(3, 0, 4)) { // TODO 3.0.4 setup files incorrectly specify the version as 3.0.3
 		privilegesRequired = StoredEnum<StoredPrivileges0>(is).get();
 	}
 	
@@ -336,7 +336,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	flags.add(shDisableFinishedPage);
 	
 	if(version.bits != 16) {
-		if(version < INNO_VERSION(3, 0, 4)) {
+		if(version < INNO_VERSION(3, 0, 4)) { // TODO 3.0.4 setup files incorrectly specify the version as 3.0.3
 			flags.add(shAdminPrivilegesRequired);
 		}
 		if(version < INNO_VERSION(3, 0, 0)) {
@@ -446,7 +446,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	
 	options |= flags.get(is);
 	
-	if(version < INNO_VERSION(3, 0, 4)) {
+	if(version < INNO_VERSION(3, 0, 4)) { // TODO 3.0.4 setup files incorrectly specify the version as 3.0.3
 		privilegesRequired = (options & shAdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;
 	}
 	

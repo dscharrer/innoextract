@@ -29,12 +29,14 @@ list(APPEND CMAKE_CXX_FLAGS "-ggdb -O3 -march=native -Wl,--as-needed")
 set(INNOEXTRACT_SOURCES
 	src/BlockReader.cpp
 	src/ChunkFilter.cpp
+	src/CustomMessageEntry.cpp
 	src/ExeReader.cpp
 	src/InnoExtract.cpp
 	src/LanguageEntry.cpp
 	src/LoadingUtils.cpp
 	src/LzmaFilter.cpp
 	src/Output.cpp
+	src/PermissionEntry.cpp
 	src/SetupHeader.cpp
 	src/SetupLoader.cpp
 	src/Utils.cpp

@@ -2,12 +2,38 @@
 #include "LoadingUtils.hpp"
 
 #include <iterator>
+#include <map>
+#include <sstream>
 
 #include <iconv.h>
 #include <errno.h>
 
 #include "Output.hpp"
 #include "Utils.hpp"
+
+namespace {
+
+std::map<u32, iconv_t> converters;
+
+iconv_t getConverter(u32 codepage) {
+	
+	std::map<u32, iconv_t>::iterator i = converters.find(codepage);
+	
+	if(i != converters.end()) {
+		return i->second;
+	}
+	
+	std::ostringstream oss;
+	if(codepage == 1200) {
+		oss << "UTF-16";
+	} else {
+		oss << "CP" << codepage;
+	}
+	
+	return converters[codepage] = iconv_open("UTF-8", oss.str().c_str());
+}
+
+};
 
 void BinaryString::loadInto(std::istream & is, std::string & target) {
 	
@@ -20,7 +46,17 @@ void BinaryString::loadInto(std::istream & is, std::string & target) {
 	is.read(&target[0], length);
 }
 
-void convert(iconv_t converter, const std::string & from, std::string & to) {
+void EncodedString::loadInto(std::istream & is, std::string & target, u32 codepage) {
+	
+	std::string temp;
+	BinaryString::loadInto(is, temp);
+	
+	toUtf8(temp, target, codepage);
+}
+
+void toUtf8(const std::string & from, std::string & to, u32 codepage) {
+	
+	iconv_t converter = getConverter(codepage);
 	
 	const char * inbuf = from.data();
 	size_t insize = from.size();
@@ -43,7 +79,7 @@ void convert(iconv_t converter, const std::string & from, std::string & to) {
 		
 		size_t ret = iconv(converter, const_cast<char**>(&inbuf), &insize, &outbuf, &outsize);
 		if(ret == size_t(-1) && errno != E2BIG) {
-			error << "iconv error";
+			error << "iconv error while converting from CP" << codepage << ": " << errno;
 			to.clear();
 			return;
 		}
@@ -52,38 +88,4 @@ void convert(iconv_t converter, const std::string & from, std::string & to) {
 	}
 	
 	to.resize(outbase);
-	
-}
-
-void AnsiString::loadInto(std::istream & is, std::string & target) {
-	
-	std::string temp;
-	BinaryString::loadInto(is, temp);
-	
-	static iconv_t converter = NULL;
-	if(!converter) {
-		converter = iconv_open("UTF-8", "CP1252");
-		if(!converter) {
-			error << "missing CP1252 -> UTF-8 converter";
-		}
-	}
-	
-	convert(converter, temp, target);
-}
-
-void WideString::loadInto(std::istream & is, std::string & target) {
-	
-	std::string temp;
-	BinaryString::loadInto(is, temp);
-	
-	static iconv_t converter = NULL;
-	if(!converter) {
-		converter = iconv_open("UTF-8", "UTF-16");
-		if(!converter) {
-			error << "missing UTF-16 -> UTF-8 converter";
-		}
-	}
-	
-	convert(converter, temp, target);
-	
 }
