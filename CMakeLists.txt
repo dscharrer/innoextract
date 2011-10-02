@@ -34,9 +34,13 @@ set(INNOEXTRACT_SOURCES
 	src/setup/CustomMessageEntry.cpp
 	src/setup/DirectoryEntry.cpp
 	src/setup/FileEntry.cpp
+	src/setup/IconEntry.cpp
+	src/setup/IniEntry.cpp
 	src/setup/LanguageEntry.cpp
 	src/setup/PermissionEntry.cpp
+	src/setup/RegistryEntry.cpp
 	src/setup/SetupComponentEntry.cpp
+	src/setup/SetupCondition.cpp
 	src/setup/SetupHeader.cpp
 	src/setup/SetupTaskEntry.cpp
 	src/setup/SetupTypeEntry.cpp

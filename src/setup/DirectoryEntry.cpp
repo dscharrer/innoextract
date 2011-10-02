@@ -21,33 +21,17 @@ STORED_FLAGS_MAP(StoredInnoDirectoryOptions1,
 
 void DirectoryEntry::load(std::istream & is, const InnoVersion & version) {
 	
+	if(version <= INNO_VERSION(1, 2, 16)) {
+		::load<u32>(is); // uncompressed size of the directory entry structure
+	}
+	
 	is >> EncodedString(name, version.codepage());
-	if(version > INNO_VERSION(1, 3, 26)) {
-		is >> EncodedString(components, version.codepage());
-		is >> EncodedString(tasks, version.codepage());
-	} else {
-		components.clear(), tasks.clear();
-	}
-	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> EncodedString(languages, version.codepage());
-	} else {
-		languages.clear();
-	}
-	if(version >= INNO_VERSION(3, 0, 8)) {
-		is >> EncodedString(check, version.codepage());
-	} else {
-		check.clear();
-	}
+	condition.load(is, version);
+	tasks.load(is, version);
 	if(version >= INNO_VERSION(4, 0, 11) && version < INNO_VERSION(4, 1, 0)) {
 		is >> EncodedString(permissions, version.codepage());
 	} else {
 		permissions.clear();
-	}
-	if(version >= INNO_VERSION(4, 1, 0)) {
-		is >> EncodedString(afterInstall, version.codepage());
-		is >> EncodedString(beforeInstall, version.codepage());
-	} else {
-		afterInstall.clear(), beforeInstall.clear();
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 11)) {

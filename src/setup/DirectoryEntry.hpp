@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+#include "setup/SetupCondition.hpp"
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"
 #include "util/Enum.hpp"
@@ -23,13 +24,9 @@ NAMED_ENUM(InnoDirectoryOptions::Enum)
 struct DirectoryEntry {
 	
 	std::string name;
-	std::string components;
-	std::string tasks;
-	std::string languages;
-	std::string check;
+	SetupCondition condition;
+	SetupTasks tasks;
 	std::string permissions;
-	std::string afterInstall;
-	std::string beforeInstall;
 	
 	u32 attributes;
 	

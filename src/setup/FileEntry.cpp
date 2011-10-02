@@ -32,7 +32,7 @@ STORED_ENUM_MAP(StoredFileType1, FileEntry::UserFile,
 	FileEntry::RegSvrExe,
 );
 
-}
+} // anonymous namespace
 
 NAMED_ENUM(FileCopyMode)
 
@@ -47,6 +47,10 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	options = 0;
 	
+	if(version <= INNO_VERSION(1, 2, 16)) {
+		::load<u32>(is); // uncompressed size of the file entry structure
+	}
+	
 	is >> EncodedString(source, version.codepage());
 	is >> EncodedString(destination, version.codepage());
 	is >> EncodedString(installFontName, version.codepage());
@@ -55,34 +59,14 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	} else {
 		strongAssemblyName.clear();
 	}
-	if(version > INNO_VERSION(1, 3, 26)) {
-		is >> EncodedString(components, version.codepage());
-		is >> EncodedString(tasks, version.codepage());
-	} else {
-		components.clear(), tasks.clear();
-	}
-	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> EncodedString(languages, version.codepage());
-	} else {
-		languages.clear();
-	}
-	if(version >= INNO_VERSION(3, 0, 8)) {
-		is >> EncodedString(check, version.codepage());
-	} else {
-		check.clear();
-	}
-	if(version >= INNO_VERSION(4, 1, 0)) {
-		is >> EncodedString(afterInstall, version.codepage());
-		is >> EncodedString(beforeInstall, version.codepage());
-	} else {
-		afterInstall.clear(), beforeInstall.clear();
-	}
+	condition.load(is, version);
+	tasks.load(is, version);
 	
 	minVersion.load(is, version);
 	onlyBelowVersion.load(is, version);
 	
-	location = loadNumber<s32>(is);
-	attributes = loadNumber<u32>(is);
+	location = loadNumber<s32>(is, version.bits);
+	attributes = loadNumber<u32>(is, version.bits);
 	externalSize = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<u64>(is) : loadNumber<u32>(is);
 	
 	if(version < INNO_VERSION(3, 0, 5)) {
@@ -102,7 +86,7 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 		permission = -1;
 	}
 	
-	StoredFlagReader<FileOptions> flags;
+	StoredFlagReader<FileOptions> flags(is);
 	
 	flags.add(foConfirmOverwrite);
 	flags.add(foUninsNeverUninstall);
@@ -112,15 +96,15 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 		flags.add(foRegisterServer);
 		flags.add(foRegisterTypeLib);
 		flags.add(foSharedFile);
-		if(version < INNO_VERSION(1, 3, 26)) {
-			flags.add(foIsReadmeFile);
-		}
+	}
+	if(version < INNO_VERSION(1, 3, 26)) {
+		flags.add(foIsReadmeFile);
 	}
 	flags.add(foCompareTimeStamp);
 	flags.add(foFontIsntTrueType);
 	flags.add(foSkipIfSourceDoesntExist);
 	flags.add(foOverwriteReadOnly);
-	if(version > INNO_VERSION(1, 2, 26)) {
+	if(version > INNO_VERSION(1, 2, 16)) {
 		flags.add(foOverwriteSameVersion);
 		flags.add(foCustomDestName);
 		flags.add(foOnlyIfDestFileExists);
@@ -170,7 +154,7 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 		flags.add(foGacInstall);
 	}
 	
-	options = flags.get(is);
+	options = flags.get();
 	
 	if(version.bits == 16 || version >= INNO_VERSION(5, 0, 0)) {
 		type = StoredEnum<StoredFileType0>(is).get();

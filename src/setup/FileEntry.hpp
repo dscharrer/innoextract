@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+#include "setup/SetupCondition.hpp"
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"
 #include "util/Enum.hpp"
@@ -62,12 +63,8 @@ struct FileEntry {
 	std::string destination;
 	std::string installFontName;
 	std::string strongAssemblyName;
-	std::string components;
-	std::string tasks;
-	std::string languages;
-	std::string check;
-	std::string afterInstall;
-	std::string beforeInstall;
+	SetupCondition condition;
+	SetupTasks tasks;
 	
 	WindowsVersion minVersion;
 	WindowsVersion onlyBelowVersion;

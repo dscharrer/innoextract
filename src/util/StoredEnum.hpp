@@ -152,43 +152,45 @@ public:
 	typedef Enum enum_type;
 	typedef Flags<enum_type> flag_type;
 	
-	std::vector<enum_type> mappings;
+	std::istream & is;
+	
+	typedef u8 stored_type;
+	static const size_t stored_bits = sizeof(stored_type) * 8;
+	
+	size_t pos;
+	stored_type buffer;
+	
+	flag_type result;
+	
+	StoredFlagReader(std::istream & _is) : is(_is), pos(0), result(0) { };
 	
 	void add(enum_type flag) {
-		mappings.push_back(flag);
+		
+		if(pos == 0) {
+			buffer = loadNumber<stored_type>(is);
+		}
+		
+		if(buffer & (stored_type(1) << pos)) {
+			result |= flag;
+		}
+		
+		pos = (pos + 1) % stored_bits;
 	}
 	
-	
-	flag_type get(std::istream & is) {
-		
-		u64 bits = 0;
-		
-		typedef u8 stored_type;
-		static const size_t stored_bits = sizeof(stored_type) * 8;
-		for(size_t i = 0; i < ceildiv(mappings.size(), stored_bits); i++) {
-			bits |= u64(load<stored_type>(is)) << (i * stored_bits);
-		}
-		
-		flag_type result = 0;
-		
-		for(size_t i = 0; i < mappings.size(); i++) {
-			if(bits & (u64(1) << i)) {
-				result |= mappings[i];
-				bits &= ~(u64(1) << i);
-			}
-		}
-		
-		if(bits) {
-			warning << "unexpected " << EnumNames<enum_type>::name << " flags: " << std::hex << bits << std::dec;
-		}
-		
+	flag_type get() {
 		return result;
 	}
 	
 };
 
 template <class Enum>
-class StoredFlagReader<Flags<Enum> > : public StoredFlagReader<Enum> { };
+class StoredFlagReader<Flags<Enum> > : public StoredFlagReader<Enum> {
+	
+public:
+	
+	StoredFlagReader(std::istream & is) : StoredFlagReader<Enum>(is) { };
+	
+};
 
 typedef StoredBitfield<256> CharSet;
 

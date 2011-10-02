@@ -16,8 +16,11 @@
 #include "setup/CustomMessageEntry.hpp"
 #include "setup/DirectoryEntry.hpp"
 #include "setup/FileEntry.hpp"
+#include "setup/IconEntry.hpp"
+#include "setup/IniEntry.hpp"
 #include "setup/LanguageEntry.hpp"
 #include "setup/PermissionEntry.hpp"
+#include "setup/RegistryEntry.hpp"
 #include "setup/SetupComponentEntry.hpp"
 #include "setup/SetupHeader.hpp"
 #include "setup/SetupTaskEntry.hpp"
@@ -38,14 +41,17 @@ using std::setfill;
 using std::hex;
 using std::dec;
 
-#pragma pack(push,1)
+std::ostream & operator<<(std::ostream & os, const SetupCondition & condition) {
+	os << IfNotEmpty("  Componenets", condition.components);
+	os << IfNotEmpty("  Tasks", condition.tasks);
+	os << IfNotEmpty("  Languages", condition.languages);
+	os << IfNotEmpty("  Check", condition.check);
+}
 
-struct BlockHeader {
-	u32 storedSize; // Total bytes written, including the CRCs
-	u8 compressed; // True if data is compressed, False if not
-};
-
-#pragma pack(pop)
+std::ostream & operator<<(std::ostream & os, const SetupTasks & tasks) {
+	os << IfNotEmpty("  After install", tasks.afterInstall);
+	os << IfNotEmpty("  Before install", tasks.beforeInstall);
+}
 
 int main(int argc, char * argv[]) {
 	
@@ -184,10 +190,6 @@ int main(int argc, char * argv[]) {
 	cout << IfNotZero("Run entries", header.numRunEntries);
 	cout << IfNotZero("Uninstall run entries", header.numUninstallRunEntries);
 	
-	cout << IfNotZero("License size", header.licenseSize);
-	cout << IfNotZero("Info before size", header.infoBeforeSize);
-	cout << IfNotZero("Info after size", header.infoAfterSize);
-	
 	cout << IfNot("Min version", header.minVersion, WindowsVersion::none);
 	cout << IfNot("Only below version", header.onlyBelowVersion, WindowsVersion::none);
 	
@@ -277,7 +279,6 @@ int main(int argc, char * argv[]) {
 		cout << "Wizard image: " << wizardImage.length() << " bytes" << endl;
 		
 		if(version > INNO_VERSION(1, 3, 26)) {
-			// TODO header.wizardSmallImageBackColor is missing after 5.0.4
 			std::string wizardSmallImage;
 			is >> BinaryString(wizardSmallImage);
 			cout << "Wizard small image: " << wizardSmallImage.length() << " bytes" << endl;
@@ -331,7 +332,7 @@ int main(int argc, char * argv[]) {
 		}
 		cout << Quoted(decoded) << endl;
 		
-	};
+	}
 	
 	if(header.numPermissionEntries) {
 		cout << endl << "Permission entries:" << endl;
@@ -346,7 +347,7 @@ int main(int argc, char * argv[]) {
 		
 		cout << " - " << entry.permissions.length() << " bytes";
 		
-	};
+	}
 	
 	if(header.numTypeEntries) {
 		cout << endl << "Type entries:" << endl;
@@ -371,7 +372,7 @@ int main(int argc, char * argv[]) {
 		cout << IfNot("  Type", entry.type, SetupTypeEntry::User);
 		cout << IfNotZero("  Size", entry.size);
 		
-	};
+	}
 	
 	if(header.numComponentEntries) {
 		cout << endl << "Component entries:" << endl;
@@ -400,7 +401,7 @@ int main(int argc, char * argv[]) {
 		cout << IfNotZero("  Options", entry.options);
 		cout << IfNotZero("  Size", entry.size);
 		
-	};
+	}
 	
 	if(header.numTaskEntries) {
 		cout << endl << "Task entries:" << endl;
@@ -428,7 +429,7 @@ int main(int argc, char * argv[]) {
 		
 		cout << IfNotZero("  Options", entry.options);
 		
-	};
+	}
 	
 	if(header.numDirectoryEntries) {
 		cout << endl << "Directory entries:" << endl;
@@ -442,15 +443,11 @@ int main(int argc, char * argv[]) {
 		}
 		
 		cout << " - " << Quoted(entry.name) << ':' << endl;
-		cout << IfNotEmpty("  Components", entry.components);
-		cout << IfNotEmpty("  Tasks", entry.tasks);
-		cout << IfNotEmpty("  Languages", entry.languages);
-		cout << IfNotEmpty("  Check", entry.check);
+		cout << entry.condition;
+		cout << entry.tasks;
 		if(!entry.permissions.empty()) {
 			cout << "  Permissions: " << entry.permissions.length() << " bytes";
 		}
-		cout << IfNotEmpty("  After install", entry.afterInstall);
-		cout << IfNotEmpty("  Before install", entry.beforeInstall);
 		
 		cout << IfNotZero("  Attributes", entry.attributes);
 		
@@ -461,7 +458,7 @@ int main(int argc, char * argv[]) {
 		
 		cout << IfNotZero("  Options", entry.options);
 		
-	};
+	}
 	
 	if(header.numFileEntries) {
 		cout << endl << "File entries:" << endl;
@@ -482,12 +479,8 @@ int main(int argc, char * argv[]) {
 		cout << IfNotEmpty("  Source", entry.source);
 		cout << IfNotEmpty("  Install font name", entry.installFontName);
 		cout << IfNotEmpty("  Strong assembly name", entry.strongAssemblyName);
-		cout << IfNotEmpty("  Components", entry.components);
-		cout << IfNotEmpty("  Tasks", entry.tasks);
-		cout << IfNotEmpty("  Languages", entry.languages);
-		cout << IfNotEmpty("  Check", entry.check);
-		cout << IfNotEmpty("  After install", entry.afterInstall);
-		cout << IfNotEmpty("  Before install", entry.beforeInstall);
+		cout << entry.condition;
+		cout << entry.tasks;
 		
 		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
 		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
@@ -502,7 +495,113 @@ int main(int argc, char * argv[]) {
 		
 		cout << IfNot("  Type", entry.type, FileEntry::UserFile);
 		
-	};
+	}
+	
+	if(header.numIconEntries) {
+		cout << endl << "Icon entries:" << endl;
+	}
+	for(size_t i = 0; i < header.numIconEntries; i++) {
+		
+		IconEntry entry;
+		entry.load(is, version);
+		if(is.fail()) {
+			error << "error reading icon entry #" << i;
+		}
+		
+		cout << " - " << Quoted(entry.name) << ':' << endl;
+		cout << IfNotEmpty("  Filename", entry.filename);
+		cout << IfNotEmpty("  Parameters", entry.parameters);
+		cout << IfNotEmpty("  Working directory", entry.workingDir);
+		cout << IfNotEmpty("  Icon file", entry.iconFilename);
+		cout << IfNotEmpty("  Comment", entry.comment);
+		cout << entry.condition;
+		cout << entry.tasks;
+		cout << IfNotEmpty("  App user model id", entry.appUserModelId);
+		
+		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
+		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
+		
+		cout << IfNotZero("  Icon index", entry.iconIndex);
+		cout << IfNot("  Show command", entry.showCmd, 1);
+		cout << IfNot("  Close on exit", entry.closeOnExit, IconEntry::NoSetting);
+		
+		cout << IfNotZero("  Hotkey", entry.hotkey);
+		
+		cout << IfNotZero("  Options", entry.options);
+		
+	}
+	
+	if(header.numIniEntries) {
+		cout << endl << "Ini entries:" << endl;
+	}
+	for(size_t i = 0; i < header.numIniEntries; i++) {
+		
+		IniEntry entry;
+		entry.load(is, version);
+		if(is.fail()) {
+			error << "error reading ini entry #" << i;
+		}
+		
+		cout << " - in " << Quoted(entry.inifile);
+		cout << " set [" << Quoted(entry.section) << "] ";
+		cout << Quoted(entry.key) << " = " << Quoted(entry.value) << std::endl;
+		
+		cout << entry.condition;
+		cout << entry.tasks;
+		
+		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
+		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
+		
+		cout << IfNotZero("  Options", entry.options);
+		
+	}
+	
+	if(header.numRegistryEntries) {
+		cout << endl << "Registry entries:" << endl;
+	}
+	for(size_t i = 0; i < header.numRegistryEntries; i++) {
+		
+		RegistryEntry entry;
+		entry.load(is, version);
+		if(is.fail()) {
+			error << "error reading registry entry #" << i;
+		}
+		
+		cout << " - ";
+		if(entry.hive != RegistryEntry::Unset) {
+			cout << entry.hive << '\\';
+		}
+		cout << Quoted(entry.key);
+		cout << endl << "  ";
+		if(entry.name.empty()) {
+			cout << "(default)";
+		} else {
+			cout << Quoted(entry.name);
+		}
+		if(!entry.value.empty()) {
+			cout << " = " << Quoted(entry.value);
+		}
+		if(entry.type != RegistryEntry::None) {
+			cout << " (" << color::cyan << entry.type << color::reset << ')';
+		}
+		cout << endl;
+		
+		cout << entry.condition;
+		cout << entry.tasks;
+		if(!entry.permissions.empty()) {
+			cout << "  Permissions: " << entry.permissions.length() << " bytes";
+		}
+		
+		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
+		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
+		
+		cout << IfNot("  Permission entry", entry.permission, -1);
+		
+		cout << IfNotZero("  Options", entry.options);
+		
+	}
+	
+	delete _is;
 	
 	return 0;
 }

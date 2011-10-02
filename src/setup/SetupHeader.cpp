@@ -155,12 +155,13 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	numRunEntries = loadNumber<u32>(is, version.bits);
 	numUninstallRunEntries = loadNumber<u32>(is, version.bits);
 	
+	size_t licenseSize;
+	size_t infoBeforeSize;
+	size_t infoAfterSize;
 	if(version <= INNO_VERSION(1, 2, 16)) { // in 1.2.16, not in 1.3.25
 		licenseSize = loadNumber<u32>(is, version.bits);
 		infoBeforeSize = loadNumber<u32>(is, version.bits);
 		infoAfterSize = loadNumber<u32>(is, version.bits);
-	} else {
-		licenseSize = infoBeforeSize = infoAfterSize = 0;
 	}
 	
 	minVersion.load(is, version);
@@ -282,7 +283,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	
-	StoredFlagReader<SetupHeaderOptions> flags;
+	StoredFlagReader<SetupHeaderOptions> flags(is);
 	
 	flags.add(shDisableStartupPrompt);
 	if(version < INNO_VERSION(5, 3, 10)) {
@@ -427,7 +428,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		flags.add(shDisableWelcomePage);
 	}
 	
-	options |= flags.get(is);
+	options |= flags.get();
 	
 	if(version < INNO_VERSION(3, 0, 4)) { // TODO 3.0.4 setup files incorrectly specify the version as 3.0.3
 		privilegesRequired = (options & shAdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;
@@ -445,6 +446,27 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	if(version < INNO_VERSION(5, 3, 3)) {
 		disableDirPage = (options & shDisableDirPage) ? Yes : No;
 		disableProgramGroupPage = (options & shDisableProgramGroupPage) ? Yes : No;
+	}
+	
+	if(version <= INNO_VERSION(1, 2, 16)) { // in 1.2.16, not in 1.3.25
+		if(licenseSize) {
+			std::string temp;
+			temp.resize(licenseSize);
+			is.read(&temp[0], licenseSize);
+			toUtf8(temp, licenseText);
+		}
+		if(infoBeforeSize) {
+			std::string temp;
+			temp.resize(infoBeforeSize);
+			is.read(&temp[0], infoBeforeSize);
+			toUtf8(temp, infoBeforeText);
+		}
+		if(infoAfterSize) {
+			std::string temp;
+			temp.resize(infoAfterSize);
+			is.read(&temp[0], infoAfterSize);
+			toUtf8(temp, infoAfterText);
+		}
 	}
 	
 }

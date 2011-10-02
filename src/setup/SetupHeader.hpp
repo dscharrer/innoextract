@@ -147,10 +147,6 @@ struct SetupHeader {
 	size_t numRunEntries;
 	size_t numUninstallRunEntries;
 	
-	size_t licenseSize;
-	size_t infoBeforeSize;
-	size_t infoAfterSize;
-	
 	WindowsVersion minVersion;
 	WindowsVersion onlyBelowVersion;
 	
