@@ -4,22 +4,6 @@
 #include "util/LoadingUtils.hpp"
 #include "util/StoredEnum.hpp"
 
-STORED_FLAGS_MAP(StoredSetupTaskOptions0,
-	toExclusive,
-	toUnchecked,
-	toRestart,
-	toCheckedOnce,
-);
-
-// starting with version 4.2.3
-STORED_FLAGS_MAP(StoredSetupTaskOptions1,
-	toExclusive,
-	toUnchecked,
-	toRestart,
-	toCheckedOnce,
-	toDontInheritCheck,
-);
-
 void SetupTaskEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	is >> EncodedString(name, version.codepage());
@@ -42,14 +26,24 @@ void SetupTaskEntry::load(std::istream & is, const InnoVersion & version) {
 	minVersion.load(is, version);
 	onlyBelowVersion.load(is, version);
 	
-	if(version >= INNO_VERSION(4, 2, 3)) {
-		options = StoredFlags<StoredSetupTaskOptions1>(is).get();
-	} else {
-		options = StoredFlags<StoredSetupTaskOptions0>(is).get();
+	StoredFlagReader<Options> flags(is);
+	
+	flags.add(Exclusive);
+	flags.add(Unchecked);
+	if(version >= INNO_VERSION(2, 0, 5)) {
+		flags.add(Restart);
 	}
+	if(version >= INNO_VERSION(2, 0, 6)) {
+		flags.add(CheckedOnce);
+	}
+	if(version >= INNO_VERSION(4, 2, 3)) {
+		flags.add(DontInheritCheck);
+	}
+	
+	options = flags.get();
 }
 
-ENUM_NAMES(SetupTaskOptions::Enum, "Setup Task Option",
+ENUM_NAMES(SetupTaskEntry::Options, "Setup Task Option",
 	"exclusive",
 	"unchecked",
 	"restart",

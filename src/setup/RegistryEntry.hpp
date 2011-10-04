@@ -4,31 +4,29 @@
 
 #include <iostream>
 
-#include "setup/SetupCondition.hpp"
+#include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
 #include "util/Types.hpp"
 
-FLAGS(RegistryOptions,
-	roCreateValueIfDoesntExist,
-	roUninsDeleteValue,
-	roUninsClearValue,
-	roUninsDeleteEntireKey,
-	roUninsDeleteEntireKeyIfEmpty,
-	roPreserveStringType,
-	roDeleteKey,
-	roDeleteValue,
-	roNoError,
-	roDontCreateKey,
-	ro32Bit,
-	ro64Bit,
-)
-
-NAMED_ENUM(RegistryOptions::Enum)
-
-struct RegistryEntry {
+struct RegistryEntry : public SetupItem {
+	
+	FLAGS(Options,
+		CreateValueIfDoesntExist,
+		UninsDeleteValue,
+		UninsClearValue,
+		UninsDeleteEntireKey,
+		UninsDeleteEntireKeyIfEmpty,
+		PreserveStringType,
+		DeleteKey,
+		DeleteValue,
+		NoError,
+		DontCreateKey,
+		Bits32,
+		Bits64
+	);
 	
 	enum Hive {
 		HKCR,
@@ -55,13 +53,7 @@ struct RegistryEntry {
 	std::string name; // empty string means (Default) key
 	std::string value;
 	
-	SetupCondition condition;
-	SetupTasks tasks;
-	
 	std::string permissions;
-	
-	WindowsVersion minVersion;
-	WindowsVersion onlyBelowVersion;
 	
 	Hive hive;
 	
@@ -69,11 +61,14 @@ struct RegistryEntry {
 	
 	Type type;
 	
-	RegistryOptions options;
+	Options options;
 	
 	void load(std::istream & is, const InnoVersion & version);
 	
 };
+
+FLAGS_OVERLOADS(RegistryEntry::Options)
+NAMED_ENUM(RegistryEntry::Options)
 
 NAMED_ENUM(RegistryEntry::Hive)
 

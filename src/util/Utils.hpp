@@ -98,4 +98,78 @@ inline A ceildiv(A num, B denom) {
 	return A((num + (denom - 1)) / denom);
 }
 
+template <class T>
+struct _PrintHex {
+	
+	T value;
+	
+	_PrintHex(T data) : value(data) { }
+	
+	bool operator==(const _PrintHex & o) const { return value == o.value; }
+	bool operator!=(const _PrintHex & o) const { return value != o.value; }
+	
+};
+template <class T>
+inline std::ostream & operator<<(std::ostream & os, const _PrintHex<T> & s) {
+	
+	std::ios_base::fmtflags old = os.flags();
+	
+	os << "0x" << std::hex << s.value;
+	
+	os.setf(old, std::ios_base::basefield);
+	return os;
+}
+template <class T>
+_PrintHex<T> PrintHex(T value) {
+	return _PrintHex<T>(value);
+}
+
+const char * const byteSizeUnits[5] = {
+	"B",
+	"KiB",
+	"MiB",
+	"GiB",
+	"TiB"
+};
+
+template <class T>
+struct _PrintBytes {
+	
+	T value;
+	
+	_PrintBytes(T data) : value(data) { }
+	
+	bool operator==(const _PrintBytes & o) const { return value == o.value; }
+	bool operator!=(const _PrintBytes & o) const { return value != o.value; }
+	
+};
+template <class T>
+inline std::ostream & operator<<(std::ostream & os, const _PrintBytes<T> & s) {
+	
+	int precision = os.precision();
+	
+	size_t frac = 0;
+	size_t whole = s.value;
+	
+	size_t i = 0;
+	
+	while((whole & ~0x3ff) && i < ARRAY_SIZE(byteSizeUnits) - 1) {
+		
+		frac = (whole & 0x3ff), whole >>= 10;
+		
+		i++;
+	}
+	
+	float num = whole + (frac / 1024.f);
+	
+	os << std::setprecision(3) << num << ' ' << byteSizeUnits[i];
+	
+	os.precision(precision);
+	return os;
+}
+template <class T>
+_PrintBytes<T> PrintBytes(T value) {
+	return _PrintBytes<T>(value);
+}
+
 #endif // INNOEXTRACT_UTIL_UTILS_HPP

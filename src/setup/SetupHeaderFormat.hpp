@@ -56,10 +56,10 @@ STORED_ENUM_MAP(StoredLanguageDetectionMethod, SetupHeader::UILanguage,
 );
 
 STORED_FLAGS_MAP(StoredArchitectures,
-	ArchitectureUnknown,
-	ArchitectureX86,
-	ArchitectureAmd64,
-	ArchitectureIA64
+	SetupHeader::ArchitectureUnknown,
+	SetupHeader::X86,
+	SetupHeader::Amd64,
+	SetupHeader::IA64
 );
 
 STORED_ENUM_MAP(StoredRestartComputer, SetupHeader::Auto,

@@ -9,91 +9,86 @@
 
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"
+#include "util/Checksum.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
 #include "util/Types.hpp"
 
-typedef char MD5Digest[16];
-typedef char SHA1Digest[20];
 typedef char SetupSalt[8];
-
-FLAGS(SetupHeaderOptions,
-			
-	shDisableStartupPrompt,
-	shCreateAppDir,
-	shAllowNoIcons,
-	shAlwaysRestart,
-	shAlwaysUsePersonalGroup,
-	shWindowVisible,
-	shWindowShowCaption,
-	shWindowResizable,
-	shWindowStartMaximized,
-	shEnableDirDoesntExistWarning,
-	shPassword,
-	shAllowRootDirectory,
-	shDisableFinishedPage,
-	shChangesAssociations,
-	shUsePreviousAppDir,
-	shBackColorHorizontal,
-	shUsePreviousGroup,
-	shUpdateUninstallLogAppName,
-	shUsePreviousSetupType,
-	shDisableReadyMemo,
-	shAlwaysShowComponentsList,
-	shFlatComponentsList,
-	shShowComponentSizes,
-	shUsePreviousTasks,
-	shDisableReadyPage,
-	shAlwaysShowDirOnReadyPage,
-	shAlwaysShowGroupOnReadyPage,
-	shAllowUNCPath,
-	shUserInfoPage,
-	shUsePreviousUserInfo,
-	shUninstallRestartComputer,
-	shRestartIfNeededByRun,
-	shShowTasksTreeLines,
-	shAllowCancelDuringInstall,
-	shWizardImageStretch,
-	shAppendDefaultDirName,
-	shAppendDefaultGroupName,
-	shEncryptionUsed,
-	shChangesEnvironment,
-	shShowUndisplayableLanguages,
-	shSetupLogging,
-	shSignedUninstaller,
-	shUsePreviousLanguage,
-	shDisableWelcomePage,
-	
-	// Obsolete flags
-	shUninstallable,
-	shDisableDirPage,
-	shDisableProgramGroupPage,
-	shDisableAppendDir,
-	shAdminPrivilegesRequired,
-	shAlwaysCreateUninstallIcon,
-	shCreateUninstallRegKey,
-	shBzipUsed,
-	shShowLanguageDialog,
-	shDetectLanguageUsingLocale,
-	shDisableDirExistsWarning,
-	shBackSolid,
-	shOverwriteUninstRegEntries,
-)
-
-NAMED_ENUM(SetupHeaderOptions::Enum)
-
-FLAGS(Architectures,
-	ArchitectureUnknown,
-	ArchitectureX86,
-	ArchitectureAmd64,
-	ArchitectureIA64,
-)
-
-NAMED_ENUM(Architectures::Enum)
 
 struct SetupHeader {
 	
 	// Setup data header.
+	
+	FLAGS(Options,
+		
+		DisableStartupPrompt,
+		CreateAppDir,
+		AllowNoIcons,
+		AlwaysRestart,
+		AlwaysUsePersonalGroup,
+		WindowVisible,
+		WindowShowCaption,
+		WindowResizable,
+		WindowStartMaximized,
+		EnableDirDoesntExistWarning,
+		Password,
+		AllowRootDirectory,
+		DisableFinishedPage,
+		ChangesAssociations,
+		UsePreviousAppDir,
+		BackColorHorizontal,
+		UsePreviousGroup,
+		UpdateUninstallLogAppName,
+		UsePreviousSetupType,
+		DisableReadyMemo,
+		AlwaysShowComponentsList,
+		FlatComponentsList,
+		ShowComponentSizes,
+		UsePreviousTasks,
+		DisableReadyPage,
+		AlwaysShowDirOnReadyPage,
+		AlwaysShowGroupOnReadyPage,
+		AllowUNCPath,
+		UserInfoPage,
+		UsePreviousUserInfo,
+		UninstallRestartComputer,
+		RestartIfNeededByRun,
+		ShowTasksTreeLines,
+		AllowCancelDuringInstall,
+		WizardImageStretch,
+		AppendDefaultDirName,
+		AppendDefaultGroupName,
+		EncryptionUsed,
+		ChangesEnvironment,
+		ShowUndisplayableLanguages,
+		SetupLogging,
+		SignedUninstaller,
+		UsePreviousLanguage,
+		DisableWelcomePage,
+		
+		// Obsolete flags
+		Uninstallable,
+		DisableDirPage,
+		DisableProgramGroupPage,
+		DisableAppendDir,
+		AdminPrivilegesRequired,
+		AlwaysCreateUninstallIcon,
+		CreateUninstallRegKey,
+		BzipUsed,
+		ShowLanguageDialog,
+		DetectLanguageUsingLocale,
+		DisableDirExistsWarning,
+		BackSolid,
+		OverwriteUninstRegEntries
+	);
+	
+	FLAGS(Architectures,
+		ArchitectureUnknown,
+		X86,
+		Amd64,
+		IA64
+	);
 	
 	std::string appName;
 	std::string appVerName;
@@ -142,7 +137,7 @@ struct SetupHeader {
 	size_t numIconEntries;
 	size_t numIniEntries;
 	size_t numRegistryEntries;
-	size_t numInstallDeleteEntries;
+	size_t numDeleteEntries;
 	size_t numUninstallDeleteEntries;
 	size_t numRunEntries;
 	size_t numUninstallRunEntries;
@@ -155,17 +150,7 @@ struct SetupHeader {
 	Color wizardImageBackColor;
 	Color wizardSmallImageBackColor;
 	
-	enum PasswordType {
-		PlainPassword,
-		Md5Password,
-		Sha1Password
-	};
-	union {
-		s32 password; // probably CRC32
-		MD5Digest passwordMd5;
-		SHA1Digest passwordSha1;
-	};
-	PasswordType passwordType;
+	Checksum password;
 	SetupSalt passwordSalt; 
 	
 	s64 extraDiskSpaceRequired;
@@ -237,13 +222,17 @@ struct SetupHeader {
 	
 	size_t uninstallDisplaySize;
 	
-	SetupHeaderOptions options;
+	Options options;
 	
 	void load(std::istream & is, const InnoVersion & version);
 	
 };
 
-NAMED_ENUM(SetupHeader::PasswordType)
+FLAGS_OVERLOADS(SetupHeader::Options)
+NAMED_ENUM(SetupHeader::Options)
+
+FLAGS_OVERLOADS(SetupHeader::Architectures)
+NAMED_ENUM(SetupHeader::Architectures)
 
 NAMED_ENUM(SetupHeader::InstallMode)
 

@@ -4,15 +4,19 @@
 #include "util/LoadingUtils.hpp"
 #include "util/StoredEnum.hpp"
 
+namespace {
+
 STORED_ENUM_MAP(StoredCloseOnExit, IconEntry::NoSetting,
 	IconEntry::NoSetting,
 	IconEntry::Yes,
 	IconEntry::No,
 );
 
+} // anonymous namespace
+
 void IconEntry::load(std::istream & is, const InnoVersion & version) {
 	
-	if(version <= INNO_VERSION(1, 2, 16)) {
+	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<u32>(is); // uncompressed size of the icon entry structure
 	}
 	
@@ -22,51 +26,53 @@ void IconEntry::load(std::istream & is, const InnoVersion & version) {
 	is >> EncodedString(workingDir, version.codepage());
 	is >> EncodedString(iconFilename, version.codepage());
 	is >> EncodedString(comment, version.codepage());
-	condition.load(is, version);
-	tasks.load(is, version);
+	
+	loadConditionData(is, version);
+	
 	if(version >= INNO_VERSION(5, 3, 5)) {
 		is >> EncodedString(appUserModelId, version.codepage());
 	} else {
 		appUserModelId.clear();
 	}
 	
-	minVersion.load(is, version);
-	onlyBelowVersion.load(is, version);
+	loadVersionData(is, version);
 	
 	iconIndex = loadNumber<s32>(is, version.bits);
 	
-	if(version > INNO_VERSION(1, 2, 16)) {
+	if(version >= INNO_VERSION(1, 3, 21)) {
 		showCmd = loadNumber<s32>(is);
 		closeOnExit = StoredEnum<StoredCloseOnExit>(is).get();
 	} else {
-		showCmd = 0, closeOnExit = NoSetting;
+		showCmd = 1, closeOnExit = NoSetting;
 	}
 	
-	if(version > INNO_VERSION(1, 3, 26)) {
+	if(version >= INNO_VERSION(2, 0, 7)) {
 		hotkey = loadNumber<u16>(is);
+	} else {
+		hotkey = 0;
 	}
 	
-	StoredFlagReader<IconFlags> flags(is);
+	StoredFlagReader<Options> flags(is);
 	
-	flags.add(ioUninsNeverUninstall);
-	if(version > INNO_VERSION(1, 2, 16)) {
-		flags.add(ioRunMinimized);
+	flags.add(NeverUninstall);
+	if(version >= INNO_VERSION(1, 3, 21)) {
+		flags.add(RunMinimized);
 	}
-	flags.add(ioCreateOnlyIfFileExists);
+	flags.add(CreateOnlyIfFileExists);
 	if(version.bits != 16) {
-		flags.add(ioUseAppPaths);
+		flags.add(UseAppPaths);
 	}
 	if(version >= INNO_VERSION(5, 0, 3)) {
-		flags.add(ioFolderShortcut);
+		flags.add(FolderShortcut);
 	}
 	if(version >= INNO_VERSION(5, 4, 2)) {
-		flags.add(ioExcludeFromShowInNewInstall);
+		flags.add(ExcludeFromShowInNewInstall);
 	}
 	
 	options = flags.get();
 }
 
-ENUM_NAMES(IconFlags::Enum, "Icon Option",
+ENUM_NAMES(IconEntry::Options, "Icon Option",
 	"never uninstall",
 	"create only if file exists",
 	"use app paths",

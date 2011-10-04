@@ -4,28 +4,32 @@
 #include "util/LoadingUtils.hpp"
 #include "util/StoredEnum.hpp"
 
+namespace {
+
 STORED_FLAGS_MAP(StoredSetupComponentOptions0,
-		coFixed,
-		coRestart,
-		coDisableNoUninstallWarning,
+		SetupComponentEntry::Fixed,
+		SetupComponentEntry::Restart,
+		SetupComponentEntry::DisableNoUninstallWarning,
 );
 
 // starting with version 3.0.8
 STORED_FLAGS_MAP(StoredSetupComponentOptions1,
-		coFixed,
-		coRestart,
-		coDisableNoUninstallWarning,
-		coExclusive,
+		SetupComponentEntry::Fixed,
+		SetupComponentEntry::Restart,
+		SetupComponentEntry::DisableNoUninstallWarning,
+		SetupComponentEntry::Exclusive,
 );
 
 // starting with version 4.2.3
 STORED_FLAGS_MAP(StoredSetupComponentOptions2,
-		coFixed,
-		coRestart,
-		coDisableNoUninstallWarning,
-		coExclusive,
-		coDontInheritCheck,
+		SetupComponentEntry::Fixed,
+		SetupComponentEntry::Restart,
+		SetupComponentEntry::DisableNoUninstallWarning,
+		SetupComponentEntry::Exclusive,
+		SetupComponentEntry::DontInheritCheck,
 );
+
+} // anonymous namespace
 
 void SetupComponentEntry::load(std::istream & is, const InnoVersion & version) {
 	
@@ -70,7 +74,7 @@ void SetupComponentEntry::load(std::istream & is, const InnoVersion & version) {
 	size = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<u64>(is) : loadNumber<u32>(is);
 }
 
-ENUM_NAMES(SetupComponentOptions::Enum, "Setup Component Option",
+ENUM_NAMES(SetupComponentEntry::Options, "Setup Component Option",
 	"fixed",
 	"restart",
 	"disable no uninstall warning",

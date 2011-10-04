@@ -6,7 +6,7 @@
 
 #include "setup/Version.hpp"
 
-struct CustomMessageEntry {
+struct MessageEntry {
 	
 	// introduced in 4.2.1
 	

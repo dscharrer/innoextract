@@ -4,41 +4,36 @@
 
 #include <iostream>
 
-#include "setup/SetupCondition.hpp"
+#include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
-#include "setup/WindowsVersion.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
 #include "util/Types.hpp"
 
-FLAGS(InnoDirectoryOptions,
-	doUninsNeverUninstall,
-	doDeleteAfterInstall,
-	doUninsAlwaysUninstall,
-	doSetNTFSCompression,
-	doUnsetNTFSCompression,
-)
-
-NAMED_ENUM(InnoDirectoryOptions::Enum)
-
-struct DirectoryEntry {
+struct DirectoryEntry : public SetupItem {
+	
+	FLAGS(Options,
+		NeverUninstall,
+		DeleteAfterInstall,
+		AlwaysUninstall,
+		SetNtfsCompression,
+		UnsetNtfsCompression
+	);
 	
 	std::string name;
-	SetupCondition condition;
-	SetupTasks tasks;
 	std::string permissions;
 	
 	u32 attributes;
 	
-	WindowsVersion minVersion;
-	WindowsVersion onlyBelowVersion;
-	
 	int permission; //!< index into the permission entry list
 	
-	InnoDirectoryOptions options;
+	Options options;
 	
 	void load(std::istream & is, const InnoVersion & version);
 	
 };
+
+FLAGS_OVERLOADS(DirectoryEntry::Options)
+NAMED_ENUM(DirectoryEntry::Options)
 
 #endif // INNOEXTRACT_SETUP_DIRECTORYENTRY_HPP

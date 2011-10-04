@@ -9,19 +9,17 @@
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
 
-FLAGS(SetupTaskOptions,
-	toExclusive,
-	toUnchecked,
-	toRestart,
-	toCheckedOnce,
-	toDontInheritCheck,
-)
-
-NAMED_ENUM(SetupTaskOptions::Enum)
-
 struct SetupTaskEntry {
 	
-	// introduced after 1.3.26
+	// introduced in 2.0.0
+	
+	FLAGS(Options,
+		Exclusive,
+		Unchecked,
+		Restart,
+		CheckedOnce,
+		DontInheritCheck
+	);
 	
 	std::string name;
 	std::string description;
@@ -36,10 +34,13 @@ struct SetupTaskEntry {
 	WindowsVersion minVersion;
 	WindowsVersion onlyBelowVersion;
 	
-	SetupTaskOptions options;
+	Options options;
 	
 	void load(std::istream & is, const InnoVersion & version);
 	
 };
+
+FLAGS_OVERLOADS(SetupTaskEntry::Options)
+NAMED_ENUM(SetupTaskEntry::Options)
 
 #endif // INNOEXTRACT_SETUP_SETUPTASKENTRY_HPP

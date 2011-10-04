@@ -47,7 +47,7 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	options = 0;
 	
-	if(version <= INNO_VERSION(1, 2, 16)) {
+	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<u32>(is); // uncompressed size of the file entry structure
 	}
 	
@@ -59,11 +59,10 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	} else {
 		strongAssemblyName.clear();
 	}
-	condition.load(is, version);
-	tasks.load(is, version);
 	
-	minVersion.load(is, version);
-	onlyBelowVersion.load(is, version);
+	loadConditionData(is, version);
+	
+	loadVersionData(is, version);
 	
 	location = loadNumber<s32>(is, version.bits);
 	attributes = loadNumber<u32>(is, version.bits);
@@ -73,9 +72,9 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 		FileCopyMode copyMode = StoredEnum<StoredFileCopyMode>(is).get();
 		// TODO this might be wrong
 		switch(copyMode) {
-			case cmNormal: options |= foPromptIfOlder; break;
-			case cmIfDoesntExist: options |= foOnlyIfDoesntExist | foPromptIfOlder; break;
-			case cmAlwaysOverwrite: options |= foIgnoreVersion | foPromptIfOlder; break;
+			case cmNormal: options |= PromptIfOlder; break;
+			case cmIfDoesntExist: options |= OnlyIfDoesntExist | PromptIfOlder; break;
+			case cmAlwaysOverwrite: options |= IgnoreVersion | PromptIfOlder; break;
 			case cmAlwaysSkipIfSameOrOlder: break;
 		}
 	}
@@ -86,72 +85,74 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 		permission = -1;
 	}
 	
-	StoredFlagReader<FileOptions> flags(is);
+	StoredFlagReader<Options> flags(is);
 	
-	flags.add(foConfirmOverwrite);
-	flags.add(foUninsNeverUninstall);
-	flags.add(foRestartReplace);
-	flags.add(foDeleteAfterInstall);
+	flags.add(ConfirmOverwrite);
+	flags.add(NeverUninstall);
+	flags.add(RestartReplace);
+	flags.add(DeleteAfterInstall);
 	if(version.bits != 16) {
-		flags.add(foRegisterServer);
-		flags.add(foRegisterTypeLib);
-		flags.add(foSharedFile);
+		flags.add(RegisterServer);
+		flags.add(RegisterTypeLib);
+		flags.add(SharedFile);
 	}
-	if(version < INNO_VERSION(1, 3, 26)) {
-		flags.add(foIsReadmeFile);
+	if(version < INNO_VERSION(2, 0, 0)) {
+		flags.add(IsReadmeFile);
 	}
-	flags.add(foCompareTimeStamp);
-	flags.add(foFontIsntTrueType);
-	flags.add(foSkipIfSourceDoesntExist);
-	flags.add(foOverwriteReadOnly);
-	if(version > INNO_VERSION(1, 2, 16)) {
-		flags.add(foOverwriteSameVersion);
-		flags.add(foCustomDestName);
-		flags.add(foOnlyIfDestFileExists);
+	flags.add(CompareTimeStamp);
+	flags.add(FontIsNotTrueType);
+	flags.add(SkipIfSourceDoesntExist);
+	flags.add(OverwriteReadOnly);
+	if(version >= INNO_VERSION(1, 3, 21)) {
+		flags.add(OverwriteSameVersion);
+		flags.add(CustomDestName);
 	}
-	if(version > INNO_VERSION(1, 3, 26)) {
-		flags.add(foNoRegError);
+	if(version >= INNO_VERSION(1, 3, 25)) {
+		flags.add(OnlyIfDestFileExists);
+	}
+	if(version >= INNO_VERSION(2, 0, 5)) {
+		flags.add(NoRegError);
 	}
 	if(version >= INNO_VERSION(3, 0, 1)) {
-		flags.add(foUninsRestartDelete);
+		flags.add(UninsRestartDelete);
 	}
 	if(version >= INNO_VERSION(3, 0, 5)) {
-		flags.add(foOnlyIfDoesntExist);
-		flags.add(foIgnoreVersion);
-		flags.add(foPromptIfOlder);
+		flags.add(OnlyIfDoesntExist);
+		flags.add(IgnoreVersion);
+		flags.add(PromptIfOlder);
 	}
 	if(version >= INNO_VERSION(3, 0, 8)) {
-		flags.add(foDontCopy);
+		flags.add(DontCopy);
 	}
 	if(version >= INNO_VERSION(4, 0, 5)) {
-		flags.add(foUninsRemoveReadOnly);
+		flags.add(UninsRemoveReadOnly);
 	}
 	if(version >= INNO_VERSION(4, 1, 8)) {
-		flags.add(foRecurseSubDirsExternal);
+		flags.add(RecurseSubDirsExternal);
 	}
 	if(version >= INNO_VERSION(4, 2, 1)) {
-		flags.add(foReplaceSameVersionIfContentsDiffer);
+		flags.add(ReplaceSameVersionIfContentsDiffer);
 	}
 	if(version >= INNO_VERSION(4, 2, 5)) {
-		flags.add(foDontVerifyChecksum);
+		flags.add(DontVerifyChecksum);
 	}
 	if(version >= INNO_VERSION(5, 0, 3)) {
-		flags.add(foUninsNoSharedFilePrompt);
+		flags.add(UninsNoSharedFilePrompt);
 	}
 	if(version >= INNO_VERSION(5, 1, 0)) {
-		flags.add(foCreateAllSubDirs);
+		flags.add(CreateAllSubDirs);
 	}
 	if(version >= INNO_VERSION(5, 1, 2)) {
-		flags.add(fo32Bit);
-		flags.add(fo64Bit);
+		flags.add(Bits32);
+		flags.add(Bits64);
 	}
 	if(version >= INNO_VERSION(5, 2, 0)) {
-		flags.add(foExternalSizePreset);
-		flags.add(foSetNTFSCompression);
-		flags.add(foUnsetNTFSCompression);
+		flags.add(ExternalSizePreset);
+		flags.add(SetNtfsCompression);
+		flags.add(UnsetNtfsCompression);
 	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
-		flags.add(foGacInstall);
+		flags.add(GacInstall);
 	}
 	
 	options = flags.get();
@@ -163,7 +164,7 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 }
 
-ENUM_NAMES(FileOptions::Enum, "File Option",
+ENUM_NAMES(FileEntry::Options, "File Option",
 	"confirm overwrite",
 	"never uninstall",
 	"restart replace",

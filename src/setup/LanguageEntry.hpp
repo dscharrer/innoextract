@@ -9,7 +9,7 @@
 
 struct LanguageEntry {
 	
-	// introduced after 1.3.26
+	// introduced in 2.0.1
 	
 	std::string name;
 	std::string languageName;

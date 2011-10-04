@@ -36,14 +36,20 @@ struct KnownSetupDataVersion {
 };
 
 const KnownSetupDataVersion knownSetupDataVersions[] = {
+	{ "Inno Setup Setup Data (1.3.21)",                INNO_VERSION_EXT(1, 3, 21, 0) },
 	{ "Inno Setup Setup Data (1.3.25)",                INNO_VERSION_EXT(1, 3, 25, 0) },
+	{ "Inno Setup Setup Data (2.0.0)",                 INNO_VERSION_EXT(2, 0,  0, 0) },
+	{ "Inno Setup Setup Data (2.0.1)",                 INNO_VERSION_EXT(2, 0,  1, 0) }, // or 2.0.2!
+	{ "Inno Setup Setup Data (2.0.5)",                 INNO_VERSION_EXT(2, 0,  5, 0) },
+	{ "Inno Setup Setup Data (2.0.6a)",                INNO_VERSION_EXT(2, 0,  6, 0) },
+	{ "Inno Setup Setup Data (2.0.7)",                 INNO_VERSION_EXT(2, 0,  7, 0) },
 	{ "Inno Setup Setup Data (2.0.8)",                 INNO_VERSION_EXT(2, 0,  8, 0) },
 	{ "Inno Setup Setup Data (2.0.11)",                INNO_VERSION_EXT(2, 0, 11, 0) },
 	{ "Inno Setup Setup Data (2.0.17)",                INNO_VERSION_EXT(2, 0, 17, 0) },
 	{ "Inno Setup Setup Data (2.0.18)",                INNO_VERSION_EXT(2, 0, 18, 0) },
 	{ "Inno Setup Setup Data (3.0.0a)",                INNO_VERSION_EXT(3, 0,  0, 0) },
 	{ "Inno Setup Setup Data (3.0.1)",                 INNO_VERSION_EXT(3, 0,  1, 0) },
-	{ "Inno Setup Setup Data (3.0.3)",                 INNO_VERSION_EXT(3, 0,  3, 0) },
+	{ "Inno Setup Setup Data (3.0.3)",                 INNO_VERSION_EXT(3, 0,  3, 0) }, // or 3.0.4!
 	{ "Inno Setup Setup Data (3.0.5)",                 INNO_VERSION_EXT(3, 0,  5, 0) },
 	{ "My Inno Setup Extensions Setup Data (3.0.6.1)", INNO_VERSION_EXT(3, 0,  6, 1) },
 	{ "Inno Setup Setup Data (4.0.0a)",                INNO_VERSION_EXT(4, 0,  0, 0) },
@@ -63,7 +69,7 @@ const KnownSetupDataVersion knownSetupDataVersions[] = {
 	{ "Inno Setup Setup Data (4.2.0)",                 INNO_VERSION_EXT(4, 2,  0, 0) },
 	{ "Inno Setup Setup Data (4.2.1)",                 INNO_VERSION_EXT(4, 2,  1, 0) },
 	{ "Inno Setup Setup Data (4.2.2)",                 INNO_VERSION_EXT(4, 2,  2, 0) },
-	{ "Inno Setup Setup Data (4.2.3)",                 INNO_VERSION_EXT(4, 2,  3, 0) },
+	{ "Inno Setup Setup Data (4.2.3)",                 INNO_VERSION_EXT(4, 2,  3, 0) }, // or 4.2.4!
 	{ "Inno Setup Setup Data (4.2.5)",                 INNO_VERSION_EXT(4, 2,  5, 0) },
 	{ "Inno Setup Setup Data (4.2.6)",                 INNO_VERSION_EXT(4, 2,  6, 0) },
 	{ "Inno Setup Setup Data (5.0.0)",                 INNO_VERSION_EXT(5, 0,  0, 0) },
@@ -181,6 +187,11 @@ void InnoVersion::load(std::istream & is) {
 }
 
 bool InnoVersion::isSuspicious() const {
+	
+	if(version == INNO_VERSION(2, 0, 1)) {
+		// might be either 2.0.1 or 2.0.2
+		return true;
+	}
 	
 	if(version == INNO_VERSION(3, 0, 3)) {
 		// might be either 3.0.3 or 3.0.4

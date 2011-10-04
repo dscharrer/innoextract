@@ -46,7 +46,7 @@ public:
 			throw std::string("unexpected chunk end");
 		}
 		
-		std::cout << "[chunk] read chunk: " << length << " bytes" << std::endl;
+		// TODO remove std::cout << "[chunk] read chunk: " << length << " bytes" << std::endl;
 		
 		checkCrc(chunkCrc32);
 		

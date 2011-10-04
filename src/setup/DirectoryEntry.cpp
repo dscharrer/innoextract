@@ -4,30 +4,35 @@
 #include "util/LoadingUtils.hpp"
 #include "util/StoredEnum.hpp"
 
+namespace {
+
 STORED_FLAGS_MAP(StoredInnoDirectoryOptions0,
-	doUninsNeverUninstall,
-	doDeleteAfterInstall,
-	doUninsAlwaysUninstall,
+	DirectoryEntry::NeverUninstall,
+	DirectoryEntry::DeleteAfterInstall,
+	DirectoryEntry::AlwaysUninstall,
 );
 
 // starting with version 5.2.0
 STORED_FLAGS_MAP(StoredInnoDirectoryOptions1,
-	doUninsNeverUninstall,
-	doDeleteAfterInstall,
-	doUninsAlwaysUninstall,
-	doSetNTFSCompression,
-	doUnsetNTFSCompression,
+	DirectoryEntry::NeverUninstall,
+	DirectoryEntry::DeleteAfterInstall,
+	DirectoryEntry::AlwaysUninstall,
+	DirectoryEntry::SetNtfsCompression,
+	DirectoryEntry::UnsetNtfsCompression,
 );
+
+} // anonymous namespace
 
 void DirectoryEntry::load(std::istream & is, const InnoVersion & version) {
 	
-	if(version <= INNO_VERSION(1, 2, 16)) {
+	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<u32>(is); // uncompressed size of the directory entry structure
 	}
 	
 	is >> EncodedString(name, version.codepage());
-	condition.load(is, version);
-	tasks.load(is, version);
+	
+	loadConditionData(is, version);
+	
 	if(version >= INNO_VERSION(4, 0, 11) && version < INNO_VERSION(4, 1, 0)) {
 		is >> EncodedString(permissions, version.codepage());
 	} else {
@@ -40,8 +45,7 @@ void DirectoryEntry::load(std::istream & is, const InnoVersion & version) {
 		attributes = 0;
 	}
 	
-	minVersion.load(is, version);
-	onlyBelowVersion.load(is, version);
+	loadVersionData(is, version);
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
 		permission = loadNumber<s16>(is);
@@ -57,7 +61,7 @@ void DirectoryEntry::load(std::istream & is, const InnoVersion & version) {
 	
 }
 
-ENUM_NAMES(InnoDirectoryOptions::Enum, "Directory Option",
+ENUM_NAMES(DirectoryEntry::Options, "Directory Option",
 	"never uninstall",
 	"delete after install",
 	"always uninstall",

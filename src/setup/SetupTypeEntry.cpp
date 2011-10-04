@@ -4,8 +4,10 @@
 #include "util/LoadingUtils.hpp"
 #include "util/StoredEnum.hpp"
 
+namespace {
+
 STORED_FLAGS_MAP(StoredSetupTypeOptions,
-	CustomSetupType,
+	SetupTypeEntry::CustomSetupType,
 );
 
 STORED_ENUM_MAP(StoredSetupType, SetupTypeEntry::User,
@@ -14,6 +16,8 @@ STORED_ENUM_MAP(StoredSetupType, SetupTypeEntry::User,
 	SetupTypeEntry::DefaultCompact,
 	SetupTypeEntry::DefaultCustom,
 );
+
+} // anonymous namespace
 
 void SetupTypeEntry::load(std::istream & is, const InnoVersion & version) {
 	
@@ -44,7 +48,7 @@ void SetupTypeEntry::load(std::istream & is, const InnoVersion & version) {
 	size = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<u64>(is) : loadNumber<u32>(is);
 }
 
-ENUM_NAMES(SetupTypeOptions::Enum, "Setyp Type Option",
+ENUM_NAMES(SetupTypeEntry::Options, "Setyp Type Option",
 	"is custom",
 )
 

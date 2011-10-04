@@ -10,20 +10,20 @@
 // loosely based on QFlags from Qt
 
 template <typename Enum>
-class EnumSize { static const size_t value = 32; };
+struct EnumSize { private: static const size_t value = 42; };
 
 /*!
  * A typesafe way to define flags as a combination of enum values.
  * 
  * This type should not be used directly, only through DECLARE_FLAGS.
  */
-template <typename _Enum>
+template <typename _Enum, size_t Bits = EnumSize<_Enum>::value>
 class Flags {
 	
 public:
 	
 	typedef _Enum Enum;
-	static const size_t bits = EnumSize<Enum>::value;
+	static const size_t bits = Bits;
 	typedef std::bitset<bits> Type;
 	
 private:
@@ -141,8 +141,7 @@ public:
 	template <> \
 	struct EnumSize<Enum> { \
 		static const size_t value = (Size); \
-	}; \
-	typedef Flags<Enum> Flagname;
+	};
 #define FLAGS_ENUM_END_HELPER(Enum) Enum ## __End
 #define FLAGS_ENUM_END(Enum) FLAGS_ENUM_END_HELPER(Enum)
 #define DECLARE_FLAGS(Enum, Flagname) DECLARE_FLAGS_SIZE(Enum, Flagname, FLAGS_ENUM_END(Enum))
@@ -165,9 +164,12 @@ public:
 #define FLAGS_ENUM(Flagname) Flagname ## __Enum
 #define FLAGS(Flagname, ...) \
 	enum FLAGS_ENUM(Flagname) { \
-		__VA_ARGS__ \
+		__VA_ARGS__, \
 		FLAGS_ENUM_END(Flagname) \
 	}; \
+	typedef ::Flags<FLAGS_ENUM(Flagname), FLAGS_ENUM_END(Flagname)> Flagname
+	
+#define FLAGS_OVERLOADS(Flagname) \
 	DECLARE_FLAGS_SIZE(FLAGS_ENUM(Flagname), Flagname, FLAGS_ENUM_END(Flagname)) \
 	DECLARE_FLAGS_OPERATORS(Flagname)
 
@@ -192,5 +194,15 @@ std::ostream & operator<<(std::ostream & os, Flags<Enum> flags) {
 		return os << color::dim_white << "(none)" << prev;
 	}
 }
+
+template <class Enum>
+struct GetEnum {
+	typedef Enum type;
+};
+template <class Enum>
+struct GetEnum< Flags<Enum> > {
+	typedef Enum type;
+};
+
 
 #endif // INNOEXTRACT_UTIL_FLAGS_HPP

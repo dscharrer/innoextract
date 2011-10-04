@@ -8,7 +8,7 @@ const WindowsVersion WindowsVersion::none = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0 }
 
 void WindowsVersion::Version::load(std::istream& is, const InnoVersion& version) {
 	
-	if(version > INNO_VERSION(1, 2, 16)) {
+	if(version >= INNO_VERSION(1, 3, 21)) {
 		build = loadNumber<u16>(is);
 	} else {
 		build = 0;
@@ -24,7 +24,7 @@ void WindowsVersion::load(std::istream & is, const InnoVersion & version) {
 	winVersion.load(is, version);
 	ntVersion.load(is, version);
 	
-	if(version > INNO_VERSION(1, 2, 16)) {
+	if(version >= INNO_VERSION(1, 3, 21)) {
 		ntServicePack.minor = loadNumber<u8>(is);
 		ntServicePack.major = loadNumber<u8>(is);
 	} else {

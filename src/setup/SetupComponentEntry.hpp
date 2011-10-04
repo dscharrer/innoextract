@@ -10,19 +10,17 @@
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
 
-FLAGS(SetupComponentOptions,
-	coFixed,
-	coRestart,
-	coDisableNoUninstallWarning,
-	coExclusive,
-	coDontInheritCheck,
-)
-
-NAMED_ENUM(SetupComponentOptions::Enum)
-
 struct SetupComponentEntry {
 	
-	// introduced after 1.3.26
+	// introduced in 2.0.0
+	
+	FLAGS(Options,
+		Fixed,
+		Restart,
+		DisableNoUninstallWarning,
+		Exclusive,
+		DontInheritCheck
+	);
 	
 	std::string name;
 	std::string description;
@@ -38,12 +36,15 @@ struct SetupComponentEntry {
 	WindowsVersion minVersion;
 	WindowsVersion onlyBelowVersion;
 	
-	SetupComponentOptions options;
+	Options options;
 	
 	u64 size;
 	
 	void load(std::istream & is, const InnoVersion & version);
 	
 };
+
+FLAGS_OVERLOADS(SetupComponentEntry::Options)
+NAMED_ENUM(SetupComponentEntry::Options)
 
 #endif // INNOEXTRACT_SETUP_SETUPCOMPONENTENTRY_HPP

@@ -4,54 +4,52 @@
 
 #include <iostream>
 
-#include "setup/SetupCondition.hpp"
+#include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
-#include "setup/WindowsVersion.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
 #include "util/Types.hpp"
 
-FLAGS(FileOptions,
-	foConfirmOverwrite,
-	foUninsNeverUninstall,
-	foRestartReplace,
-	foDeleteAfterInstall,
-	foRegisterServer,
-	foRegisterTypeLib,
-	foSharedFile,
-	foCompareTimeStamp,
-	foFontIsntTrueType,
-	foSkipIfSourceDoesntExist,
-	foOverwriteReadOnly,
-	foOverwriteSameVersion,
-	foCustomDestName,
-	foOnlyIfDestFileExists,
-	foNoRegError,
-	foUninsRestartDelete,
-	foOnlyIfDoesntExist,
-	foIgnoreVersion,
-	foPromptIfOlder,
-	foDontCopy,
-	foUninsRemoveReadOnly,
-	foRecurseSubDirsExternal,
-	foReplaceSameVersionIfContentsDiffer,
-	foDontVerifyChecksum,
-	foUninsNoSharedFilePrompt,
-	foCreateAllSubDirs,
-	fo32Bit,
-	fo64Bit,
-	foExternalSizePreset,
-	foSetNTFSCompression,
-	foUnsetNTFSCompression,
-	foGacInstall,
+struct FileEntry : public SetupItem {
 	
-	// obsolete options:
-	foIsReadmeFile,
-)
-
-NAMED_ENUM(FileOptions::Enum)
-
-struct FileEntry {
+	FLAGS(Options,
+		
+		ConfirmOverwrite,
+		NeverUninstall,
+		RestartReplace,
+		DeleteAfterInstall,
+		RegisterServer,
+		RegisterTypeLib,
+		SharedFile,
+		CompareTimeStamp,
+		FontIsNotTrueType,
+		SkipIfSourceDoesntExist,
+		OverwriteReadOnly,
+		OverwriteSameVersion,
+		CustomDestName,
+		OnlyIfDestFileExists,
+		NoRegError,
+		UninsRestartDelete,
+		OnlyIfDoesntExist,
+		IgnoreVersion,
+		PromptIfOlder,
+		DontCopy,
+		UninsRemoveReadOnly,
+		RecurseSubDirsExternal,
+		ReplaceSameVersionIfContentsDiffer,
+		DontVerifyChecksum,
+		UninsNoSharedFilePrompt,
+		CreateAllSubDirs,
+		Bits32,
+		Bits64,
+		ExternalSizePreset,
+		SetNtfsCompression,
+		UnsetNtfsCompression,
+		GacInstall,
+		
+		// obsolete options:
+		IsReadmeFile
+	);
 	
 	enum Type {
 		UserFile,
@@ -63,11 +61,6 @@ struct FileEntry {
 	std::string destination;
 	std::string installFontName;
 	std::string strongAssemblyName;
-	SetupCondition condition;
-	SetupTasks tasks;
-	
-	WindowsVersion minVersion;
-	WindowsVersion onlyBelowVersion;
 	
 	int location; //!< index into the file location entry list
 	u32 attributes;
@@ -75,13 +68,16 @@ struct FileEntry {
 	
 	int permission; //!< index into the permission entry list
 	
-	FileOptions options;
+	Options options;
 	
 	Type type;
 	
 	void load(std::istream & is, const InnoVersion & version);
 	
 };
+
+FLAGS_OVERLOADS(FileEntry::Options)
+NAMED_ENUM(FileEntry::Options)
 
 NAMED_ENUM(FileEntry::Type)
 

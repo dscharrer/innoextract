@@ -31,17 +31,20 @@ set(INNOEXTRACT_SOURCES
 	src/loader/ExeReader.cpp
 	src/loader/SetupLoader.cpp
 	
-	src/setup/CustomMessageEntry.cpp
+	src/setup/DeleteEntry.cpp
 	src/setup/DirectoryEntry.cpp
 	src/setup/FileEntry.cpp
+	src/setup/FileLocationEntry.cpp
 	src/setup/IconEntry.cpp
 	src/setup/IniEntry.cpp
 	src/setup/LanguageEntry.cpp
+	src/setup/MessageEntry.cpp
 	src/setup/PermissionEntry.cpp
 	src/setup/RegistryEntry.cpp
+	src/setup/RunEntry.cpp
 	src/setup/SetupComponentEntry.cpp
-	src/setup/SetupCondition.cpp
 	src/setup/SetupHeader.cpp
+	src/setup/SetupItem.cpp
 	src/setup/SetupTaskEntry.cpp
 	src/setup/SetupTypeEntry.cpp
 	src/setup/Version.cpp
@@ -51,6 +54,7 @@ set(INNOEXTRACT_SOURCES
 	src/stream/ChunkFilter.cpp
 	src/stream/Lzma1Filter.cpp
 	
+	src/util/Checksum.cpp
 	src/util/LoadingUtils.cpp
 	src/util/Output.cpp
 	src/util/Utils.cpp

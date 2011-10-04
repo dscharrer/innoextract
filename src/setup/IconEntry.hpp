@@ -4,26 +4,23 @@
 
 #include <iostream>
 
-#include "setup/SetupCondition.hpp"
+#include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
-#include "setup/WindowsVersion.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
 #include "util/Types.hpp"
 
-FLAGS(IconFlags,
-	ioUninsNeverUninstall,
-	ioCreateOnlyIfFileExists,
-	ioUseAppPaths,
-	ioFolderShortcut,
-	ioExcludeFromShowInNewInstall,
-	// obsolete options:
-	ioRunMinimized,
-)
-
-NAMED_ENUM(IconFlags::Enum)
-
-struct IconEntry {
+struct IconEntry : public SetupItem {
+	
+	FLAGS(Options,
+		NeverUninstall,
+		CreateOnlyIfFileExists,
+		UseAppPaths,
+		FolderShortcut,
+		ExcludeFromShowInNewInstall,
+		// obsolete options:
+		RunMinimized
+	);
 	
 	enum CloseOnExit {
 		NoSetting,
@@ -37,12 +34,7 @@ struct IconEntry {
 	std::string workingDir;
 	std::string iconFilename;
 	std::string comment;
-	SetupCondition condition;
-	SetupTasks tasks;
 	std::string appUserModelId;
-	
-	WindowsVersion minVersion;
-	WindowsVersion onlyBelowVersion;
 	
 	int iconIndex;
 	
@@ -52,11 +44,14 @@ struct IconEntry {
 	
 	u16 hotkey;
 	
-	IconFlags options;
+	Options options;
 	
 	void load(std::istream & is, const InnoVersion & version);
 	
 };
+
+FLAGS_OVERLOADS(IconEntry::Options)
+NAMED_ENUM(IconEntry::Options)
 
 NAMED_ENUM(IconEntry::CloseOnExit)
 

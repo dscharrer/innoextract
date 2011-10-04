@@ -7,18 +7,18 @@
 namespace {
 
 STORED_FLAGS_MAP(StoredIniOptions,
-	ioCreateKeyIfDoesntExist,
-	ioUninsDeleteEntry,
-	ioUninsDeleteEntireSection,
-	ioUninsDeleteSectionIfEmpty,
-	ioHasValue,
+	IniEntry::CreateKeyIfDoesntExist,
+	IniEntry::UninsDeleteEntry,
+	IniEntry::UninsDeleteEntireSection,
+	IniEntry::UninsDeleteSectionIfEmpty,
+	IniEntry::HasValue,
 );
 
 } // anonymous namespace
 
 void IniEntry::load(std::istream & is, const InnoVersion & version) {
 	
-	if(version <= INNO_VERSION(1, 2, 16)) {
+	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<u32>(is); // uncompressed size of the ini entry structure
 	}
 	
@@ -29,16 +29,15 @@ void IniEntry::load(std::istream & is, const InnoVersion & version) {
 	is >> EncodedString(section, version.codepage());
 	is >> EncodedString(key, version.codepage());
 	is >> EncodedString(value, version.codepage());
-	condition.load(is, version);
-	tasks.load(is, version);
 	
-	minVersion.load(is, version);
-	onlyBelowVersion.load(is, version);
+	loadConditionData(is, version);
+	
+	loadVersionData(is, version);
 	
 	options = StoredFlags<StoredIniOptions>(is).get();
 }
 
-ENUM_NAMES(IniOptions::Enum, "Ini Option",
+ENUM_NAMES(IniEntry::Options, "Ini Option",
 	"create key if doesn't exist",
 	"uninstall delete entry",
 	"uninstall delete section",

@@ -4,39 +4,34 @@
 
 #include <iostream>
 
-#include "setup/SetupCondition.hpp"
+#include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
-#include "setup/WindowsVersion.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
 #include "util/Types.hpp"
 
-FLAGS(IniOptions,
-	ioCreateKeyIfDoesntExist,
-	ioUninsDeleteEntry,
-	ioUninsDeleteEntireSection,
-	ioUninsDeleteSectionIfEmpty,
-	ioHasValue,
-)
-
-NAMED_ENUM(IniOptions::Enum)
-
-struct IniEntry {
+struct IniEntry : public SetupItem {
+	
+	FLAGS(Options,
+		CreateKeyIfDoesntExist,
+		UninsDeleteEntry,
+		UninsDeleteEntireSection,
+		UninsDeleteSectionIfEmpty,
+		HasValue
+	);
 	
 	std::string inifile;
 	std::string section;
 	std::string key;
 	std::string value;
-	SetupCondition condition;
-	SetupTasks tasks;
 	
-	WindowsVersion minVersion;
-	WindowsVersion onlyBelowVersion;
-	
-	IniOptions options;
+	Options options;
 	
 	void load(std::istream & is, const InnoVersion & version);
 	
 };
+
+FLAGS_OVERLOADS(IniEntry::Options)
+NAMED_ENUM(IniEntry::Options)
 
 #endif // INNOEXTRACT_SETUP_INIENTRY_HPP

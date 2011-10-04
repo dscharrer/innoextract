@@ -81,7 +81,7 @@ bool inno_lzma1_decompressor_impl::filter(const char * & begin_in, const char * 
 	
 	lzma_ret ret = lzma_code(strm, LZMA_RUN);
 	
-	cout << "[lzma] decompressed " << (reinterpret_cast<const char *>(strm->next_in) - begin_in) << " / " << bufsize_in << " -> " << (reinterpret_cast<char *>(strm->next_out) - begin_out) << " / " << bufsize_out << "  ret=" << ret << endl;
+	// TODO remove: cout << "[lzma] decompressed " << (reinterpret_cast<const char *>(strm->next_in) - begin_in) << " / " << bufsize_in << " -> " << (reinterpret_cast<char *>(strm->next_out) - begin_out) << " / " << bufsize_out << "  ret=" << ret << endl;
 	
 	begin_in = reinterpret_cast<const char *>(strm->next_in);
 	

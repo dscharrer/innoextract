@@ -8,7 +8,7 @@
 
 struct PermissionEntry {
 	
-	// introduced in version 4.1.0
+	// introduced in 4.1.0
 	
 	std::string permissions;
 	

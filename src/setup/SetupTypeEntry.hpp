@@ -9,15 +9,13 @@
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
 
-FLAGS(SetupTypeOptions,
-	CustomSetupType,
-)
-
-NAMED_ENUM(SetupTypeOptions::Enum)
-
 struct SetupTypeEntry {
 	
-	// introduced after 1.3.26
+	// introduced in 2.0.0
+	
+	FLAGS(Options,
+		CustomSetupType
+	);
 	
 	enum Type {
 		User,
@@ -34,7 +32,7 @@ struct SetupTypeEntry {
 	WindowsVersion minVersion;
 	WindowsVersion onlyBelowVersion;
 	
-	SetupTypeOptions options;
+	Options options;
 	
 	Type type;
 	
@@ -43,6 +41,9 @@ struct SetupTypeEntry {
 	void load(std::istream & is, const InnoVersion & version);
 	
 };
+
+FLAGS_OVERLOADS(SetupTypeEntry::Options)
+NAMED_ENUM(SetupTypeEntry::Options)
 
 NAMED_ENUM(SetupTypeEntry::Type)
 

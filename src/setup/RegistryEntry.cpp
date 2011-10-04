@@ -36,6 +36,10 @@ STORED_ENUM_MAP(StoredRegistryEntryType2, RegistryEntry::None,
 
 void RegistryEntry::load(std::istream & is, const InnoVersion & version) {
 	
+	if(version < INNO_VERSION(1, 3, 21)) {
+		::load<u32>(is); // uncompressed size of the directory entry structure
+	}
+	
 	is >> EncodedString(key, version.codepage());
 	if(version.bits != 16) {
 		is >> EncodedString(name, version.codepage());
@@ -43,16 +47,16 @@ void RegistryEntry::load(std::istream & is, const InnoVersion & version) {
 		name.clear();
 	}
 	is >> EncodedString(value, version.codepage());
-	condition.load(is, version);
-	tasks.load(is, version);
+	
+	loadConditionData(is, version);
+	
 	if(version >= INNO_VERSION(4, 0, 11) && version < INNO_VERSION(4, 1, 0)) {
 		is >> EncodedString(permissions, version.codepage());
 	} else {
 		permissions.clear();
 	}
 	
-	minVersion.load(is, version);
-	onlyBelowVersion.load(is, version);
+	loadVersionData(is, version);
 	
 	if(version.bits != 16) {
 		hive = Hive(loadNumber<u32>(is) & ~0x80000000);
@@ -74,31 +78,31 @@ void RegistryEntry::load(std::istream & is, const InnoVersion & version) {
 		type = StoredEnum<StoredRegistryEntryType0>(is).get();
 	}
 	
-	StoredFlagReader<RegistryOptions> flags(is);
+	StoredFlagReader<Options> flags(is);
 	
 	if(version.bits != 16) {
-		flags.add(roCreateValueIfDoesntExist);
-		flags.add(roUninsDeleteValue);
+		flags.add(CreateValueIfDoesntExist);
+		flags.add(UninsDeleteValue);
 	}
-	flags.add(roUninsClearValue);
-	flags.add(roUninsDeleteEntireKey);
-	flags.add(roUninsDeleteEntireKeyIfEmpty);
-	flags.add(roPreserveStringType);
-	if(version > INNO_VERSION(1, 2, 16)) {
-		flags.add(roDeleteKey);
-		flags.add(roDeleteValue);
-		flags.add(roNoError);
-		flags.add(roDontCreateKey);
+	flags.add(UninsClearValue);
+	flags.add(UninsDeleteEntireKey);
+	flags.add(UninsDeleteEntireKeyIfEmpty);
+	flags.add(PreserveStringType);
+	if(version >= INNO_VERSION(1, 3, 21)) {
+		flags.add(DeleteKey);
+		flags.add(DeleteValue);
+		flags.add(NoError);
+		flags.add(DontCreateKey);
 	}
 	if(version >= INNO_VERSION(5, 1, 0)) {
-		flags.add(ro32Bit);
-		flags.add(ro64Bit);
+		flags.add(Bits32);
+		flags.add(Bits64);
 	}
 	
-	options = flags.get();	
+	options = flags.get();
 }
 
-ENUM_NAMES(RegistryOptions::Enum, "Registry Option",
+ENUM_NAMES(RegistryEntry::Options, "Registry Option",
 	"create value if doesn't exist",
 	"uninstall delete value",
 	"uninstall clear value",

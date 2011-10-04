@@ -14,17 +14,17 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	
 	options = 0;
 	
-	if(version <= INNO_VERSION(1, 2, 16)) {
+	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<u32>(is); // uncompressed size of the setup header structure
 	}
 	
 	is >> EncodedString(appName, version.codepage());
 	is >> EncodedString(appVerName, version.codepage());
-	if(version > INNO_VERSION(1, 2, 16)) { // not in 1.2.16, in 1.3.25
+	if(version >= INNO_VERSION(1, 3, 21)) {
 		is >> EncodedString(appId, version.codepage());
 	}
 	is >> EncodedString(appCopyright, version.codepage());
-	if(version > INNO_VERSION(1, 2, 16)) { // not in 1.2.16, in 1.3.25
+	if(version >= INNO_VERSION(1, 3, 21)) {
 		is >> EncodedString(appPublisher, version.codepage());
 		is >> EncodedString(appPublisherURL, version.codepage());
 	} else {
@@ -35,7 +35,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	} else {
 		appSupportPhone.clear();
 	}
-	if(version > INNO_VERSION(1, 2, 16)) { // not in 1.2.16, in 1.3.25
+	if(version >= INNO_VERSION(1, 3, 21)) {
 		is >> EncodedString(appSupportURL, version.codepage());
 		is >> EncodedString(appUpdatesURL, version.codepage());
 		is >> EncodedString(appVersion, version.codepage());
@@ -50,7 +50,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		uninstallIconName.clear();
 	}
 	is >> EncodedString(baseFilename, version.codepage());
-	if(version > INNO_VERSION(1, 2, 16)) { // not in 1.2.16, in 1.3.25
+	if(version >= INNO_VERSION(1, 3, 21)) {
 		if(version < INNO_VERSION(5, 2, 5)) {
 			is >> AnsiString(licenseText);
 			is >> AnsiString(infoBeforeText);
@@ -79,7 +79,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	} else {
 		defaultUserInfoSerial.clear(), compiledCodeText.clear();
 	}
-	if(version >= INNO_VERSION(4, 2, 4)) { // TODO 4.2.4 setup files incorrectly specify the version as 4.2.3
+	if(version >= INNO_VERSION(4, 2, 4)) {
 		is >> EncodedString(appReadmeFile, version.codepage());
 		is >> EncodedString(appContact, version.codepage());
 		is >> EncodedString(appComments, version.codepage());
@@ -112,7 +112,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		is >> BinaryString(compiledCodeText);
 	}
 	
-	if(version > INNO_VERSION(1, 3, 26) && !version.unicode) {
+	if(version >= INNO_VERSION(2, 0, 6) && !version.unicode) {
 		leadBytes = CharSet(is).getBitSet();
 	} else {
 		leadBytes = 0;
@@ -120,8 +120,10 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
 		numLanguageEntries = loadNumber<u32>(is);
+	} else if(version >= INNO_VERSION(2, 0, 1)) {
+		numLanguageEntries = 1;
 	} else {
-		numLanguageEntries = (version > INNO_VERSION(1, 3, 26)) ? 1 : 0;
+		numLanguageEntries = 0;
 	}
 	
 	if(version >= INNO_VERSION(4, 2, 1)) {
@@ -136,7 +138,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		numPermissionEntries = 0;
 	}
 	
-	if(version > INNO_VERSION(1, 3, 26)) { // not in 1.3.26, in 2.0.8
+	if(version >= INNO_VERSION(2, 0, 0)) {
 		numTypeEntries = loadNumber<u32>(is);
 		numComponentEntries = loadNumber<u32>(is);
 		numTaskEntries = loadNumber<u32>(is);
@@ -150,7 +152,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	numIconEntries = loadNumber<u32>(is, version.bits);
 	numIniEntries = loadNumber<u32>(is, version.bits);
 	numRegistryEntries = loadNumber<u32>(is, version.bits);
-	numInstallDeleteEntries = loadNumber<u32>(is, version.bits);
+	numDeleteEntries = loadNumber<u32>(is, version.bits);
 	numUninstallDeleteEntries = loadNumber<u32>(is, version.bits);
 	numRunEntries = loadNumber<u32>(is, version.bits);
 	numUninstallRunEntries = loadNumber<u32>(is, version.bits);
@@ -158,7 +160,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	size_t licenseSize;
 	size_t infoBeforeSize;
 	size_t infoAfterSize;
-	if(version <= INNO_VERSION(1, 2, 16)) { // in 1.2.16, not in 1.3.25
+	if(version < INNO_VERSION(1, 3, 21)) {
 		licenseSize = loadNumber<u32>(is, version.bits);
 		infoBeforeSize = loadNumber<u32>(is, version.bits);
 		infoAfterSize = loadNumber<u32>(is, version.bits);
@@ -168,24 +170,24 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	onlyBelowVersion.load(is, version);
 	
 	backColor = loadNumber<u32>(is);
-	if(version > INNO_VERSION(1, 2, 16)) { // not in 1.2.16, in 1.3.25
+	if(version >= INNO_VERSION(1, 3, 21)) {
 		backColor2 = loadNumber<u32>(is);
 	} else {
 		backColor2 = 0;
 	}
 	wizardImageBackColor = loadNumber<u32>(is);
-	if(version > INNO_VERSION(1, 3, 26) && version < INNO_VERSION(5, 0, 4)) { // not in 1.3.26, in 2.0.8
+	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 4)) {
 		wizardSmallImageBackColor = loadNumber<u32>(is);
 	} else {
 		wizardSmallImageBackColor = 0;
 	}
 	
 	if(version < INNO_VERSION(4, 2, 0)) {
-		password = loadNumber<s32>(is), passwordType = PlainPassword;
+		password.crc32 = loadNumber<s32>(is), password.type = Checksum::Crc32;
 	} else if(version < INNO_VERSION(5, 3, 9)) {
-		is.read(passwordMd5, sizeof(passwordMd5)), passwordType = Md5Password;
+		is.read(password.md5, sizeof(password.md5)), password.type = Checksum::MD5;
 	} else {
-		is.read(passwordSha1, sizeof(passwordSha1)), passwordType = Sha1Password;
+		is.read(password.sha1, sizeof(password.sha1)), password.type = Checksum::Sha1;
 	}
 	if(version >= INNO_VERSION(4, 2, 2)) {
 		is.read(passwordSalt, sizeof(passwordSalt));
@@ -201,43 +203,42 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		slicesPerDisk = loadNumber<s32>(is);
 	}
 	
-	if(version > INNO_VERSION(1, 3, 26) && version < INNO_VERSION(5, 0, 0)) {
-		// removed in 5.0.0, not in 1.2.10, not in 1.3.25
+	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 0)) {
 		installMode = StoredEnum<StoredInstallMode>(is).get();
 	} else {
 		installMode = NormalInstallMode;
 	}
 	
-	if(version > INNO_VERSION(1, 2, 16)) { // not in 1.2.16, in 1.3.25
+	if(version >= INNO_VERSION(1, 3, 21)) {
 		uninstallLogMode = StoredEnum<StoredUninstallLogMode>(is).get();
 	} else {
 		uninstallLogMode = AppendLog;
 	}
 	
-	if(version > INNO_VERSION(1, 3, 26) && version < INNO_VERSION(5, 0, 0)) {
+	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 0)) {
 		uninstallStyle = StoredEnum<StoredUninstallStyle>(is).get();
 	} else {
 		uninstallStyle = (version < INNO_VERSION(5, 0, 0)) ? ClassicStyle : ModernStyle;
 	}
 	
-	if(version > INNO_VERSION(1, 2, 16)) { // not in 1.2.16, in 1.3.25
+	if(version >= INNO_VERSION(1, 3, 21)) {
 		dirExistsWarning = StoredEnum<StoredDirExistsWarning>(is).get();
 	} else {
 		dirExistsWarning = Auto;
 	}
 	
-	if(version >= INNO_VERSION(3, 0, 0) && version < INNO_VERSION(3, 0, 3)) { // only in [3.0.0, 3.0.3)?
+	if(version >= INNO_VERSION(3, 0, 0) && version < INNO_VERSION(3, 0, 3)) {
 		AutoBoolean val = StoredEnum<StoredRestartComputer>(is).get();
 		switch(val) {
-			case Yes: options |= shAlwaysRestart; break;
-			case Auto: options |= shRestartIfNeededByRun; break;
+			case Yes: options |= AlwaysRestart; break;
+			case Auto: options |= RestartIfNeededByRun; break;
 			case No: break;
 		}
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 7)) {
 		privilegesRequired = StoredEnum<StoredPrivileges1>(is).get();
-	} else if(version >= INNO_VERSION(3, 0, 4)) { // TODO 3.0.4 setup files incorrectly specify the version as 3.0.3
+	} else if(version >= INNO_VERSION(3, 0, 4)) {
 		privilegesRequired = StoredEnum<StoredPrivileges0>(is).get();
 	}
 	
@@ -283,172 +284,175 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	
-	StoredFlagReader<SetupHeaderOptions> flags(is);
+	StoredFlagReader<Options> flags(is);
 	
-	flags.add(shDisableStartupPrompt);
+	flags.add(DisableStartupPrompt);
 	if(version < INNO_VERSION(5, 3, 10)) {
-		flags.add(shUninstallable);
+		flags.add(Uninstallable);
 	}
-	flags.add(shCreateAppDir);
+	flags.add(CreateAppDir);
 	if(version < INNO_VERSION(5, 3, 3)) {
-		flags.add(shDisableDirPage);
+		flags.add(DisableDirPage);
 	}
-	if(version <= INNO_VERSION(1, 2, 16)) {
-		flags.add(shDisableDirExistsWarning); // only in 1.2.10, not in 1.3.25
+	if(version < INNO_VERSION(1, 3, 21)) {
+		flags.add(DisableDirExistsWarning);
 	}
 	if(version < INNO_VERSION(5, 3, 3)) {
-		flags.add(shDisableProgramGroupPage);
+		flags.add(DisableProgramGroupPage);
 	}
-	flags.add(shAllowNoIcons);
+	flags.add(AllowNoIcons);
 	if(version < INNO_VERSION(3, 0, 0) || version >= INNO_VERSION(3, 0, 3)) {
-		flags.add(shAlwaysRestart);
+		flags.add(AlwaysRestart);
 	}
-	if(version <= INNO_VERSION(1, 2, 16)) {
-		flags.add(shBackSolid); // only in 1.2.10, not in 1.3.25
+	if(version < INNO_VERSION(1, 3, 21)) {
+		flags.add(BackSolid);
 	}
-	flags.add(shAlwaysUsePersonalGroup);
-	flags.add(shWindowVisible);
-	flags.add(shWindowShowCaption);
-	flags.add(shWindowResizable);
-	flags.add(shWindowStartMaximized);
-	flags.add(shEnableDirDoesntExistWarning);
+	flags.add(AlwaysUsePersonalGroup);
+	flags.add(WindowVisible);
+	flags.add(WindowShowCaption);
+	flags.add(WindowResizable);
+	flags.add(WindowStartMaximized);
+	flags.add(EnableDirDoesntExistWarning);
 	if(version < INNO_VERSION(4, 1, 2)) {
-		flags.add(shDisableAppendDir);
+		flags.add(DisableAppendDir);
 	}
-	flags.add(shPassword);
-	flags.add(shAllowRootDirectory);
-	flags.add(shDisableFinishedPage);
+	flags.add(Password);
+	flags.add(AllowRootDirectory);
+	flags.add(DisableFinishedPage);
 	
 	if(version.bits != 16) {
-		if(version < INNO_VERSION(3, 0, 4)) { // TODO 3.0.4 setup files incorrectly specify the version as 3.0.3
-			flags.add(shAdminPrivilegesRequired);
+		if(version < INNO_VERSION(3, 0, 4)) {
+			flags.add(AdminPrivilegesRequired);
 		}
 		if(version < INNO_VERSION(3, 0, 0)) {
-			flags.add(shAlwaysCreateUninstallIcon);
+			flags.add(AlwaysCreateUninstallIcon);
 		}
-		if(version <= INNO_VERSION(1, 2, 16)) {
-			flags.add(shOverwriteUninstRegEntries); // only in 1.2.10, win32-only); not in 1.3.25
+		if(version < INNO_VERSION(1, 3, 21)) {
+			flags.add(OverwriteUninstRegEntries);
 		}
-		flags.add(shChangesAssociations);
+		flags.add(ChangesAssociations);
 	}
 	
-	if(version > INNO_VERSION(1, 2, 16)) { // new after 1.2.16); in 1.3.25
+	if(version >= INNO_VERSION(1, 3, 21)) {
 		if(version < INNO_VERSION(5, 3, 8)) {
-			flags.add(shCreateUninstallRegKey);
+			flags.add(CreateUninstallRegKey);
 		}
-		flags.add(shUsePreviousAppDir);
-		flags.add(shBackColorHorizontal);
-		flags.add(shUsePreviousGroup);
-		flags.add(shUpdateUninstallLogAppName);
+		flags.add(UsePreviousAppDir);
+		flags.add(BackColorHorizontal);
+		flags.add(UsePreviousGroup);
+		flags.add(UpdateUninstallLogAppName);
 	}
 	
-	if(version > INNO_VERSION(1, 3, 26)) { // new after 1.3.26
-		flags.add(shUsePreviousSetupType);
-		flags.add(shDisableReadyMemo);
-		flags.add(shAlwaysShowComponentsList);
-		flags.add(shFlatComponentsList);
-		flags.add(shShowComponentSizes);
-		flags.add(shUsePreviousTasks);
-		flags.add(shDisableReadyPage);
-		flags.add(shAlwaysShowDirOnReadyPage);
-		flags.add(shAlwaysShowGroupOnReadyPage);
+	if(version >= INNO_VERSION(2, 0, 0)) {
+		flags.add(UsePreviousSetupType);
+		flags.add(DisableReadyMemo);
+		flags.add(AlwaysShowComponentsList);
+		flags.add(FlatComponentsList);
+		flags.add(ShowComponentSizes);
+		flags.add(UsePreviousTasks);
+		flags.add(DisableReadyPage);
+	}
+	
+	if(version >= INNO_VERSION(2, 0, 7)) {
+		flags.add(AlwaysShowDirOnReadyPage);
+		flags.add(AlwaysShowGroupOnReadyPage);
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 17) && version < INNO_VERSION(4, 1, 5)) {
-		flags.add(shBzipUsed);
+		flags.add(BzipUsed);
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 18)) {
-		flags.add(shAllowUNCPath);
+		flags.add(AllowUNCPath);
 	}
 	
 	if(version >= INNO_VERSION(3, 0, 0)) {
-		flags.add(shUserInfoPage);
-		flags.add(shUsePreviousUserInfo);
+		flags.add(UserInfoPage);
+		flags.add(UsePreviousUserInfo);
 	}
 	
 	if(version >= INNO_VERSION(3, 0, 1)) {
-		flags.add(shUninstallRestartComputer);
+		flags.add(UninstallRestartComputer);
 	}
 	
 	if(version >= INNO_VERSION(3, 0, 3)) {
-		flags.add(shRestartIfNeededByRun);
+		flags.add(RestartIfNeededByRun);
 	}
 	
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
-		flags.add(shShowTasksTreeLines);
+		flags.add(ShowTasksTreeLines);
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0) && version < INNO_VERSION(4, 0, 10)) {
-		flags.add(shShowLanguageDialog);
+		flags.add(ShowLanguageDialog);
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 1) && version < INNO_VERSION(4, 0, 10)) {
-		flags.add(shDetectLanguageUsingLocale);
+		flags.add(DetectLanguageUsingLocale);
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 9)) {
-		flags.add(shAllowCancelDuringInstall);
+		flags.add(AllowCancelDuringInstall);
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 3)) {
-		flags.add(shWizardImageStretch);
+		flags.add(WizardImageStretch);
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 8)) {
-		flags.add(shAppendDefaultDirName);
-		flags.add(shAppendDefaultGroupName);
+		flags.add(AppendDefaultDirName);
+		flags.add(AppendDefaultGroupName);
 	}
 	
 	if(version >= INNO_VERSION(4, 2, 2)) {
-		flags.add(shEncryptionUsed);
+		flags.add(EncryptionUsed);
 	}
 	
 	if(version >= INNO_VERSION(5, 0, 4)) {
-		flags.add(shChangesEnvironment);
+		flags.add(ChangesEnvironment);
 	}
 	
 	if(version >= INNO_VERSION(5, 1, 7) && !version.unicode) {
-		flags.add(shShowUndisplayableLanguages);
+		flags.add(ShowUndisplayableLanguages);
 	}
 	
 	if(version >= INNO_VERSION(5, 1, 13)) {
-		flags.add(shSetupLogging);
+		flags.add(SetupLogging);
 	}
 	
 	if(version >= INNO_VERSION(5, 2, 1)) {
-		flags.add(shSignedUninstaller);
+		flags.add(SignedUninstaller);
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 8)) {
-		flags.add(shUsePreviousLanguage);
+		flags.add(UsePreviousLanguage);
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 9)) {
-		flags.add(shDisableWelcomePage);
+		flags.add(DisableWelcomePage);
 	}
 	
 	options |= flags.get();
 	
-	if(version < INNO_VERSION(3, 0, 4)) { // TODO 3.0.4 setup files incorrectly specify the version as 3.0.3
-		privilegesRequired = (options & shAdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;
+	if(version < INNO_VERSION(3, 0, 4)) {
+		privilegesRequired = (options & AdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;
 	}
 	
 	if(version < INNO_VERSION(4, 0, 10)) {
-		showLanguageDialog = (options & shShowLanguageDialog) ? Yes : No;
-		languageDetectionMethod = (options & shDetectLanguageUsingLocale) ? LocaleLanguage : UILanguage;
+		showLanguageDialog = (options & ShowLanguageDialog) ? Yes : No;
+		languageDetectionMethod = (options & DetectLanguageUsingLocale) ? LocaleLanguage : UILanguage;
 	}
 	
 	if(version < INNO_VERSION(4, 1, 5)) {
-		compressMethod = (options & shBzipUsed) ? BZip2 : Zlib;
+		compressMethod = (options & BzipUsed) ? BZip2 : Zlib;
 	}
 	
 	if(version < INNO_VERSION(5, 3, 3)) {
-		disableDirPage = (options & shDisableDirPage) ? Yes : No;
-		disableProgramGroupPage = (options & shDisableProgramGroupPage) ? Yes : No;
+		disableDirPage = (options & DisableDirPage) ? Yes : No;
+		disableProgramGroupPage = (options & DisableProgramGroupPage) ? Yes : No;
 	}
 	
-	if(version <= INNO_VERSION(1, 2, 16)) { // in 1.2.16, not in 1.3.25
+	if(version < INNO_VERSION(1, 3, 21)) {
 		if(licenseSize) {
 			std::string temp;
 			temp.resize(licenseSize);
@@ -471,7 +475,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	
 }
 
-ENUM_NAMES(SetupHeaderOptions::Enum, "Setup Option",
+ENUM_NAMES(SetupHeader::Options, "Setup Option",
 	"disable startup prompt",
 	"create app dir",
 	"allow no icons",
@@ -530,19 +534,13 @@ ENUM_NAMES(SetupHeaderOptions::Enum, "Setup Option",
 	"back solid",
 	"overwrite uninst reg entries",
 )
-BOOST_STATIC_ASSERT(EnumSize<SetupHeaderOptions::Enum>::value == EnumNames<SetupHeaderOptions::Enum>::count);
+BOOST_STATIC_ASSERT(EnumSize<SetupHeader::Options::Enum>::value == EnumNames<SetupHeader::Options::Enum>::count);
 
-ENUM_NAMES(Architectures::Enum, "Architecture",
+ENUM_NAMES(SetupHeader::Architectures, "Architecture",
 	"unknown",
 	"x86",
 	"amd64",
 	"IA64",
-)
-
-ENUM_NAMES(SetupHeader::PasswordType, "Password Type",
-	"plain",
-	"MD5",
-	"SHA1",
 )
 
 ENUM_NAMES(SetupHeader::InstallMode, "Install Mode",

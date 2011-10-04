@@ -5,24 +5,26 @@
 #include <iostream>
 
 #include "setup/Version.hpp"
+#include "setup/WindowsVersion.hpp"
 
-struct SetupCondition {
+struct SetupItem {
 	
 	std::string components;
 	std::string tasks;
 	std::string languages;
 	std::string check;
 	
-	void load(std::istream & is, const InnoVersion & version);
-	
-};
-
-struct SetupTasks {
-	
 	std::string afterInstall;
 	std::string beforeInstall;
 	
-	void load(std::istream & is, const InnoVersion & version);
+	WindowsVersion minVersion;
+	WindowsVersion onlyBelowVersion;
+	
+protected:
+	
+	void loadConditionData(std::istream & is, const InnoVersion & version);
+	
+	void loadVersionData(std::istream & is, const InnoVersion & version);
 	
 };
 

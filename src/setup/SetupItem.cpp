@@ -1,11 +1,11 @@
 
-#include "setup/SetupCondition.hpp"
+#include "setup/SetupItem.hpp"
 
 #include "util/LoadingUtils.hpp"
 
-void SetupCondition::load(std::istream & is, const InnoVersion & version) {
+void SetupItem::loadConditionData(std::istream & is, const InnoVersion & version) {
 	
-	if(version > INNO_VERSION(1, 3, 26)) {
+	if(version >= INNO_VERSION(2, 0, 0)) {
 		is >> EncodedString(components, version.codepage());
 		is >> EncodedString(tasks, version.codepage());
 	} else {
@@ -22,15 +22,18 @@ void SetupCondition::load(std::istream & is, const InnoVersion & version) {
 		check.clear();
 	}
 	
-}
-
-void SetupTasks::load(std::istream & is, const InnoVersion & version) {
-	
 	if(version >= INNO_VERSION(4, 1, 0)) {
 		is >> EncodedString(afterInstall, version.codepage());
 		is >> EncodedString(beforeInstall, version.codepage());
 	} else {
 		afterInstall.clear(), beforeInstall.clear();
 	}
+	
+}
+
+void SetupItem::loadVersionData(std::istream & is, const InnoVersion & version) {
+	
+	minVersion.load(is, version);
+	onlyBelowVersion.load(is, version);
 	
 }
