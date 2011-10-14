@@ -5,47 +5,45 @@
 #include <stddef.h>
 #include <iostream>
 
-#include "util/Types.hpp"
+#include "util/Checksum.hpp"
 
-enum ChecksumMode {
-	ChecksumAdler32,
-	ChecksumCrc32
-};
-
-class SetupLoader {
+struct SetupLoader {
 	
-public:
+	size_t totalSize; //!< Minimum expected size of the setup file
 	
-	struct Offsets {
-		
-		size_t totalSize; //!< Minimum expected size of the setup file
-		
-		size_t exeOffset; //!< Offset of compressed setup.e32
-		size_t exeCompressedSize; //!< Size of setup.e32 after compression
-		size_t exeUncompressedSize; //!< Size of setup.e32 before compression
-		s32 exeChecksum; //!< Checksum of setup.e32 before compression
-		ChecksumMode exeChecksumMode;  //! Type of the checksum in exeChecksum
-		
-		size_t messageOffset; // TODO document
-		
-		size_t offset0; //!< Offset of embedded setup-0.bin data
-		size_t offset1; //!< Offset of embedded setup-1.bin data, or 0 when DiskSpanning=yes
-		
-	};
+	size_t exeOffset; //!< Offset of compressed setup.e32. 0 means there is no exe in this file.
+	size_t exeCompressedSize; //!< Size of setup.e32 after compression (0 = unknown)
+	size_t exeUncompressedSize; //!< Size of setup.e32 before compression
+	
+	Checksum exeChecksum; //!< Checksum of setup.e32 before compression
+	
+	size_t messageOffset;
+	
+	/*!
+		* Offset of embedded setup-0.bin data (the setup headers)
+		* This points to a version string (see setup/Version.hpp) followed by a
+		* compressed block of headers (see stream/BlockReader.hpp and setup/SetupHeader.hpp)
+		*/
+	size_t headerOffset;
+	
+	/*!
+		* Offset of embedded setup-1.bin data.
+		* If this is zero, the setup data is stored in seprarate files.
+		*/
+	size_t dataOffset;
 	
 	/*!
 	* Try to find the setup loader offsets in the given file.
-	* @return true if the offsets were found, false otherwise
 	*/
-	static bool getOffsets(std::istream & is, Offsets & offsets);
+	void load(std::istream & is);
 	
 private:
 	
-	static bool getOldOffsets(std::istream & is, Offsets & offsets);
+	bool loadFromExeFile(std::istream & is);
 	
-	static bool getNewOffsets(std::istream & is, Offsets & offsets);
+	bool loadFromExeResource(std::istream & is);
 	
-	static bool getOffsetsAt(std::istream & is, Offsets & offsets, size_t pos);
+	bool loadOffsetsAt(std::istream & is, size_t pos);
 	
 };
 

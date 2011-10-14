@@ -50,9 +50,11 @@ set(INNOEXTRACT_SOURCES
 	src/setup/Version.cpp
 	src/setup/WindowsVersion.cpp
 	
+	src/stream/BlockFilter.cpp
 	src/stream/BlockReader.cpp
-	src/stream/ChunkFilter.cpp
+	src/stream/ChunkReader.cpp
 	src/stream/Lzma1Filter.cpp
+	src/stream/SliceReader.cpp
 	
 	src/util/Checksum.cpp
 	src/util/LoadingUtils.cpp

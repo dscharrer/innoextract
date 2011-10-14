@@ -8,7 +8,7 @@
 #include <boost/iostreams/filter/zlib.hpp>
 #include <lzma.h>
 
-#include "stream/ChunkFilter.hpp"
+#include "stream/BlockFilter.hpp"
 #include "stream/Lzma1Filter.hpp"
 #include "util/Enum.hpp"
 #include "util/LoadingUtils.hpp"
@@ -19,15 +19,19 @@ using std::endl;
 
 namespace io = boost::iostreams;
 
-enum Compression {
+namespace {
+
+enum BlockCompression {
 	Stored,
 	Zlib,
 	LZMA1,
 };
 
-NAMED_ENUM(Compression)
+} // anonymous namespace
 
-ENUM_NAMES(Compression, "Compression", "stored", "zlib", "lzma1")
+NAMED_ENUM(BlockCompression)
+
+ENUM_NAMES(BlockCompression, "Compression", "stored", "zlib", "lzma1")
 
 template <class T>
 T loadNumberChecked(std::istream & is, u32 & crc) {
@@ -42,14 +46,12 @@ std::istream * BlockReader::get(std::istream & base, const InnoVersion & version
 	u32 actualCrc = 0;
 	
 	u64 storedSize;
-	Compression compression;
-	bool chunked;
+	BlockCompression compression;
 	
 	if(version >= INNO_VERSION(4, 0, 9)) {
 		storedSize = loadNumberChecked<u32>(base, actualCrc);
 		u8 compressed = loadNumberChecked<u8>(base, actualCrc);
 		compression = compressed ? (version >= INNO_VERSION(4, 1, 6) ? LZMA1 : Zlib) : Stored;
-		chunked = true;
 		
 	} else {
 		
@@ -62,7 +64,7 @@ std::istream * BlockReader::get(std::istream & base, const InnoVersion & version
 			storedSize = compressedSize, compression = Zlib;
 		}
 		
-		// Add the size of a CRC32 checksum for each 4KiB chunk.
+		// Add the size of a CRC32 checksum for each 4KiB subblock.
 		storedSize += ceildiv(storedSize, 4096) * 4;
 	}
 	
@@ -82,7 +84,7 @@ std::istream * BlockReader::get(std::istream & base, const InnoVersion & version
 		case LZMA1: fis->push(inno_lzma1_decompressor(), 8192); break;
 	}
 	
-	fis->push(inno_chunk_filter(), 4096);
+	fis->push(inno_block_filter(), 4096);
 	
 	fis->push(io::restrict(base, 0, storedSize));
 	

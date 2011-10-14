@@ -197,7 +197,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	
 	if(version < INNO_VERSION(4, 0, 0)) {
 		extraDiskSpaceRequired = loadNumber<s32>(is);
-		slicesPerDisk = 0;
+		slicesPerDisk = 1;
 	} else {
 		extraDiskSpaceRequired = loadNumber<s64>(is);
 		slicesPerDisk = loadNumber<s32>(is);
@@ -393,6 +393,8 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	
 	if(version >= INNO_VERSION(4, 0, 9)) {
 		flags.add(AllowCancelDuringInstall);
+	} else {
+		options |= AllowCancelDuringInstall;
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 3)) {

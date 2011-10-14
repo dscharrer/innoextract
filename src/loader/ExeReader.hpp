@@ -10,7 +10,7 @@ struct CoffFileHeader;
 struct CoffSection;
 
 /*!
- * PE/COFF parser that can find resources by ID in .EXE files.
+ * Minimal PE/COFF parser that can find resources by ID in .exe files.
  * This implementation is optimized to look for exactly one resource.
  */
 class ExeReader {

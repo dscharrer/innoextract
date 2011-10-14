@@ -10,21 +10,20 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 	firstSlice = loadNumber<u32>(is, version.bits);
 	lastSlice = loadNumber<u32>(is, version.bits);
 	
-	startOffset = loadNumber<u32>(is);
+	chunkOffset = loadNumber<u32>(is);
 	
 	if(version >= INNO_VERSION(4, 0, 1)) {
-		chunkSubOffset = loadNumber<u64>(is);
+		fileOffset = loadNumber<u64>(is);
 	} else {
-		chunkSubOffset = 0;
+		fileOffset = 0;
 	}
 	
-	// TODO before 4.0.1 chunkCompressedSize is actually compressedSize
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		originalSize = loadNumber<u64>(is);
-		chunkCompressedSize = loadNumber<u64>(is);
+		fileSize = loadNumber<u64>(is);
+		chunkSize = loadNumber<u64>(is);
 	} else {
-		originalSize = loadNumber<u32>(is);
-		chunkCompressedSize = loadNumber<u32>(is);
+		fileSize = loadNumber<u32>(is);
+		chunkSize = loadNumber<u32>(is);
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 9)) {

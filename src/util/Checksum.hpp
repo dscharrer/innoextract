@@ -7,9 +7,6 @@
 
 struct Checksum {
 	
-	typedef char MD5Digest[16];
-	typedef char SHA1Digest[20];
-	
 	enum Type {
 		Adler32,
 		Crc32,
@@ -20,11 +17,29 @@ struct Checksum {
 	union {
 		u32 adler32;
 		u32 crc32;
-		MD5Digest md5;
-		SHA1Digest sha1;
+		char md5[16];
+		char sha1[20];
 	};
 	
 	Type type;
+	
+	void init(Type type);
+	
+	void process(const void * data, size_t size);
+	
+	template <class T>
+	inline T process(T data) {
+		process(&data, sizeof(data));
+		return data;
+	}
+	
+	void finalize();
+	
+	bool operator==(const Checksum & other) const;
+	inline bool operator!=(const Checksum & other) const { return !(*this == other); }
+	
+	inline Checksum() { }
+	inline Checksum(Type type) { init(type); }
 	
 };
 

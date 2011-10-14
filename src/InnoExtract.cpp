@@ -99,11 +99,13 @@ std::ostream & operator<<(std::ostream & os, const Checksum & checksum) {
 			for(size_t i = 0; i < ARRAY_SIZE(checksum.md5); i++) {
 				cout << std::setfill('0') << std::setw(0) << int(u8(checksum.md5[i]));
 			}
+			break;
 		}
 		case Checksum::Sha1: {
 			for(size_t i = 0; i < ARRAY_SIZE(checksum.sha1); i++) {
 				cout << std::setfill('0') << std::setw(0) << int(u8(checksum.sha1[i]));
 			}
+			break;
 		}
 	}
 	
@@ -198,31 +200,37 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 	
-	SetupLoader::Offsets offsets;
-	if(!SetupLoader::getOffsets(ifs, offsets)) {
-		error << "failed to load setup loader offsets";
-		// TODO try offset0 = 0
-		return 1;
-	}
+	SetupLoader offsets;
+	offsets.load(ifs);
 	
 	cout << std::boolalpha;
 	
-	cout << color::white;
 	cout << "loaded offsets:" << endl;
-	cout << "- total size: " << offsets.totalSize << endl;
-	cout << "- exe: @ " << hex << offsets.exeOffset << dec << "  compressed: " << offsets.exeCompressedSize << "  uncompressed: " << offsets.exeUncompressedSize << endl;
-	cout << "- exe checksum: " << hex << setfill('0') << setw(8) << offsets.exeChecksum << dec << " (" << (offsets.exeChecksumMode == ChecksumAdler32 ? "Alder32" : "CRC32") << ')' << endl;
-	cout << "- messageOffset: " << hex << offsets.messageOffset << dec << endl;
-	cout << "- offset:  0: " << hex << offsets.offset0 << "  1: " << offsets.messageOffset << dec << endl;
-	cout << color::reset;
+	cout << "- total size: " << color::cyan << PrintBytes(offsets.totalSize) << color::reset << endl;
+	if(offsets.exeOffset) {
+		cout << "- exe: @ " << color::cyan << PrintHex(offsets.exeOffset) << color::reset;
+		if(offsets.exeCompressedSize) {
+			cout << "  compressed: " << color::cyan << PrintHex(offsets.exeCompressedSize) << color::reset;
+		}
+		cout << "  uncompressed: " << color::cyan << PrintBytes(offsets.exeUncompressedSize) << color::reset << endl;
+		cout << "- exe checksum: " << color::cyan << offsets.exeChecksum  << color::reset << endl;
+	}
+	cout << IfNotZero("- message offset", PrintHex(offsets.messageOffset));
+	cout << "- header offset: " << color::cyan << PrintHex(offsets.headerOffset) << color::reset << endl;
+	cout << IfNotZero("- data offset", PrintHex(offsets.dataOffset));
 	
-	ifs.seekg(offsets.offset0);
+	ifs.seekg(offsets.headerOffset);
 	
 	InnoVersion version;
 	version.load(ifs);
 	if(ifs.fail()) {
 		error << "error reading setup data version!";
 		return 1;
+	}
+	
+	if(!version.known) {
+		error << "unknown version!";
+		return 1; // TODO
 	}
 	
 	cout << "version: " << color::white << version << color::reset << endl;
@@ -514,9 +522,11 @@ int main(int argc, char * argv[]) {
 	if(header.numDirectoryEntries) {
 		cout << endl << "Directory entries:" << endl;
 	}
+	std::vector<DirectoryEntry> directories;
+	directories.resize(header.numDirectoryEntries);
 	for(size_t i = 0; i < header.numDirectoryEntries; i++) {
 		
-		DirectoryEntry entry;
+		DirectoryEntry & entry = directories[i];
 		entry.load(*is, version);
 		if(is->fail()) {
 			error << "error reading directory entry #" << i;
@@ -542,9 +552,11 @@ int main(int argc, char * argv[]) {
 	if(header.numFileEntries) {
 		cout << endl << "File entries:" << endl;
 	}
+	std::vector<FileEntry> files;
+	files.resize(header.numFileEntries);
 	for(size_t i = 0; i < header.numFileEntries; i++) {
 		
-		FileEntry entry;
+		FileEntry & entry = files[i];
 		entry.load(*is, version);
 		if(is->fail()) {
 			error << "error reading file entry #" << i;
@@ -760,9 +772,11 @@ int main(int argc, char * argv[]) {
 	if(header.numFileLocationEntries) {
 		cout << endl << "File location entries:" << endl;
 	}
+	std::vector<FileLocationEntry> locations;
+	locations.resize(header.numFileLocationEntries);
 	for(size_t i = 0; i < header.numFileLocationEntries; i++) {
 		
-		FileLocationEntry entry;
+		FileLocationEntry & entry = locations[i];
 		entry.load(*is, version);
 		if(is->fail()) {
 			error << "error reading file location entry #" << i;
@@ -773,13 +787,11 @@ int main(int argc, char * argv[]) {
 		cout << IfNotZero("  First slice", entry.firstSlice);
 		cout << IfNot("  Last slice", entry.lastSlice, entry.firstSlice);
 		
-		cout << IfNotZero("  Start offset: ", PrintHex(entry.chunkSubOffset));
+		cout << "  Chunk: offset " << color::cyan << PrintHex(entry.chunkOffset) << color::reset
+		     << " size " << color::cyan << PrintHex(entry.chunkSize) << color::reset << std::endl;
 		
-		cout << IfNotZero("  Chunk sub offset", PrintHex(entry.chunkSubOffset));
-		
-		cout << IfNotZero("  Original size", PrintBytes(entry.originalSize));
-		
-		cout << IfNotZero("  Chunk compressed size", PrintHex(entry.chunkCompressedSize));
+		cout << IfNotZero("  File offset", PrintHex(entry.fileOffset));
+		cout << IfNotZero("  File size", PrintBytes(entry.fileSize));
 		
 		cout << "  Checksum: " << entry.checksum << endl;
 		

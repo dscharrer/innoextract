@@ -6,6 +6,9 @@
 
 #include "setup/Version.hpp"
 
+/*!
+ * Reads a compressed and checksumed block of data used to store the setup headers.
+ */
 class BlockReader {
 	
 public:
