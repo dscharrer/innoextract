@@ -48,7 +48,7 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	options = 0;
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<u32>(is); // uncompressed size of the file entry structure
+		::load<uint32_t>(is); // uncompressed size of the file entry structure
 	}
 	
 	is >> EncodedString(source, version.codepage());
@@ -64,13 +64,12 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	loadVersionData(is, version);
 	
-	location = loadNumber<s32>(is, version.bits);
-	attributes = loadNumber<u32>(is, version.bits);
-	externalSize = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<u64>(is) : loadNumber<u32>(is);
+	location = loadNumber<int32_t>(is, version.bits);
+	attributes = loadNumber<uint32_t>(is, version.bits);
+	externalSize = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<uint64_t>(is) : loadNumber<uint32_t>(is);
 	
 	if(version < INNO_VERSION(3, 0, 5)) {
 		FileCopyMode copyMode = StoredEnum<StoredFileCopyMode>(is).get();
-		// TODO this might be wrong
 		switch(copyMode) {
 			case cmNormal: options |= PromptIfOlder; break;
 			case cmIfDoesntExist: options |= OnlyIfDoesntExist | PromptIfOlder; break;
@@ -80,7 +79,7 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		permission = loadNumber<s16>(is);
+		permission = loadNumber<int16_t>(is);
 	} else {
 		permission = -1;
 	}
@@ -156,6 +155,15 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	options = flags.get();
+	
+	if(version >= INNO_VERSION(3, 0, 5) && version < INNO_VERSION(5, 0, 3)) {
+		// TODO find out where this byte comes from
+		int byte = is.get();
+		std::cout << "read: " << PrintHex(byte) << std::endl;
+		if(byte) {
+			LogWarning << "unknown byte: " << byte;
+		}
+	}
 	
 	if(version.bits == 16 || version >= INNO_VERSION(5, 0, 0)) {
 		type = StoredEnum<StoredFileType0>(is).get();

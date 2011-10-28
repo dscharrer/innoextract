@@ -26,7 +26,7 @@ STORED_FLAGS_MAP(StoredInnoDirectoryOptions1,
 void DirectoryEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<u32>(is); // uncompressed size of the directory entry structure
+		::load<uint32_t>(is); // uncompressed size of the directory entry structure
 	}
 	
 	is >> EncodedString(name, version.codepage());
@@ -40,7 +40,7 @@ void DirectoryEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 11)) {
-		attributes = loadNumber<u32>(is);
+		attributes = loadNumber<uint32_t>(is);
 	} else {
 		attributes = 0;
 	}
@@ -48,7 +48,7 @@ void DirectoryEntry::load(std::istream & is, const InnoVersion & version) {
 	loadVersionData(is, version);
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		permission = loadNumber<s16>(is);
+		permission = loadNumber<int16_t>(is);
 	} else {
 		permission = -1;
 	}

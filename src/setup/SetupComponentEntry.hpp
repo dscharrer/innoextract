@@ -2,11 +2,12 @@
 #ifndef INNOEXTRACT_SETUP_SETUPCOMPONENTENTRY_HPP
 #define INNOEXTRACT_SETUP_SETUPCOMPONENTENTRY_HPP
 
-#include <iostream>
+#include <stdint.h>
+#include <string>
+#include <iosfwd>
 
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"
-
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
 
@@ -28,7 +29,7 @@ struct SetupComponentEntry {
 	std::string languages;
 	std::string check;
 	
-	u64 extraDiskSpaceRequired;
+	uint64_t extraDiskSpaceRequired;
 	
 	int level;
 	bool used;
@@ -38,7 +39,7 @@ struct SetupComponentEntry {
 	
 	Options options;
 	
-	u64 size;
+	uint64_t size;
 	
 	void load(std::istream & is, const InnoVersion & version);
 	

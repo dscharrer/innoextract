@@ -48,14 +48,14 @@ void SetupComponentEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		extraDiskSpaceRequired = loadNumber<u64>(is);
+		extraDiskSpaceRequired = loadNumber<uint64_t>(is);
 	} else {
-		extraDiskSpaceRequired = loadNumber<u32>(is);
+		extraDiskSpaceRequired = loadNumber<uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION(3, 0, 8)) {
-		level = loadNumber<s32>(is);
-		used = loadNumber<u8>(is);
+		level = loadNumber<int32_t>(is);
+		used = loadNumber<uint8_t>(is);
 	} else {
 		level = 0, used = true;
 	}
@@ -71,7 +71,7 @@ void SetupComponentEntry::load(std::istream & is, const InnoVersion & version) {
 		options = StoredFlags<StoredSetupComponentOptions0>(is).get();
 	}
 	
-	size = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<u64>(is) : loadNumber<u32>(is);
+	size = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<uint64_t>(is) : loadNumber<uint32_t>(is);
 }
 
 ENUM_NAMES(SetupComponentEntry::Options, "Setup Component Option",

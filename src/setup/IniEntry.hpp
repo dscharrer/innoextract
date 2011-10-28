@@ -2,13 +2,13 @@
 #ifndef INNOEXTRACT_SETUP_INIENTRY_HPP
 #define INNOEXTRACT_SETUP_INIENTRY_HPP
 
-#include <iostream>
+#include <string>
+#include <iosfwd>
 
 #include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
-#include "util/Types.hpp"
 
 struct IniEntry : public SetupItem {
 	

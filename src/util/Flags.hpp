@@ -3,7 +3,7 @@
 #define INNOEXTRACT_UTIL_FLAGS_HPP
 
 #include <bitset>
-#include <iostream>
+#include <ostream>
 
 #include "util/Output.hpp"
 

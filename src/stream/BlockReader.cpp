@@ -1,15 +1,17 @@
 
 #include "stream/BlockReader.hpp"
 
-#include <iostream>
+#include <stdint.h>
+#include <istream>
 
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/restrict.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
-#include <lzma.h>
 
+#include "crypto/CRC32.hpp"
+#include "setup/Version.hpp"
 #include "stream/BlockFilter.hpp"
-#include "stream/Lzma1Filter.hpp"
+#include "stream/LzmaFilter.hpp"
 #include "util/Enum.hpp"
 #include "util/LoadingUtils.hpp"
 #include "util/Utils.hpp"
@@ -34,31 +36,32 @@ NAMED_ENUM(BlockCompression)
 ENUM_NAMES(BlockCompression, "Compression", "stored", "zlib", "lzma1")
 
 template <class T>
-T loadNumberChecked(std::istream & is, u32 & crc) {
+T loadNumberChecked(std::istream & is, Crc32 & crc) {
 	T value = load<T>(is);
-	crc = lzma_crc32(reinterpret_cast<const uint8_t *>(&value), sizeof(value), crc);
+	crc.process(value);
 	return fromLittleEndian(value);
 };
 
 std::istream * BlockReader::get(std::istream & base, const InnoVersion & version) {
 	
-	u32 expectedCrc = loadNumber<u32>(base);
-	u32 actualCrc = 0;
+	uint32_t expectedCrc = loadNumber<uint32_t>(base);
+	Crc32 actualCrc;
+	actualCrc.init();
 	
-	u64 storedSize;
+	uint64_t storedSize;
 	BlockCompression compression;
 	
 	if(version >= INNO_VERSION(4, 0, 9)) {
-		storedSize = loadNumberChecked<u32>(base, actualCrc);
-		u8 compressed = loadNumberChecked<u8>(base, actualCrc);
+		storedSize = loadNumberChecked<uint32_t>(base, actualCrc);
+		uint8_t compressed = loadNumberChecked<uint8_t>(base, actualCrc);
 		compression = compressed ? (version >= INNO_VERSION(4, 1, 6) ? LZMA1 : Zlib) : Stored;
 		
 	} else {
 		
-		u32 compressedSize = loadNumberChecked<u32>(base, actualCrc);
-		u32 uncompressedSize = loadNumberChecked<u32>(base, actualCrc);
+		uint32_t compressedSize = loadNumberChecked<uint32_t>(base, actualCrc);
+		uint32_t uncompressedSize = loadNumberChecked<uint32_t>(base, actualCrc);
 		
-		if(compressedSize == u32(-1)) {
+		if(compressedSize == uint32_t(-1)) {
 			storedSize = uncompressedSize, compression = Stored;
 		} else {
 			storedSize = compressedSize, compression = Zlib;
@@ -68,8 +71,8 @@ std::istream * BlockReader::get(std::istream & base, const InnoVersion & version
 		storedSize += ceildiv(storedSize, 4096) * 4;
 	}
 	
-	if(actualCrc != expectedCrc) {
-		error << "block CRC32 mismatch";
+	if(actualCrc.finalize() != expectedCrc) {
+		LogError << "block CRC32 mismatch";
 		return NULL;
 	}
 	

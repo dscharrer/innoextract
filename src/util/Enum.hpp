@@ -2,7 +2,7 @@
 #ifndef INNOEXTRACT_UTIL_ENUM_HPP
 #define INNOEXTRACT_UTIL_ENUM_HPP
 
-#include <iostream>
+#include <ostream>
 #include <boost/static_assert.hpp>
 
 #include "util/Flags.hpp"

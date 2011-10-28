@@ -7,23 +7,29 @@
 
 void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 	
-	firstSlice = loadNumber<u32>(is, version.bits);
-	lastSlice = loadNumber<u32>(is, version.bits);
+	firstSlice = loadNumber<uint32_t>(is, version.bits);
+	lastSlice = loadNumber<uint32_t>(is, version.bits);
+	if(version < INNO_VERSION(4, 0, 0)) {
+		if(firstSlice < 1 || lastSlice < 1) {
+			LogWarning << "unexpected disk number: " << firstSlice << " / " << lastSlice;
+		}
+		firstSlice--, lastSlice--;
+	}
 	
-	chunkOffset = loadNumber<u32>(is);
+	chunkOffset = loadNumber<uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 0, 1)) {
-		fileOffset = loadNumber<u64>(is);
+		fileOffset = loadNumber<uint64_t>(is);
 	} else {
 		fileOffset = 0;
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		fileSize = loadNumber<u64>(is);
-		chunkSize = loadNumber<u64>(is);
+		fileSize = loadNumber<uint64_t>(is);
+		chunkSize = loadNumber<uint64_t>(is);
 	} else {
-		fileSize = loadNumber<u32>(is);
-		chunkSize = loadNumber<u32>(is);
+		fileSize = loadNumber<uint32_t>(is);
+		chunkSize = loadNumber<uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 9)) {
@@ -31,14 +37,14 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 	} else if(version >= INNO_VERSION(4, 2, 0)) {
 		is.read(checksum.md5, sizeof(checksum.md5)), checksum.type = Checksum::MD5;
 	} else if(version >= INNO_VERSION(4, 0, 1)) {
-		checksum.crc32 = loadNumber<u32>(is), checksum.type = Checksum::Crc32;
+		checksum.crc32 = loadNumber<uint32_t>(is), checksum.type = Checksum::Crc32;
 	} else {
-		checksum.adler32 = loadNumber<u32>(is), checksum.type = Checksum::Adler32;
+		checksum.adler32 = loadNumber<uint32_t>(is), checksum.type = Checksum::Adler32;
 	}
 	
 	if(version.bits == 16) {
 		
-		u32 date = loadNumber<u32>(is); // milliseconds?
+		uint32_t date = loadNumber<uint32_t>(is); // milliseconds?
 		
 		// TODO this seems to be off by a few years:
 		// expected ~ 2000-04-18, got 1991-07-28
@@ -48,11 +54,11 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 		
 	} else {
 		
-		s64 filetime = loadNumber<s64>(is);
+		int64_t filetime = loadNumber<int64_t>(is);
 		
-		static const s64 FILETIME_OFFSET = 0x19DB1DED53E8000l;
+		static const int64_t FILETIME_OFFSET = 0x19DB1DED53E8000l;
 		if(filetime < FILETIME_OFFSET) {
-			warning << "unexpected filetime: " << filetime;
+			LogWarning << "unexpected filetime: " << filetime;
 		}
 		filetime -= FILETIME_OFFSET;
 		
@@ -60,8 +66,10 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 		timestamp.tv_nsec = long(filetime % 10000000) * 100;
 	}
 	
-	fileVersionMS = loadNumber<u32>(is);
-	fileVersionLS = loadNumber<u32>(is);
+	fileVersionMS = loadNumber<uint32_t>(is);
+	fileVersionLS = loadNumber<uint32_t>(is);
+	
+	options = 0;
 	
 	StoredFlagReader<Options> flags(is);
 	
@@ -87,12 +95,18 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 	if(version >= INNO_VERSION(4, 2, 5)) {
 		flags.add(ChunkCompressed);
+	} else {
+		options |= ChunkCompressed;
 	}
 	if(version >= INNO_VERSION(5, 1, 13)) {
 		flags.add(SolidBreak);
 	}
 	
-	options = flags.get();
+	options |= flags.get();
+	
+	if(options & BZipped) {
+		options |= ChunkCompressed;
+	}
 }
 
 ENUM_NAMES(FileLocationEntry::Options, "File Location Option",

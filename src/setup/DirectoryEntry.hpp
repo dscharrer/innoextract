@@ -2,13 +2,14 @@
 #ifndef INNOEXTRACT_SETUP_DIRECTORYENTRY_HPP
 #define INNOEXTRACT_SETUP_DIRECTORYENTRY_HPP
 
-#include <iostream>
+#include <stdint.h>
+#include <string>
+#include <iosfwd>
 
 #include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
-#include "util/Types.hpp"
 
 struct DirectoryEntry : public SetupItem {
 	
@@ -23,7 +24,7 @@ struct DirectoryEntry : public SetupItem {
 	std::string name;
 	std::string permissions;
 	
-	u32 attributes;
+	uint32_t attributes;
 	
 	int permission; //!< index into the permission entry list
 	

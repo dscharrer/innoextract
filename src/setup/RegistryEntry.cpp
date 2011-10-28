@@ -1,6 +1,8 @@
 
 #include "setup/RegistryEntry.hpp"
 
+#include <stdint.h>
+
 #include "util/LoadingUtils.hpp"
 #include "util/StoredEnum.hpp"
 
@@ -37,7 +39,7 @@ STORED_ENUM_MAP(StoredRegistryEntryType2, RegistryEntry::None,
 void RegistryEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<u32>(is); // uncompressed size of the directory entry structure
+		::load<uint32_t>(is); // uncompressed size of the directory entry structure
 	}
 	
 	is >> EncodedString(key, version.codepage());
@@ -59,13 +61,13 @@ void RegistryEntry::load(std::istream & is, const InnoVersion & version) {
 	loadVersionData(is, version);
 	
 	if(version.bits != 16) {
-		hive = Hive(loadNumber<u32>(is) & ~0x80000000);
+		hive = Hive(loadNumber<uint32_t>(is) & ~0x80000000);
 	} else {
 		hive = Unset;
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		permission = loadNumber<s16>(is);
+		permission = loadNumber<int16_t>(is);
 	} else {
 		permission = -1;
 	}

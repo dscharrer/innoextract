@@ -2,7 +2,8 @@
 #ifndef INNOEXTRACT_SETUP_CUSTOMMESSAGEENTRY_HPP
 #define INNOEXTRACT_SETUP_CUSTOMMESSAGEENTRY_HPP
 
-#include <iostream>
+#include <string>
+#include <iosfwd>
 
 #include "setup/Version.hpp"
 
@@ -13,7 +14,7 @@ struct MessageEntry {
 	// UTF-8 encoded name.
 	std::string name;
 	
-	// Value encoding in the codepage specified at language index.
+	// Value encoded in the codepage specified at language index.
 	std::string value;
 	
 	// Index into the default language entry list or -1.

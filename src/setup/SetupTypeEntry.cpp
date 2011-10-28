@@ -45,7 +45,7 @@ void SetupTypeEntry::load(std::istream & is, const InnoVersion & version) {
 		type = User;
 	}
 	
-	size = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<u64>(is) : loadNumber<u32>(is);
+	size = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<uint64_t>(is) : loadNumber<uint32_t>(is);
 }
 
 ENUM_NAMES(SetupTypeEntry::Options, "Setyp Type Option",

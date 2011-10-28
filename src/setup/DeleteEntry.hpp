@@ -2,7 +2,8 @@
 #ifndef INNOEXTRACT_SETUP_DELETEENTRY_HPP
 #define INNOEXTRACT_SETUP_DELETEENTRY_HPP
 
-#include <iostream>
+#include <string>
+#include <iosfwd>
 
 #include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"

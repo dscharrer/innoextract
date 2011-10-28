@@ -2,15 +2,15 @@
 #ifndef INNOEXTRACT_SETUP_FILELOCATIONENTRY_HPP
 #define INNOEXTRACT_SETUP_FILELOCATIONENTRY_HPP
 
+#include <stdint.h>
 #include <ctime>
-#include <iostream>
+#include <iosfwd>
 
+#include "crypto/Checksum.hpp"
 #include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
-#include "util/Checksum.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
-#include "util/Types.hpp"
 
 struct FileLocationEntry : public SetupItem {
 	
@@ -33,18 +33,18 @@ struct FileLocationEntry : public SetupItem {
 	size_t firstSlice;
 	size_t lastSlice;
 	
-	size_t chunkOffset; //!< offset of the compressed chunk
-	u64 chunkSize; //! total compressed size of the chunk
+	size_t chunkOffset; //!< offset of the compressed chunk in firstSlice
+	uint64_t chunkSize; //! total compressed size of the chunk
 	
-	u64 fileOffset; //!< offset of this file within the decompressed chunk
-	u64 fileSize; //!< decompressed size of this file
+	uint64_t fileOffset; //!< offset of this file within the decompressed chunk
+	uint64_t fileSize; //!< decompressed size of this file
 	
 	Checksum checksum;
 	
 	timespec timestamp;
 	
-	u32 fileVersionMS;
-	u32 fileVersionLS;
+	uint32_t fileVersionMS;
+	uint32_t fileVersionLS;
 	
 	Options options;
 	

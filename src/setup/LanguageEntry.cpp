@@ -36,10 +36,10 @@ void LanguageEntry::load(std::istream & is, const InnoVersion & version) {
 		licenseText.clear(), infoBeforeText.clear(), infoAfterText.clear();
 	}
 	
-	languageId = loadNumber<u32>(is);
+	languageId = loadNumber<uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 2, 2) && (version < INNO_VERSION(5, 3, 0) || !version.unicode)) {
-		codepage = loadNumber<u32>(is);
+		codepage = loadNumber<uint32_t>(is);
 	} else {
 		codepage = 0;
 	}
@@ -47,20 +47,20 @@ void LanguageEntry::load(std::istream & is, const InnoVersion & version) {
 		codepage = version.codepage();
 	}
 	
-	dialogFontSize = loadNumber<u32>(is);
+	dialogFontSize = loadNumber<uint32_t>(is);
 	
 	if(version < INNO_VERSION(4, 1, 0)) {
-		dialogFontStandardHeight = loadNumber<u32>(is);
+		dialogFontStandardHeight = loadNumber<uint32_t>(is);
 	} else {
 		dialogFontStandardHeight = 0;
 	}
 	
-	titleFontSize = loadNumber<u32>(is);
-	welcomeFontSize = loadNumber<u32>(is);
-	copyrightFontSize = loadNumber<u32>(is);
+	titleFontSize = loadNumber<uint32_t>(is);
+	welcomeFontSize = loadNumber<uint32_t>(is);
+	copyrightFontSize = loadNumber<uint32_t>(is);
 	
 	if(version >= INNO_VERSION(5, 2, 3)) {
-		rightToLeft = ::load<u8>(is);
+		rightToLeft = ::load<uint8_t>(is);
 	} else {
 		rightToLeft = false;
 	}

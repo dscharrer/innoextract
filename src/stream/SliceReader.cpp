@@ -1,12 +1,12 @@
 
 #include "stream/SliceReader.hpp"
 
+#include <stdint.h>
 #include <sstream>
 #include <cstring>
 
 #include "util/LoadingUtils.hpp"
 #include "util/Output.hpp"
-#include "util/Types.hpp"
 #include "util/Utils.hpp"
 
 using std::string;
@@ -44,7 +44,7 @@ bool SliceReader::seek(size_t slice) {
 	}
 	
 	if(dataOffset != 0) {
-		error << "[slice] cannot change slices in single-file setup";
+		LogError << "[slice] cannot change slices in single-file setup";
 		return false;
 	}
 	
@@ -56,7 +56,7 @@ bool SliceReader::openFile(const std::string & file) {
 	std::cout << "[slice] opening " << file;
 	
 	ifs.open(file.c_str(), std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
-	if(!ifs.fail()) {
+	if(ifs.fail()) {
 		return false;
 	}
 	
@@ -66,7 +66,7 @@ bool SliceReader::openFile(const std::string & file) {
 	char magic[8];
 	if(ifs.read(magic, 8).fail()) {
 		ifs.close();
-		error << "[slice] error reading magic number";
+		LogError << "[slice] error reading magic number";
 		return false;
 	}
 	bool found = false;
@@ -77,14 +77,14 @@ bool SliceReader::openFile(const std::string & file) {
 		}
 	}
 	if(!found) {
-		error << "[slice] bad magic number";
+		LogError << "[slice] bad magic number";
 		ifs.close();
 		return false;
 	}
 	
-	sliceSize = loadNumber<u32>(ifs);
+	sliceSize = loadNumber<uint32_t>(ifs);
 	if(ifs.fail() || sliceSize > fileSize) {
-		error << "[slice] bad slice size: " << sliceSize << " > " << fileSize;
+		LogError << "[slice] bad slice size: " << sliceSize << " > " << fileSize;
 		ifs.close();
 		return false;
 	}
@@ -107,7 +107,7 @@ bool SliceReader::open(size_t slice, const std::string & file) {
 	ifs.close();
 	
 	if(slicesPerDisk == 0) {
-		error << "[slice] slices per disk must not be zero";
+		LogError << "[slice] slices per disk must not be zero";
 		return false;
 	}
 	
@@ -122,7 +122,7 @@ bool SliceReader::open(size_t slice, const std::string & file) {
 		} else {
 			size_t major = (slice / slicesPerDisk) + 1;
 			size_t minor = slice % slicesPerDisk;
-			oss << major << char(u8('a') + minor);
+			oss << major << char(uint8_t('a') + minor);
 		}
 		oss << ".bin";
 		
@@ -154,14 +154,18 @@ bool SliceReader::seek(size_t slice, size_t offset) {
 		return false;
 	}
 	
-	if(!ifs.seekg(dataOffset + offset).fail()) {
+	if(ifs.seekg(dataOffset + offset).fail()) {
 		return false;
 	}
+	
+	return true;
 }
 
 std::streamsize SliceReader::read(char * buffer, std::streamsize bytes) {
 	
 	size_t nread = 0;
+	
+	std::streamsize requested = bytes;
 	
 	while(bytes > 0) {
 		

@@ -17,7 +17,7 @@ STORED_ENUM_MAP(StoredCloseOnExit, IconEntry::NoSetting,
 void IconEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<u32>(is); // uncompressed size of the icon entry structure
+		::load<uint32_t>(is); // uncompressed size of the icon entry structure
 	}
 	
 	is >> EncodedString(name, version.codepage());
@@ -37,17 +37,17 @@ void IconEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	loadVersionData(is, version);
 	
-	iconIndex = loadNumber<s32>(is, version.bits);
+	iconIndex = loadNumber<int32_t>(is, version.bits);
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		showCmd = loadNumber<s32>(is);
+		showCmd = loadNumber<int32_t>(is);
 		closeOnExit = StoredEnum<StoredCloseOnExit>(is).get();
 	} else {
 		showCmd = 1, closeOnExit = NoSetting;
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 7)) {
-		hotkey = loadNumber<u16>(is);
+		hotkey = loadNumber<uint16_t>(is);
 	} else {
 		hotkey = 0;
 	}

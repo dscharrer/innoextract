@@ -9,8 +9,18 @@
 #include <vector>
 #include <bitset>
 #include <ctime>
+#include <map>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/foreach.hpp>
+#include <boost/ref.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/bzip2.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/restrict.hpp>
+
+#include <crypto/Hasher.hpp>
 
 #include "loader/SetupLoader.hpp"
 
@@ -32,6 +42,11 @@
 #include "setup/Version.hpp"
 
 #include "stream/BlockReader.hpp"
+#include "stream/ChunkReader.hpp"
+#include "stream/LzmaFilter.hpp"
+#include "stream/SliceReader.hpp"
+#include "stream/ChecksumFilter.hpp"
+#include "stream/InstructionFilter.hpp"
 
 #include "util/LoadingUtils.hpp"
 #include "util/Output.hpp"
@@ -44,6 +59,35 @@ using std::setw;
 using std::setfill;
 using std::hex;
 using std::dec;
+
+template <class T>
+void discard(T & is, uint64_t bytes) {
+	
+	std::cout << "discarding " << PrintBytes(bytes) << std::endl;
+	
+	char buf[1024];
+	while(bytes) {
+		size_t n = std::min<uint64_t>(bytes, ARRAY_SIZE(buf));
+		is.read(buf, n);
+		bytes -= n;
+	}
+	
+}
+
+namespace io = boost::iostreams;
+
+struct FileLocationComparer {
+	
+	const std::vector<FileLocationEntry> & locations;
+	
+	FileLocationComparer(const std::vector<FileLocationEntry> & loc) : locations(loc) { }
+	FileLocationComparer(const FileLocationComparer & o) : locations(o.locations) { }
+	
+	bool operator()(size_t a, size_t b) {
+		return (locations[a].fileOffset < locations[b].fileOffset);
+	}
+	
+};
 
 void printSetupItem(std::ostream & os, const SetupItem & item, const SetupHeader & header) {
 	
@@ -82,28 +126,27 @@ void print(std::ostream & os, const RunEntry & entry, const SetupHeader & header
 std::ostream & operator<<(std::ostream & os, const Checksum & checksum) {
 	
 	std::ios_base::fmtflags old = os.flags();
-	os << std::hex;
 	
 	cout << checksum.type << ' ';
 	
 	switch(checksum.type) {
 		case Checksum::Adler32: {
-			cout << "0x" << std::setfill('0') << std::setw(8) << checksum.adler32;
+			cout << PrintHex(checksum.adler32);
 			break;
 		}
 		case Checksum::Crc32: {
-			cout << "0x" << std::setfill('0') << std::setw(8) << checksum.crc32;
+			cout << PrintHex(checksum.crc32);
 			break;
 		}
 		case Checksum::MD5: {
 			for(size_t i = 0; i < ARRAY_SIZE(checksum.md5); i++) {
-				cout << std::setfill('0') << std::setw(0) << int(u8(checksum.md5[i]));
+				cout << std::setfill('0') << std::hex << std::setw(2) << int(uint8_t(checksum.md5[i]));
 			}
 			break;
 		}
 		case Checksum::Sha1: {
 			for(size_t i = 0; i < ARRAY_SIZE(checksum.sha1); i++) {
-				cout << std::setfill('0') << std::setw(0) << int(u8(checksum.sha1[i]));
+				cout << std::setfill('0') << std::hex << std::setw(2) << int(uint8_t(checksum.sha1[i]));
 			}
 			break;
 		}
@@ -152,7 +195,7 @@ void dump(std::istream & is, const string & file) {
 	
 	std::string filename = file + '.' + guessExtension(data);
 	
-	std::ofstream ofs(filename.c_str(), strm::trunc | strm::binary | strm::out);
+	std::ofstream ofs(filename.c_str(), std::ios_base::trunc | std::ios_base::binary | std::ios_base::out);
 	
 	ofs << data;
 };
@@ -175,7 +218,7 @@ void readWizardImageAndDecompressor(std::istream & is, const InnoVersion & versi
 	}
 	
 	if(is.fail()) {
-		error << "error reading misc setup data";
+		LogError << "error reading misc setup data";
 	}
 	
 }
@@ -187,16 +230,16 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 	
-	std::ifstream ifs(argv[1], strm::in | strm::binary | strm::ate);
+	std::ifstream ifs(argv[1], std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
 	
 	if(!ifs.is_open()) {
-		error << "error opening file";
+		LogError << "error opening file";
 		return 1;
 	}
 	
-	u64 fileSize = ifs.tellg();
+	uint64_t fileSize = ifs.tellg();
 	if(!fileSize) {
-		error << "cannot read file or empty file";
+		LogError << "cannot read file or empty file";
 		return 1;
 	}
 	
@@ -224,12 +267,12 @@ int main(int argc, char * argv[]) {
 	InnoVersion version;
 	version.load(ifs);
 	if(ifs.fail()) {
-		error << "error reading setup data version!";
+		LogError << "error reading setup data version!";
 		return 1;
 	}
 	
 	if(!version.known) {
-		error << "unknown version!";
+		LogError << "unknown version!";
 		return 1; // TODO
 	}
 	
@@ -237,16 +280,16 @@ int main(int argc, char * argv[]) {
 	
 	boost::shared_ptr<std::istream> is(BlockReader::get(ifs, version));
 	if(!is) {
-		error << "error reading block";
+		LogError << "error reading block";
 		return 1;
 	}
 	
-	is->exceptions(strm::badbit | strm::failbit);
+	is->exceptions(std::ios_base::badbit | std::ios_base::failbit);
 	
 	SetupHeader header;
 	header.load(*is, version);
 	if(is->fail()) {
-		error << "error reading setup data header!";
+		LogError << "error reading setup data header!";
 		return 1;
 	}
 	
@@ -357,7 +400,7 @@ int main(int argc, char * argv[]) {
 		LanguageEntry & entry = languages[i];
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading language entry #" << i;
+			LogError << "error reading language entry #" << i;
 		}
 		
 		cout << " - " << Quoted(entry.name) << ':' << endl;
@@ -395,11 +438,11 @@ int main(int argc, char * argv[]) {
 		MessageEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading custom message entry #" << i;
+			LogError << "error reading custom message entry #" << i;
 		}
 		
 		if(entry.language >= 0 ? size_t(entry.language) >= languages.size() : entry.language != -1) {
-			warning << "unexpected language index: " << entry.language;
+			LogWarning << "unexpected language index: " << entry.language;
 		}
 		
 		int codepage;
@@ -430,7 +473,7 @@ int main(int argc, char * argv[]) {
 		PermissionEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading permission entry #" << i;
+			LogError << "error reading permission entry #" << i;
 		}
 		
 		cout << " - " << entry.permissions.length() << " bytes";
@@ -445,7 +488,7 @@ int main(int argc, char * argv[]) {
 		SetupTypeEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading type entry #" << i;
+			LogError << "error reading type entry #" << i;
 		}
 		
 		cout << " - " << Quoted(entry.name) << ':' << endl;
@@ -470,7 +513,7 @@ int main(int argc, char * argv[]) {
 		SetupComponentEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading component entry #" << i;
+			LogError << "error reading component entry #" << i;
 		}
 		
 		cout << " - " << Quoted(entry.name) << ':' << endl;
@@ -499,7 +542,7 @@ int main(int argc, char * argv[]) {
 		SetupTaskEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading task entry #" << i;
+			LogError << "error reading task entry #" << i;
 		}
 		
 		cout << " - " << Quoted(entry.name) << ':' << endl;
@@ -529,7 +572,7 @@ int main(int argc, char * argv[]) {
 		DirectoryEntry & entry = directories[i];
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading directory entry #" << i;
+			LogError << "error reading directory entry #" << i;
 		}
 		
 		cout << " - " << Quoted(entry.name) << ':' << endl;
@@ -559,7 +602,7 @@ int main(int argc, char * argv[]) {
 		FileEntry & entry = files[i];
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading file entry #" << i;
+			LogError << "error reading file entry #" << i;
 		}
 		
 		if(entry.destination.empty()) {
@@ -597,7 +640,7 @@ int main(int argc, char * argv[]) {
 		IconEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading icon entry #" << i;
+			LogError << "error reading icon entry #" << i;
 		}
 		
 		cout << " - " << Quoted(entry.name) << " -> " << Quoted(entry.filename) << endl;
@@ -627,7 +670,7 @@ int main(int argc, char * argv[]) {
 		IniEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading ini entry #" << i;
+			LogError << "error reading ini entry #" << i;
 		}
 		
 		cout << " - in " << Quoted(entry.inifile);
@@ -648,7 +691,7 @@ int main(int argc, char * argv[]) {
 		RegistryEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading registry entry #" << i;
+			LogError << "error reading registry entry #" << i;
 		}
 		
 		cout << " - ";
@@ -689,7 +732,7 @@ int main(int argc, char * argv[]) {
 		DeleteEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading install delete entry #" << i;
+			LogError << "error reading install delete entry #" << i;
 		}
 		
 		cout << " - " << Quoted(entry.name)
@@ -707,7 +750,7 @@ int main(int argc, char * argv[]) {
 		DeleteEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading uninstall delete entry #" << i;
+			LogError << "error reading uninstall delete entry #" << i;
 		}
 		
 		cout << " - " << Quoted(entry.name)
@@ -725,7 +768,7 @@ int main(int argc, char * argv[]) {
 		RunEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading install run entry #" << i;
+			LogError << "error reading install run entry #" << i;
 		}
 		
 		print(cout, entry, header);
@@ -740,7 +783,7 @@ int main(int argc, char * argv[]) {
 		RunEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading uninstall run entry #" << i;
+			LogError << "error reading uninstall run entry #" << i;
 		}
 		
 		print(cout, entry, header);
@@ -752,10 +795,10 @@ int main(int argc, char * argv[]) {
 	}
 	
 	{
-		is->exceptions(strm::goodbit);
+		is->exceptions(std::ios_base::goodbit);
 		char dummy;
 		if(!is->get(dummy).eof()) {
-			warning << "expected end of stream";
+			LogWarning << "expected end of stream";
 		}
 	}
 	
@@ -763,11 +806,11 @@ int main(int argc, char * argv[]) {
 	
 	is.reset(BlockReader::get(ifs, version));
 	if(!is) {
-		error << "error reading block";
+		LogError << "error reading block";
 		return 1;
 	}
 	
-	is->exceptions(strm::badbit | strm::failbit);
+	is->exceptions(std::ios_base::badbit | std::ios_base::failbit);
 	
 	if(header.numFileLocationEntries) {
 		cout << endl << "File location entries:" << endl;
@@ -779,7 +822,7 @@ int main(int argc, char * argv[]) {
 		FileLocationEntry & entry = locations[i];
 		entry.load(*is, version);
 		if(is->fail()) {
-			error << "error reading file location entry #" << i;
+			LogError << "error reading file location entry #" << i;
 		}
 		
 		cout << " - " << "File location #" << i << ':' << endl;
@@ -820,12 +863,164 @@ int main(int argc, char * argv[]) {
 	}
 	
 	{
-		is->exceptions(strm::goodbit);
+		is->exceptions(std::ios_base::goodbit);
 		char dummy;
 		if(!is->get(dummy).eof()) {
-			warning << "expected end of stream";
+			LogWarning << "expected end of stream";
 		}
 	}
+	
+	is.reset();
+	
+	std::vector<std::vector<size_t> > files_for_location;
+	files_for_location.resize(locations.size());
+	for(size_t i = 0; i < files.size(); i++) {
+		if(files[i].location < files_for_location.size()) {
+			files_for_location[files[i].location].push_back(i);
+		}
+	}
+	
+	typedef std::map<ChunkReader::Chunk, std::vector<size_t> > Chunks;
+	Chunks chunks;
+	for(size_t i = 0; i < locations.size(); i++) {
+		const FileLocationEntry & location = locations[i];
+		chunks[ChunkReader::Chunk(location.firstSlice, location.chunkOffset, location.chunkSize, location.options & FileLocationEntry::ChunkCompressed, location.options & FileLocationEntry::ChunkEncrypted)].push_back(i);
+	}
+	
+	SliceReader reader(argv[1], offsets.dataOffset);
+	
+	try {
+	
+	BOOST_FOREACH(Chunks::value_type & chunk, chunks) {
+		
+		cout << "[starting " << (chunk.first.compressed ? header.compressMethod : SetupHeader::Stored) << " chunk @ " << chunk.first.firstSlice << " + " << PrintHex(offsets.dataOffset) << " + "
+		     << PrintHex(chunk.first.chunkOffset) << ']' << std::endl;
+		
+		std::sort(chunk.second.begin(), chunk.second.end(), FileLocationComparer(locations));
+		
+		if(!reader.seek(chunk.first.firstSlice, chunk.first.chunkOffset)) {
+			LogError << "error seeking" << std::endl;
+			return 1;
+		}
+		
+		const char chunkId[4] = { 'z', 'l', 'b', 0x1a };
+		
+		char magic[4];
+		if(reader.read(magic, 4) != 4 || memcmp(magic, chunkId, 4)) {
+			LogError << "bad chunk id";
+			return 1;
+		}
+		
+		typedef io::chain<io::input> chunk_stream_type;
+		chunk_stream_type fis;
+		
+		if(chunk.first.compressed) {
+			switch(header.compressMethod) {
+				case SetupHeader::Stored: LogError << "wtf"; break;
+				case SetupHeader::Zlib: fis.push(io::zlib_decompressor(), 8192); break;
+				case SetupHeader::BZip2: fis.push(io::bzip2_decompressor(), 8192); break;
+				case SetupHeader::LZMA1: fis.push(inno_lzma1_decompressor(), 8192); break;
+				case SetupHeader::LZMA2: fis.push(inno_lzma2_decompressor(), 8192); break;
+				default: LogError << "unknown compression";
+			}
+		}
+		
+		fis.push(io::restrict(boost::ref(reader), 0, chunk.first.chunkSize));
+		
+		//fis.exceptions(std::ios_base::badbit | std::ios_base::failbit);
+		
+		uint64_t offset = 0;
+		
+		BOOST_FOREACH(size_t location_i, chunk.second) {
+			const FileLocationEntry & location = locations[location_i];
+			
+			if(location.fileOffset < offset) {
+				LogError << "bad offset";
+				return 1;
+			}
+			
+			if(location.fileOffset > offset) {
+				discard(fis, location.fileOffset - offset);
+			}
+			offset = location.fileOffset + location.fileSize;
+			
+			std::cout << "-> reading ";
+			bool named = false;
+			BOOST_FOREACH(size_t file_i, files_for_location[location_i]) {
+				if(!files[file_i].destination.empty()) {
+					std::cout << '"' << files[file_i].destination << '"';
+					named = true;
+					break;
+				}
+			}
+			if(!named) {
+				std::cout << "unnamed file";
+			}
+			std::cout << " @ " << PrintHex(location.fileOffset)
+			          << " (" << PrintBytes(location.fileSize) << ')' << std::endl;
+			
+			Hasher hasher;
+			hasher.init(location.checksum.type);
+			
+			io::restriction<chunk_stream_type> raw_src(fis, 0, location.fileSize);
+			
+			io::filtering_istream file;
+			
+			file.push(checksum_filter(&hasher), 8192);
+			
+			if(location.options & FileLocationEntry::CallInstructionOptimized) {
+				if(version < INNO_VERSION(5, 2, 0)) {
+					file.push(call_instruction_decoder_4108(), 8192);
+				} else {
+					file.push(call_instruction_decoder_5200(version >= INNO_VERSION(5, 3, 9)), 8192);
+				}
+			}
+			
+			file.push(raw_src);
+			
+			file.exceptions(std::ios_base::badbit | std::ios_base::failbit);
+			
+			//discard(file, location.fileSize);
+			
+			BOOST_FOREACH(size_t file_i, files_for_location[location_i]) {
+				if(!files[file_i].destination.empty()) {
+					std::ofstream ofs(files[file_i].destination.c_str());
+					io::copy(file, ofs, 8192);
+					break; // TODO ...
+				}
+			}
+			
+			Checksum actual;
+			hasher.finalize(actual);
+			if(actual != location.checksum) {
+				LogWarning << "checksum mismatch:";
+				LogWarning << "actual:   " << actual;
+				LogWarning << "expected: " << location.checksum;
+			}
+		}
+	}
+	
+	} catch(io::bzip2_error e) {
+		LogError << e.what() << ": " <<
+		e.error();
+	}
+	
+	std::cout << color::green << "Done" << color::reset;
+	
+	if(total_errors || total_warnings) {
+		std::cout << " with ";
+		if(total_errors) {
+			std::cout << color::red << total_errors << " errors" << color::reset;
+		}
+		if(total_errors && total_warnings) {
+			std::cout << " and ";
+		}
+		if(total_warnings) {
+			std::cout << color::yellow << total_warnings << " warnings" << color::reset;
+		}
+	}
+	
+	std::cout << '.' << std::endl;
 	
 	return 0;
 }

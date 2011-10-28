@@ -1,6 +1,8 @@
 
 #include "setup/SetupTaskEntry.hpp"
 
+#include <stdint.h>
+
 #include "util/LoadingUtils.hpp"
 #include "util/StoredEnum.hpp"
 
@@ -17,8 +19,8 @@ void SetupTaskEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 	if(version >= INNO_VERSION(3, 0, 8)) {
 		is >> EncodedString(check, version.codepage());
-		level = loadNumber<s32>(is);
-		used = loadNumber<u8>(is);
+		level = loadNumber<int32_t>(is);
+		used = loadNumber<uint8_t>(is);
 	} else {
 		check.clear(), level = 0, used = true;
 	}

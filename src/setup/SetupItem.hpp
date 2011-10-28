@@ -2,7 +2,8 @@
 #ifndef INNOEXTRACT_SETUP_SETUPCONDITION_HPP
 #define INNOEXTRACT_SETUP_SETUPCONDITION_HPP
 
-#include <iostream>
+#include <string>
+#include <iosfwd>
 
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"

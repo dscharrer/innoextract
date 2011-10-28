@@ -1,6 +1,8 @@
 
 #include "setup/IniEntry.hpp"
 
+#include <stdint.h>
+
 #include "util/LoadingUtils.hpp"
 #include "util/StoredEnum.hpp"
 
@@ -19,7 +21,7 @@ STORED_FLAGS_MAP(StoredIniOptions,
 void IniEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<u32>(is); // uncompressed size of the ini entry structure
+		::load<uint32_t>(is); // uncompressed size of the ini entry structure
 	}
 	
 	is >> EncodedString(inifile, version.codepage());

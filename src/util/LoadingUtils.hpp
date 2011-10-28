@@ -2,23 +2,23 @@
 #ifndef INNOEXTRACT_UTIL_LOADINGUTILS_HPP
 #define INNOEXTRACT_UTIL_LOADINGUTILS_HPP
 
+#include <stdint.h>
 #include <iostream>
 #include <string>
 #include <limits>
 #include <boost/detail/endian.hpp>
-#include "Types.hpp"
 
-inline u8 fromLittleEndian(u8 value) { return value; }
-inline s8 fromLittleEndian(s8 value) { return value; }
+inline uint8_t fromLittleEndian(uint8_t value) { return value; }
+inline int8_t fromLittleEndian(int8_t value) { return value; }
 
 #ifdef BOOST_LITTLE_ENDIAN
 
-inline u16 fromLittleEndian(u16 value) { return value; }
-inline u32 fromLittleEndian(u32 value) { return value; }
-inline u64 fromLittleEndian(u64 value) { return value; }
-inline s16 fromLittleEndian(s16 value) { return value; }
-inline s32 fromLittleEndian(s32 value) { return value; }
-inline s64 fromLittleEndian(s64 value) { return value; }
+inline uint16_t fromLittleEndian(uint16_t value) { return value; }
+inline uint32_t fromLittleEndian(uint32_t value) { return value; }
+inline uint64_t fromLittleEndian(uint64_t value) { return value; }
+inline int16_t fromLittleEndian(int16_t value) { return value; }
+inline int32_t fromLittleEndian(int32_t value) { return value; }
+inline int64_t fromLittleEndian(int64_t value) { return value; }
 
 #else 
 
@@ -41,16 +41,16 @@ inline std::istream & operator>>(std::istream & is, const BinaryString & str) {
 	return is;
 }
 
-void toUtf8(const std::string & from, std::string & to, u32 codepage = 1252);
+void toUtf8(const std::string & from, std::string & to, uint32_t codepage = 1252);
 
 struct EncodedString {
 	
 	std::string & data;
-	u32 codepage;
+	uint32_t codepage;
 	
-	inline EncodedString(std::string & target, u32 _codepage) : data(target), codepage(_codepage) { }
+	inline EncodedString(std::string & target, uint32_t _codepage) : data(target), codepage(_codepage) { }
 	
-	static void loadInto(std::istream & is, std::string & target, u32 codepage);
+	static void loadInto(std::istream & is, std::string & target, uint32_t codepage);
 	
 };
 
@@ -80,21 +80,21 @@ inline T loadNumber(std::istream & is) {
 template <class Base, size_t Bits, bool Signed = std::numeric_limits<Base>::is_signed>
 struct compatible_integer { typedef void type; };
 template <class Base>
-struct compatible_integer<Base, 8, false> { typedef u8 type; };
+struct compatible_integer<Base, 8, false> { typedef uint8_t type; };
 template <class Base>
-struct compatible_integer<Base, 8, true> { typedef s8 type; };
+struct compatible_integer<Base, 8, true> { typedef int8_t type; };
 template <class Base>
-struct compatible_integer<Base, 16, false> { typedef u16 type; };
+struct compatible_integer<Base, 16, false> { typedef uint16_t type; };
 template <class Base>
-struct compatible_integer<Base, 16, true> { typedef s16 type; };
+struct compatible_integer<Base, 16, true> { typedef int16_t type; };
 template <class Base>
-struct compatible_integer<Base, 32, false> { typedef u32 type; };
+struct compatible_integer<Base, 32, false> { typedef uint32_t type; };
 template <class Base>
-struct compatible_integer<Base, 32, true> { typedef s32 type; };
+struct compatible_integer<Base, 32, true> { typedef int32_t type; };
 template <class Base>
-struct compatible_integer<Base, 64, false> { typedef u64 type; };
+struct compatible_integer<Base, 64, false> { typedef uint64_t type; };
 template <class Base>
-struct compatible_integer<Base, 64, true> { typedef s64 type; };
+struct compatible_integer<Base, 64, true> { typedef int64_t type; };
 
 template <class T>
 T loadNumber(std::istream & is, size_t bits) {

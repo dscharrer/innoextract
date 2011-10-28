@@ -2,10 +2,11 @@
 #ifndef INNOEXTRACT_SETUP_LANGUAGEENTRY_HPP
 #define INNOEXTRACT_SETUP_LANGUAGEENTRY_HPP
 
-#include <iostream>
+#include <stdint.h>
+#include <string>
+#include <iosfwd>
 
 #include "setup/Version.hpp"
-#include "util/Types.hpp"
 
 struct LanguageEntry {
 	
@@ -22,8 +23,8 @@ struct LanguageEntry {
 	std::string infoBeforeText;
 	std::string infoAfterText;
 	
-	u32 languageId;
-	u32 codepage;
+	uint32_t languageId;
+	uint32_t codepage;
 	size_t dialogFontSize;
 	size_t dialogFontStandardHeight;
 	size_t titleFontSize;

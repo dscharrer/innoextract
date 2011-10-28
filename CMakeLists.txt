@@ -24,9 +24,16 @@ include_directories(SYSTEM "${Boost_INCLUDE_DIR}")
 
 list(APPEND LIBRARIES -llzma)
 
-list(APPEND CMAKE_CXX_FLAGS "-ggdb -O3 -march=native -Wl,--as-needed")
+list(APPEND CMAKE_CXX_FLAGS "-ggdb -O0 -march=native -Wl,--as-needed")
 
 set(INNOEXTRACT_SOURCES
+	
+	src/crypto/Adler-32.cpp
+	src/crypto/Checksum.cpp
+	src/crypto/CRC32.cpp
+	src/crypto/Hasher.cpp
+	src/crypto/MD5.cpp
+	src/crypto/SHA-1.cpp
 	
 	src/loader/ExeReader.cpp
 	src/loader/SetupLoader.cpp
@@ -50,13 +57,11 @@ set(INNOEXTRACT_SOURCES
 	src/setup/Version.cpp
 	src/setup/WindowsVersion.cpp
 	
-	src/stream/BlockFilter.cpp
 	src/stream/BlockReader.cpp
 	src/stream/ChunkReader.cpp
-	src/stream/Lzma1Filter.cpp
+	src/stream/LzmaFilter.cpp
 	src/stream/SliceReader.cpp
 	
-	src/util/Checksum.cpp
 	src/util/LoadingUtils.cpp
 	src/util/Output.cpp
 	src/util/Utils.cpp

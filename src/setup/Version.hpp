@@ -2,13 +2,13 @@
 #ifndef INNOEXTRACT_SETUP_VERSION_HPP
 #define INNOEXTRACT_SETUP_VERSION_HPP
 
-#include <iostream>
-#include <utility>
+#include <stdint.h>
+#include <iosfwd>
 
-#include "util/Types.hpp"
-
-typedef u32 InnoVersionConstant;
-#define INNO_VERSION_EXT(a, b, c, d) ((u32(a) << 24) | (u32(b) << 16) | (u32(c) << 8) | u32(d))
+typedef uint32_t InnoVersionConstant;
+#define INNO_VERSION_EXT(a, b, c, d) \
+	((InnoVersionConstant(a) << 24) | (InnoVersionConstant(b) << 16) \
+	 | (InnoVersionConstant(c) << 8) | InnoVersionConstant(d))
 #define INNO_VERSION(a, b, c) INNO_VERSION_EXT(a, b, c, 0)
 
 struct InnoVersion {
@@ -36,11 +36,10 @@ struct InnoVersion {
 	
 	void load(std::istream & is);
 	
-	inline u32 codepage() const { return u32(unicode ? 1200 : 1252); }
+	//! @return the Windows codepage used for encode strings
+	inline uint32_t codepage() const { return uint32_t(unicode ? 1200 : 1252); }
 	
-	/*!
-	 * @return true if the version stored might not be correct
-	 */
+	//! @return true if the version stored might not be correct
 	inline bool isSuspicious() const;
 	
 };

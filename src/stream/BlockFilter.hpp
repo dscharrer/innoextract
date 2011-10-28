@@ -2,16 +2,32 @@
 #ifndef INNOEXTRACT_STREAM_BLOCKFILTER_HPP
 #define INNOEXTRACT_STREAM_BLOCKFILTER_HPP
 
+#include <stdint.h>
 #include <string>
 #include <algorithm>
-#include <iostream>
+#include <iosfwd>
 
+#include <boost/iostreams/char_traits.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/read.hpp>
 
-#include "util/Output.hpp"
-#include "util/Types.hpp"
+#include "crypto/CRC32.hpp"
 
+struct block_error : public std::ios_base::failure {
+	
+	inline block_error(std::string msg) : failure(msg) { }
+	
+};
+
+/*!
+ * A filter that reads a block of 4096-byte chunks where each chunk is preceeded by
+ * a CRC32 checksum. The last chunk can be shorter than 4096 bytes.
+ *
+ * If chunk checksum is wrong a block_error is thrown before any data of that
+ * chunk is returned.
+ *
+ * block_error is also thrown if there is trailing data: 0 < (total size % (4096 + 4)) < 5
+ */
 class inno_block_filter : public boost::iostreams::multichar_input_filter {
 	
 private:
@@ -25,30 +41,29 @@ public:
 	
 	inno_block_filter() : pos(0), length(0) { }
 	
-	void checkCrc(u32 expected) const;
-	
 	template<typename Source>
-	bool readChunk(Source & src) {
+	bool read_chunk(Source & src) {
 		
-		u32 blockCrc32 = *reinterpret_cast<u32 *>(buffer);
+		uint32_t blockCrc32;
 		std::streamsize nread = boost::iostreams::read(src, reinterpret_cast<char *>(&blockCrc32), 4);
-		if(nread == -1) {
-			std::cout << "[block] end" << std::endl;
+		if(nread == EOF) {
 			return false;
 		}	else if(nread != 4) {
-			error << "[block] unexpected block end";
-			throw std::string("unexpected block end");
+			// TODO handle WOULD_BLOCK
+			throw block_error("unexpected block end");
 		}
 		
 		length = boost::iostreams::read(src, buffer, sizeof(buffer));
-		if(length == (size_t)-1) {
-			error << "[block] unexpected block end";
-			throw std::string("unexpected block end");
+		if(length == size_t(EOF)) {
+			throw block_error("unexpected block end");
 		}
 		
-		// TODO remove std::cout << "[block] read block: " << length << " bytes" << std::endl;
-		
-		checkCrc(blockCrc32);
+		Crc32 actual;
+		actual.init();
+		actual.update(buffer, length);
+		if(actual.finalize() != blockCrc32) {
+			throw block_error("block CRC32 mismatch");
+		}
 		
 		pos = 0;
 		
@@ -61,17 +76,15 @@ public:
 		size_t read = 0;
 		while(n) {
 			
-			if(pos == length && !readChunk(src)) {
-				return read ? read : -1;
+			if(pos == length && !read_chunk(src)) {
+				return read ? read : EOF;
 			}
 			
 			std::streamsize size = std::min(n, std::streamsize(length - pos));
 			
-			std::copy(buffer + pos, buffer + pos + size, dest);
-			pos += size;
-			dest += size, n -= size;
-			read += size;
+			std::copy(buffer + pos, buffer + pos + size, dest + read);
 			
+			pos += size, n -= size, read += size;
 		}
 		
 		return read;
@@ -79,8 +92,8 @@ public:
 	
 private:
 	
-	size_t pos;
-	size_t length;
+	size_t pos; //! Current read position in the buffer.
+	size_t length; //! Length of the buffer. This is always 4096 except for the last chunk.
 	char buffer[4096];
 	
 };

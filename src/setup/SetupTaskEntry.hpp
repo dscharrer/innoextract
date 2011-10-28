@@ -2,7 +2,8 @@
 #ifndef INNOEXTRACT_SETUP_SETUPTASKENTRY_HPP
 #define INNOEXTRACT_SETUP_SETUPTASKENTRY_HPP
 
-#include <iostream>
+#include <string>
+#include <iosfwd>
 
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"

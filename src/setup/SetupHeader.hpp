@@ -2,17 +2,17 @@
 #ifndef INNOEXTRACT_SETUP_SETUPHEADER_HPP
 #define INNOEXTRACT_SETUP_SETUPHEADER_HPP
 
+#include <stdint.h>
 #include <stddef.h>
 #include <bitset>
 #include <string>
-#include <iostream>
+#include <iosfwd>
 
+#include "crypto/Checksum.hpp"
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"
-#include "util/Checksum.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
-#include "util/Types.hpp"
 
 typedef char SetupSalt[8];
 
@@ -145,6 +145,7 @@ struct SetupHeader {
 	WindowsVersion minVersion;
 	WindowsVersion onlyBelowVersion;
 	
+	typedef uint32_t Color;
 	Color backColor;
 	Color backColor2;
 	Color wizardImageBackColor;
@@ -153,7 +154,7 @@ struct SetupHeader {
 	Checksum password;
 	SetupSalt passwordSalt; 
 	
-	s64 extraDiskSpaceRequired;
+	int64_t extraDiskSpaceRequired;
 	size_t slicesPerDisk;
 	
 	enum InstallMode {
@@ -214,8 +215,8 @@ struct SetupHeader {
 	Architectures architecturesAllowed;
 	Architectures architecturesInstallIn64BitMode;
 	
-	u64 signedUninstallerOrigSize;
-	u32 signedUninstallerHdrChecksum;
+	uint64_t signedUninstallerOrigSize;
+	uint32_t signedUninstallerHdrChecksum;
 	
 	AutoBoolean disableDirPage;
 	AutoBoolean disableProgramGroupPage;

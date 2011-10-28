@@ -2,26 +2,26 @@
 #ifndef INNOEXTRACT_LOADER_EXEFORMAT_HPP
 #define INNOEXTRACT_LOADER_EXEFORMAT_HPP
 
-#include "util/Types.hpp"
+#include <stdint.h>
 
 # pragma pack(push, 1)
 
 struct CoffFileHeader {
 	
-	u16 machine; // ignored
+	uint16_t machine; // ignored
 	
 	//! Number of CoffSection structures following this header after optionalHeaderSize bytes.
-	u16 nsections;
+	uint16_t nsections;
 	
-	u32 creationTime; // ignored
+	uint32_t creationTime; // ignored
 	
-	u32 symbolTableOffset; // ignored
-	u32 nsymbols; // ignored
+	uint32_t symbolTableOffset; // ignored
+	uint32_t nsymbols; // ignored
 	
 	//! Offset from the end of this header to the start of the section table.
-	u16 optionalHeaderSize;
+	uint16_t optionalHeaderSize;
 	
-	u16 characteristics; // ignored
+	uint16_t characteristics; // ignored
 	
 };
 
@@ -31,48 +31,48 @@ struct CoffDataDirectory {
 	 * Virtual memory address of the start of this dictionary.
 	 * Use the section table to map this to a file offset.
 	 */
-	u32 address;
+	uint32_t address;
 	
 	//! Size of this data directory.
-	u32 size;
+	uint32_t size;
 	
 };
 
 struct CoffResourceTable {
 	
-	u32 characteristics; // ignored
+	uint32_t characteristics; // ignored
 	
-	u32 timestamp; // ignored
+	uint32_t timestamp; // ignored
 	
-	u16 majorVersion; // ignored
-	u16 minorVersion; // minorVersion
+	uint16_t majorVersion; // ignored
+	uint16_t minorVersion; // minorVersion
 	
-	u16 nbnames; //!< Number of named resource entries.
-	u16 nbids; //! Number of id resource entries.
+	uint16_t nbnames; //!< Number of named resource entries.
+	uint16_t nbids; //! Number of id resource entries.
 	
 	//! Folowed by nbames CoffResourceEntry entries and the another nbids CoffResourceEntry.
 };
 
 struct CoffResourceEntry {
 	
-	u32 id; //!< Entry ID.
+	uint32_t id; //!< Entry ID.
 	
 	/*!
 	 * Highest order bit: 1 = points to another CoffResourceTable / 0 = points to a CoffResourceLeaf
 	 * Remaining 31 bits: Offset to the CoffResourceTable CoffResourceLeaf relative to the directory start.
 	 */
-	u32 offset;
+	uint32_t offset;
 	
 };
 
 struct CoffResourceLeaf {
 	
-	u32 address; //! Virtual memory address of the resource data.
-	u32 size; //! Size of the resource data.
+	uint32_t address; //! Virtual memory address of the resource data.
+	uint32_t size; //! Size of the resource data.
 	
-	u32 codepage; //! Windows codepage for the resource encoding.
+	uint32_t codepage; //! Windows codepage for the resource encoding.
 	
-	u32 reserved; // ignored
+	uint32_t reserved; // ignored
 	
 };
 
@@ -80,18 +80,18 @@ struct CoffSection {
 	
 	char name[8]; // ignored
 	
-	u32 virtualSize; //!< Section size in virtual memory.
-	u32 virtualAddress; //!< Base virtual memory address.
+	uint32_t virtualSize; //!< Section size in virtual memory.
+	uint32_t virtualAddress; //!< Base virtual memory address.
 	
-	u32 rawSize; //!< Section size in the file.
-	u32 rawAddress; //!< Base file offset.
+	uint32_t rawSize; //!< Section size in the file.
+	uint32_t rawAddress; //!< Base file offset.
 	
-	u32 relocationAddress; // ignored
-	u32 linenumberAddress; // ignored
-	u16 relocationCount; // ignored
-	u16 linenumberCount; // ignored
+	uint32_t relocationAddress; // ignored
+	uint32_t linenumberAddress; // ignored
+	uint16_t relocationCount; // ignored
+	uint16_t linenumberCount; // ignored
 	
-	u32 characteristics; // ignored
+	uint32_t characteristics; // ignored
 	
 };
 

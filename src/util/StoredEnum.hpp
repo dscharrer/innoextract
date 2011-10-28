@@ -2,6 +2,8 @@
 #ifndef INNOEXTRACT_UTIL_STOREDENUM_HPP
 #define INNOEXTRACT_UTIL_STOREDENUM_HPP
 
+#include <stdint.h>
+#include <stddef.h>
 #include <vector>
 
 #include <boost/utility/enable_if.hpp>
@@ -10,7 +12,6 @@
 #include "util/Enum.hpp"
 #include "util/LoadingUtils.hpp"
 #include "util/Output.hpp"
-#include "util/Types.hpp"
 
 template <class Enum>
 struct EnumValueMap {
@@ -35,7 +36,7 @@ const size_t MapName::count = ARRAY_SIZE(MapName::values)
 template <class Mapping>
 struct StoredEnum {
 	
-	u32 value;
+	size_t value;
 	
 public:
 	
@@ -45,7 +46,8 @@ public:
 	static const size_t size = Mapping::count;
 	
 	inline StoredEnum(std::istream & is) {
-		value = loadNumber<u8>(is); // TODO use larger types for larger enums
+		value = loadNumber<uint8_t>(is); // TODO use larger types for larger enums
+		std::cout << "[e]read: " << PrintHex(value) << " - " << size << std::endl;
 	}
 	
 	enum_type get() {
@@ -54,7 +56,7 @@ public:
 			return Mapping::values[value];
 		}
 		
-		warning << "warning: unexpected " << EnumNames<enum_type>::name << " value: " << value;
+		LogWarning << "warning: unexpected " << EnumNames<enum_type>::name << " value: " << value;
 		
 		return Mapping::default_value;
 	}
@@ -64,7 +66,7 @@ public:
 template <size_t Bits>
 class StoredBitfield {
 	
-	typedef u8 base_type;
+	typedef uint8_t base_type;
 	
 	static const size_t base_size = sizeof(base_type) * 8;
 	static const size_t count = (Bits + (base_size - 1)) / base_size; // ceildiv
@@ -81,14 +83,14 @@ public:
 		}
 	}
 	
-	inline u64 getLowerBits() const {
+	inline uint64_t getLowerBits() const {
 		
-		BOOST_STATIC_ASSERT(sizeof(u64) % sizeof(base_type) == 0);
+		BOOST_STATIC_ASSERT(sizeof(uint64_t) % sizeof(base_type) == 0);
 		
-		u64 result = 0;
+		uint64_t result = 0;
 		
-		for(size_t i = 0; i < std::min(sizeof(u64) / sizeof(base_type), count); i++) {
-			result |= (u64(bits[i]) << (i * base_size));
+		for(size_t i = 0; i < std::min(sizeof(uint64_t) / sizeof(base_type), size_t(count)); i++) {
+			result |= (uint64_t(bits[i]) << (i * base_size));
 		}
 		
 		return result;
@@ -125,18 +127,18 @@ public:
 	
 	flag_type get() {
 		
-		u64 bits = this->getLowerBits();
+		uint64_t bits = this->getLowerBits();
 		flag_type result = 0;
 		
 		for(size_t i = 0; i < this->size; i++) {
-			if(bits & (u64(1) << i)) {
+			if(bits & (uint64_t(1) << i)) {
 				result |= Mapping::values[i];
-				bits &= ~(u64(1) << i);
+				bits &= ~(uint64_t(1) << i);
 			}
 		}
 		
 		if(bits) {
-			warning << "unexpected " << EnumNames<enum_type>::name << " flags: " << std::hex << bits << std::dec;
+			LogWarning << "unexpected " << EnumNames<enum_type>::name << " flags: " << std::hex << bits << std::dec;
 		}
 		
 		return result;
@@ -154,7 +156,7 @@ public:
 	
 	std::istream & is;
 	
-	typedef u8 stored_type;
+	typedef uint8_t stored_type;
 	static const size_t stored_bits = sizeof(stored_type) * 8;
 	
 	size_t pos;
@@ -162,12 +164,15 @@ public:
 	
 	flag_type result;
 	
-	StoredFlagReader(std::istream & _is) : is(_is), pos(0), result(0) { };
+	size_t bits;
+	
+	StoredFlagReader(std::istream & _is) : is(_is), pos(0), result(0), bits(0) { };
 	
 	void add(enum_type flag) {
 		
 		if(pos == 0) {
 			buffer = loadNumber<stored_type>(is);
+			std::cout << "[f]read: " << PrintHex(int(buffer)) << std::endl;
 		}
 		
 		if(buffer & (stored_type(1) << pos)) {
@@ -175,6 +180,8 @@ public:
 		}
 		
 		pos = (pos + 1) % stored_bits;
+		
+		bits++;
 	}
 	
 	flag_type get() {

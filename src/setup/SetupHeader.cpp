@@ -15,7 +15,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	options = 0;
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<u32>(is); // uncompressed size of the setup header structure
+		::load<uint32_t>(is); // uncompressed size of the setup header structure
 	}
 	
 	is >> EncodedString(appName, version.codepage());
@@ -119,7 +119,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		numLanguageEntries = loadNumber<u32>(is);
+		numLanguageEntries = loadNumber<uint32_t>(is);
 	} else if(version >= INNO_VERSION(2, 0, 1)) {
 		numLanguageEntries = 1;
 	} else {
@@ -127,63 +127,63 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 2, 1)) {
-		numCustomMessageEntries = loadNumber<u32>(is);
+		numCustomMessageEntries = loadNumber<uint32_t>(is);
 	} else {
 		numCustomMessageEntries = 0;
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		numPermissionEntries = loadNumber<u32>(is);
+		numPermissionEntries = loadNumber<uint32_t>(is);
 	} else {
 		numPermissionEntries = 0;
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 0)) {
-		numTypeEntries = loadNumber<u32>(is);
-		numComponentEntries = loadNumber<u32>(is);
-		numTaskEntries = loadNumber<u32>(is);
+		numTypeEntries = loadNumber<uint32_t>(is);
+		numComponentEntries = loadNumber<uint32_t>(is);
+		numTaskEntries = loadNumber<uint32_t>(is);
 	} else {
 		numTypeEntries = 0, numComponentEntries = 0, numTaskEntries = 0;
 	}
 	
-	numDirectoryEntries = loadNumber<u32>(is, version.bits);
-	numFileEntries = loadNumber<u32>(is, version.bits);
-	numFileLocationEntries = loadNumber<u32>(is, version.bits);
-	numIconEntries = loadNumber<u32>(is, version.bits);
-	numIniEntries = loadNumber<u32>(is, version.bits);
-	numRegistryEntries = loadNumber<u32>(is, version.bits);
-	numDeleteEntries = loadNumber<u32>(is, version.bits);
-	numUninstallDeleteEntries = loadNumber<u32>(is, version.bits);
-	numRunEntries = loadNumber<u32>(is, version.bits);
-	numUninstallRunEntries = loadNumber<u32>(is, version.bits);
+	numDirectoryEntries = loadNumber<uint32_t>(is, version.bits);
+	numFileEntries = loadNumber<uint32_t>(is, version.bits);
+	numFileLocationEntries = loadNumber<uint32_t>(is, version.bits);
+	numIconEntries = loadNumber<uint32_t>(is, version.bits);
+	numIniEntries = loadNumber<uint32_t>(is, version.bits);
+	numRegistryEntries = loadNumber<uint32_t>(is, version.bits);
+	numDeleteEntries = loadNumber<uint32_t>(is, version.bits);
+	numUninstallDeleteEntries = loadNumber<uint32_t>(is, version.bits);
+	numRunEntries = loadNumber<uint32_t>(is, version.bits);
+	numUninstallRunEntries = loadNumber<uint32_t>(is, version.bits);
 	
 	size_t licenseSize;
 	size_t infoBeforeSize;
 	size_t infoAfterSize;
 	if(version < INNO_VERSION(1, 3, 21)) {
-		licenseSize = loadNumber<u32>(is, version.bits);
-		infoBeforeSize = loadNumber<u32>(is, version.bits);
-		infoAfterSize = loadNumber<u32>(is, version.bits);
+		licenseSize = loadNumber<uint32_t>(is, version.bits);
+		infoBeforeSize = loadNumber<uint32_t>(is, version.bits);
+		infoAfterSize = loadNumber<uint32_t>(is, version.bits);
 	}
 	
 	minVersion.load(is, version);
 	onlyBelowVersion.load(is, version);
 	
-	backColor = loadNumber<u32>(is);
+	backColor = loadNumber<uint32_t>(is);
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		backColor2 = loadNumber<u32>(is);
+		backColor2 = loadNumber<uint32_t>(is);
 	} else {
 		backColor2 = 0;
 	}
-	wizardImageBackColor = loadNumber<u32>(is);
+	wizardImageBackColor = loadNumber<uint32_t>(is);
 	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 4)) {
-		wizardSmallImageBackColor = loadNumber<u32>(is);
+		wizardSmallImageBackColor = loadNumber<uint32_t>(is);
 	} else {
 		wizardSmallImageBackColor = 0;
 	}
 	
 	if(version < INNO_VERSION(4, 2, 0)) {
-		password.crc32 = loadNumber<s32>(is), password.type = Checksum::Crc32;
+		password.crc32 = loadNumber<int32_t>(is), password.type = Checksum::Crc32;
 	} else if(version < INNO_VERSION(5, 3, 9)) {
 		is.read(password.md5, sizeof(password.md5)), password.type = Checksum::MD5;
 	} else {
@@ -196,11 +196,11 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version < INNO_VERSION(4, 0, 0)) {
-		extraDiskSpaceRequired = loadNumber<s32>(is);
+		extraDiskSpaceRequired = loadNumber<int32_t>(is);
 		slicesPerDisk = 1;
 	} else {
-		extraDiskSpaceRequired = loadNumber<s64>(is);
-		slicesPerDisk = loadNumber<s32>(is);
+		extraDiskSpaceRequired = loadNumber<int64_t>(is);
+		slicesPerDisk = loadNumber<int32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 0)) {
@@ -257,7 +257,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		compressMethod = StoredEnum<StoredCompressionMethod0>(is).get();
 	}
 	
-	if(version >= INNO_VERSION(5, 0, 2)) {
+	if(version >= INNO_VERSION(5, 1, 0)) {
 		architecturesAllowed = StoredFlags<StoredArchitectures>(is).get();
 		architecturesInstallIn64BitMode = StoredFlags<StoredArchitectures>(is).get();
 	} else {
@@ -266,8 +266,8 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(5, 2, 1) && version < INNO_VERSION(5, 3, 10)) {
-		signedUninstallerOrigSize = loadNumber<s32>(is);
-		signedUninstallerHdrChecksum = loadNumber<u32>(is);
+		signedUninstallerOrigSize = loadNumber<int32_t>(is);
+		signedUninstallerHdrChecksum = loadNumber<uint32_t>(is);
 	} else {
 		signedUninstallerOrigSize = signedUninstallerHdrChecksum = 0;
 	}
@@ -278,7 +278,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 6)) {
-		uninstallDisplaySize = loadNumber<u32>(is);
+		uninstallDisplaySize = loadNumber<uint32_t>(is);
 	} else {
 		uninstallDisplaySize = 0;
 	}

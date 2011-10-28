@@ -13,11 +13,11 @@
 
 namespace {
 
-std::map<u32, iconv_t> converters;
+std::map<uint32_t, iconv_t> converters;
 
-iconv_t getConverter(u32 codepage) {
+iconv_t getConverter(uint32_t codepage) {
 	
-	std::map<u32, iconv_t>::iterator i = converters.find(codepage);
+	std::map<uint32_t, iconv_t>::iterator i = converters.find(codepage);
 	
 	if(i != converters.end()) {
 		return i->second;
@@ -37,7 +37,7 @@ iconv_t getConverter(u32 codepage) {
 
 void BinaryString::loadInto(std::istream & is, std::string & target) {
 	
-	size_t length = loadNumber<u32>(is);
+	size_t length = loadNumber<uint32_t>(is);
 	if(is.fail()) {
 		return;
 	}
@@ -46,7 +46,7 @@ void BinaryString::loadInto(std::istream & is, std::string & target) {
 	is.read(&target[0], length);
 }
 
-void EncodedString::loadInto(std::istream & is, std::string & target, u32 codepage) {
+void EncodedString::loadInto(std::istream & is, std::string & target, uint32_t codepage) {
 	
 	std::string temp;
 	BinaryString::loadInto(is, temp);
@@ -54,7 +54,7 @@ void EncodedString::loadInto(std::istream & is, std::string & target, u32 codepa
 	toUtf8(temp, target, codepage);
 }
 
-void toUtf8(const std::string & from, std::string & to, u32 codepage) {
+void toUtf8(const std::string & from, std::string & to, uint32_t codepage) {
 	
 	iconv_t converter = getConverter(codepage);
 	
@@ -79,7 +79,7 @@ void toUtf8(const std::string & from, std::string & to, u32 codepage) {
 		
 		size_t ret = iconv(converter, const_cast<char**>(&inbuf), &insize, &outbuf, &outsize);
 		if(ret == size_t(-1) && errno != E2BIG) {
-			error << "iconv error while converting from CP" << codepage << ": " << errno;
+			LogError << "iconv error while converting from CP" << codepage << ": " << errno;
 			to.clear();
 			return;
 		}

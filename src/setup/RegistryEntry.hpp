@@ -2,14 +2,14 @@
 #ifndef INNOEXTRACT_SETUP_REGISTRYENTRY_HPP
 #define INNOEXTRACT_SETUP_REGISTRYENTRY_HPP
 
-#include <iostream>
+#include <string>
+#include <iosfwd>
 
 #include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
-#include "util/Types.hpp"
 
 struct RegistryEntry : public SetupItem {
 	

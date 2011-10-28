@@ -2,13 +2,14 @@
 #ifndef INNOEXTRACT_SETUP_ICONENTRY_HPP
 #define INNOEXTRACT_SETUP_ICONENTRY_HPP
 
-#include <iostream>
+#include <stdint.h>
+#include <string>
+#include <iosfwd>
 
 #include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
-#include "util/Types.hpp"
 
 struct IconEntry : public SetupItem {
 	
@@ -42,7 +43,7 @@ struct IconEntry : public SetupItem {
 	
 	CloseOnExit closeOnExit;
 	
-	u16 hotkey;
+	uint16_t hotkey;
 	
 	Options options;
 	

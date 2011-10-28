@@ -1,6 +1,8 @@
 
 #include "setup/RunEntry.hpp"
 
+#include <stdint.h>
+
 #include "util/LoadingUtils.hpp"
 #include "util/StoredEnum.hpp"
 
@@ -17,7 +19,7 @@ STORED_ENUM_MAP(StoredRunWait, RunEntry::WaitUntilTerminated,
 void RunEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<u32>(is); // uncompressed size of the directory entry structure
+		::load<uint32_t>(is); // uncompressed size of the directory entry structure
 	}
 	
 	is >> EncodedString(name, version.codepage());
@@ -47,7 +49,7 @@ void RunEntry::load(std::istream & is, const InnoVersion & version) {
 	loadVersionData(is, version);
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		showCmd = loadNumber<s32>(is);
+		showCmd = loadNumber<int32_t>(is);
 	} else {
 		showCmd = 0;
 	}

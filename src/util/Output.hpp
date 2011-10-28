@@ -60,7 +60,10 @@ struct error_base {
 	
 };
 
-#define error (error_base(color::red), std::cerr)
-#define warning (error_base(color::yellow), std::cerr)
+extern size_t total_warnings;
+extern size_t total_errors;
+
+#define LogError (error_base(color::red), total_errors++, std::cerr)
+#define LogWarning (error_base(color::yellow), total_warnings++, std::cerr)
 
 #endif // INNOEXTRACT_UTIL_OUTPUT_HPP

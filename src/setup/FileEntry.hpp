@@ -2,13 +2,14 @@
 #ifndef INNOEXTRACT_SETUP_FILEENTRY_HPP
 #define INNOEXTRACT_SETUP_FILEENTRY_HPP
 
-#include <iostream>
+#include <stdint.h>
+#include <string>
+#include <iosfwd>
 
 #include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
 #include "util/Enum.hpp"
 #include "util/Flags.hpp"
-#include "util/Types.hpp"
 
 struct FileEntry : public SetupItem {
 	
@@ -63,8 +64,8 @@ struct FileEntry : public SetupItem {
 	std::string strongAssemblyName;
 	
 	int location; //!< index into the file location entry list
-	u32 attributes;
-	u64 externalSize;
+	uint32_t attributes;
+	uint64_t externalSize;
 	
 	int permission; //!< index into the permission entry list
 	

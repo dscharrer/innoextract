@@ -2,9 +2,9 @@
 #ifndef INNOEXTRACT_STREAM_BLOCKREADER_HPP
 #define INNOEXTRACT_STREAM_BLOCKREADER_HPP
 
-#include <iostream>
+#include <iosfwd>
 
-#include "setup/Version.hpp"
+struct InnoVersion;
 
 /*!
  * Reads a compressed and checksumed block of data used to store the setup headers.

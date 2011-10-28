@@ -2,7 +2,9 @@
 #ifndef INNOEXTRACT_SETUP_SETUPTYPEENTRY_HPP
 #define INNOEXTRACT_SETUP_SETUPTYPEENTRY_HPP
 
-#include <iostream>
+#include <stdint.h>
+#include <string>
+#include <iosfwd>
 
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"
@@ -36,7 +38,7 @@ struct SetupTypeEntry {
 	
 	Type type;
 	
-	u64 size;
+	uint64_t size;
 	
 	void load(std::istream & is, const InnoVersion & version);
 	

@@ -2,10 +2,8 @@
 #ifndef INNOEXTRACT_SETUP_WINDOWSVERSION_HPP
 #define INNOEXTRACT_SETUP_WINDOWSVERSION_HPP
 
-#include <iostream>
-
+#include <ostream>
 #include "setup/Version.hpp"
-#include "util/Types.hpp"
 
 struct WindowsVersion {
 	

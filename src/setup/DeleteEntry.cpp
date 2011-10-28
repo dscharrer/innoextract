@@ -17,7 +17,7 @@ STORED_ENUM_MAP(DeleteTypeMap, DeleteEntry::Files,
 void DeleteEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<u32>(is); // uncompressed size of the directory entry structure
+		::load<uint32_t>(is); // uncompressed size of the directory entry structure
 	}
 	
 	is >> EncodedString(name, version.codepage());
