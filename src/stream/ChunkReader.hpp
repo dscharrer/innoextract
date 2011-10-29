@@ -8,7 +8,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
-class SliceReader;
+class silce_source;
 
 class ChunkReader {
 	
@@ -41,7 +41,7 @@ public:
 	enum CompressionMethod { };
 	CompressionMethod chunkCompression;
 	
-	boost::shared_ptr<std::istream> get(boost::shared_ptr<SliceReader> base);
+	boost::shared_ptr<std::istream> get(boost::shared_ptr<silce_source> base);
 	
 };
 

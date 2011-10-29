@@ -166,7 +166,7 @@ void SetupLoader::load(std::istream & is) {
 	}
 	
 	/*
-	 * Try to load an offset table located in a COFF/PE (.exe) resource entry.
+	 * Try to load an offset table located in a PE/COFF (.exe) resource entry.
 	 * This method of storing the offset table was introduced in version 5.1.5
 	 */
 	if(loadFromExeResource(is)) {
@@ -180,8 +180,7 @@ void SetupLoader::load(std::istream & is) {
 	
 	totalSize = is.seekg(0, std::ios_base::end).tellg();
 	
-	exeOffset = 0; // No embedded setup exe.
-	exeCompressedSize = exeUncompressedSize = 0;
+	exeCompressedSize = exeUncompressedSize = exeOffset = 0; // No embedded setup exe.
 	
 	messageOffset = 0; // No embedded messages.
 	

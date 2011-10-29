@@ -30,7 +30,18 @@ struct Checksum {
 };
 
 template <class Base>
-class ChecksumBase {
+class StaticPolymorphic {
+	
+protected:
+	
+	inline Base & impl() { return *reinterpret_cast<Base *>(this); }
+	
+	inline const Base & impl() const { return *reinterpret_cast<const Base *>(this); }
+	
+};
+
+template <class Base>
+class ChecksumBase : public StaticPolymorphic<Base> {
 	
 public:
 	
@@ -38,7 +49,7 @@ public:
 	inline T process(T data) {
 		char buf[sizeof(data)];
 		std::memcpy(&buf, &data, sizeof(data));
-		static_cast<Base *>(this)->update(buf, sizeof(data));
+		this->impl().update(buf, sizeof(data));
 		return data;
 	}
 	

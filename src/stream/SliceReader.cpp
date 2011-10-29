@@ -48,12 +48,14 @@ bool SliceReader::seek(size_t slice) {
 		return false;
 	}
 	
-	return open(slice, sliceFile);
+	return open(slice, string());
 }
 
 bool SliceReader::openFile(const std::string & file) {
 	
-	std::cout << "[slice] opening " << file;
+	std::cout << color::cyan << "\33[2K\r[slice] opening " << file << color::reset << std::endl;
+	
+	ifs.close();;
 	
 	ifs.open(file.c_str(), std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
 	if(ifs.fail()) {
@@ -167,23 +169,23 @@ std::streamsize SliceReader::read(char * buffer, std::streamsize bytes) {
 	
 	std::streamsize requested = bytes;
 	
+	if(!seek(currentSlice)) {
+		return nread;
+	}
+	
 	while(bytes > 0) {
 		
-		if(!seek(currentSlice)) {
-			return 0;
+		std::streamsize remaining = sliceSize - ifs.tellg();
+		if(!remaining) {
+			if(!seek(currentSlice + 1)) {
+				return nread;
+			}
+			remaining = sliceSize - ifs.tellg();
 		}
 		
-		size_t remaining = sliceSize - ifs.tellg();
-		if(bytes <= remaining) {
-			ifs.read(buffer, bytes);
-			nread += bytes;
-			break;
-		} else {
-			ifs.read(buffer, remaining);
-			nread += remaining, buffer += remaining, bytes -= remaining;
-			currentSlice++;
-		}
+		std::streamsize read = ifs.read(buffer, std::min(remaining, bytes)).gcount();
 		
+		nread += read, buffer += read, bytes -= read;
 	}
 	
 	return nread;

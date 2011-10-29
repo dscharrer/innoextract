@@ -11,9 +11,17 @@
 #include <ctime>
 #include <map>
 
+#include <sys/ioctl.h>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 #include <boost/ref.hpp>
+
+#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+
+#include <boost/filesystem/path.hpp>
+
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
@@ -52,6 +60,50 @@
 #include "util/Output.hpp"
 #include "util/Utils.hpp"
 
+class progress {
+	
+public:
+	
+	static void show(float value, const std::string & label) {
+		
+		struct winsize w;
+		ioctl(0, TIOCGWINSZ, &w);
+		
+		clear();
+		
+		std::ios_base::fmtflags flags = std::cout.flags();
+		
+		size_t progress_length = w.ws_col - label.length() - 6 - 2 - 2 - 1;
+		
+		if(progress_length > 10) {
+			
+			size_t progress = size_t(progress_length * value);
+			
+			std::cout << '[';
+			for(size_t i = 0; i < progress; i++) {
+				std::cout << '=';
+			}
+			std::cout << '>';
+			for(size_t i = progress; i < progress_length; i++) {
+				std::cout << ' ';
+			}
+			std::cout << ']';
+			
+		}
+		
+		std::cout << std::right << std::fixed << std::setprecision(1) << std::setfill(' ') << std::setw(5) << (value * 100) << "% " << label;
+		std::cout.flush();
+		
+		std::cout.flags(flags);
+		
+	}
+	
+	static void clear() {
+		std::cout << "\33[2K\r" ;
+	}
+	
+};
+
 using std::cout;
 using std::string;
 using std::endl;
@@ -75,6 +127,7 @@ void discard(T & is, uint64_t bytes) {
 }
 
 namespace io = boost::iostreams;
+namespace fs = boost::filesystem;
 
 struct FileLocationComparer {
 	
@@ -885,9 +938,18 @@ int main(int argc, char * argv[]) {
 	for(size_t i = 0; i < locations.size(); i++) {
 		const FileLocationEntry & location = locations[i];
 		chunks[ChunkReader::Chunk(location.firstSlice, location.chunkOffset, location.chunkSize, location.options & FileLocationEntry::ChunkCompressed, location.options & FileLocationEntry::ChunkEncrypted)].push_back(i);
+		assert(header.compressMethod == SetupHeader::BZip2 || !(location.options & FileLocationEntry::BZipped));
 	}
 	
-	SliceReader reader(argv[1], offsets.dataOffset);
+	boost::shared_ptr<SliceReader> slice_reader;
+	
+	if(offsets.dataOffset) {
+		slice_reader.reset(new SliceReader(argv[1], offsets.dataOffset));
+	} else {
+		fs::path path(argv[1]);
+		
+		slice_reader.reset(new SliceReader(path.parent_path().string() + '/', path.stem().string(), header.slicesPerDisk));
+	}
 	
 	try {
 	
@@ -898,7 +960,7 @@ int main(int argc, char * argv[]) {
 		
 		std::sort(chunk.second.begin(), chunk.second.end(), FileLocationComparer(locations));
 		
-		if(!reader.seek(chunk.first.firstSlice, chunk.first.chunkOffset)) {
+		if(!slice_reader->seek(chunk.first.firstSlice, chunk.first.chunkOffset)) {
 			LogError << "error seeking" << std::endl;
 			return 1;
 		}
@@ -906,28 +968,26 @@ int main(int argc, char * argv[]) {
 		const char chunkId[4] = { 'z', 'l', 'b', 0x1a };
 		
 		char magic[4];
-		if(reader.read(magic, 4) != 4 || memcmp(magic, chunkId, 4)) {
+		if(slice_reader->read(magic, 4) != 4 || memcmp(magic, chunkId, 4)) {
 			LogError << "bad chunk id";
 			return 1;
 		}
 		
 		typedef io::chain<io::input> chunk_stream_type;
-		chunk_stream_type fis;
+		chunk_stream_type chunk_source;
 		
 		if(chunk.first.compressed) {
 			switch(header.compressMethod) {
-				case SetupHeader::Stored: LogError << "wtf"; break;
-				case SetupHeader::Zlib: fis.push(io::zlib_decompressor(), 8192); break;
-				case SetupHeader::BZip2: fis.push(io::bzip2_decompressor(), 8192); break;
-				case SetupHeader::LZMA1: fis.push(inno_lzma1_decompressor(), 8192); break;
-				case SetupHeader::LZMA2: fis.push(inno_lzma2_decompressor(), 8192); break;
+				case SetupHeader::Stored: break;
+				case SetupHeader::Zlib: chunk_source.push(io::zlib_decompressor(), 8192); break;
+				case SetupHeader::BZip2: chunk_source.push(io::bzip2_decompressor(), 8192); break;
+				case SetupHeader::LZMA1: chunk_source.push(inno_lzma1_decompressor(), 8192); break;
+				case SetupHeader::LZMA2: chunk_source.push(inno_lzma2_decompressor(), 8192); break;
 				default: LogError << "unknown compression";
 			}
 		}
 		
-		fis.push(io::restrict(boost::ref(reader), 0, chunk.first.chunkSize));
-		
-		//fis.exceptions(std::ios_base::badbit | std::ios_base::failbit);
+		chunk_source.push(io::restrict(boost::ref(*slice_reader.get()), 0, chunk.first.chunkSize));
 		
 		uint64_t offset = 0;
 		
@@ -940,7 +1000,7 @@ int main(int argc, char * argv[]) {
 			}
 			
 			if(location.fileOffset > offset) {
-				discard(fis, location.fileOffset - offset);
+				discard(chunk_source, location.fileOffset - offset);
 			}
 			offset = location.fileOffset + location.fileSize;
 			
@@ -962,33 +1022,83 @@ int main(int argc, char * argv[]) {
 			Hasher hasher;
 			hasher.init(location.checksum.type);
 			
-			io::restriction<chunk_stream_type> raw_src(fis, 0, location.fileSize);
+			io::restriction<chunk_stream_type> raw_src(chunk_source, 0, location.fileSize);
 			
-			io::filtering_istream file;
+			io::filtering_istream file_source;
 			
-			file.push(checksum_filter(&hasher), 8192);
+			file_source.push(checksum_filter(&hasher), 8192);
 			
 			if(location.options & FileLocationEntry::CallInstructionOptimized) {
 				if(version < INNO_VERSION(5, 2, 0)) {
-					file.push(call_instruction_decoder_4108(), 8192);
+					file_source.push(call_instruction_decoder_4108(), 8192);
 				} else {
-					file.push(call_instruction_decoder_5200(version >= INNO_VERSION(5, 3, 9)), 8192);
+					file_source.push(call_instruction_decoder_5200(version >= INNO_VERSION(5, 3, 9)), 8192);
 				}
 			}
 			
-			file.push(raw_src);
+			file_source.push(raw_src);
 			
-			file.exceptions(std::ios_base::badbit | std::ios_base::failbit);
+			//file_source.exceptions(std::ios_base::badbit | std::ios_base::failbit);
 			
 			//discard(file, location.fileSize);
 			
 			BOOST_FOREACH(size_t file_i, files_for_location[location_i]) {
 				if(!files[file_i].destination.empty()) {
 					std::ofstream ofs(files[file_i].destination.c_str());
-					io::copy(file, ofs, 8192);
+					
+					char buffer[8192 * 10];
+					
+					float status = 0.f;
+					uint64_t total = 0;
+					
+					std::ostringstream oss;
+					float last_rate = 0;
+					
+					int32_t last_milliseconds = 0;
+					
+					boost::posix_time::ptime start(boost::posix_time::microsec_clock::universal_time());
+					
+					while(!file_source.eof()) {
+						
+						std::streamsize n = file_source.read(buffer, ARRAY_SIZE(buffer)).gcount();
+						
+						if(n > 0) {
+							
+							ofs.write(buffer, n);
+							
+							total += n;
+							float new_status = size_t(1000.f * total / location.fileSize)
+																	* (1 / 1000.f);
+							if(status != new_status && new_status != 100.f) {
+								
+								boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
+								int32_t milliseconds = (now - start).total_milliseconds();
+								
+								if(milliseconds - last_milliseconds > 200) {
+									last_milliseconds = milliseconds;
+									
+									if(total >= 10 * 1024 && milliseconds > 0) {
+										float rate = 1000.f * total / milliseconds;
+										if(rate != last_rate) {
+											last_rate = rate;
+											oss.str(string()); // clear the buffer
+											oss << std::right << std::fixed << std::setfill(' ') << std::setw(8) << PrintBytes(rate) << "/s";
+										}
+									}
+									
+									status = new_status;
+									progress::show(status, oss.str());
+								}
+							}
+						}
+					}
+					
+					//io::copy(file_source, ofs, 8192);
 					break; // TODO ...
 				}
 			}
+			
+			progress::clear();
 			
 			Checksum actual;
 			hasher.finalize(actual);
