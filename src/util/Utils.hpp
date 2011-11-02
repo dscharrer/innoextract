@@ -7,11 +7,6 @@
 
 #include "util/Output.hpp"
 
-// TODO remove
-template <class T>
-inline std::istream & read(std::istream & ifs, T & data) {
-	return ifs.read(reinterpret_cast<char *>(&data), sizeof(T));
-}
 /**
  * Load an std::string from a const char * that may not be null-terminated.
  */

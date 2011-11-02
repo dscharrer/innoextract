@@ -7,79 +7,117 @@
 #include <algorithm>
 #include <cstring>
 
-#include "loader/ExeFormat.hpp"
-#include "util/Output.hpp"
+#include "util/LoadingUtils.hpp"
 #include "util/Utils.hpp"
 
-using std::cout;
-using std::string;
-using std::endl;
-using std::setw;
-using std::setfill;
-using std::hex;
-using std::dec;
+namespace {
 
-size_t ExeReader::findResourceEntry(std::istream & ifs, int id) {
+static const char PE_MAGIC[] = { 'P', 'E', 0, 0 };
+
+inline bool getResourceTable(size_t & entry, size_t resource_offset) {
 	
-	CoffResourceTable table;
-	if(read(ifs, table).fail()) {
-		LogError << "error reading resource table";
+	bool is_table = (entry & (1 << 31));
+	
+	entry &= ~(1 << 31), entry += resource_offset;
+	
+	return is_table;
+}
+
+} // anonymous namespace
+
+struct ExeReader::CoffFileHeader {
+	
+	//! Number of CoffSection structures following this header after optionalHeaderSize bytes.
+	uint16_t nsections;
+	
+	//! Offset from the end of this header to the start of the section table.
+	uint16_t optional_header_size;
+	
+};
+
+struct ExeReader::CoffSection {
+	
+	uint32_t virtual_size; //!< Section size in virtual memory.
+	uint32_t virtual_address; //!< Base virtual memory address.
+	
+	uint32_t raw_address; //!< Base file offset.
+	
+};
+
+size_t ExeReader::findResourceEntry(std::istream & is, int needle) {
+	
+	// skip: characteristics + timestamp + major version + minor version
+	if(is.seekg(4 + 4 + 2 + 2, std::ios_base::cur).fail()) {
 		return 0;
 	}
 	
-	cout << "[table] char: " << table.characteristics << "  time: " << table.timestamp << "  version: " << table.majorVersion << '.' << table.minorVersion << "  names: " << table.nbnames << "  ids: " << table.nbids << endl;
+	// Number of named resource entries.
+	uint16_t nbnames = loadNumber<uint16_t>(is);
 	
-	ifs.seekg(table.nbnames * sizeof(CoffResourceEntry), std::ios_base::cur);
+	// Number of id resource entries.
+	uint16_t nbids = loadNumber<uint16_t>(is);
 	
-	size_t offset = 0;
 	
-	for(size_t i = 0; i < table.nbids; i++) {
+	// Ignore named resource entries.
+	const size_t entry_size = 4 + 4; // id / string address + offset
+	if(is.seekg(nbnames * entry_size, std::ios_base::cur).fail()) {
+		return 0;
+	}
+	
+	for(size_t i = 0; i < nbids; i++) {
 		
-		CoffResourceEntry entry;
-		if(read(ifs, entry).fail()) {
-			LogError << "error reading resource table entry";
+		uint32_t id = loadNumber<uint32_t>(is);
+		uint32_t offset = loadNumber<uint32_t>(is);
+		if(is.fail()) {
 			return 0;
 		}
 		
-		cout << "[entry] id: " << entry.id << "  address: " << hex << (entry.offset & ~(1 << 31)) << dec << "  type: " << ((entry.offset & (1 << 31)) ? "table" : "leaf" ) << endl;
-		
-		if(entry.id == id) {
-			//ifs.seekg((table.nbids - i - 1) * sizeof(ResourceEntry));
-			offset = entry.offset;
-			// break;
+		if(id == needle) {
+			return offset;
 		}
 	}
 	
-	return offset;
+	return 0;
 }
 
-bool ExeReader::loadSectionTable(std::istream & ifs, size_t peOffset, const CoffFileHeader & coff, CoffSectionTable & table) {
+bool ExeReader::loadSectionTable(std::istream & is, size_t peOffset,
+                                 const CoffFileHeader & coff, CoffSectionTable & table) {
 	
-	size_t sectionTableOffset = peOffset + 4 + sizeof(CoffFileHeader) + coff.optionalHeaderSize;
+	// machine + nsections + creation time + symbol table offset + nsymbols
+	// + optional header size + characteristics
+	const size_t file_header_size = 2 + 2 + 4 + 4 + 4 + 2 + 2;
+	size_t section_table_offset = peOffset + sizeof(PE_MAGIC) + file_header_size
+	                              + coff.optional_header_size;
+	is.seekg(section_table_offset);
 	
 	table.resize(coff.nsections);
-	
-	ifs.seekg(sectionTableOffset);
-	if(ifs.read(reinterpret_cast<char *>(table.data()), sizeof(CoffSection) * table.size()).fail()) {
-		LogError << "error coff loading section table";
-		return false;
+	for(CoffSectionTable::iterator i = table.begin(); i != table.end(); ++i) {
+		CoffSection & section = *i;
+		
+		is.seekg(8, std::ios_base::cur); // name
+		
+		section.virtual_size = loadNumber<uint32_t>(is);
+		section.virtual_address = loadNumber<uint32_t>(is);
+		
+		is.seekg(4, std::ios_base::cur); // raw size
+		section.raw_address = loadNumber<uint32_t>(is);
+		
+		// relocation addr + line number addr + relocation count + line number count + characteristics
+		is.seekg(4 + 4 + 2 + 2 + 4, std::ios_base::cur);
+		
 	}
 	
-	for(CoffSectionTable::const_iterator i = table.begin(); i != table.end(); ++i) {
-		cout << "[section] \"" << safestring(i->name) << "\" virtual=" << hex << i->virtualAddress << '+' << i->virtualSize << " raw=" << i->rawAddress << '+' << i->rawSize << dec << endl;
-	}
-	
-	return true;
+	return !is.fail();
 }
 
 size_t ExeReader::memoryAddressToFileOffset(const CoffSectionTable & sections, size_t memory) {
 	
 	for(CoffSectionTable::const_iterator i = sections.begin(); i != sections.end(); ++i) {
-		
 		const CoffSection & section = *i;
 		
-		if(memory >= section.virtualAddress && memory < section.virtualAddress + section.virtualSize) {
-			return memory + section.rawAddress - section.virtualAddress;
+		if(memory >= section.virtual_address
+			 && memory < section.virtual_address + section.virtual_size) {
+			return memory + section.raw_address - section.virtual_address;
 		}
 		
 	}
@@ -92,61 +130,49 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 	Resource result;
 	result.offset = result.size = 0;
 	
-	uint16_t peOffset;
-	if(read(is.seekg(0x3c), peOffset).fail()) {
-		LogError << "error reading PE signature offset";
+	// Skip the DOS stub.
+	uint16_t peOffset = loadNumber<uint16_t>(is.seekg(0x3c));
+	if(is.fail()) {
 		return result;
 	}
-	cout << "PE signature is @ " << hex << peOffset << dec << endl;
 	
-	char magic[4];
-	if(is.seekg(peOffset).read(magic, 4).fail()) {
-		LogError << "error reading PE signature";
+	char magic[sizeof(PE_MAGIC)];
+	if(is.seekg(peOffset).read(magic, sizeof(magic)).fail()) {
 		return result;
 	}
-	static const char expectedMagic[] = { 'P', 'E', 0, 0 };
-	if(std::memcmp(magic, expectedMagic, 4)) {
-		LogError << "wrong PE signature - not an exe file";
+	if(std::memcmp(magic, PE_MAGIC, sizeof(PE_MAGIC))) {
 		return result;
 	}
 	
 	CoffFileHeader coff;
-	if(read(is, coff).fail()) {
-		LogError << "error reading COFF file header";
+	is.seekg(2, std::ios_base::cur); // machine
+	coff.nsections = loadNumber<uint16_t>(is);
+	is.seekg(4 + 4 + 4, std::ios_base::cur); // creation time + symbol table offset + nbsymbols
+	coff.optional_header_size = loadNumber<uint16_t>(is);
+	is.seekg(2, std::ios_base::cur); // characteristics
+	
+	// Skip the optional header.
+	uint16_t optionalHeaderMagic = loadNumber<uint16_t>(is);
+	if(is.fail()) {
 		return result;
 	}
-	
-	uint16_t optionalHeaderMagic;
-	if(read(is, optionalHeaderMagic).fail()) {
-		LogError << "error reading the optional header magic number";
-		return result;
-	}
-	
-	// skip the optional header
 	if(optionalHeaderMagic == 0x20b) { // PE32+
 		is.seekg(106, std::ios_base::cur);
 	} else {
 		is.seekg(90, std::ios_base::cur);
 	}
 	
-	uint32_t ndirectories;
-	if(read(is, ndirectories).fail()) {
-		LogError << "error reading number of data directories";
+	uint32_t ndirectories = loadNumber<uint32_t>(is);
+	if(is.fail() || ndirectories < 3) {
 		return result;
 	}
-	cout << "number of directories is " << ndirectories << endl;
-	if(ndirectories < 3) {
-		LogError << "no resource directory found";
-		return result;
-	}
+	const size_t directory_header_size = 4 + 4; // address + size
+	is.seekg(2 * directory_header_size, std::ios_base::cur);
 	
-	CoffDataDirectory resources;
-	if(read(is.seekg(16, std::ios_base::cur), resources).fail()) {
-		LogError << "error reading resource directory offset";
-		return result;
-	}
-	if(!resources.address || !resources.size) {
-		LogError << "missing resource directory";
+	// Virtual memory address and size of the start of resource directory.
+	uint32_t resource_address = loadNumber<uint32_t>(is);
+	uint32_t resource_size = loadNumber<uint32_t>(is);
+	if(is.fail() || !resource_address || !resource_size) {
 		return result;
 	}
 	
@@ -155,74 +181,45 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 		return result;
 	}
 	
-	size_t resourceOffset = memoryAddressToFileOffset(sections, resources.address);
-	if(!resourceOffset) {
-		LogError << "error mapping virtual resource address " << hex << resources.address << dec << " to file offset";
-		return result;
-	}
-	cout << "resource table is @ RVA " << hex << resources.address << " -> @ " << resourceOffset << dec << endl;
-	
-	is.seekg(resourceOffset);
-	
-	uint32_t typeOffset = findResourceEntry(is, type);
-	if(!typeOffset) {
-		LogError << "missing data resource entry";
-		return result;
-	}
-	if(!(typeOffset & (1 << 31))) {
-		LogError << "unexpected resource leaf for data";
-		return result;
-	}
-	typeOffset &= ~(1 << 31), typeOffset += resourceOffset;
-	
-	cout << "data resource table is @ " << hex << typeOffset << dec << endl;
-	
-	is.seekg(typeOffset);
-	
-	size_t nameOffset = findResourceEntry(is, name);
-	if(!nameOffset) {
-		LogError << "missing installer resource entry";
-		return result;
-	}
-	if(!(nameOffset & (1 << 31))) {
-		LogError << "unexpected resource leaf for installer";
-		return result;
-	}
-	nameOffset &= ~(1 << 31), nameOffset += resourceOffset;
-	
-	cout << "installer resource table is @ " << hex << nameOffset << dec << endl;
-	
-	is.seekg(nameOffset);
-	
-	size_t finalOffset = findResourceEntry(is, language);
-	if(!finalOffset) {
-		LogError << "missing final resource entry";
-		return result;
-	}
-	if(finalOffset & (1 << 31)) {
-		LogError << "unexpected table for final resource entry";
-		return result;
-	}
-	finalOffset += resourceOffset;
-	
-	cout << "final resource entry is @ " << hex << finalOffset << dec << endl;
-	
-	CoffResourceLeaf leaf;
-	if(read(is.seekg(finalOffset), leaf).fail()) {
-		LogError << "error loading final resource entry";
+	size_t resource_offset = memoryAddressToFileOffset(sections, resource_address);
+	if(!resource_offset) {
 		return result;
 	}
 	
-	cout << "[resource] address: " << hex << leaf.address << dec << "  size: " << leaf.size << "  codepage: " << leaf.codepage << endl;
-	
-	size_t dataOffset = memoryAddressToFileOffset(sections, leaf.address);
-	if(!dataOffset) {
-		LogError << "error mapping final virtual resource address " << hex << leaf.address << dec << " to file offset";
+	is.seekg(resource_offset);
+	size_t type_offset = findResourceEntry(is, type);
+	if(!getResourceTable(type_offset, resource_offset)) {
 		return result;
 	}
 	
-	result.offset = dataOffset;
-	result.size = leaf.size;
+	is.seekg(type_offset);
+	size_t name_offset = findResourceEntry(is, name);
+	if(!getResourceTable(name_offset, resource_offset)) {
+		return result;
+	}
+	
+	is.seekg(name_offset);
+	size_t leaf_offset = findResourceEntry(is, language);
+	if(!leaf_offset || getResourceTable(leaf_offset, resource_offset)) {
+		return result;
+	}
+	
+	// Virtual memory address and size of the resource data.
+	is.seekg(leaf_offset);
+	uint32_t data_address = loadNumber<uint32_t>(is);
+	uint32_t data_size = loadNumber<uint32_t>(is);
+	// ignore codepage and reserved word
+	if(is.fail()) {
+		return result;
+	}
+	
+	size_t data_offset = memoryAddressToFileOffset(sections, data_address);
+	if(!data_offset) {
+		return result;
+	}
+	
+	result.offset = data_offset;
+	result.size = data_size;
 	
 	return result;
 }

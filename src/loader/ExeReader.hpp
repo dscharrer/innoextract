@@ -6,9 +6,6 @@
 #include <istream>
 #include <vector>
 
-struct CoffFileHeader;
-struct CoffSection;
-
 /*!
  * Minimal PE/COFF parser that can find resources by ID in .exe files.
  * This implementation is optimized to look for exactly one resource.
@@ -38,8 +35,22 @@ public:
 	
 private:
 	
+	struct CoffFileHeader;
+	struct CoffSection;
+	
 	typedef std::vector<CoffSection> CoffSectionTable;
 	
+	/*!
+	 * Find the entry in a resource table with a given ID.
+	 * The input stream is expected to be positioned at the start of the table.
+	 * The position if the stream after the function call is undefined.
+	 * 
+	 * @return:
+	 *   Highest order bit: 1 = points to another CoffResourceTable
+	 *                      0 = points to a CoffResourceLeaf
+	 *   Remaining 31 bits: Offset to the CoffResourceTable CoffResourceLeaf relative to
+	 *                      the directory start.
+	 */
 	static size_t findResourceEntry(std::istream & ifs, int id);
 	
 	static bool loadSectionTable(std::istream & ifs, size_t peOffset, const CoffFileHeader & coff, CoffSectionTable & table);
