@@ -100,30 +100,30 @@ bool SetupLoader::loadOffsetsAt(std::istream & is, size_t pos) {
 	checksum.update(magic, ARRAY_SIZE(magic));
 	
 	if(version >= INNO_VERSION(5, 1,  5)) {
-		uint32_t revision = fromLittleEndian(checksum.process(::load<uint32_t>(is)));
+		uint32_t revision = checksum.load<LittleEndian, uint32_t>(is);
 		if(is.fail() || revision != 1) {
 			is.clear();
 			return false;
 		}
 	}
 	
-	totalSize = fromLittleEndian(checksum.process(::load<uint32_t>(is)));
-	exeOffset = fromLittleEndian(checksum.process(::load<uint32_t>(is)));
+	totalSize = checksum.load<LittleEndian, uint32_t>(is);
+	exeOffset = checksum.load<LittleEndian, uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 1, 6)) {
 		exeCompressedSize = 0;
 	} else {
-		exeCompressedSize = fromLittleEndian(checksum.process(::load<uint32_t>(is)));
+		exeCompressedSize = checksum.load<LittleEndian, uint32_t>(is);
 	}
 	
-	exeUncompressedSize = fromLittleEndian(checksum.process(::load<uint32_t>(is)));
+	exeUncompressedSize = checksum.load<LittleEndian, uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 0, 3)) {
 		exeChecksum.type = Checksum::Crc32;
-		exeChecksum.crc32 = fromLittleEndian(checksum.process(::load<uint32_t>(is)));
+		exeChecksum.crc32 = checksum.load<LittleEndian, uint32_t>(is);
 	} else {
 		exeChecksum.type = Checksum::Adler32;
-		exeChecksum.adler32 = fromLittleEndian(checksum.process(::load<uint32_t>(is)));
+		exeChecksum.adler32 = checksum.load<LittleEndian, uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
@@ -132,8 +132,8 @@ bool SetupLoader::loadOffsetsAt(std::istream & is, size_t pos) {
 		messageOffset = loadNumber<uint32_t>(is);
 	}
 	
-	headerOffset = fromLittleEndian(checksum.process(::load<uint32_t>(is)));
-	dataOffset = fromLittleEndian(checksum.process(::load<uint32_t>(is)));
+	headerOffset = checksum.load<LittleEndian, uint32_t>(is);
+	dataOffset = checksum.load<LittleEndian, uint32_t>(is);
 	
 	if(is.fail()) {
 		is.clear();

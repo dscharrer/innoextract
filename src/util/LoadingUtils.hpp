@@ -3,29 +3,11 @@
 #define INNOEXTRACT_UTIL_LOADINGUTILS_HPP
 
 #include <stdint.h>
+#include <cstring>
 #include <iostream>
 #include <string>
 #include <limits>
-#include <boost/detail/endian.hpp>
-
-inline uint8_t fromLittleEndian(uint8_t value) { return value; }
-inline int8_t fromLittleEndian(int8_t value) { return value; }
-
-#ifdef BOOST_LITTLE_ENDIAN
-
-inline uint16_t fromLittleEndian(uint16_t value) { return value; }
-inline uint32_t fromLittleEndian(uint32_t value) { return value; }
-inline uint64_t fromLittleEndian(uint64_t value) { return value; }
-inline int16_t fromLittleEndian(int16_t value) { return value; }
-inline int32_t fromLittleEndian(int32_t value) { return value; }
-inline int64_t fromLittleEndian(int64_t value) { return value; }
-
-#else 
-
-// TODO implement!
-#error "Host endianness not supported!"
-
-#endif
+#include "util/Endian.hpp"
 
 struct BinaryString {
 	
@@ -68,13 +50,15 @@ struct AnsiString : EncodedString {
 template <class T>
 inline T load(std::istream & is) {
 	T value;
-	is.read(reinterpret_cast<char *>(&value), sizeof(value));
+	char buffer[sizeof(value)];
+	is.read(buffer, sizeof(buffer));
+	std::memcpy(&value, buffer, sizeof(value));
 	return value;
 }
 
 template <class T>
 inline T loadNumber(std::istream & is) {
-	return fromLittleEndian(load<T>(is));
+	return LittleEndian::byteSwapIfAlien(load<T>(is));
 }
 
 template <class Base, size_t Bits, bool Signed = std::numeric_limits<Base>::is_signed>

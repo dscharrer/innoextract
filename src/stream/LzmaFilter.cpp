@@ -32,7 +32,7 @@ bool lzma_decompressor_impl_base::filter(const char * & begin_in, const char * e
                                          char * & begin_out, char * end_out, bool flush) {
 	(void)flush;
 	
-	lzma_stream * strm = reinterpret_cast<lzma_stream *>(stream);
+	lzma_stream * strm = static_cast<lzma_stream *>(stream);
 	
 	strm->next_in = reinterpret_cast<const uint8_t *>(begin_in);
 	strm->avail_in = end_in - begin_in;
@@ -55,7 +55,7 @@ bool lzma_decompressor_impl_base::filter(const char * & begin_in, const char * e
 void lzma_decompressor_impl_base::close() {
 	
 	if(stream) {
-		lzma_stream * strm = reinterpret_cast<lzma_stream *>(stream);
+		lzma_stream * strm = static_cast<lzma_stream *>(stream);
 		lzma_end(strm);
 		delete strm, stream = NULL;
 	}

@@ -77,7 +77,7 @@ public:
 		
 		if(progress_length > 10) {
 			
-			size_t progress = size_t(progress_length * value);
+			size_t progress = ceil(progress_length * value);
 			
 			std::cout << '[';
 			for(size_t i = 0; i < progress; i++) {

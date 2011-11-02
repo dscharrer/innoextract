@@ -35,13 +35,6 @@ NAMED_ENUM(BlockCompression)
 
 ENUM_NAMES(BlockCompression, "Compression", "stored", "zlib", "lzma1")
 
-template <class T>
-T loadNumberChecked(std::istream & is, Crc32 & crc) {
-	T value = load<T>(is);
-	crc.process(value);
-	return fromLittleEndian(value);
-};
-
 std::istream * BlockReader::get(std::istream & base, const InnoVersion & version) {
 	
 	uint32_t expectedCrc = loadNumber<uint32_t>(base);
@@ -52,14 +45,14 @@ std::istream * BlockReader::get(std::istream & base, const InnoVersion & version
 	BlockCompression compression;
 	
 	if(version >= INNO_VERSION(4, 0, 9)) {
-		storedSize = loadNumberChecked<uint32_t>(base, actualCrc);
-		uint8_t compressed = loadNumberChecked<uint8_t>(base, actualCrc);
+		storedSize = actualCrc.load<LittleEndian, uint32_t>(base);
+		uint8_t compressed = actualCrc.load<LittleEndian, uint8_t>(base);
 		compression = compressed ? (version >= INNO_VERSION(4, 1, 6) ? LZMA1 : Zlib) : Stored;
 		
 	} else {
 		
-		uint32_t compressedSize = loadNumberChecked<uint32_t>(base, actualCrc);
-		uint32_t uncompressedSize = loadNumberChecked<uint32_t>(base, actualCrc);
+		uint32_t compressedSize = actualCrc.load<LittleEndian, uint32_t>(base);
+		uint32_t uncompressedSize = actualCrc.load<LittleEndian, uint32_t>(base);
 		
 		if(compressedSize == uint32_t(-1)) {
 			storedSize = uncompressedSize, compression = Stored;

@@ -7,6 +7,7 @@
 
 #include "util/Output.hpp"
 
+// TODO remove
 template <class T>
 inline std::istream & read(std::istream & ifs, T & data) {
 	return ifs.read(reinterpret_cast<char *>(&data), sizeof(T));

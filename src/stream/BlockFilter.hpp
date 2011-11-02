@@ -3,15 +3,18 @@
 #define INNOEXTRACT_STREAM_BLOCKFILTER_HPP
 
 #include <stdint.h>
+#include <cstring>
 #include <string>
 #include <algorithm>
 #include <iosfwd>
+#include <cassert>
 
 #include <boost/iostreams/char_traits.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/read.hpp>
 
 #include "crypto/CRC32.hpp"
+#include "util/Endian.hpp"
 
 struct block_error : public std::ios_base::failure {
 	
@@ -45,13 +48,15 @@ public:
 	bool read_chunk(Source & src) {
 		
 		uint32_t blockCrc32;
-		std::streamsize nread = boost::iostreams::read(src, reinterpret_cast<char *>(&blockCrc32), 4);
+		char temp[sizeof(blockCrc32)];
+		std::streamsize nread = boost::iostreams::read(src, temp, sizeof(temp));
 		if(nread == EOF) {
 			return false;
-		}	else if(nread != 4) {
-			// TODO handle WOULD_BLOCK
+		}	else if(nread != sizeof(temp)) {
 			throw block_error("unexpected block end");
 		}
+		std::memcpy(&blockCrc32, temp, sizeof(blockCrc32));
+		blockCrc32 = LittleEndian::byteSwapIfAlien(blockCrc32);
 		
 		length = boost::iostreams::read(src, buffer, sizeof(buffer));
 		if(length == size_t(EOF)) {

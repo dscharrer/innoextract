@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 #include <cstring>
+#include <iostream>
+#include "util/Endian.hpp"
 #include "util/Enum.hpp"
 
 struct Checksum {
@@ -34,9 +36,9 @@ class StaticPolymorphic {
 	
 protected:
 	
-	inline Base & impl() { return *reinterpret_cast<Base *>(this); }
+	inline Base & impl() { return *static_cast<Base *>(this); }
 	
-	inline const Base & impl() const { return *reinterpret_cast<const Base *>(this); }
+	inline const Base & impl() const { return *static_cast<const Base *>(this); }
 	
 };
 
@@ -45,16 +47,31 @@ class ChecksumBase : public StaticPolymorphic<Base> {
 	
 public:
 	
-	template <class T>
+	template <typename Endianness, class T>
 	inline T process(T data) {
 		char buf[sizeof(data)];
-		std::memcpy(&buf, &data, sizeof(data));
-		this->impl().update(buf, sizeof(data));
+		T swapped = Endianness::byteSwapIfAlien(data);
+		std::memcpy(buf, &swapped, sizeof(swapped));
+		this->impl().update(buf, sizeof(buf));
 		return data;
+	}
+	
+	/*!
+	 * Load the data and process it.
+	 * Data is processed as-is and then converted according to Endianness.
+	 */
+	template <typename Endianness, class T>
+	inline T load(std::istream & is) {
+		T result;
+		char buf[sizeof(result)];
+		is.read(buf, sizeof(buf));
+		this->impl().update(buf, sizeof(buf));
+		std::memcpy(&result, buf, sizeof(result));
+		return Endianness::byteSwapIfAlien(result);
 	}
 	
 };
 
 NAMED_ENUM(Checksum::Type)
 
-#endif // INNOEXTRACT_CRYPTO_CHECKSUM_HPP;
+#endif // INNOEXTRACT_CRYPTO_CHECKSUM_HPP
