@@ -21,19 +21,20 @@ public:
 	struct Chunk {
 		
 		size_t firstSlice; //!< Slice where the chunk starts.
-		size_t chunkOffset; //!< Offset of the compressed chunk in firstSlice.
+		uint32_t chunkOffset; //!< Offset of the compressed chunk in firstSlice.
 		uint64_t chunkSize; //! Total compressed size of the chunk.
 		
 		bool compressed;
 		bool encrypted;
 		
-		Chunk(size_t firstSlice, size_t chunkOffset, uint64_t chunkSize, bool compressed, bool encrypted);
+		Chunk(size_t firstSlice, uint32_t chunkOffset, uint64_t chunkSize,
+		      bool compressed, bool encrypted);
 		
 		bool operator<(const Chunk & o) const;
 		bool operator==(const Chunk & o) const;
 	};
 	
-	ChunkReader(uint64_t _storedSize) : storedSize(_storedSize) { }
+	explicit ChunkReader(uint64_t _storedSize) : storedSize(_storedSize) { }
 	
 	uint64_t chunkDecompressedBytesRead;
 	uint64_t chunkCompressedBytesLeft;

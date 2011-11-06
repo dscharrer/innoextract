@@ -29,7 +29,7 @@ public:
 		std::streamsize nread = boost::iostreams::read(src, dest, n);
 		
 		if(nread != EOF) {
-			hasher->update(dest, nread);
+			hasher->update(dest, size_t(nread));
 		}
 		
 		return nread;

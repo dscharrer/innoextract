@@ -15,13 +15,13 @@ inline bool isPowerOf2(const T & n) {
 }
 
 template <class T1, class T2>
-inline T2 modPowerOf2(const T1 &a, const T2 &b) {
-	return T2(a) & (b-1);
+inline T2 modPowerOf2(const T1 & a, const T2 & b) {
+	return T2(a) & (b - 1);
 }
 
 template <class T>
 inline unsigned int getAlignmentOf() {
-#if (_MSC_VER >= 1300)
+#if defined(_MSC_VER) && _MSC_VER >= 1300
 	return __alignof(T);
 #elif defined(__GNUC__)
 	return __alignof__(T);
@@ -31,7 +31,8 @@ inline unsigned int getAlignmentOf() {
 }
 
 inline bool isAlignedOn(const void * p, unsigned int alignment) {
-	return alignment==1 || (isPowerOf2(alignment) ? modPowerOf2((size_t)p, alignment) == 0 : (size_t)p % alignment == 0);
+	return alignment == 1 || (isPowerOf2(alignment) ? modPowerOf2(size_t(p), alignment) == 0
+	                                                : size_t(p) % alignment == 0);
 }
 
 template <class T>
@@ -45,12 +46,12 @@ template<>
 struct SafeShifter<true> {
 	
 	template <class T>
-	static inline T RightShift(T value, unsigned int bits) {
+	static inline T RightShift(T, unsigned int) {
 		return 0;
 	}
 
 	template <class T>
-	static inline T LeftShift(T value, unsigned int bits) {
+	static inline T LeftShift(T, unsigned int) {
 		return 0;
 	}
 };
@@ -71,12 +72,12 @@ struct SafeShifter<false> {
 
 template <unsigned int bits, class T>
 inline T SafeRightShift(T value) {
-	return SafeShifter<(bits>=(8*sizeof(T)))>::RightShift(value, bits);
+	return SafeShifter<(bits >= (8 * sizeof(T)))>::RightShift(value, bits);
 }
 
 template <unsigned int bits, class T>
 inline T SafeLeftShift(T value) {
-	return SafeShifter<(bits>=(8*sizeof(T)))>::LeftShift(value, bits);
+	return SafeShifter<(bits >= (8 * sizeof(T)))>::LeftShift(value, bits);
 }
 
 template <class T>
@@ -116,7 +117,7 @@ private:
 template <class T>
 void IteratedHash<T>::update(const char * input, size_t len) {
 	
-	HashWord oldCountLo = countLo, oldCountHi = countHi;
+	HashWord oldCountLo = countLo;
 	
 	if((countLo = oldCountLo + HashWord(len)) < oldCountLo) {
 		countHi++; // carry from low to high
@@ -124,7 +125,7 @@ void IteratedHash<T>::update(const char * input, size_t len) {
 	
 	countHi += HashWord(SafeRightShift<8 * sizeof(HashWord)>(len));
 	
-	unsigned int num = modPowerOf2(oldCountLo, size_t(BlockSize));
+	size_t num = modPowerOf2(oldCountLo, size_t(BlockSize));
 	uint8_t * d = reinterpret_cast<uint8_t *>(data);
 	
 	if(num != 0) { // process left over data
@@ -155,7 +156,7 @@ void IteratedHash<T>::update(const char * input, size_t len) {
 				hash(data, BlockSize);
 				input += BlockSize;
 				len -= BlockSize;
-			} while (len >= BlockSize);
+			} while(len >= BlockSize);
 		}
 	}
 
@@ -187,16 +188,16 @@ size_t IteratedHash<T>::hash(const HashWord * input, size_t length) {
 template <class T>
 void IteratedHash<T>::pad(unsigned int lastBlockSize, uint8_t padFirst) {
 	
-	unsigned int num = modPowerOf2(countLo, size_t(BlockSize));
+	size_t num = modPowerOf2(countLo, size_t(BlockSize));
 	
 	uint8_t * d = reinterpret_cast<uint8_t *>(data);
 	
 	d[num++] = padFirst;
 	
 	if(num <= lastBlockSize) {
-		memset(d + num, 0, lastBlockSize-num);
+		memset(d + num, 0, lastBlockSize - num);
 	} else {
-		memset(d+num, 0, BlockSize-num);
+		memset(d + num, 0, BlockSize - num);
 		hash(data, BlockSize);
 		memset(d, 0, lastBlockSize);
 	}
@@ -206,7 +207,7 @@ template <class T> inline T rotlFixed(T x, unsigned int y) {
 	return T((x << y) | (x >> (sizeof(T) * 8 - y)));
 }
 
-#if _MSC_VER >= 1400 && !defined(__INTEL_COMPILER)
+#if defined(_MSC_VER) && _MSC_VER >= 1400 && !defined(__INTEL_COMPILER)
 
 template<> inline uint8_t rotlFixed<uint8_t>(uint8_t x, unsigned int y) {
 	return y ? _rotl8(x, y) : x;
@@ -225,8 +226,9 @@ template<> inline uint32_t rotlFixed<uint32_t>(uint32_t x, unsigned int y) {
 }
 #endif
 
-#if _MSC_VER >= 1300 && !defined(__INTEL_COMPILER)
-// Intel C++ Compiler 10.0 calls a function instead of using the rotate instruction when using these instructions
+#if defined(_MSC_VER) && _MSC_VER >= 1300 && !defined(__INTEL_COMPILER)
+// Intel C++ Compiler 10.0 calls a function instead of using the rotate instruction when
+// using these instructions
 template<> inline uint64_t rotlFixed<uint64_t>(uint64_t x, unsigned int y) {
 	return y ? _rotl64(x, y) : x;
 }
@@ -234,15 +236,15 @@ template<> inline uint64_t rotlFixed<uint64_t>(uint64_t x, unsigned int y) {
 
 template <class T>
 void IteratedHash<T>::finalize(char * digest) {
-
-	int order = ByteOrder::offset;
-
+	
+	size_t order = ByteOrder::offset;
+	
 	pad(BlockSize - 2 * sizeof(HashWord));
 	data[BlockSize / sizeof(HashWord) - 2 + order] = ByteOrder::byteSwapIfAlien(getBitCountLo());
 	data[BlockSize / sizeof(HashWord) - 1 - order] = ByteOrder::byteSwapIfAlien(getBitCountHi());
-
+	
 	hash(data, BlockSize);
-
+	
 	if(isAligned<HashWord>(digest) && HashSize % sizeof(HashWord) == 0) {
 		ByteOrder::byteSwapIfAlien(state, reinterpret_cast<HashWord *>(digest), HashSize);
 	} else {

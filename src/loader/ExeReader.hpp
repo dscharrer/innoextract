@@ -2,7 +2,7 @@
 #ifndef INNOEXTRACT_LOADER_EXEREADER_HPP
 #define INNOEXTRACT_LOADER_EXEREADER_HPP
 
-#include <stddef.h>
+#include <stdint.h>
 #include <istream>
 #include <vector>
 
@@ -16,9 +16,9 @@ public:
 	
 	struct Resource {
 		
-		size_t offset;
+		uint32_t offset;
 		
-		size_t size;
+		uint32_t size;
 		
 	};
 	
@@ -31,7 +31,8 @@ public:
 	 * Find where a resource with a given ID is stored in a MS PE/COFF executable.
 	 * @return The location of the resource or (0, 0) if the requested resource does not exist.
 	 */
-	static Resource findResource(std::istream & is, int name, int type = TypeData, int language = LanguageDefault);
+	static Resource findResource(std::istream & is, uint32_t name, uint32_t type = TypeData,
+	                             uint32_t language = LanguageDefault);
 	
 private:
 	
@@ -51,11 +52,12 @@ private:
 	 *   Remaining 31 bits: Offset to the CoffResourceTable CoffResourceLeaf relative to
 	 *                      the directory start.
 	 */
-	static size_t findResourceEntry(std::istream & ifs, int id);
+	static uint32_t findResourceEntry(std::istream & ifs, uint32_t id);
 	
-	static bool loadSectionTable(std::istream & ifs, size_t peOffset, const CoffFileHeader & coff, CoffSectionTable & table);
+	static bool loadSectionTable(std::istream & ifs, uint32_t peOffset,
+	                             const CoffFileHeader & coff, CoffSectionTable & table);
 	
-	static size_t memoryAddressToFileOffset(const CoffSectionTable & sections, size_t memory);
+	static uint32_t memoryAddressToFileOffset(const CoffSectionTable & sections, uint32_t memory);
 	
 };
 

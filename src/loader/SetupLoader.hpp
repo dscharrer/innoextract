@@ -9,28 +9,26 @@
 
 struct SetupLoader {
 	
-	size_t totalSize; //!< Minimum expected size of the setup file
-	
-	size_t exeOffset; //!< Offset of compressed setup.e32. 0 means there is no exe in this file.
-	size_t exeCompressedSize; //!< Size of setup.e32 after compression (0 = unknown)
-	size_t exeUncompressedSize; //!< Size of setup.e32 before compression
+	uint32_t exeOffset; //!< Offset of compressed setup.e32. 0 means there is no exe in this file.
+	uint32_t exeCompressedSize; //!< Size of setup.e32 after compression (0 = unknown)
+	uint32_t exeUncompressedSize; //!< Size of setup.e32 before compression
 	
 	Checksum exeChecksum; //!< Checksum of setup.e32 before compression
 	
-	size_t messageOffset;
+	uint32_t messageOffset;
 	
 	/*!
 		* Offset of embedded setup-0.bin data (the setup headers)
 		* This points to a version string (see setup/Version.hpp) followed by a
 		* compressed block of headers (see stream/BlockReader.hpp and setup/SetupHeader.hpp)
 		*/
-	size_t headerOffset;
+	uint32_t headerOffset;
 	
 	/*!
 		* Offset of embedded setup-1.bin data.
 		* If this is zero, the setup data is stored in seprarate files.
 		*/
-	size_t dataOffset;
+	uint32_t dataOffset;
 	
 	/*!
 	* Try to find the setup loader offsets in the given file.
@@ -43,7 +41,7 @@ private:
 	
 	bool loadFromExeResource(std::istream & is);
 	
-	bool loadOffsetsAt(std::istream & is, size_t pos);
+	bool loadOffsetsAt(std::istream & is, uint32_t pos);
 	
 };
 

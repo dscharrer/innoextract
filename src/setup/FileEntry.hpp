@@ -63,7 +63,7 @@ struct FileEntry : public SetupItem {
 	std::string installFontName;
 	std::string strongAssemblyName;
 	
-	int location; //!< index into the file location entry list
+	uint32_t location; //!< index into the file location entry list
 	uint32_t attributes;
 	uint64_t externalSize;
 	

@@ -5,7 +5,7 @@
 
 const char chunkId[4] = { 'z', 'l', 'b', 0x1a };
 
-ChunkReader::Chunk::Chunk(size_t _firstSlice, size_t _chunkOffset, uint64_t _chunkSize,
+ChunkReader::Chunk::Chunk(size_t _firstSlice, uint32_t _chunkOffset, uint64_t _chunkSize,
                           bool _compressed, bool _encrypted)
 	: firstSlice(_firstSlice), chunkOffset(_chunkOffset), chunkSize(_chunkSize),
 	  compressed(_compressed), encrypted(_encrypted) { }

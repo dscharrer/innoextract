@@ -94,6 +94,7 @@ std::ostream & operator<<(std::ostream & os, const WindowsVersion::Version & v) 
 	if(v.build) {
 		os << v.build;
 	}
+	return os;
 }
 
 std::ostream & operator<<(std::ostream & os, const WindowsVersion & v) {
@@ -117,10 +118,10 @@ std::ostream & operator<<(std::ostream & os, const WindowsVersion & v) {
 		os << ')';
 	}
 	if(v.ntServicePack.major || v.ntServicePack.minor) {
-	 os << " service pack " << v.ntServicePack.major;
-	 if(v.ntServicePack.minor) {
-		 os << '.' << v.ntServicePack.minor;
-	 }
+		os << " service pack " << v.ntServicePack.major;
+		if(v.ntServicePack.minor) {
+			os << '.' << v.ntServicePack.minor;
+		}
 	}
 	return os;
 }

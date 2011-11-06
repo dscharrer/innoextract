@@ -157,13 +157,13 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	numRunEntries = loadNumber<uint32_t>(is, version.bits);
 	numUninstallRunEntries = loadNumber<uint32_t>(is, version.bits);
 	
-	size_t licenseSize;
-	size_t infoBeforeSize;
-	size_t infoAfterSize;
+	int32_t licenseSize;
+	int32_t infoBeforeSize;
+	int32_t infoAfterSize;
 	if(version < INNO_VERSION(1, 3, 21)) {
-		licenseSize = loadNumber<uint32_t>(is, version.bits);
-		infoBeforeSize = loadNumber<uint32_t>(is, version.bits);
-		infoAfterSize = loadNumber<uint32_t>(is, version.bits);
+		licenseSize = loadNumber<int32_t>(is, version.bits);
+		infoBeforeSize = loadNumber<int32_t>(is, version.bits);
+		infoAfterSize = loadNumber<int32_t>(is, version.bits);
 	}
 	
 	minVersion.load(is, version);
@@ -183,7 +183,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version < INNO_VERSION(4, 2, 0)) {
-		password.crc32 = loadNumber<int32_t>(is), password.type = Checksum::Crc32;
+		password.crc32 = loadNumber<uint32_t>(is), password.type = Checksum::Crc32;
 	} else if(version < INNO_VERSION(5, 3, 9)) {
 		is.read(password.md5, sizeof(password.md5)), password.type = Checksum::MD5;
 	} else {
@@ -200,7 +200,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		slicesPerDisk = 1;
 	} else {
 		extraDiskSpaceRequired = loadNumber<int64_t>(is);
-		slicesPerDisk = loadNumber<int32_t>(is);
+		slicesPerDisk = loadNumber<uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 0)) {
@@ -266,7 +266,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(5, 2, 1) && version < INNO_VERSION(5, 3, 10)) {
-		signedUninstallerOrigSize = loadNumber<int32_t>(is);
+		signedUninstallerOrigSize = loadNumber<uint32_t>(is);
 		signedUninstallerHdrChecksum = loadNumber<uint32_t>(is);
 	} else {
 		signedUninstallerOrigSize = signedUninstallerHdrChecksum = 0;
@@ -455,21 +455,21 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		if(licenseSize) {
+		if(licenseSize > 0) {
 			std::string temp;
-			temp.resize(licenseSize);
+			temp.resize(size_t(licenseSize));
 			is.read(&temp[0], licenseSize);
 			toUtf8(temp, licenseText);
 		}
-		if(infoBeforeSize) {
+		if(infoBeforeSize > 0) {
 			std::string temp;
-			temp.resize(infoBeforeSize);
+			temp.resize(size_t(infoBeforeSize));
 			is.read(&temp[0], infoBeforeSize);
 			toUtf8(temp, infoBeforeText);
 		}
-		if(infoAfterSize) {
+		if(infoAfterSize > 0) {
 			std::string temp;
-			temp.resize(infoAfterSize);
+			temp.resize(size_t(infoAfterSize));
 			is.read(&temp[0], infoAfterSize);
 			toUtf8(temp, infoAfterText);
 		}
@@ -536,7 +536,8 @@ ENUM_NAMES(SetupHeader::Options, "Setup Option",
 	"back solid",
 	"overwrite uninst reg entries",
 )
-BOOST_STATIC_ASSERT(EnumSize<SetupHeader::Options::Enum>::value == EnumNames<SetupHeader::Options::Enum>::count);
+BOOST_STATIC_ASSERT(EnumSize<SetupHeader::Options::Enum>::value
+                    == EnumNames<SetupHeader::Options::Enum>::count);
 
 ENUM_NAMES(SetupHeader::Architectures, "Architecture",
 	"unknown",

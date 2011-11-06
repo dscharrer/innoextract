@@ -6,10 +6,10 @@
 
 void Adler32::update(const char * input, size_t length) {
 	
-	const unsigned long BASE = 65521;
+	const uint_fast32_t BASE = 65521;
 	
-	unsigned long s1 = this->s1;
-	unsigned long s2 = this->s2;
+	uint_fast32_t s1 = this->s1;
+	uint_fast32_t s2 = this->s2;
 	
 	if(length % 8 != 0) {
 		
@@ -28,14 +28,14 @@ void Adler32::update(const char * input, size_t length) {
 	
 	while(length > 0) {
 		
-		s1 += uint8_t(input[0]); s2 += s1;
-		s1 += uint8_t(input[1]); s2 += s1;
-		s1 += uint8_t(input[2]); s2 += s1;
-		s1 += uint8_t(input[3]); s2 += s1;
-		s1 += uint8_t(input[4]); s2 += s1;
-		s1 += uint8_t(input[5]); s2 += s1;
-		s1 += uint8_t(input[6]); s2 += s1;
-		s1 += uint8_t(input[7]); s2 += s1;
+		s1 += uint8_t(input[0]), s2 += s1;
+		s1 += uint8_t(input[1]), s2 += s1;
+		s1 += uint8_t(input[2]), s2 += s1;
+		s1 += uint8_t(input[3]), s2 += s1;
+		s1 += uint8_t(input[4]), s2 += s1;
+		s1 += uint8_t(input[5]), s2 += s1;
+		s1 += uint8_t(input[6]), s2 += s1;
+		s1 += uint8_t(input[7]), s2 += s1;
 		
 		length -= 8;
 		input += 8;

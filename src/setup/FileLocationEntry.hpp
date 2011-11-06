@@ -33,7 +33,7 @@ struct FileLocationEntry : public SetupItem {
 	size_t firstSlice;
 	size_t lastSlice;
 	
-	size_t chunkOffset; //!< offset of the compressed chunk in firstSlice
+	uint32_t chunkOffset; //!< offset of the compressed chunk in firstSlice
 	uint64_t chunkSize; //! total compressed size of the chunk
 	
 	uint64_t fileOffset; //!< offset of this file within the decompressed chunk

@@ -52,13 +52,13 @@ public:
 		std::streamsize nread = boost::iostreams::read(src, temp, sizeof(temp));
 		if(nread == EOF) {
 			return false;
-		}	else if(nread != sizeof(temp)) {
+		} else if(nread != sizeof(temp)) {
 			throw block_error("unexpected block end");
 		}
 		std::memcpy(&blockCrc32, temp, sizeof(blockCrc32));
 		blockCrc32 = LittleEndian::byteSwapIfAlien(blockCrc32);
 		
-		length = boost::iostreams::read(src, buffer, sizeof(buffer));
+		length = size_t(boost::iostreams::read(src, buffer, sizeof(buffer)));
 		if(length == size_t(EOF)) {
 			throw block_error("unexpected block end");
 		}
@@ -78,7 +78,7 @@ public:
 	template<typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n) {
 		
-		size_t read = 0;
+		std::streamsize read = 0;
 		while(n) {
 			
 			if(pos == length && !read_chunk(src)) {
@@ -89,7 +89,7 @@ public:
 			
 			std::copy(buffer + pos, buffer + pos + size, dest + read);
 			
-			pos += size, n -= size, read += size;
+			pos += size_t(size), n -= size, read += size;
 		}
 		
 		return read;

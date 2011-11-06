@@ -14,9 +14,9 @@ namespace {
 
 static const char PE_MAGIC[] = { 'P', 'E', 0, 0 };
 
-inline bool getResourceTable(size_t & entry, size_t resource_offset) {
+inline bool getResourceTable(uint32_t & entry, uint32_t resource_offset) {
 	
-	bool is_table = (entry & (1 << 31));
+	bool is_table = (entry & (uint32_t(1) << 31));
 	
 	entry &= ~(1 << 31), entry += resource_offset;
 	
@@ -44,7 +44,7 @@ struct ExeReader::CoffSection {
 	
 };
 
-size_t ExeReader::findResourceEntry(std::istream & is, int needle) {
+uint32_t ExeReader::findResourceEntry(std::istream & is, uint32_t needle) {
 	
 	// skip: characteristics + timestamp + major version + minor version
 	if(is.seekg(4 + 4 + 2 + 2, std::ios_base::cur).fail()) {
@@ -59,7 +59,7 @@ size_t ExeReader::findResourceEntry(std::istream & is, int needle) {
 	
 	
 	// Ignore named resource entries.
-	const size_t entry_size = 4 + 4; // id / string address + offset
+	const uint32_t entry_size = 4 + 4; // id / string address + offset
 	if(is.seekg(nbnames * entry_size, std::ios_base::cur).fail()) {
 		return 0;
 	}
@@ -80,13 +80,13 @@ size_t ExeReader::findResourceEntry(std::istream & is, int needle) {
 	return 0;
 }
 
-bool ExeReader::loadSectionTable(std::istream & is, size_t peOffset,
+bool ExeReader::loadSectionTable(std::istream & is, uint32_t peOffset,
                                  const CoffFileHeader & coff, CoffSectionTable & table) {
 	
 	// machine + nsections + creation time + symbol table offset + nsymbols
 	// + optional header size + characteristics
-	const size_t file_header_size = 2 + 2 + 4 + 4 + 4 + 2 + 2;
-	size_t section_table_offset = peOffset + sizeof(PE_MAGIC) + file_header_size
+	const uint32_t file_header_size = 2 + 2 + 4 + 4 + 4 + 2 + 2;
+	uint32_t section_table_offset = peOffset + uint32_t(sizeof(PE_MAGIC)) + file_header_size
 	                              + coff.optional_header_size;
 	is.seekg(section_table_offset);
 	
@@ -110,7 +110,7 @@ bool ExeReader::loadSectionTable(std::istream & is, size_t peOffset,
 	return !is.fail();
 }
 
-size_t ExeReader::memoryAddressToFileOffset(const CoffSectionTable & sections, size_t memory) {
+uint32_t ExeReader::memoryAddressToFileOffset(const CoffSectionTable & sections, uint32_t memory) {
 	
 	for(CoffSectionTable::const_iterator i = sections.begin(); i != sections.end(); ++i) {
 		const CoffSection & section = *i;
@@ -125,7 +125,8 @@ size_t ExeReader::memoryAddressToFileOffset(const CoffSectionTable & sections, s
 	return 0;
 }
 
-ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int type, int language) {
+ExeReader::Resource ExeReader::findResource(std::istream & is, uint32_t name,
+                                            uint32_t type, uint32_t language) {
 	
 	Resource result;
 	result.offset = result.size = 0;
@@ -166,7 +167,7 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 	if(is.fail() || ndirectories < 3) {
 		return result;
 	}
-	const size_t directory_header_size = 4 + 4; // address + size
+	const uint32_t directory_header_size = 4 + 4; // address + size
 	is.seekg(2 * directory_header_size, std::ios_base::cur);
 	
 	// Virtual memory address and size of the start of resource directory.
@@ -181,25 +182,25 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 		return result;
 	}
 	
-	size_t resource_offset = memoryAddressToFileOffset(sections, resource_address);
+	uint32_t resource_offset = memoryAddressToFileOffset(sections, resource_address);
 	if(!resource_offset) {
 		return result;
 	}
 	
 	is.seekg(resource_offset);
-	size_t type_offset = findResourceEntry(is, type);
+	uint32_t type_offset = findResourceEntry(is, type);
 	if(!getResourceTable(type_offset, resource_offset)) {
 		return result;
 	}
 	
 	is.seekg(type_offset);
-	size_t name_offset = findResourceEntry(is, name);
+	uint32_t name_offset = findResourceEntry(is, name);
 	if(!getResourceTable(name_offset, resource_offset)) {
 		return result;
 	}
 	
 	is.seekg(name_offset);
-	size_t leaf_offset = findResourceEntry(is, language);
+	uint32_t leaf_offset = findResourceEntry(is, language);
 	if(!leaf_offset || getResourceTable(leaf_offset, resource_offset)) {
 		return result;
 	}
@@ -213,7 +214,7 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, int name, int typ
 		return result;
 	}
 	
-	size_t data_offset = memoryAddressToFileOffset(sections, data_address);
+	uint32_t data_offset = memoryAddressToFileOffset(sections, data_address);
 	if(!data_offset) {
 		return result;
 	}

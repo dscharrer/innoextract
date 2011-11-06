@@ -2,6 +2,7 @@
 #ifndef INNOEXTRACT_UTIL_UTILS_HPP
 #define INNOEXTRACT_UTIL_UTILS_HPP
 
+#include <stdint.h>
 #include <iostream>
 #include <string>
 
@@ -23,9 +24,10 @@ struct Quoted {
 	
 	const std::string & str;
 	
-	Quoted(const std::string & _str) : str(_str) { }
+	explicit Quoted(const std::string & _str) : str(_str) { }
 	
 };
+
 inline std::ostream & operator<<(std::ostream & os, const Quoted & q) {
 	color::shell_command prev = color::current;
 	os << '"' << color::green;
@@ -33,7 +35,8 @@ inline std::ostream & operator<<(std::ostream & os, const Quoted & q) {
 		unsigned char c = (unsigned char)*i;
 		if(c < ' ' && c != '\t' && c != '\r' && c != '\n') {
 			std::ios_base::fmtflags old = os.flags();
-			os << color::red << '<' << std::hex << std::setfill('0') << std::setw(2) << int(c) << '>' << color::green;
+			os << color::red << '<' << std::hex << std::setfill('0') << std::setw(2)
+			   << int(c) << '>' << color::green;
 			os.setf(old, std::ios_base::basefield);
 		} else {
 			os << *i;
@@ -47,13 +50,16 @@ struct IfNotEmpty {
 	const std::string & name;
 	const std::string & value;
 	
-	IfNotEmpty(const std::string & _name, const std::string & _value) : name(_name), value(_value) { }
+	IfNotEmpty(const std::string & _name, const std::string & _value)
+		: name(_name), value(_value) { }
 	
 };
+
 inline std::ostream & operator<<(std::ostream & os, const IfNotEmpty & s) {
 	if(s.value.length() > 100) {
 		color::shell_command prev = color::current;
-		return os << s.name << ": " << color::white << s.value.length() << prev << " bytes" << std::endl;
+		return os << s.name << ": " << color::white << s.value.length() << prev
+		          << " bytes" << std::endl;
 	} else if(!s.value.empty()) {
 		return os << s.name << ": " << Quoted(s.value) << std::endl;
 	} else {
@@ -68,9 +74,11 @@ struct _IfNot {
 	const T value;
 	const T excluded;
 	
-	_IfNot(const std::string & _name, T _value, T _excluded) : name(_name), value(_value), excluded(_excluded) { }
+	_IfNot(const std::string & _name, T _value, T _excluded)
+		: name(_name), value(_value), excluded(_excluded) { }
 	
 };
+
 template <class T>
 inline std::ostream & operator<<(std::ostream & os, const _IfNot<T> & s) {
 	if(s.value != s.excluded) {
@@ -80,18 +88,20 @@ inline std::ostream & operator<<(std::ostream & os, const _IfNot<T> & s) {
 		return os;
 	}
 }
+
 template <class T>
 _IfNot<T> IfNot(const std::string & name, T value, T excluded) {
 	return _IfNot<T>(name, value, excluded);
 }
+
 template <class T>
 _IfNot<T> IfNotZero(const std::string & name, T value) {
 	return _IfNot<T>(name, value, T(0));
 }
 
-template <class A, class B>
-inline A ceildiv(A num, B denom) {
-	return A((num + (denom - 1)) / denom);
+template <typename T>
+inline T ceildiv(T num, T denom) {
+	return (num + (denom - T(1))) / denom;
 }
 
 template <class T>
@@ -99,12 +109,13 @@ struct _PrintHex {
 	
 	T value;
 	
-	_PrintHex(T data) : value(data) { }
+	explicit _PrintHex(T data) : value(data) { }
 	
 	bool operator==(const _PrintHex & o) const { return value == o.value; }
 	bool operator!=(const _PrintHex & o) const { return value != o.value; }
 	
 };
+
 template <class T>
 inline std::ostream & operator<<(std::ostream & os, const _PrintHex<T> & s) {
 	
@@ -115,6 +126,7 @@ inline std::ostream & operator<<(std::ostream & os, const _PrintHex<T> & s) {
 	os.setf(old, std::ios_base::basefield);
 	return os;
 }
+
 template <class T>
 _PrintHex<T> PrintHex(T value) {
 	return _PrintHex<T>(value);
@@ -133,36 +145,38 @@ struct _PrintBytes {
 	
 	T value;
 	
-	_PrintBytes(T data) : value(data) { }
+	explicit _PrintBytes(T data) : value(data) { }
 	
 	bool operator==(const _PrintBytes & o) const { return value == o.value; }
 	bool operator!=(const _PrintBytes & o) const { return value != o.value; }
 	
 };
+
 template <class T>
 inline std::ostream & operator<<(std::ostream & os, const _PrintBytes<T> & s) {
 	
-	int precision = os.precision();
+	std::streamsize precision = os.precision();
 	
-	size_t frac = 0;
-	size_t whole = s.value;
+	size_t frac = size_t(1024 * (s.value - T(uint64_t(s.value))));
+	uint64_t whole = uint64_t(s.value);
 	
 	size_t i = 0;
 	
-	while((whole & ~0x3ff) && i < ARRAY_SIZE(byteSizeUnits) - 1) {
+	while(whole > 1024 && i < ARRAY_SIZE(byteSizeUnits) - 1) {
 		
-		frac = (whole & 0x3ff), whole >>= 10;
+		frac = whole % 1024, whole /= 1024;
 		
 		i++;
 	}
 	
-	float num = whole + (frac / 1024.f);
+	float num = float(whole) + (float(frac) / 1024.f);
 	
 	os << std::setprecision(3) << num << ' ' << byteSizeUnits[i];
 	
 	os.precision(precision);
 	return os;
 }
+
 template <class T>
 _PrintBytes<T> PrintBytes(T value) {
 	return _PrintBytes<T>(value);

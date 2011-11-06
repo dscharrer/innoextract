@@ -152,7 +152,7 @@ struct SetupHeader {
 	Color wizardSmallImageBackColor;
 	
 	Checksum password;
-	SetupSalt passwordSalt; 
+	SetupSalt passwordSalt;
 	
 	int64_t extraDiskSpaceRequired;
 	size_t slicesPerDisk;
@@ -215,7 +215,7 @@ struct SetupHeader {
 	Architectures architecturesAllowed;
 	Architectures architecturesInstallIn64BitMode;
 	
-	uint64_t signedUninstallerOrigSize;
+	uint32_t signedUninstallerOrigSize;
 	uint32_t signedUninstallerHdrChecksum;
 	
 	AutoBoolean disableDirPage;

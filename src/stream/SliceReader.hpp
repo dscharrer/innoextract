@@ -11,12 +11,12 @@ class SliceReader : public boost::iostreams::source {
 	std::string dir;
 	std::string lastDir;
 	std::string baseFile;
-	const size_t dataOffset;
+	const uint32_t dataOffset;
 	const size_t slicesPerDisk;
 	
 	size_t currentSlice;
 	std::string sliceFile;
-	size_t sliceSize;
+	uint32_t sliceSize;
 	
 	std::ifstream ifs;
 	
@@ -25,7 +25,7 @@ class SliceReader : public boost::iostreams::source {
 	
 public:
 	
-	SliceReader(const std::string & setupFile, size_t dataOffset);
+	SliceReader(const std::string & setupFile, uint32_t dataOffset);
 	
 	/*!
 	 *   if Ver>=4107 then baseFile := PathChangeExt(PathExtractName(SetupLdrOriginalFilename), '')
@@ -33,7 +33,7 @@ public:
 	 */
 	SliceReader(const std::string & dir, const std::string & baseFile, size_t slicesPerDisk);
 	
-	bool seek(size_t slice, size_t offset);
+	bool seek(size_t slice, uint32_t offset);
 	
 	std::streamsize read(char * buffer, std::streamsize bytes);
 	

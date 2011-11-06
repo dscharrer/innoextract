@@ -92,7 +92,7 @@ private:
 template<typename Source>
 std::streamsize call_instruction_decoder_4108::read(Source & src, char * dest, std::streamsize n) {
 	
-	for(size_t i = 0; i < n; i++, addr_offset++) {
+	for(std::streamsize i = 0; i < n; i++, addr_offset++) {
 		
 		int byte = boost::iostreams::get(src);
 		if(byte == EOF) { return i ? i : EOF; }
@@ -107,13 +107,13 @@ std::streamsize call_instruction_decoder_4108::read(Source & src, char * dest, s
 			}
 			
 		} else {
-			addr += byte;
-			byte = addr;
+			addr += uint8_t(byte);
+			byte = uint8_t(addr);
 			addr >>= 8;
 			addr_bytes_left--;
 		}
 		
-		*dest++ = uint8_t(byte);
+		*dest++ = char(uint8_t(byte));
 	}
 	
 	return n;
@@ -127,16 +127,17 @@ std::streamsize call_instruction_decoder_5200::read(Source & src, char * dest, s
 	//! Total number of filtered bytes read and written to dest.
 #define total_read     (n - (end - dest))
 	
-#define flush(N) { \
+#define flush(N) \
+	{ \
 		if((N) > 0) { \
 			flush_bytes = (N); \
 			size_t buffer_i = 0; \
 			do { \
 				if(dest == end) { \
-					memmove(buffer, buffer + buffer_i, flush_bytes); \
+					memmove(buffer, buffer + buffer_i, size_t(flush_bytes)); \
 					return total_read; \
 				} \
-				*dest++ = buffer[buffer_i++]; \
+				*dest++ = char(buffer[buffer_i++]); \
 			} while(--flush_bytes); \
 		} \
 	} (void)0
@@ -153,7 +154,7 @@ std::streamsize call_instruction_decoder_5200::read(Source & src, char * dest, s
 			int byte = boost::iostreams::get(src);
 			if(byte == EOF) { return total_read ? total_read : EOF; }
 			if(byte == boost::iostreams::WOULD_BLOCK) { return total_read; }
-			*dest++ = byte;
+			*dest++ = char(byte);
 			offset++;
 			if(byte != 0xe8 && byte != 0xe9) {
 				// Not a CALL or JMP instruction.
@@ -175,10 +176,10 @@ std::streamsize call_instruction_decoder_5200::read(Source & src, char * dest, s
 		char * dst = reinterpret_cast<char *>(buffer + 4 + flush_bytes);
 		std::streamsize nread = boost::iostreams::read(src, dst, -flush_bytes);
 		if(nread == EOF) {
-			flush(4 + flush_bytes);
+			flush(int8_t(4 + flush_bytes));
 			return total_read ? total_read : EOF;
 		}
-		flush_bytes += nread, offset += nread;
+		flush_bytes = int8_t(flush_bytes + nread), offset += uint32_t(nread);
 		if(flush_bytes) { return total_read; }
 		
 		// Verify that the high byte of the address is 0x00 or 00xff.
@@ -196,7 +197,7 @@ std::streamsize call_instruction_decoder_5200::read(Source & src, char * dest, s
 				// of the original relative address is likely to be the sign extension
 				// of bit 23, so if bit 23 is set, toggle all bits in the high byte.
 				if(rel & 0x800000) {
-					buffer[3] = ~buffer[3];
+					buffer[3] = uint8_t(~buffer[3]);
 				}
 			}
 			

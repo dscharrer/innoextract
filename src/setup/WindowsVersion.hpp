@@ -57,7 +57,7 @@ struct WindowsVersion {
 		return !(*this == o);
 	}
 	
-	const static WindowsVersion none;
+	static const WindowsVersion none;
 	
 };
 

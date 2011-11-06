@@ -44,7 +44,7 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	if(version.bits == 16) {
 		
-		uint32_t date = loadNumber<uint32_t>(is); // milliseconds?
+		int32_t date = loadNumber<int32_t>(is); // milliseconds?
 		
 		// TODO this seems to be off by a few years:
 		// expected ~ 2000-04-18, got 1991-07-28
@@ -63,7 +63,7 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 		filetime -= FILETIME_OFFSET;
 		
 		timestamp.tv_sec = std::time_t(filetime / 10000000);
-		timestamp.tv_nsec = long(filetime % 10000000) * 100;
+		timestamp.tv_nsec = int32_t(filetime % 10000000) * 100;
 	}
 	
 	fileVersionMS = loadNumber<uint32_t>(is);

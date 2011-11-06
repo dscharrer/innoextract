@@ -19,6 +19,6 @@ public:
 	static void transform(HashWord * digest, const HashWord * data);
 };
 
-typedef IteratedHash<Sha1Transform> Sha1; 
+typedef IteratedHash<Sha1Transform> Sha1;
 
 #endif // INNOEXTRACT_CRYPTO_SHA1_HPP

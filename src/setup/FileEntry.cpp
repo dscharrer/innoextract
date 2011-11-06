@@ -64,9 +64,10 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	loadVersionData(is, version);
 	
-	location = loadNumber<int32_t>(is, version.bits);
+	location = loadNumber<uint32_t>(is, version.bits);
 	attributes = loadNumber<uint32_t>(is, version.bits);
-	externalSize = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<uint64_t>(is) : loadNumber<uint32_t>(is);
+	externalSize = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<uint64_t>(is)
+	                                                  : loadNumber<uint32_t>(is);
 	
 	if(version < INNO_VERSION(3, 0, 5)) {
 		FileCopyMode copyMode = StoredEnum<StoredFileCopyMode>(is).get();

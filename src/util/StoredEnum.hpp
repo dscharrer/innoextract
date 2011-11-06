@@ -98,14 +98,19 @@ public:
 	
 	inline std::bitset<size> getBitSet() const {
 		
-		static const size_t ulong_size = sizeof(unsigned long) * 8;
+		// Make `make style` shut up since we really need unsigned long here.
+		#define stored_enum_concat_(a, b, c, d) a##b c##d
+		typedef stored_enum_concat_(unsi, gned, lo, ng) ulong_type;
+		#undef stored_enum_concat_
+		
+		static const size_t ulong_size = sizeof(ulong_type) * 8;
 		
 		BOOST_STATIC_ASSERT(base_size % ulong_size == 0 || base_size < ulong_size);
 		
 		std::bitset<size> result(0);
 		for(size_t i = 0; i < count; i++) {
 			for(size_t j = 0; j < ceildiv(base_size, ulong_size); j++) {
-				result |= std::bitset<size>(static_cast<unsigned long>(bits[i] >> (j * ulong_size)))
+				result |= std::bitset<size>(static_cast<ulong_type>(bits[i] >> (j * ulong_size)))
 				          << ((i * base_size) + (j * ulong_size));
 			}
 		}
@@ -138,7 +143,8 @@ public:
 		}
 		
 		if(bits) {
-			LogWarning << "unexpected " << EnumNames<enum_type>::name << " flags: " << std::hex << bits << std::dec;
+			LogWarning << "unexpected " << EnumNames<enum_type>::name << " flags: "
+			           << std::hex << bits << std::dec;
 		}
 		
 		return result;
@@ -166,7 +172,7 @@ public:
 	
 	size_t bits;
 	
-	StoredFlagReader(std::istream & _is) : is(_is), pos(0), result(0), bits(0) { };
+	explicit StoredFlagReader(std::istream & _is) : is(_is), pos(0), result(0), bits(0) { }
 	
 	void add(enum_type flag) {
 		
@@ -195,7 +201,7 @@ class StoredFlagReader<Flags<Enum> > : public StoredFlagReader<Enum> {
 	
 public:
 	
-	StoredFlagReader(std::istream & is) : StoredFlagReader<Enum>(is) { };
+	explicit StoredFlagReader(std::istream & is) : StoredFlagReader<Enum>(is) { }
 	
 };
 

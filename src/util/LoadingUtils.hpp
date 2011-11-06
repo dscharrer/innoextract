@@ -7,6 +7,10 @@
 #include <iostream>
 #include <string>
 #include <limits>
+
+#include <boost/integer/static_min_max.hpp>
+#include <boost/integer.hpp>
+
 #include "util/Endian.hpp"
 
 struct BinaryString {
@@ -30,7 +34,8 @@ struct EncodedString {
 	std::string & data;
 	uint32_t codepage;
 	
-	inline EncodedString(std::string & target, uint32_t _codepage) : data(target), codepage(_codepage) { }
+	inline EncodedString(std::string & target, uint32_t _codepage)
+		: data(target), codepage(_codepage) { }
 	
 	static void loadInto(std::istream & is, std::string & target, uint32_t codepage);
 	
@@ -61,24 +66,25 @@ inline T loadNumber(std::istream & is) {
 	return LittleEndian::byteSwapIfAlien(load<T>(is));
 }
 
-template <class Base, size_t Bits, bool Signed = std::numeric_limits<Base>::is_signed>
-struct compatible_integer { typedef void type; };
-template <class Base>
-struct compatible_integer<Base, 8, false> { typedef uint8_t type; };
-template <class Base>
-struct compatible_integer<Base, 8, true> { typedef int8_t type; };
-template <class Base>
-struct compatible_integer<Base, 16, false> { typedef uint16_t type; };
-template <class Base>
-struct compatible_integer<Base, 16, true> { typedef int16_t type; };
-template <class Base>
-struct compatible_integer<Base, 32, false> { typedef uint32_t type; };
-template <class Base>
-struct compatible_integer<Base, 32, true> { typedef int32_t type; };
-template <class Base>
-struct compatible_integer<Base, 64, false> { typedef uint64_t type; };
-template <class Base>
-struct compatible_integer<Base, 64, true> { typedef int64_t type; };
+template <class Base, size_t Bits,
+          bool Signed = std::numeric_limits<Base>::is_signed>
+struct compatible_integer {
+	typedef void type;
+};
+
+template <class Base, size_t Bits>
+struct compatible_integer<Base, Bits, false> {
+	typedef typename boost::uint_t<
+		boost::static_unsigned_min<Bits, sizeof(Base) * 8>::value
+	>::exact type;
+};
+
+template <class Base, size_t Bits>
+struct compatible_integer<Base, Bits, true> {
+	typedef typename boost::int_t<
+		boost::static_unsigned_min<Bits, sizeof(Base) * 8>::value
+	>::exact type;
+};
 
 template <class T>
 T loadNumber(std::istream & is, size_t bits) {

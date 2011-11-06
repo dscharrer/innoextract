@@ -77,7 +77,7 @@ public:
 		
 		if(progress_length > 10) {
 			
-			size_t progress = ceil(progress_length * value);
+			size_t progress = size_t(ceil(float(progress_length) * value));
 			
 			std::cout << '[';
 			for(size_t i = 0; i < progress; i++) {
@@ -91,7 +91,8 @@ public:
 			
 		}
 		
-		std::cout << std::right << std::fixed << std::setprecision(1) << std::setfill(' ') << std::setw(5) << (value * 100) << "% " << label;
+		std::cout << std::right << std::fixed << std::setprecision(1) << std::setfill(' ')
+		          << std::setw(5) << (value * 100) << "% " << label;
 		std::cout.flush();
 		
 		std::cout.flags(flags);
@@ -99,7 +100,7 @@ public:
 	}
 	
 	static void clear() {
-		std::cout << "\33[2K\r" ;
+		std::cout << "\33[2K\r";
 	}
 	
 };
@@ -119,9 +120,9 @@ void discard(T & is, uint64_t bytes) {
 	
 	char buf[1024];
 	while(bytes) {
-		size_t n = std::min<uint64_t>(bytes, ARRAY_SIZE(buf));
+		std::streamsize n = std::streamsize(std::min<uint64_t>(bytes, ARRAY_SIZE(buf)));
 		is.read(buf, n);
-		bytes -= n;
+		bytes -= uint64_t(n);
 	}
 	
 }
@@ -133,7 +134,7 @@ struct FileLocationComparer {
 	
 	const std::vector<FileLocationEntry> & locations;
 	
-	FileLocationComparer(const std::vector<FileLocationEntry> & loc) : locations(loc) { }
+	explicit FileLocationComparer(const std::vector<FileLocationEntry> & loc) : locations(loc) { }
 	FileLocationComparer(const FileLocationComparer & o) : locations(o.locations) { }
 	
 	bool operator()(size_t a, size_t b) {
@@ -142,7 +143,8 @@ struct FileLocationComparer {
 	
 };
 
-void printSetupItem(std::ostream & os, const SetupItem & item, const SetupHeader & header) {
+static void printSetupItem(std::ostream & os, const SetupItem & item,
+                           const SetupHeader & header) {
 	
 	os << IfNotEmpty("  Componenets", item.components);
 	os << IfNotEmpty("  Tasks", item.tasks);
@@ -157,7 +159,7 @@ void printSetupItem(std::ostream & os, const SetupItem & item, const SetupHeader
 	
 }
 
-void print(std::ostream & os, const RunEntry & entry, const SetupHeader & header) {
+static void print(std::ostream & os, const RunEntry & entry, const SetupHeader & header) {
 	
 	os << " - " << Quoted(entry.name) << ':' << endl;
 	os << IfNotEmpty("  Parameters", entry.parameters);
@@ -176,7 +178,7 @@ void print(std::ostream & os, const RunEntry & entry, const SetupHeader & header
 	
 }
 
-std::ostream & operator<<(std::ostream & os, const Checksum & checksum) {
+static std::ostream & operator<<(std::ostream & os, const Checksum & checksum) {
 	
 	std::ios_base::fmtflags old = os.flags();
 	
@@ -220,7 +222,7 @@ static const char * magicNumbers[][2] = {
 	{ "BM", "bmp" },
 };
 
-const char * guessExtension(const string & data) {
+static const char * guessExtension(const string & data) {
 	
 	for(size_t i = 0; i < ARRAY_SIZE(magicNumbers); i++) {
 		
@@ -234,13 +236,14 @@ const char * guessExtension(const string & data) {
 	return "bin";
 }
 
-void dump(std::istream & is, const string & file) {
+static void dump(std::istream & is, const string & file) {
 	
 	// TODO stream
 	
 	std::string data;
 	is >> BinaryString(data);
-	cout << "Resource: " << color::cyan << file << color::reset << ": " << color::white << data.length() << color::reset << " bytes" << endl;
+	cout << "Resource: " << color::cyan << file << color::reset << ": " << color::white
+	     << data.length() << color::reset << " bytes" << endl;
 	
 	if(data.empty()) {
 		return;
@@ -248,12 +251,14 @@ void dump(std::istream & is, const string & file) {
 	
 	std::string filename = file + '.' + guessExtension(data);
 	
-	std::ofstream ofs(filename.c_str(), std::ios_base::trunc | std::ios_base::binary | std::ios_base::out);
+	std::ofstream ofs(filename.c_str(), std::ios_base::trunc | std::ios_base::binary
+	                                    | std::ios_base::out);
 	
 	ofs << data;
 };
 
-void readWizardImageAndDecompressor(std::istream & is, const InnoVersion & version, const SetupHeader & header) {
+static void readWizardImageAndDecompressor(std::istream & is, const InnoVersion & version,
+                                           const SetupHeader & header) {
 	
 	cout << endl;
 	
@@ -264,8 +269,8 @@ void readWizardImageAndDecompressor(std::istream & is, const InnoVersion & versi
 	}
 	
 	if(header.compressMethod == SetupHeader::BZip2
-			|| (header.compressMethod == SetupHeader::LZMA1 && version == INNO_VERSION(4, 1, 5))
-			|| (header.compressMethod == SetupHeader::Zlib && version >= INNO_VERSION(4, 2, 6))) {
+	   || (header.compressMethod == SetupHeader::LZMA1 && version == INNO_VERSION(4, 1, 5))
+	   || (header.compressMethod == SetupHeader::Zlib && version >= INNO_VERSION(4, 2, 6))) {
 		
 		dump(is, "decompressor");
 	}
@@ -290,29 +295,25 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 	
-	uint64_t fileSize = ifs.tellg();
-	if(!fileSize) {
-		LogError << "cannot read file or empty file";
-		return 1;
-	}
-	
 	SetupLoader offsets;
 	offsets.load(ifs);
 	
 	cout << std::boolalpha;
 	
 	cout << "loaded offsets:" << endl;
-	cout << "- total size: " << color::cyan << PrintBytes(offsets.totalSize) << color::reset << endl;
 	if(offsets.exeOffset) {
 		cout << "- exe: @ " << color::cyan << PrintHex(offsets.exeOffset) << color::reset;
 		if(offsets.exeCompressedSize) {
-			cout << "  compressed: " << color::cyan << PrintHex(offsets.exeCompressedSize) << color::reset;
+			cout << "  compressed: " << color::cyan << PrintHex(offsets.exeCompressedSize)
+			     << color::reset;
 		}
-		cout << "  uncompressed: " << color::cyan << PrintBytes(offsets.exeUncompressedSize) << color::reset << endl;
+		cout << "  uncompressed: " << color::cyan << PrintBytes(offsets.exeUncompressedSize)
+		     << color::reset << endl;
 		cout << "- exe checksum: " << color::cyan << offsets.exeChecksum  << color::reset << endl;
 	}
 	cout << IfNotZero("- message offset", PrintHex(offsets.messageOffset));
-	cout << "- header offset: " << color::cyan << PrintHex(offsets.headerOffset) << color::reset << endl;
+	cout << "- header offset: " << color::cyan << PrintHex(offsets.headerOffset)
+	     << color::reset << endl;
 	cout << IfNotZero("- data offset", PrintHex(offsets.dataOffset));
 	
 	ifs.seekg(offsets.headerOffset);
@@ -419,15 +420,21 @@ int main(int argc, char * argv[]) {
 	cout << IfNotZero("Slices per disk", header.slicesPerDisk);
 	
 	cout << IfNot("Install mode", header.installMode, SetupHeader::NormalInstallMode);
-	cout << "Uninstall log mode: " << color::cyan << header.uninstallLogMode << color::reset << endl;
+	cout << "Uninstall log mode: " << color::cyan << header.uninstallLogMode
+	     << color::reset << endl;
 	cout << "Uninstall style: " << color::cyan << header.uninstallStyle << color::reset << endl;
-	cout << "Dir exists warning: " << color::cyan << header.dirExistsWarning << color::reset << endl;
+	cout << "Dir exists warning: " << color::cyan << header.dirExistsWarning
+	     << color::reset << endl;
 	cout << IfNot("Privileges required", header.privilegesRequired, SetupHeader::NoPrivileges);
-	cout << "Show language dialog: " << color::cyan << header.showLanguageDialog << color::reset << endl;
-	cout << IfNot("Danguage detection", header.languageDetectionMethod, SetupHeader::NoLanguageDetection);
+	cout << "Show language dialog: " << color::cyan << header.showLanguageDialog
+	     << color::reset << endl;
+	cout << IfNot("Danguage detection", header.languageDetectionMethod,
+	              SetupHeader::NoLanguageDetection);
 	cout << "Compression: " << color::cyan << header.compressMethod << color::reset << endl;
-	cout << "Architectures allowed: " << color::cyan << header.architecturesAllowed << color::reset << endl;
-	cout << "Architectures installed in 64-bit mode: " << color::cyan << header.architecturesInstallIn64BitMode << color::reset << endl;
+	cout << "Architectures allowed: " << color::cyan << header.architecturesAllowed
+	     << color::reset << endl;
+	cout << "Architectures installed in 64-bit mode: " << color::cyan
+	     << header.architecturesInstallIn64BitMode << color::reset << endl;
 	
 	if(header.options & SetupHeader::SignedUninstaller) {
 		cout << IfNotZero("Size before signing uninstaller", header.signedUninstallerOrigSize);
@@ -435,7 +442,8 @@ int main(int argc, char * argv[]) {
 	}
 	
 	cout << "Disable dir page: " << color::cyan << header.disableDirPage << color::reset << endl;
-	cout << "Disable program group page: " << color::cyan << header.disableProgramGroupPage << color::reset << endl;
+	cout << "Disable program group page: " << color::cyan << header.disableProgramGroupPage
+	     << color::reset << endl;
 	
 	cout << IfNotZero("Uninstall display size", header.uninstallDisplaySize);
 	
@@ -467,7 +475,8 @@ int main(int argc, char * argv[]) {
 		cout << IfNotEmpty("  Info before text", entry.infoBeforeText);
 		cout << IfNotEmpty("  Info after text", entry.infoAfterText);
 		
-		cout << "  Language id: " << color::cyan << hex << entry.languageId << dec << color::reset << endl;
+		cout << "  Language id: " << color::cyan << hex << entry.languageId << dec
+		     << color::reset << endl;
 		
 		cout << IfNotZero("  Codepage", entry.codepage);
 		cout << IfNotZero("  Dialog font size", entry.dialogFontSize);
@@ -498,21 +507,22 @@ int main(int argc, char * argv[]) {
 			LogWarning << "unexpected language index: " << entry.language;
 		}
 		
-		int codepage;
-		if(entry.language == -1) {
+		uint32_t codepage;
+		if(entry.language < 0) {
 			codepage = version.codepage();
 		} else {
-			codepage = languages[entry.language].codepage;
+			codepage = languages[size_t(entry.language)].codepage;
 		}
 		
 		string decoded;
 		toUtf8(entry.value, decoded, codepage);
 		
 		cout << " - " << Quoted(entry.name);
-		if(entry.language == -1) {
+		if(entry.language < 0) {
 			cout << " (default) = ";
 		} else {
-			cout << " (" << color::cyan << languages[entry.language].name << color::reset << ") = ";
+			cout << " (" << color::cyan << languages[size_t(entry.language)].name
+			     << color::reset << ") = ";
 		}
 		cout << Quoted(decoded) << endl;
 		
@@ -663,7 +673,7 @@ int main(int argc, char * argv[]) {
 		} else {
 			cout << " - " << Quoted(entry.destination);
 		}
-		if(entry.location != -1) {
+		if(entry.location != uint32_t(-1)) {
 			cout << " (location: " << color::cyan << entry.location << color::reset << ')';
 		}
 		cout  << endl;
@@ -900,11 +910,11 @@ int main(int argc, char * argv[]) {
 		
 		cout << "  Timestamp: " << color::cyan << (t.tm_year + 1900)
 		     << '-' << std::setfill('0') << std::setw(2) << (t.tm_mon + 1)
-				 << '-' << std::setfill('0') << std::setw(2) << t.tm_mday
-				 << ' ' << std::setfill(' ') << std::setw(2) << t.tm_hour
-				 << ':' << std::setfill('0') << std::setw(2) << t.tm_min
-				 << ':' << std::setfill('0') << std::setw(2) << t.tm_sec
-				 << color::reset << " +" << entry.timestamp.tv_nsec << endl;
+		     << '-' << std::setfill('0') << std::setw(2) << t.tm_mday
+		     << ' ' << std::setfill(' ') << std::setw(2) << t.tm_hour
+		     << ':' << std::setfill('0') << std::setw(2) << t.tm_min
+		     << ':' << std::setfill('0') << std::setw(2) << t.tm_sec
+		     << color::reset << " +" << entry.timestamp.tv_nsec << endl;
 		
 		cout << IfNotZero("  Options", entry.options);
 		
@@ -937,8 +947,12 @@ int main(int argc, char * argv[]) {
 	Chunks chunks;
 	for(size_t i = 0; i < locations.size(); i++) {
 		const FileLocationEntry & location = locations[i];
-		chunks[ChunkReader::Chunk(location.firstSlice, location.chunkOffset, location.chunkSize, location.options & FileLocationEntry::ChunkCompressed, location.options & FileLocationEntry::ChunkEncrypted)].push_back(i);
-		assert(header.compressMethod == SetupHeader::BZip2 || !(location.options & FileLocationEntry::BZipped));
+		chunks[ChunkReader::Chunk(location.firstSlice, location.chunkOffset, location.chunkSize,
+		                          location.options & FileLocationEntry::ChunkCompressed,
+		                          location.options & FileLocationEntry::ChunkEncrypted)
+		      ].push_back(i);
+		assert(header.compressMethod == SetupHeader::BZip2
+		       || !(location.options & FileLocationEntry::BZipped));
 	}
 	
 	boost::shared_ptr<SliceReader> slice_reader;
@@ -948,15 +962,17 @@ int main(int argc, char * argv[]) {
 	} else {
 		fs::path path(argv[1]);
 		
-		slice_reader.reset(new SliceReader(path.parent_path().string() + '/', path.stem().string(), header.slicesPerDisk));
+		slice_reader.reset(new SliceReader(path.parent_path().string() + '/',
+		                                   path.stem().string(), header.slicesPerDisk));
 	}
 	
 	try {
 	
 	BOOST_FOREACH(Chunks::value_type & chunk, chunks) {
 		
-		cout << "[starting " << (chunk.first.compressed ? header.compressMethod : SetupHeader::Stored) << " chunk @ " << chunk.first.firstSlice << " + " << PrintHex(offsets.dataOffset) << " + "
-		     << PrintHex(chunk.first.chunkOffset) << ']' << std::endl;
+		cout << "[starting " << (chunk.first.compressed ? header.compressMethod : SetupHeader::Stored)
+		     << " chunk @ " << chunk.first.firstSlice << " + " << PrintHex(offsets.dataOffset)
+		     << " + " << PrintHex(chunk.first.chunkOffset) << ']' << std::endl;
 		
 		std::sort(chunk.second.begin(), chunk.second.end(), FileLocationComparer(locations));
 		
@@ -987,7 +1003,8 @@ int main(int argc, char * argv[]) {
 			}
 		}
 		
-		chunk_source.push(io::restrict(boost::ref(*slice_reader.get()), 0, chunk.first.chunkSize));
+		int64_t csize = int64_t(chunk.first.chunkSize);
+		chunk_source.push(io::restrict(boost::ref(*slice_reader.get()), 0, csize));
 		
 		uint64_t offset = 0;
 		
@@ -1022,7 +1039,8 @@ int main(int argc, char * argv[]) {
 			Hasher hasher;
 			hasher.init(location.checksum.type);
 			
-			io::restriction<chunk_stream_type> raw_src(chunk_source, 0, location.fileSize);
+			int64_t file_size = int64_t(location.fileSize);
+			io::restriction<chunk_stream_type> raw_src(chunk_source, 0, file_size);
 			
 			io::filtering_istream file_source;
 			
@@ -1038,10 +1056,6 @@ int main(int argc, char * argv[]) {
 			
 			file_source.push(raw_src);
 			
-			//file_source.exceptions(std::ios_base::badbit | std::ios_base::failbit);
-			
-			//discard(file, location.fileSize);
-			
 			BOOST_FOREACH(size_t file_i, files_for_location[location_i]) {
 				if(!files[file_i].destination.empty()) {
 					std::ofstream ofs(files[file_i].destination.c_str());
@@ -1054,7 +1068,7 @@ int main(int argc, char * argv[]) {
 					std::ostringstream oss;
 					float last_rate = 0;
 					
-					int32_t last_milliseconds = 0;
+					int64_t last_milliseconds = 0;
 					
 					boost::posix_time::ptime start(boost::posix_time::microsec_clock::universal_time());
 					
@@ -1066,23 +1080,24 @@ int main(int argc, char * argv[]) {
 							
 							ofs.write(buffer, n);
 							
-							total += n;
-							float new_status = size_t(1000.f * total / location.fileSize)
-																	* (1 / 1000.f);
+							total += uint64_t(n);
+							float new_status = float(size_t(1000.f * float(total) / float(location.fileSize)))
+							                   * (1 / 1000.f);
 							if(status != new_status && new_status != 100.f) {
 								
 								boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
-								int32_t milliseconds = (now - start).total_milliseconds();
+								int64_t milliseconds = (now - start).total_milliseconds();
 								
 								if(milliseconds - last_milliseconds > 200) {
 									last_milliseconds = milliseconds;
 									
 									if(total >= 10 * 1024 && milliseconds > 0) {
-										float rate = 1000.f * total / milliseconds;
+										float rate = 1000.f * float(total) / float(milliseconds);
 										if(rate != last_rate) {
 											last_rate = rate;
 											oss.str(string()); // clear the buffer
-											oss << std::right << std::fixed << std::setfill(' ') << std::setw(8) << PrintBytes(rate) << "/s";
+											oss << std::right << std::fixed << std::setfill(' ') << std::setw(8)
+											    << PrintBytes(rate) << "/s";
 										}
 									}
 									
@@ -1093,7 +1108,6 @@ int main(int argc, char * argv[]) {
 						}
 					}
 					
-					//io::copy(file_source, ofs, 8192);
 					break; // TODO ...
 				}
 			}

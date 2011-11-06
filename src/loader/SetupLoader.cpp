@@ -16,7 +16,7 @@ namespace {
 
 struct SetupLoaderVersion {
 	
-	char magic[12];
+	unsigned char magic[12];
 	
 	// Earliest known version with that ID.
 	InnoVersionConstant version;
@@ -70,7 +70,7 @@ bool SetupLoader::loadFromExeResource(std::istream & is) {
 	return loadOffsetsAt(is, resource.offset);
 }
 
-bool SetupLoader::loadOffsetsAt(std::istream & is, size_t pos) {
+bool SetupLoader::loadOffsetsAt(std::istream & is, uint32_t pos) {
 	
 	if(is.seekg(pos).fail()) {
 		is.clear();
@@ -107,7 +107,7 @@ bool SetupLoader::loadOffsetsAt(std::istream & is, size_t pos) {
 		}
 	}
 	
-	totalSize = checksum.load<LittleEndian, uint32_t>(is);
+	(void)checksum.load<LittleEndian, uint32_t>(is);
 	exeOffset = checksum.load<LittleEndian, uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 1, 6)) {
@@ -177,8 +177,6 @@ void SetupLoader::load(std::istream & is) {
 	 * If no offset table has been found, this must be an external setup-0.bin file.
 	 * In that case, the setup headers start at the beginning of the file.
 	 */
-	
-	totalSize = is.seekg(0, std::ios_base::end).tellg();
 	
 	exeCompressedSize = exeUncompressedSize = exeOffset = 0; // No embedded setup exe.
 	

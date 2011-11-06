@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <sstream>
 #include <cstring>
+#include <limits>
 
 #include "util/LoadingUtils.hpp"
 #include "util/Output.hpp"
@@ -20,20 +21,20 @@ const char sliceIds[][8] = {
 
 } // anonymous namespace
 
-SliceReader::SliceReader(const string & setupFile, size_t _dataOffset)
+SliceReader::SliceReader(const string & setupFile, uint32_t _dataOffset)
 	: dir(), lastDir(), baseFile(), dataOffset(_dataOffset), slicesPerDisk(1),
 	  currentSlice(0) {
 	
 	ifs.open(setupFile.c_str(), std::ios_base::binary | std::ios_base::in | std::ios_base::ate);
-	sliceSize = ifs.tellg();
-	if(sliceSize < dataOffset) {
+	
+	sliceSize = uint32_t(std::min<std::streampos>(ifs.tellg(), std::numeric_limits<int32_t>::max()));
+	if(ifs.seekg(dataOffset).fail()) {
 		ifs.close();
-	} else {
-		ifs.seekg(dataOffset);
 	}
 }
 
-SliceReader::SliceReader(const std::string & _dir, const std::string & _baseFile, size_t _slicesPerDisk)
+SliceReader::SliceReader(const std::string & _dir, const std::string & _baseFile,
+                         size_t _slicesPerDisk)
 	: dir(_dir), lastDir(_dir), baseFile(_baseFile), dataOffset(0), slicesPerDisk(_slicesPerDisk),
 	  currentSlice(0) { }
 
@@ -55,14 +56,14 @@ bool SliceReader::openFile(const std::string & file) {
 	
 	std::cout << color::cyan << "\33[2K\r[slice] opening " << file << color::reset << std::endl;
 	
-	ifs.close();;
+	ifs.close();
 	
 	ifs.open(file.c_str(), std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
 	if(ifs.fail()) {
 		return false;
 	}
 	
-	size_t fileSize = ifs.tellg();
+	std::streampos fileSize = ifs.tellg();
 	ifs.seekg(0);
 	
 	char magic[8];
@@ -85,7 +86,7 @@ bool SliceReader::openFile(const std::string & file) {
 	}
 	
 	sliceSize = loadNumber<uint32_t>(ifs);
-	if(ifs.fail() || sliceSize > fileSize) {
+	if(ifs.fail() || std::streampos(sliceSize) > fileSize) {
 		LogError << "[slice] bad slice size: " << sliceSize << " > " << fileSize;
 		ifs.close();
 		return false;
@@ -146,7 +147,7 @@ bool SliceReader::open(size_t slice, const std::string & file) {
 	return false;
 }
 
-bool SliceReader::seek(size_t slice, size_t offset) {
+bool SliceReader::seek(size_t slice, uint32_t offset) {
 	
 	if(!seek(slice)) {
 		return false;
@@ -165,9 +166,7 @@ bool SliceReader::seek(size_t slice, size_t offset) {
 
 std::streamsize SliceReader::read(char * buffer, std::streamsize bytes) {
 	
-	size_t nread = 0;
-	
-	std::streamsize requested = bytes;
+	std::streamsize nread = 0;
 	
 	if(!seek(currentSlice)) {
 		return nread;
@@ -175,12 +174,12 @@ std::streamsize SliceReader::read(char * buffer, std::streamsize bytes) {
 	
 	while(bytes > 0) {
 		
-		std::streamsize remaining = sliceSize - ifs.tellg();
+		std::streamsize remaining = std::streamsize(sliceSize - size_t(ifs.tellg()));
 		if(!remaining) {
 			if(!seek(currentSlice + 1)) {
 				return nread;
 			}
-			remaining = sliceSize - ifs.tellg();
+			remaining = std::streamsize(sliceSize - size_t(ifs.tellg()));
 		}
 		
 		std::streamsize read = ifs.read(buffer, std::min(remaining, bytes)).gcount();

@@ -10,7 +10,9 @@
 // loosely based on QFlags from Qt
 
 template <typename Enum>
-struct EnumSize { private: static const size_t value = 42; };
+struct EnumSize {
+	static const size_t value;
+};
 
 /*!
  * A typesafe way to define flags as a combination of enum values.

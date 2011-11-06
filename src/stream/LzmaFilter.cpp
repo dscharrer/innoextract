@@ -18,7 +18,7 @@ static lzma_stream * init_raw_lzma_stream(lzma_vli filter, lzma_options_lzma & o
 	*strm = tmp;
 	strm->allocator = NULL;
 	
-	const lzma_filter filters[2] = { { filter,  &options }, { LZMA_VLI_UNKNOWN } };
+	const lzma_filter filters[2] = { { filter,  &options }, { LZMA_VLI_UNKNOWN, NULL } };
 	lzma_ret ret = lzma_raw_decoder(strm, filters);
 	if(ret != LZMA_OK) {
 		delete strm;
@@ -35,14 +35,14 @@ bool lzma_decompressor_impl_base::filter(const char * & begin_in, const char * e
 	lzma_stream * strm = static_cast<lzma_stream *>(stream);
 	
 	strm->next_in = reinterpret_cast<const uint8_t *>(begin_in);
-	strm->avail_in = end_in - begin_in;
+	strm->avail_in = size_t(end_in - begin_in);
 	
 	strm->next_out = reinterpret_cast<uint8_t *>(begin_out);
-	strm->avail_out = end_out - begin_out;
+	strm->avail_out = size_t(end_out - begin_out);
 	
 	lzma_ret ret = lzma_code(strm, LZMA_RUN);
 	
-	begin_in = reinterpret_cast<const char *>(strm->next_in);	
+	begin_in = reinterpret_cast<const char *>(strm->next_in);
 	begin_out = reinterpret_cast<char *>(strm->next_out);
 	
 	if(ret != LZMA_OK && ret != LZMA_STREAM_END && ret != LZMA_BUF_ERROR) {
@@ -77,7 +77,7 @@ bool inno_lzma1_decompressor_impl::filter(const char * & begin_in, const char * 
 		
 		lzma_options_lzma options;
 		
-		uint8_t properties = header[0];
+		uint8_t properties = uint8_t(header[0]);
 		if(properties > (9 * 5 * 5)) {
 			throw lzma_error("inno lzma1 property error", LZMA_FORMAT_ERROR);
 		}
@@ -94,7 +94,7 @@ bool inno_lzma1_decompressor_impl::filter(const char * & begin_in, const char * 
 	}
 	
 	return lzma_decompressor_impl_base::filter(begin_in, end_in, begin_out, end_out, flush);
-} 
+}
 
 bool inno_lzma2_decompressor_impl::filter(const char * & begin_in, const char * end_in,
                                           char * & begin_out, char * end_out, bool flush) {
@@ -108,7 +108,7 @@ bool inno_lzma2_decompressor_impl::filter(const char * & begin_in, const char * 
 		
 		lzma_options_lzma options;
 		
-		uint8_t prop = *begin_in++;
+		uint8_t prop = uint8_t(*begin_in++);
 		if(prop > 40) {
 			throw lzma_error("inno lzma2 property error", LZMA_FORMAT_ERROR);
 		}

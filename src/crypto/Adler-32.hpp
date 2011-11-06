@@ -2,13 +2,14 @@
 #ifndef INNOEXTRACT_CRYPTO_ADLER32_HPP
 #define INNOEXTRACT_CRYPTO_ADLER32_HPP
 
+#include <stddef.h>
 #include <stdint.h>
 #include "crypto/Checksum.hpp"
 
-//! ADLER-32 checksum calculations 
+//! ADLER-32 checksum calculations
 struct Adler32 : public ChecksumBase<Adler32> {
 	
-	void init() { s1 = 1; s2 = 0; }
+	void init() { s1 = 1, s2 = 0; }
 	
 	void update(const char * data, size_t length);
 	

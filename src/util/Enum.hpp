@@ -31,7 +31,8 @@ struct EnumNames {
 #define ENUM_NAMES(Enum, Name, ...) \
 	const char * EnumNames<GetEnum<Enum>::type>::name = (Name); \
 	const char * EnumNames<GetEnum<Enum>::type>::names[] = { __VA_ARGS__ }; \
-	const size_t EnumNames<GetEnum<Enum>::type>::count = ARRAY_SIZE(EnumNames<GetEnum<Enum>::type>::names); \
+	const size_t EnumNames<GetEnum<Enum>::type>::count = \
+	  ARRAY_SIZE(EnumNames<GetEnum<Enum>::type>::names); \
 	std::ostream & operator<<(std::ostream & os, GetEnum<Enum>::type value) { \
 		if(value < EnumNames<GetEnum<Enum>::type>::count) { \
 			return os << EnumNames<GetEnum<Enum>::type>::names[value]; \

@@ -15,24 +15,28 @@ struct InnoVersion {
 	
 	InnoVersionConstant version;
 	
-	char bits; // 16 or 32
+	uint8_t bits; // 16 or 32
 	
 	bool unicode;
 	
 	bool known;
 	
 	
-	inline InnoVersion() : known(false) { };
+	inline InnoVersion() : known(false) { }
 	
-	inline InnoVersion(InnoVersionConstant _version, bool _unicode = false, bool _known = false, char _bits = 32) : version(_version), unicode(_unicode), known(_known), bits(_bits) { };
+	inline InnoVersion(InnoVersionConstant _version, bool _unicode = false,
+	                   bool _known = false, uint8_t _bits = 32)
+		: version(_version), bits(_bits), unicode(_unicode), known(_known) { }
 	
 	
-	inline InnoVersion(char a, char b, char c, char d = 0, bool _unicode = false, bool _known = false, char _bits = 32) : version(INNO_VERSION_EXT(a, b, c, d)), unicode(_unicode), known(_known), bits(_bits) { };
+	inline InnoVersion(uint8_t a, uint8_t b, uint8_t c, uint8_t d = 0, bool _unicode = false,
+	                   bool _known = false, uint8_t _bits = 32)
+		: version(INNO_VERSION_EXT(a, b, c, d)), bits(_bits), unicode(_unicode), known(_known) { }
 	
-	inline int a() const { return version >> 24; }
-	inline int b() const { return (version >> 16) & 0xff; }
-	inline int c() const { return (version >> 8) & 0xff; }
-	inline int d() const { return version & 0xff; }
+	inline unsigned int a() const { return version >> 24; }
+	inline unsigned int b() const { return (version >> 16) & 0xff; }
+	inline unsigned int c() const { return (version >> 8) & 0xff; }
+	inline unsigned int d() const { return version & 0xff; }
 	
 	void load(std::istream & is);
 	
@@ -44,12 +48,24 @@ struct InnoVersion {
 	
 };
 
-inline bool operator==(const InnoVersion & a, const InnoVersion & b) { return a.version == b.version; }
-inline bool operator!=(const InnoVersion & a, const InnoVersion & b) { return !operator==(a, b);      }
-inline bool operator< (const InnoVersion & a, const InnoVersion & b) { return a.version < b.version;  }
-inline bool operator> (const InnoVersion & a, const InnoVersion & b) { return  operator< (b, a);      }
-inline bool operator<=(const InnoVersion & a, const InnoVersion & b) { return !operator> (a, b);      }
-inline bool operator>=(const InnoVersion & a, const InnoVersion & b) { return !operator< (a, b);      }
+inline bool operator==(const InnoVersion & a, const InnoVersion & b) {
+	return a.version == b.version;
+}
+inline bool operator!=(const InnoVersion & a, const InnoVersion & b) {
+	return !operator==(a, b);
+}
+inline bool operator< (const InnoVersion & a, const InnoVersion & b) {
+	return a.version < b.version;
+}
+inline bool operator> (const InnoVersion & a, const InnoVersion & b) {
+	return  operator< (b, a);
+}
+inline bool operator<=(const InnoVersion & a, const InnoVersion & b) {
+	return !operator> (a, b);
+}
+inline bool operator>=(const InnoVersion & a, const InnoVersion & b) {
+	return !operator< (a, b);
+}
 
 inline bool operator==(const InnoVersion & a, InnoVersionConstant b) { return a.version == b;    }
 inline bool operator!=(const InnoVersion & a, InnoVersionConstant b) { return !operator==(a, b); }

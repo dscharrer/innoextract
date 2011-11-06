@@ -49,7 +49,7 @@ public:
 	bool filter(const char * & begin_in, const char * end_in,
 	            char * & begin_out, char * end_out, bool flush);
 	
-	inline void close() { lzma_decompressor_impl_base::close(); nread = 0; }
+	inline void close() { lzma_decompressor_impl_base::close(), nread = 0; }
 	
 private:
 	

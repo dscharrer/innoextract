@@ -37,12 +37,12 @@ iconv_t getConverter(uint32_t codepage) {
 
 void BinaryString::loadInto(std::istream & is, std::string & target) {
 	
-	size_t length = loadNumber<uint32_t>(is);
-	if(is.fail()) {
+	int32_t length = loadNumber<int32_t>(is);
+	if(is.fail() || length < 0) {
 		return;
 	}
 	
-	target.resize(length);
+	target.resize(size_t(length));
 	is.read(&target[0], length);
 }
 

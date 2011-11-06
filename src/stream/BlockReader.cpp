@@ -41,7 +41,7 @@ std::istream * BlockReader::get(std::istream & base, const InnoVersion & version
 	Crc32 actualCrc;
 	actualCrc.init();
 	
-	uint64_t storedSize;
+	uint32_t storedSize;
 	BlockCompression compression;
 	
 	if(version >= INNO_VERSION(4, 0, 9)) {
@@ -61,7 +61,7 @@ std::istream * BlockReader::get(std::istream & base, const InnoVersion & version
 		}
 		
 		// Add the size of a CRC32 checksum for each 4KiB subblock.
-		storedSize += ceildiv(storedSize, 4096) * 4;
+		storedSize += uint32_t(ceildiv<uint64_t>(storedSize, 4096) * 4);
 	}
 	
 	if(actualCrc.finalize() != expectedCrc) {

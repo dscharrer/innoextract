@@ -7,26 +7,26 @@
 namespace {
 
 STORED_FLAGS_MAP(StoredSetupComponentOptions0,
-		SetupComponentEntry::Fixed,
-		SetupComponentEntry::Restart,
-		SetupComponentEntry::DisableNoUninstallWarning,
+	SetupComponentEntry::Fixed,
+	SetupComponentEntry::Restart,
+	SetupComponentEntry::DisableNoUninstallWarning,
 );
 
 // starting with version 3.0.8
 STORED_FLAGS_MAP(StoredSetupComponentOptions1,
-		SetupComponentEntry::Fixed,
-		SetupComponentEntry::Restart,
-		SetupComponentEntry::DisableNoUninstallWarning,
-		SetupComponentEntry::Exclusive,
+	SetupComponentEntry::Fixed,
+	SetupComponentEntry::Restart,
+	SetupComponentEntry::DisableNoUninstallWarning,
+	SetupComponentEntry::Exclusive,
 );
 
 // starting with version 4.2.3
 STORED_FLAGS_MAP(StoredSetupComponentOptions2,
-		SetupComponentEntry::Fixed,
-		SetupComponentEntry::Restart,
-		SetupComponentEntry::DisableNoUninstallWarning,
-		SetupComponentEntry::Exclusive,
-		SetupComponentEntry::DontInheritCheck,
+	SetupComponentEntry::Fixed,
+	SetupComponentEntry::Restart,
+	SetupComponentEntry::DisableNoUninstallWarning,
+	SetupComponentEntry::Exclusive,
+	SetupComponentEntry::DontInheritCheck,
 );
 
 } // anonymous namespace
