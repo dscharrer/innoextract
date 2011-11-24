@@ -14,17 +14,11 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 #include <boost/ref.hpp>
-
+#include <boost/make_shared.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-
 #include <boost/filesystem/path.hpp>
-
 #include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/bzip2.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
-#include <boost/iostreams/restrict.hpp>
 
 #include <crypto/Hasher.hpp>
 
@@ -47,12 +41,10 @@
 #include "setup/SetupTypeEntry.hpp"
 #include "setup/Version.hpp"
 
-#include "stream/BlockReader.hpp"
-#include "stream/ChunkReader.hpp"
-#include "stream/LzmaFilter.hpp"
-#include "stream/SliceReader.hpp"
-#include "stream/ChecksumFilter.hpp"
-#include "stream/InstructionFilter.hpp"
+#include "stream/block.hpp"
+#include "stream/chunk.hpp"
+#include "stream/file.hpp"
+#include "stream/slice.hpp"
 
 #include "util/console.hpp"
 #include "util/load.hpp"
@@ -81,8 +73,7 @@ struct FileLocationComparer {
 	
 };
 
-static void printSetupItem(std::ostream & os, const SetupItem & item,
-                           const SetupHeader & header) {
+static void print(std::ostream & os, const SetupItem & item, const SetupHeader & header) {
 	
 	os << if_not_empty("  Componenets", item.components);
 	os << if_not_empty("  Tasks", item.tasks);
@@ -107,47 +98,13 @@ static void print(std::ostream & os, const RunEntry & entry, const SetupHeader &
 	os << if_not_empty("  Verb", entry.verb);
 	os << if_not_empty("  Description", entry.verb);
 	
-	printSetupItem(cout, entry, header);
+	print(cout, static_cast<const SetupItem &>(entry), header);
 	
 	os << if_not_equal("  Show command", entry.showCmd, 1);
 	os << if_not_equal("  Wait", entry.wait, RunEntry::WaitUntilTerminated);
 	
 	os << if_not_zero("  Options", entry.options);
 	
-}
-
-static std::ostream & operator<<(std::ostream & os, const Checksum & checksum) {
-	
-	std::ios_base::fmtflags old = os.flags();
-	
-	cout << checksum.type << ' ';
-	
-	switch(checksum.type) {
-		case Checksum::Adler32: {
-			cout << print_hex(checksum.adler32);
-			break;
-		}
-		case Checksum::Crc32: {
-			cout << print_hex(checksum.crc32);
-			break;
-		}
-		case Checksum::MD5: {
-			for(size_t i = 0; i < ARRAY_SIZE(checksum.md5); i++) {
-				cout << std::setfill('0') << std::hex << std::setw(2) << int(uint8_t(checksum.md5[i]));
-			}
-			break;
-		}
-		case Checksum::Sha1: {
-			for(size_t i = 0; i < ARRAY_SIZE(checksum.sha1); i++) {
-				cout << std::setfill('0') << std::hex << std::setw(2) << int(uint8_t(checksum.sha1[i]));
-			}
-			break;
-		}
-	}
-	
-	os.setf(old, std::ios_base::basefield);
-	
-	return os;
 }
 
 static const char * magicNumbers[][2] = {
@@ -206,9 +163,9 @@ static void readWizardImageAndDecompressor(std::istream & is, const InnoVersion 
 		dump(is, "wizard_small");
 	}
 	
-	if(header.compressMethod == SetupHeader::BZip2
-	   || (header.compressMethod == SetupHeader::LZMA1 && version == INNO_VERSION(4, 1, 5))
-	   || (header.compressMethod == SetupHeader::Zlib && version >= INNO_VERSION(4, 2, 6))) {
+	if(header.compressMethod == stream::chunk::BZip2
+	   || (header.compressMethod == stream::chunk::LZMA1 && version == INNO_VERSION(4, 1, 5))
+	   || (header.compressMethod == stream::chunk::Zlib && version >= INNO_VERSION(4, 2, 6))) {
 		
 		dump(is, "decompressor");
 	}
@@ -274,7 +231,7 @@ int main(int argc, char * argv[]) {
 	
 	cout << "version: " << color::white << version << color::reset << endl;
 	
-	boost::shared_ptr<std::istream> is(BlockReader::get(ifs, version));
+	stream::block_reader::pointer is = stream::block_reader::get(ifs, version);
 	if(!is) {
 		log_error << "error reading block";
 		return 1;
@@ -582,7 +539,7 @@ int main(int argc, char * argv[]) {
 		
 		cout << " - " << quoted(entry.name) << ':' << endl;
 		
-		printSetupItem(cout, entry, header);
+		print(cout, entry, header);
 		
 		if(!entry.permissions.empty()) {
 			cout << "  Permissions: " << entry.permissions.length() << " bytes";
@@ -624,7 +581,7 @@ int main(int argc, char * argv[]) {
 		cout << if_not_empty("  Install font name", entry.installFontName);
 		cout << if_not_empty("  Strong assembly name", entry.strongAssemblyName);
 		
-		printSetupItem(cout, entry, header);
+		print(cout, entry, header);
 		
 		cout << if_not_zero("  Attributes", entry.attributes);
 		cout << if_not_zero("  Size", entry.externalSize);
@@ -655,7 +612,7 @@ int main(int argc, char * argv[]) {
 		cout << if_not_empty("  Comment", entry.comment);
 		cout << if_not_empty("  App user model id", entry.appUserModelId);
 		
-		printSetupItem(cout, entry, header);
+		print(cout, entry, header);
 		
 		cout << if_not_zero("  Icon index", entry.iconIndex);
 		cout << if_not_equal("  Show command", entry.showCmd, 1);
@@ -682,7 +639,7 @@ int main(int argc, char * argv[]) {
 		cout << " set [" << quoted(entry.section) << "] ";
 		cout << quoted(entry.key) << " = " << quoted(entry.value) << std::endl;
 		
-		printSetupItem(cout, entry, header);
+		print(cout, entry, header);
 		
 		cout << if_not_zero("  Options", entry.options);
 		
@@ -718,7 +675,7 @@ int main(int argc, char * argv[]) {
 		}
 		cout << endl;
 		
-		printSetupItem(cout, entry, header);
+		print(cout, entry, header);
 		
 		if(!entry.permissions.empty()) {
 			cout << "  Permissions: " << entry.permissions.length() << " bytes";
@@ -743,7 +700,7 @@ int main(int argc, char * argv[]) {
 		cout << " - " << quoted(entry.name)
 		     << " (" << color::cyan << entry.type << color::reset << ')' << endl;
 		
-		printSetupItem(cout, entry, header);
+		print(cout, entry, header);
 		
 	}
 	
@@ -761,7 +718,7 @@ int main(int argc, char * argv[]) {
 		cout << " - " << quoted(entry.name)
 		     << " (" << color::cyan << entry.type << color::reset << ')' << endl;
 		
-		printSetupItem(cout, entry, header);
+		print(cout, entry, header);
 		
 	}
 	
@@ -809,7 +766,7 @@ int main(int argc, char * argv[]) {
 	
 	// TODO skip to end if not there yet
 	
-	is.reset(BlockReader::get(ifs, version));
+	is = stream::block_reader::get(ifs, version);
 	if(!is) {
 		log_error << "error reading block";
 		return 1;
@@ -839,7 +796,7 @@ int main(int argc, char * argv[]) {
 		     << " size " << color::cyan << print_hex(entry.chunkSize) << color::reset << std::endl;
 		
 		cout << if_not_zero("  File offset", print_hex(entry.fileOffset));
-		cout << if_not_zero("  File size", print_bytes(entry.fileSize));
+		cout << if_not_zero("  File size", print_bytes(entry.file_size));
 		
 		cout << "  Checksum: " << entry.checksum << endl;
 		
@@ -885,68 +842,46 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	
-	typedef std::map<ChunkReader::Chunk, std::vector<size_t> > Chunks;
+	typedef std::map<stream::chunk, std::vector<size_t> > Chunks;
 	Chunks chunks;
 	for(size_t i = 0; i < locations.size(); i++) {
 		const FileLocationEntry & location = locations[i];
-		chunks[ChunkReader::Chunk(location.firstSlice, location.chunkOffset, location.chunkSize,
-		                          location.options & FileLocationEntry::ChunkCompressed,
-		                          location.options & FileLocationEntry::ChunkEncrypted)
+		
+		stream::chunk::compression_method compression = stream::chunk::Stored;
+		if(location.options & FileLocationEntry::ChunkCompressed) {
+			compression = header.compressMethod;
+		}
+		
+		chunks[stream::chunk(location.firstSlice, location.chunkOffset, location.chunkSize,
+		                     compression, location.options & FileLocationEntry::ChunkEncrypted)
 		      ].push_back(i);
-		assert(header.compressMethod == SetupHeader::BZip2
+		assert(header.compressMethod == stream::chunk::BZip2
 		       || !(location.options & FileLocationEntry::BZipped));
 	}
 	
-	boost::shared_ptr<SliceReader> slice_reader;
+	boost::shared_ptr<stream::slice_reader> slice_reader;
 	
 	if(offsets.dataOffset) {
-		slice_reader.reset(new SliceReader(argv[1], offsets.dataOffset));
+		slice_reader = boost::make_shared<stream::slice_reader>(argv[1], offsets.dataOffset);
 	} else {
 		fs::path path(argv[1]);
-		
-		slice_reader.reset(new SliceReader(path.parent_path().string() + '/',
-		                                   path.stem().string(), header.slicesPerDisk));
+		slice_reader = boost::make_shared<stream::slice_reader>(path.parent_path().string() + '/',
+		                                                        path.stem().string(),
+		                                                        header.slicesPerDisk);
 	}
 	
 	try {
 	
 	BOOST_FOREACH(Chunks::value_type & chunk, chunks) {
 		
-		cout << "[starting " << (chunk.first.compressed ? header.compressMethod : SetupHeader::Stored)
-		     << " chunk @ " << chunk.first.firstSlice << " + " << print_hex(offsets.dataOffset)
-		     << " + " << print_hex(chunk.first.chunkOffset) << ']' << std::endl;
+		cout << "[starting " << chunk.first.compression
+		     << " chunk @ " << chunk.first.first_slice << " + " << print_hex(offsets.dataOffset)
+		     << " + " << print_hex(chunk.first.offset) << ']' << std::endl;
 		
 		std::sort(chunk.second.begin(), chunk.second.end(), FileLocationComparer(locations));
 		
-		if(!slice_reader->seek(chunk.first.firstSlice, chunk.first.chunkOffset)) {
-			log_error << "error seeking";
-			return 1;
-		}
-		
-		const char chunkId[4] = { 'z', 'l', 'b', 0x1a };
-		
-		char magic[4];
-		if(slice_reader->read(magic, 4) != 4 || memcmp(magic, chunkId, 4)) {
-			log_error << "bad chunk id";
-			return 1;
-		}
-		
-		typedef io::chain<io::input> chunk_stream_type;
-		chunk_stream_type chunk_source;
-		
-		if(chunk.first.compressed) {
-			switch(header.compressMethod) {
-				case SetupHeader::Stored: break;
-				case SetupHeader::Zlib: chunk_source.push(io::zlib_decompressor(), 8192); break;
-				case SetupHeader::BZip2: chunk_source.push(io::bzip2_decompressor(), 8192); break;
-				case SetupHeader::LZMA1: chunk_source.push(inno_lzma1_decompressor(), 8192); break;
-				case SetupHeader::LZMA2: chunk_source.push(inno_lzma2_decompressor(), 8192); break;
-				default: log_error << "unknown compression";
-			}
-		}
-		
-		int64_t csize = int64_t(chunk.first.chunkSize);
-		chunk_source.push(io::restrict(boost::ref(*slice_reader), 0, csize));
+		stream::chunk_reader::pointer chunk_source;
+		chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);
 		
 		uint64_t offset = 0;
 		
@@ -960,9 +895,9 @@ int main(int argc, char * argv[]) {
 			
 			if(location.fileOffset > offset) {
 				std::cout << "discarding " << print_bytes(location.fileOffset - offset) << std::endl;
-				discard(chunk_source, location.fileOffset - offset);
+				discard(*chunk_source, location.fileOffset - offset);
 			}
-			offset = location.fileOffset + location.fileSize;
+			offset = location.fileOffset + location.file_size;
 			
 			std::cout << "-> reading ";
 			bool named = false;
@@ -977,27 +912,12 @@ int main(int argc, char * argv[]) {
 				std::cout << "unnamed file";
 			}
 			std::cout << " @ " << print_hex(location.fileOffset)
-			          << " (" << print_bytes(location.fileSize) << ')' << std::endl;
+			          << " (" << print_bytes(location.file_size) << ')' << std::endl;
 			
 			Hasher hasher;
-			hasher.init(location.checksum.type);
 			
-			int64_t file_size = int64_t(location.fileSize);
-			io::restriction<chunk_stream_type> raw_src(chunk_source, 0, file_size);
-			
-			io::filtering_istream file_source;
-			
-			file_source.push(checksum_filter(&hasher), 8192);
-			
-			if(location.options & FileLocationEntry::CallInstructionOptimized) {
-				if(version < INNO_VERSION(5, 2, 0)) {
-					file_source.push(call_instruction_decoder_4108(), 8192);
-				} else {
-					file_source.push(call_instruction_decoder_5200(version >= INNO_VERSION(5, 3, 9)), 8192);
-				}
-			}
-			
-			file_source.push(raw_src);
+			stream::file_reader::pointer file_source;
+			file_source = stream::file_reader::get(*chunk_source, location, version, hasher);
 			
 			BOOST_FOREACH(size_t file_i, files_for_location[location_i]) {
 				if(!files[file_i].destination.empty()) {
@@ -1015,16 +935,16 @@ int main(int argc, char * argv[]) {
 					
 					boost::posix_time::ptime start(boost::posix_time::microsec_clock::universal_time());
 					
-					while(!file_source.eof()) {
+					while(!file_source->eof()) {
 						
-						std::streamsize n = file_source.read(buffer, ARRAY_SIZE(buffer)).gcount();
+						std::streamsize n = file_source->read(buffer, ARRAY_SIZE(buffer)).gcount();
 						
 						if(n > 0) {
 							
 							ofs.write(buffer, n);
 							
 							total += uint64_t(n);
-							float new_status = float(size_t(1000.f * float(total) / float(location.fileSize)))
+							float new_status = float(size_t(1000.f * float(total) / float(location.file_size)))
 							                   * (1 / 1000.f);
 							if(status != new_status && new_status != 100.f) {
 								
@@ -1067,9 +987,8 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	
-	} catch(io::bzip2_error e) {
-		log_error << e.what() << ": " <<
-		e.error();
+	} catch(std::ios_base::failure e) {
+		log_error << e.what();
 	}
 	
 	std::cout << color::green << "Done" << color::reset << std::dec;

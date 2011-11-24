@@ -1,11 +1,14 @@
 
-#ifndef INNOEXTRACT_STREAM_LZMAFILTER_HPP
-#define INNOEXTRACT_STREAM_LZMAFILTER_HPP
+#ifndef INNOEXTRACT_STREAM_LZMA_HPP
+#define INNOEXTRACT_STREAM_LZMA_HPP
 
 #include <stddef.h>
+#include <iosfwd>
+
 #include <boost/iostreams/filter/symmetric.hpp>
 #include <boost/noncopyable.hpp>
-#include <iosfwd>
+
+namespace stream {
 
 struct lzma_error : public std::ios_base::failure {
 	
@@ -95,4 +98,6 @@ typedef lzma_decompressor<inno_lzma1_decompressor_impl> inno_lzma1_decompressor;
  */
 typedef lzma_decompressor<inno_lzma2_decompressor_impl> inno_lzma2_decompressor;
 
-#endif // INNOEXTRACT_STREAM_LZMAFILTER_HPP
+} // namespace stream
+
+#endif // INNOEXTRACT_STREAM_LZMA_HPP

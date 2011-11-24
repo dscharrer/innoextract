@@ -1,11 +1,13 @@
 
-#ifndef INNOEXTRACT_CHECKSUMFILTER_HPP
-#define INNOEXTRACT_CHECKSUMFILTER_HPP
+#ifndef INNOEXTRACT_STREAM_CHECKSUM_HPP
+#define INNOEXTRACT_STREAM_CHECKSUM_HPP
 
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/read.hpp>
 
 #include "crypto/Hasher.hpp"
+
+namespace stream {
 
 class checksum_filter : public boost::iostreams::multichar_input_filter {
 	
@@ -39,4 +41,6 @@ private:
 	
 };
 
-#endif // INNOEXTRACT_CHECKSUMFILTER_HPP
+} // namespace stream
+
+#endif // INNOEXTRACT_STREAM_CHECKSUM_HPP

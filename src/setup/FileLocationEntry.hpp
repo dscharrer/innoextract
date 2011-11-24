@@ -37,7 +37,7 @@ struct FileLocationEntry : public SetupItem {
 	uint64_t chunkSize; //! total compressed size of the chunk
 	
 	uint64_t fileOffset; //!< offset of this file within the decompressed chunk
-	uint64_t fileSize; //!< decompressed size of this file
+	uint64_t file_size; //!< decompressed size of this file
 	
 	Checksum checksum;
 	

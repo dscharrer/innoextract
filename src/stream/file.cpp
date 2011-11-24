@@ -1,14 +1,21 @@
 
-#ifndef INNOEXTRACT_STREAM_INSTRUCTIONFILTER_HPP
-#define INNOEXTRACT_STREAM_INSTRUCTIONFILTER_HPP
+#include "stream/file.hpp"
 
-#include <stdint.h>
-#include <cassert>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/restrict.hpp>
+#include <boost/make_shared.hpp>
 
-#include <boost/iostreams/concepts.hpp>
-#include <boost/iostreams/read.hpp>
+#include "setup/FileLocationEntry.hpp"
+#include "setup/Version.hpp"
+#include "stream/checksum.hpp"
 
-class call_instruction_decoder_4108 : public boost::iostreams::multichar_input_filter {
+namespace io = boost::iostreams;
+
+namespace stream {
+
+namespace {
+
+class inno_exe_decoder_4108 : public boost::iostreams::multichar_input_filter {
 	
 private:
 	
@@ -19,12 +26,14 @@ public:
 	typedef base_type::char_type char_type;
 	typedef base_type::category category;
 	
-	inline call_instruction_decoder_4108() { cclose(); }
+	inno_exe_decoder_4108() { close(0); }
 	
 	template<typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n);
 	
-	inline void cclose() {
+	
+	template<typename Source>
+	void close(const Source &) {
 		addr_bytes_left = 0, addr_offset = 5;
 	}
 	
@@ -34,7 +43,7 @@ public:
 	
 };
 
-class call_instruction_decoder_5200 : public boost::iostreams::multichar_input_filter {
+class inno_exe_decoder_5200 : public boost::iostreams::multichar_input_filter {
 	
 private:
 	
@@ -45,13 +54,14 @@ public:
 	typedef base_type::char_type char_type;
 	typedef base_type::category category;
 	
-	inline call_instruction_decoder_5200(bool _flip_high_byte)
-		: flip_high_byte(_flip_high_byte) { cclose(); }
+	inno_exe_decoder_5200(bool _flip_high_byte)
+		: flip_high_byte(_flip_high_byte) { close(0); }
 	
 	template<typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n);
 	
-	inline void cclose() {
+	template<typename Source>
+	void close(const Source &) {
 		offset = 0, flush_bytes = 0;
 	}
 	
@@ -90,7 +100,7 @@ private:
 // Implementation:
 
 template<typename Source>
-std::streamsize call_instruction_decoder_4108::read(Source & src, char * dest, std::streamsize n) {
+std::streamsize inno_exe_decoder_4108::read(Source & src, char * dest, std::streamsize n) {
 	
 	for(std::streamsize i = 0; i < n; i++, addr_offset++) {
 		
@@ -120,7 +130,7 @@ std::streamsize call_instruction_decoder_4108::read(Source & src, char * dest, s
 }
 
 template<typename Source>
-std::streamsize call_instruction_decoder_5200::read(Source & src, char * dest, std::streamsize n) {
+std::streamsize inno_exe_decoder_5200::read(Source & src, char * dest, std::streamsize n) {
 	
 	char * end = dest + n;
 	
@@ -215,4 +225,28 @@ std::streamsize call_instruction_decoder_5200::read(Source & src, char * dest, s
 	
 }
 
-#endif // INNOEXTRACT_STREAM_INSTRUCTIONFILTER_HPP
+} // anonymous namespace
+
+file_reader::pointer file_reader::get(base_type & base, const FileLocationEntry & location,
+                                      const InnoVersion & version, Hasher & hasher) {
+	
+	hasher.init(location.checksum.type);
+	
+	boost::shared_ptr<io::filtering_istream> result = boost::make_shared<io::filtering_istream>();
+	
+	result->push(stream::checksum_filter(&hasher), 8192);
+	
+	if(location.options & FileLocationEntry::CallInstructionOptimized) {
+		if(version < INNO_VERSION(5, 2, 0)) {
+			result->push(inno_exe_decoder_4108(), 8192);
+		} else {
+			result->push(inno_exe_decoder_5200(version >= INNO_VERSION(5, 3, 9)), 8192);
+		}
+	}
+	
+	result->push(io::restrict(base, 0, int64_t(location.file_size)));
+	
+	return result;
+}
+
+} // namespace stream

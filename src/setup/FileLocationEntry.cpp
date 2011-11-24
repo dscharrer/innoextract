@@ -27,10 +27,10 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		fileSize = load_number<uint64_t>(is);
+		file_size = load_number<uint64_t>(is);
 		chunkSize = load_number<uint64_t>(is);
 	} else {
-		fileSize = load_number<uint32_t>(is);
+		file_size = load_number<uint32_t>(is);
 		chunkSize = load_number<uint32_t>(is);
 	}
 	

@@ -106,10 +106,11 @@ set(INNOEXTRACT_SOURCES
 	src/setup/Version.cpp
 	src/setup/WindowsVersion.cpp
 	
-	src/stream/BlockReader.cpp
-	src/stream/ChunkReader.cpp
-	src/stream/LzmaFilter.cpp
-	src/stream/SliceReader.cpp
+	src/stream/block.cpp
+	src/stream/chunk.cpp
+	src/stream/file.cpp
+	src/stream/lzma.cpp
+	src/stream/slice.cpp
 	
 	src/util/console.cpp
 	src/util/load.cpp

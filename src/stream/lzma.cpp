@@ -1,9 +1,11 @@
 
-#include "stream/LzmaFilter.hpp"
+#include "stream/lzma.hpp"
 
 #include <stdint.h>
 
 #include <lzma.h>
+
+namespace stream {
 
 static lzma_stream * init_raw_lzma_stream(lzma_vli filter, lzma_options_lzma & options) {
 	
@@ -124,3 +126,5 @@ bool inno_lzma2_decompressor_impl::filter(const char * & begin_in, const char * 
 	
 	return lzma_decompressor_impl_base::filter(begin_in, end_in, begin_out, end_out, flush);
 }
+
+} // namespace stream

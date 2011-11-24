@@ -75,34 +75,34 @@ STORED_ENUM_MAP(StoredRestartComputer, SetupHeader::Auto,
 );
 
 // pre-4.2.5
-STORED_ENUM_MAP(StoredCompressionMethod0, SetupHeader::Unknown,
-	SetupHeader::Zlib,
-	SetupHeader::BZip2,
-	SetupHeader::LZMA1
+STORED_ENUM_MAP(StoredCompressionMethod0, stream::chunk::Unknown,
+	stream::chunk::Zlib,
+	stream::chunk::BZip2,
+	stream::chunk::LZMA1
 );
 
 // 4.2.5
-STORED_ENUM_MAP(StoredCompressionMethod1, SetupHeader::Unknown,
-	SetupHeader::Stored,
-	SetupHeader::BZip2,
-	SetupHeader::LZMA1
+STORED_ENUM_MAP(StoredCompressionMethod1, stream::chunk::Unknown,
+	stream::chunk::Stored,
+	stream::chunk::BZip2,
+	stream::chunk::LZMA1
 );
 
 // [4.2.6 5.3.9)
-STORED_ENUM_MAP(StoredCompressionMethod2, SetupHeader::Unknown,
-	SetupHeader::Stored,
-	SetupHeader::Zlib,
-	SetupHeader::BZip2,
-	SetupHeader::LZMA1
+STORED_ENUM_MAP(StoredCompressionMethod2, stream::chunk::Unknown,
+	stream::chunk::Stored,
+	stream::chunk::Zlib,
+	stream::chunk::BZip2,
+	stream::chunk::LZMA1
 );
 
 // 5.3.9+
-STORED_ENUM_MAP(StoredCompressionMethod3, SetupHeader::Unknown,
-	SetupHeader::Stored,
-	SetupHeader::Zlib,
-	SetupHeader::BZip2,
-	SetupHeader::LZMA1,
-	SetupHeader::LZMA2
+STORED_ENUM_MAP(StoredCompressionMethod3, stream::chunk::Unknown,
+	stream::chunk::Stored,
+	stream::chunk::Zlib,
+	stream::chunk::BZip2,
+	stream::chunk::LZMA1,
+	stream::chunk::LZMA2
 );
 
 STORED_ENUM_MAP(StoredDisablePage, SetupHeader::Auto,
@@ -528,7 +528,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version < INNO_VERSION(4, 1, 5)) {
-		compressMethod = (options & BzipUsed) ? BZip2 : Zlib;
+		compressMethod = (options & BzipUsed) ? stream::chunk::BZip2 : stream::chunk::Zlib;
 	}
 	
 	if(version < INNO_VERSION(5, 3, 3)) {
@@ -661,13 +661,4 @@ ENUM_NAMES(SetupHeader::LanguageDetection, "Language Detection",
 	"ui language",
 	"locale",
 	"none",
-)
-
-ENUM_NAMES(SetupHeader::CompressionMethod, "Compression Method",
-	"stored",
-	"zlib",
-	"bzip2",
-	"lzma1",
-	"lzma2",
-	"unknown",
 )

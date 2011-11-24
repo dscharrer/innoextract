@@ -4,7 +4,8 @@
 
 #include <stdint.h>
 #include <cstring>
-#include <iostream>
+#include <iosfwd>
+#include <istream>
 
 #include "util/endian.hpp"
 #include "util/enum.hpp"
@@ -74,5 +75,7 @@ public:
 };
 
 NAMED_ENUM(Checksum::Type)
+
+std::ostream & operator<<(std::ostream & os, const Checksum & checksum);
 
 #endif // INNOEXTRACT_CRYPTO_CHECKSUM_HPP

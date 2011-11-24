@@ -11,6 +11,7 @@
 #include "crypto/Checksum.hpp"
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"
+#include "stream/chunk.hpp"
 #include "util/enum.hpp"
 #include "util/flags.hpp"
 
@@ -202,15 +203,7 @@ struct SetupHeader {
 	};
 	LanguageDetection languageDetectionMethod;
 	
-	enum CompressionMethod {
-		Stored,
-		Zlib,
-		BZip2,
-		LZMA1,
-		LZMA2,
-		Unknown
-	};
-	CompressionMethod compressMethod;
+	stream::chunk::compression_method compressMethod;
 	
 	Architectures architecturesAllowed;
 	Architectures architecturesInstallIn64BitMode;
@@ -246,7 +239,5 @@ NAMED_ENUM(SetupHeader::AutoBoolean)
 NAMED_ENUM(SetupHeader::Privileges)
 
 NAMED_ENUM(SetupHeader::LanguageDetection)
-
-NAMED_ENUM(SetupHeader::CompressionMethod)
 
 #endif // INNOEXTRACT_SETUP_SETUPHEADER_HPP

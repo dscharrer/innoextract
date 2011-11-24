@@ -74,7 +74,7 @@ void init() {
 	
 }
 
-}
+} // namespace color
 
 namespace progress {
 
