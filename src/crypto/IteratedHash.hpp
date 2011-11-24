@@ -7,78 +7,9 @@
 #include <stdint.h>
 #include <cstring>
 #include "crypto/Checksum.hpp"
-#include "util/Endian.hpp"
-
-template <class T>
-inline bool isPowerOf2(const T & n) {
-	return n > 0 && (n & (n - 1)) == 0;
-}
-
-template <class T1, class T2>
-inline T2 modPowerOf2(const T1 & a, const T2 & b) {
-	return T2(a) & (b - 1);
-}
-
-template <class T>
-inline unsigned int getAlignmentOf() {
-#if defined(_MSC_VER) && _MSC_VER >= 1300
-	return __alignof(T);
-#elif defined(__GNUC__)
-	return __alignof__(T);
-#else
-	return sizeof(T);
-#endif
-}
-
-inline bool isAlignedOn(const void * p, unsigned int alignment) {
-	return alignment == 1 || (isPowerOf2(alignment) ? modPowerOf2(size_t(p), alignment) == 0
-	                                                : size_t(p) % alignment == 0);
-}
-
-template <class T>
-inline bool isAligned(const void * p) {
-	return isAlignedOn(p, getAlignmentOf<T>());
-}
-
-template <bool overflow> struct SafeShifter;
-
-template<>
-struct SafeShifter<true> {
-	
-	template <class T>
-	static inline T RightShift(T, unsigned int) {
-		return 0;
-	}
-
-	template <class T>
-	static inline T LeftShift(T, unsigned int) {
-		return 0;
-	}
-};
-
-template<>
-struct SafeShifter<false> {
-	
-	template <class T>
-	static inline T RightShift(T value, unsigned int bits) {
-		return value >> bits;
-	}
-
-	template <class T>
-	static inline T LeftShift(T value, unsigned int bits) {
-		return value << bits;
-	}
-};
-
-template <unsigned int bits, class T>
-inline T SafeRightShift(T value) {
-	return SafeShifter<(bits >= (8 * sizeof(T)))>::RightShift(value, bits);
-}
-
-template <unsigned int bits, class T>
-inline T SafeLeftShift(T value) {
-	return SafeShifter<(bits >= (8 * sizeof(T)))>::LeftShift(value, bits);
-}
+#include "util/endian.hpp"
+#include "util/types.hpp"
+#include "util/util.hpp"
 
 template <class T>
 class IteratedHash : public ChecksumBase< IteratedHash<T> > {
@@ -123,9 +54,9 @@ void IteratedHash<T>::update(const char * input, size_t len) {
 		countHi++; // carry from low to high
 	}
 	
-	countHi += HashWord(SafeRightShift<8 * sizeof(HashWord)>(len));
+	countHi += HashWord(safe_right_shift<8 * sizeof(HashWord)>(len));
 	
-	size_t num = modPowerOf2(oldCountLo, size_t(BlockSize));
+	size_t num = mod_power_of_2(oldCountLo, size_t(BlockSize));
 	uint8_t * d = reinterpret_cast<uint8_t *>(data);
 	
 	if(num != 0) { // process left over data
@@ -145,7 +76,7 @@ void IteratedHash<T>::update(const char * input, size_t len) {
 	// now process the input data in blocks of BlockSize bytes and save the leftovers to m_data
 	if(len >= BlockSize) {
 		
-		if(isAligned<T>(input)) {
+		if(is_aligned<T>(input)) {
 			size_t leftOver = hash(reinterpret_cast<const HashWord *>(input), len);
 			input += (len - leftOver);
 			len = leftOver;
@@ -173,7 +104,7 @@ size_t IteratedHash<T>::hash(const HashWord * input, size_t length) {
 		if(ByteOrder::native) {
 			Transform::transform(state, input);
 		} else {
-			byteSwap(data, input, BlockSize);
+			byteswap(data, input, BlockSize);
 			Transform::transform(state, data);
 		}
 		
@@ -188,7 +119,7 @@ size_t IteratedHash<T>::hash(const HashWord * input, size_t length) {
 template <class T>
 void IteratedHash<T>::pad(unsigned int lastBlockSize, uint8_t padFirst) {
 	
-	size_t num = modPowerOf2(countLo, size_t(BlockSize));
+	size_t num = mod_power_of_2(countLo, size_t(BlockSize));
 	
 	uint8_t * d = reinterpret_cast<uint8_t *>(data);
 	
@@ -240,15 +171,15 @@ void IteratedHash<T>::finalize(char * digest) {
 	size_t order = ByteOrder::offset;
 	
 	pad(BlockSize - 2 * sizeof(HashWord));
-	data[BlockSize / sizeof(HashWord) - 2 + order] = ByteOrder::byteSwapIfAlien(getBitCountLo());
-	data[BlockSize / sizeof(HashWord) - 1 - order] = ByteOrder::byteSwapIfAlien(getBitCountHi());
+	data[BlockSize / sizeof(HashWord) - 2 + order] = ByteOrder::byteswap_if_alien(getBitCountLo());
+	data[BlockSize / sizeof(HashWord) - 1 - order] = ByteOrder::byteswap_if_alien(getBitCountHi());
 	
 	hash(data, BlockSize);
 	
-	if(isAligned<HashWord>(digest) && HashSize % sizeof(HashWord) == 0) {
-		ByteOrder::byteSwapIfAlien(state, reinterpret_cast<HashWord *>(digest), HashSize);
+	if(is_aligned<HashWord>(digest) && HashSize % sizeof(HashWord) == 0) {
+		ByteOrder::byteswap_if_alien(state, reinterpret_cast<HashWord *>(digest), HashSize);
 	} else {
-		ByteOrder::byteSwapIfAlien(state, state, HashSize);
+		ByteOrder::byteswap_if_alien(state, state, HashSize);
 		memcpy(digest, state, HashSize);
 	}
 	

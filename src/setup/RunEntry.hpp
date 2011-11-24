@@ -7,8 +7,8 @@
 
 #include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
-#include "util/Enum.hpp"
-#include "util/Flags.hpp"
+#include "util/enum.hpp"
+#include "util/flags.hpp"
 
 struct RunEntry : public SetupItem {
 	
@@ -18,7 +18,7 @@ struct RunEntry : public SetupItem {
 		PostInstall,
 		Unchecked,
 		SkipIfSilent,
-		SkipIfNotSilent,
+		Skipif_not_equalSilent,
 		HideWizard,
 		Bits32,
 		Bits64,

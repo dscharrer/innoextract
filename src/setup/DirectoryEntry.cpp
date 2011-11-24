@@ -1,8 +1,8 @@
 
 #include "setup/DirectoryEntry.hpp"
 
-#include "util/LoadingUtils.hpp"
-#include "util/StoredEnum.hpp"
+#include "util/load.hpp"
+#include "util/storedenum.hpp"
 
 namespace {
 
@@ -29,18 +29,18 @@ void DirectoryEntry::load(std::istream & is, const InnoVersion & version) {
 		::load<uint32_t>(is); // uncompressed size of the directory entry structure
 	}
 	
-	is >> EncodedString(name, version.codepage());
+	is >> encoded_string(name, version.codepage());
 	
 	loadConditionData(is, version);
 	
 	if(version >= INNO_VERSION(4, 0, 11) && version < INNO_VERSION(4, 1, 0)) {
-		is >> EncodedString(permissions, version.codepage());
+		is >> encoded_string(permissions, version.codepage());
 	} else {
 		permissions.clear();
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 11)) {
-		attributes = loadNumber<uint32_t>(is);
+		attributes = load_number<uint32_t>(is);
 	} else {
 		attributes = 0;
 	}
@@ -48,15 +48,15 @@ void DirectoryEntry::load(std::istream & is, const InnoVersion & version) {
 	loadVersionData(is, version);
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		permission = loadNumber<int16_t>(is);
+		permission = load_number<int16_t>(is);
 	} else {
 		permission = -1;
 	}
 	
 	if(version >= INNO_VERSION(5, 2, 0)) {
-		options = StoredFlags<StoredInnoDirectoryOptions1>(is).get();
+		options = stored_flags<StoredInnoDirectoryOptions1>(is).get();
 	} else {
-		options = StoredFlags<StoredInnoDirectoryOptions0>(is).get();
+		options = stored_flags<StoredInnoDirectoryOptions0>(is).get();
 	}
 	
 }

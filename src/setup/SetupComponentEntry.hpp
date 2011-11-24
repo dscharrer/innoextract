@@ -8,8 +8,8 @@
 
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"
-#include "util/Enum.hpp"
-#include "util/Flags.hpp"
+#include "util/enum.hpp"
+#include "util/flags.hpp"
 
 struct SetupComponentEntry {
 	

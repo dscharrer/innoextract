@@ -7,8 +7,7 @@
 #include <algorithm>
 #include <cstring>
 
-#include "util/LoadingUtils.hpp"
-#include "util/Utils.hpp"
+#include "util/load.hpp"
 
 namespace {
 
@@ -52,10 +51,10 @@ uint32_t ExeReader::findResourceEntry(std::istream & is, uint32_t needle) {
 	}
 	
 	// Number of named resource entries.
-	uint16_t nbnames = loadNumber<uint16_t>(is);
+	uint16_t nbnames = load_number<uint16_t>(is);
 	
 	// Number of id resource entries.
-	uint16_t nbids = loadNumber<uint16_t>(is);
+	uint16_t nbids = load_number<uint16_t>(is);
 	
 	
 	// Ignore named resource entries.
@@ -66,8 +65,8 @@ uint32_t ExeReader::findResourceEntry(std::istream & is, uint32_t needle) {
 	
 	for(size_t i = 0; i < nbids; i++) {
 		
-		uint32_t id = loadNumber<uint32_t>(is);
-		uint32_t offset = loadNumber<uint32_t>(is);
+		uint32_t id = load_number<uint32_t>(is);
+		uint32_t offset = load_number<uint32_t>(is);
 		if(is.fail()) {
 			return 0;
 		}
@@ -96,11 +95,11 @@ bool ExeReader::loadSectionTable(std::istream & is, uint32_t peOffset,
 		
 		is.seekg(8, std::ios_base::cur); // name
 		
-		section.virtual_size = loadNumber<uint32_t>(is);
-		section.virtual_address = loadNumber<uint32_t>(is);
+		section.virtual_size = load_number<uint32_t>(is);
+		section.virtual_address = load_number<uint32_t>(is);
 		
 		is.seekg(4, std::ios_base::cur); // raw size
-		section.raw_address = loadNumber<uint32_t>(is);
+		section.raw_address = load_number<uint32_t>(is);
 		
 		// relocation addr + line number addr + relocation count + line number count + characteristics
 		is.seekg(4 + 4 + 2 + 2 + 4, std::ios_base::cur);
@@ -132,7 +131,7 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, uint32_t name,
 	result.offset = result.size = 0;
 	
 	// Skip the DOS stub.
-	uint16_t peOffset = loadNumber<uint16_t>(is.seekg(0x3c));
+	uint16_t peOffset = load_number<uint16_t>(is.seekg(0x3c));
 	if(is.fail()) {
 		return result;
 	}
@@ -147,13 +146,13 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, uint32_t name,
 	
 	CoffFileHeader coff;
 	is.seekg(2, std::ios_base::cur); // machine
-	coff.nsections = loadNumber<uint16_t>(is);
+	coff.nsections = load_number<uint16_t>(is);
 	is.seekg(4 + 4 + 4, std::ios_base::cur); // creation time + symbol table offset + nbsymbols
-	coff.optional_header_size = loadNumber<uint16_t>(is);
+	coff.optional_header_size = load_number<uint16_t>(is);
 	is.seekg(2, std::ios_base::cur); // characteristics
 	
 	// Skip the optional header.
-	uint16_t optionalHeaderMagic = loadNumber<uint16_t>(is);
+	uint16_t optionalHeaderMagic = load_number<uint16_t>(is);
 	if(is.fail()) {
 		return result;
 	}
@@ -163,7 +162,7 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, uint32_t name,
 		is.seekg(90, std::ios_base::cur);
 	}
 	
-	uint32_t ndirectories = loadNumber<uint32_t>(is);
+	uint32_t ndirectories = load_number<uint32_t>(is);
 	if(is.fail() || ndirectories < 3) {
 		return result;
 	}
@@ -171,8 +170,8 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, uint32_t name,
 	is.seekg(2 * directory_header_size, std::ios_base::cur);
 	
 	// Virtual memory address and size of the start of resource directory.
-	uint32_t resource_address = loadNumber<uint32_t>(is);
-	uint32_t resource_size = loadNumber<uint32_t>(is);
+	uint32_t resource_address = load_number<uint32_t>(is);
+	uint32_t resource_size = load_number<uint32_t>(is);
 	if(is.fail() || !resource_address || !resource_size) {
 		return result;
 	}
@@ -207,8 +206,8 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, uint32_t name,
 	
 	// Virtual memory address and size of the resource data.
 	is.seekg(leaf_offset);
-	uint32_t data_address = loadNumber<uint32_t>(is);
-	uint32_t data_size = loadNumber<uint32_t>(is);
+	uint32_t data_address = load_number<uint32_t>(is);
+	uint32_t data_size = load_number<uint32_t>(is);
 	// ignore codepage and reserved word
 	if(is.fail()) {
 		return result;

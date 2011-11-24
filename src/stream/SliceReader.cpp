@@ -6,9 +6,9 @@
 #include <cstring>
 #include <limits>
 
-#include "util/LoadingUtils.hpp"
-#include "util/Output.hpp"
-#include "util/Utils.hpp"
+#include "util/color.hpp"
+#include "util/load.hpp"
+#include "util/util.hpp"
 
 using std::string;
 
@@ -85,7 +85,7 @@ bool SliceReader::openFile(const std::string & file) {
 		return false;
 	}
 	
-	sliceSize = loadNumber<uint32_t>(ifs);
+	sliceSize = load_number<uint32_t>(ifs);
 	if(ifs.fail() || std::streampos(sliceSize) > fileSize) {
 		LogError << "[slice] bad slice size: " << sliceSize << " > " << fileSize;
 		ifs.close();

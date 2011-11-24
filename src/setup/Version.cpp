@@ -2,10 +2,16 @@
 #include "setup/Version.hpp"
 
 #include <cstring>
+#include <algorithm>
+#include <iostream>
 
 #include <boost/static_assert.hpp>
 
-#include <util/Utils.hpp>
+#include <util/util.hpp>
+
+using std::cout;
+using std::string;
+using std::endl;
 
 typedef char StoredLegacySetupDataVersion[12];
 
@@ -105,9 +111,6 @@ const KnownSetupDataVersion knownSetupDataVersions[] = {
 	{ "Inno Setup Setup Data (5.4.2)",                 INNO_VERSION_EXT(5, 4,  2, 0), false },
 	{ "Inno Setup Setup Data (5.4.2) (u)",             INNO_VERSION_EXT(5, 4,  2, 0), true  },
 };
-using std::cout;
-using std::string;
-using std::endl;
 
 std::ostream & operator<<(std::ostream & os, const InnoVersion & v) {
 	
@@ -141,7 +144,7 @@ void InnoVersion::load(std::istream & is) {
 	if(legacyVersion[0] == 'i' && legacyVersion[sizeof(legacyVersion) - 1] == '\x1a') {
 		
 		cout << "found legacy version: \""
-		     << safestring(legacyVersion, sizeof(legacyVersion) - 1) << '"' << endl;
+		     << std::string(legacyVersion, sizeof(legacyVersion) - 1) << '"' << endl;
 		
 		for(size_t i = 0; i < ARRAY_SIZE(knownLegacySetupDataVersions); i++) {
 			if(!memcmp(legacyVersion, knownLegacySetupDataVersions[i].name, sizeof(legacyVersion))) {
@@ -166,7 +169,9 @@ void InnoVersion::load(std::istream & is) {
 	memcpy(storedVersion, legacyVersion, sizeof(legacyVersion));
 	is.read(storedVersion + sizeof(legacyVersion), sizeof(storedVersion) - sizeof(legacyVersion));
 	
-	cout << "found version: \"" << safestring(storedVersion) << '"' << endl;
+	char * end = std::find(storedVersion, storedVersion + ARRAY_SIZE(storedVersion) - 1, '\0');
+	std::string versionstr(storedVersion, end);
+	cout << "found version: \"" << versionstr << '"' << endl;
 	
 	for(size_t i = 0; i < ARRAY_SIZE(knownSetupDataVersions); i++) {
 		if(!memcmp(storedVersion, knownSetupDataVersions[i].name, sizeof(storedVersion))) {

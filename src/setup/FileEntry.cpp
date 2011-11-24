@@ -1,8 +1,8 @@
 
 #include "setup/FileEntry.hpp"
 
-#include "util/LoadingUtils.hpp"
-#include "util/StoredEnum.hpp"
+#include "util/load.hpp"
+#include "util/storedenum.hpp"
 
 namespace {
 
@@ -51,11 +51,11 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 		::load<uint32_t>(is); // uncompressed size of the file entry structure
 	}
 	
-	is >> EncodedString(source, version.codepage());
-	is >> EncodedString(destination, version.codepage());
-	is >> EncodedString(installFontName, version.codepage());
+	is >> encoded_string(source, version.codepage());
+	is >> encoded_string(destination, version.codepage());
+	is >> encoded_string(installFontName, version.codepage());
 	if(version >= INNO_VERSION(5, 2, 5)) {
-		is >> EncodedString(strongAssemblyName, version.codepage());
+		is >> encoded_string(strongAssemblyName, version.codepage());
 	} else {
 		strongAssemblyName.clear();
 	}
@@ -64,13 +64,13 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	loadVersionData(is, version);
 	
-	location = loadNumber<uint32_t>(is, version.bits);
-	attributes = loadNumber<uint32_t>(is, version.bits);
-	externalSize = (version >= INNO_VERSION(4, 0, 0)) ? loadNumber<uint64_t>(is)
-	                                                  : loadNumber<uint32_t>(is);
+	location = load_number<uint32_t>(is, version.bits);
+	attributes = load_number<uint32_t>(is, version.bits);
+	externalSize = (version >= INNO_VERSION(4, 0, 0)) ? load_number<uint64_t>(is)
+	                                                  : load_number<uint32_t>(is);
 	
 	if(version < INNO_VERSION(3, 0, 5)) {
-		FileCopyMode copyMode = StoredEnum<StoredFileCopyMode>(is).get();
+		FileCopyMode copyMode = stored_enum<StoredFileCopyMode>(is).get();
 		switch(copyMode) {
 			case cmNormal: options |= PromptIfOlder; break;
 			case cmIfDoesntExist: options |= OnlyIfDoesntExist | PromptIfOlder; break;
@@ -80,12 +80,12 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		permission = loadNumber<int16_t>(is);
+		permission = load_number<int16_t>(is);
 	} else {
 		permission = -1;
 	}
 	
-	StoredFlagReader<Options> flags(is);
+	stored_flag_reader<Options> flags(is);
 	
 	flags.add(ConfirmOverwrite);
 	flags.add(NeverUninstall);
@@ -155,21 +155,20 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 		flags.add(GacInstall);
 	}
 	
-	options = flags.get();
+	options = flags;
 	
 	if(version >= INNO_VERSION(3, 0, 5) && version < INNO_VERSION(5, 0, 3)) {
 		// TODO find out where this byte comes from
 		int byte = is.get();
-		std::cout << "read: " << PrintHex(byte) << std::endl;
 		if(byte) {
 			LogWarning << "unknown byte: " << byte;
 		}
 	}
 	
 	if(version.bits == 16 || version >= INNO_VERSION(5, 0, 0)) {
-		type = StoredEnum<StoredFileType0>(is).get();
+		type = stored_enum<StoredFileType0>(is).get();
 	} else {
-		type = StoredEnum<StoredFileType1>(is).get();
+		type = stored_enum<StoredFileType1>(is).get();
 	}
 }
 

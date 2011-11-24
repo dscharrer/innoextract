@@ -3,24 +3,24 @@
 
 #include <stdint.h>
 
-#include "util/LoadingUtils.hpp"
-#include "util/StoredEnum.hpp"
+#include "util/load.hpp"
+#include "util/storedenum.hpp"
 
 void SetupTaskEntry::load(std::istream & is, const InnoVersion & version) {
 	
-	is >> EncodedString(name, version.codepage());
-	is >> EncodedString(description, version.codepage());
-	is >> EncodedString(groupDescription, version.codepage());
-	is >> EncodedString(components, version.codepage());
+	is >> encoded_string(name, version.codepage());
+	is >> encoded_string(description, version.codepage());
+	is >> encoded_string(groupDescription, version.codepage());
+	is >> encoded_string(components, version.codepage());
 	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> EncodedString(languages, version.codepage());
+		is >> encoded_string(languages, version.codepage());
 	} else {
 		languages.clear();
 	}
 	if(version >= INNO_VERSION(3, 0, 8)) {
-		is >> EncodedString(check, version.codepage());
-		level = loadNumber<int32_t>(is);
-		used = loadNumber<uint8_t>(is);
+		is >> encoded_string(check, version.codepage());
+		level = load_number<int32_t>(is);
+		used = load_number<uint8_t>(is);
 	} else {
 		check.clear(), level = 0, used = true;
 	}
@@ -28,7 +28,7 @@ void SetupTaskEntry::load(std::istream & is, const InnoVersion & version) {
 	minVersion.load(is, version);
 	onlyBelowVersion.load(is, version);
 	
-	StoredFlagReader<Options> flags(is);
+	stored_flag_reader<Options> flags(is);
 	
 	flags.add(Exclusive);
 	flags.add(Unchecked);
@@ -42,7 +42,7 @@ void SetupTaskEntry::load(std::istream & is, const InnoVersion & version) {
 		flags.add(DontInheritCheck);
 	}
 	
-	options = flags.get();
+	options = flags;
 }
 
 ENUM_NAMES(SetupTaskEntry::Options, "Setup Task Option",

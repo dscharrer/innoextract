@@ -7,8 +7,6 @@
 
 #include "crypto/Hasher.hpp"
 
-#include "util/Output.hpp"
-
 class checksum_filter : public boost::iostreams::multichar_input_filter {
 	
 private:

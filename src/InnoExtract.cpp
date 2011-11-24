@@ -56,9 +56,9 @@
 #include "stream/ChecksumFilter.hpp"
 #include "stream/InstructionFilter.hpp"
 
-#include "util/LoadingUtils.hpp"
-#include "util/Output.hpp"
-#include "util/Utils.hpp"
+#include "util/color.hpp"
+#include "util/load.hpp"
+#include "util/output.hpp"
 
 class progress {
 	
@@ -110,13 +110,11 @@ using std::string;
 using std::endl;
 using std::setw;
 using std::setfill;
-using std::hex;
-using std::dec;
 
 template <class T>
 void discard(T & is, uint64_t bytes) {
 	
-	std::cout << "discarding " << PrintBytes(bytes) << std::endl;
+	std::cout << "discarding " << print_bytes(bytes) << std::endl;
 	
 	char buf[1024];
 	while(bytes) {
@@ -146,35 +144,35 @@ struct FileLocationComparer {
 static void printSetupItem(std::ostream & os, const SetupItem & item,
                            const SetupHeader & header) {
 	
-	os << IfNotEmpty("  Componenets", item.components);
-	os << IfNotEmpty("  Tasks", item.tasks);
-	os << IfNotEmpty("  Languages", item.languages);
-	os << IfNotEmpty("  Check", item.check);
+	os << if_not_empty("  Componenets", item.components);
+	os << if_not_empty("  Tasks", item.tasks);
+	os << if_not_empty("  Languages", item.languages);
+	os << if_not_empty("  Check", item.check);
 	
-	os << IfNotEmpty("  After install", item.afterInstall);
-	os << IfNotEmpty("  Before install", item.beforeInstall);
+	os << if_not_empty("  After install", item.afterInstall);
+	os << if_not_empty("  Before install", item.beforeInstall);
 	
-	os << IfNot("  Min version", item.minVersion, header.minVersion);
-	os << IfNot("  Only below version", item.onlyBelowVersion, header.onlyBelowVersion);
+	os << if_not_equal("  Min version", item.minVersion, header.minVersion);
+	os << if_not_equal("  Only below version", item.onlyBelowVersion, header.onlyBelowVersion);
 	
 }
 
 static void print(std::ostream & os, const RunEntry & entry, const SetupHeader & header) {
 	
-	os << " - " << Quoted(entry.name) << ':' << endl;
-	os << IfNotEmpty("  Parameters", entry.parameters);
-	os << IfNotEmpty("  Working directory", entry.workingDir);
-	os << IfNotEmpty("  Run once id", entry.runOnceId);
-	os << IfNotEmpty("  Status message", entry.statusMessage);
-	os << IfNotEmpty("  Verb", entry.verb);
-	os << IfNotEmpty("  Description", entry.verb);
+	os << " - " << quoted(entry.name) << ':' << endl;
+	os << if_not_empty("  Parameters", entry.parameters);
+	os << if_not_empty("  Working directory", entry.workingDir);
+	os << if_not_empty("  Run once id", entry.runOnceId);
+	os << if_not_empty("  Status message", entry.statusMessage);
+	os << if_not_empty("  Verb", entry.verb);
+	os << if_not_empty("  Description", entry.verb);
 	
 	printSetupItem(cout, entry, header);
 	
-	os << IfNot("  Show command", entry.showCmd, 1);
-	os << IfNot("  Wait", entry.wait, RunEntry::WaitUntilTerminated);
+	os << if_not_equal("  Show command", entry.showCmd, 1);
+	os << if_not_equal("  Wait", entry.wait, RunEntry::WaitUntilTerminated);
 	
-	os << IfNotZero("  Options", entry.options);
+	os << if_not_zero("  Options", entry.options);
 	
 }
 
@@ -186,11 +184,11 @@ static std::ostream & operator<<(std::ostream & os, const Checksum & checksum) {
 	
 	switch(checksum.type) {
 		case Checksum::Adler32: {
-			cout << PrintHex(checksum.adler32);
+			cout << print_hex(checksum.adler32);
 			break;
 		}
 		case Checksum::Crc32: {
-			cout << PrintHex(checksum.crc32);
+			cout << print_hex(checksum.crc32);
 			break;
 		}
 		case Checksum::MD5: {
@@ -241,7 +239,7 @@ static void dump(std::istream & is, const string & file) {
 	// TODO stream
 	
 	std::string data;
-	is >> BinaryString(data);
+	is >> binary_string(data);
 	cout << "Resource: " << color::cyan << file << color::reset << ": " << color::white
 	     << data.length() << color::reset << " bytes" << endl;
 	
@@ -302,19 +300,19 @@ int main(int argc, char * argv[]) {
 	
 	cout << "loaded offsets:" << endl;
 	if(offsets.exeOffset) {
-		cout << "- exe: @ " << color::cyan << PrintHex(offsets.exeOffset) << color::reset;
+		cout << "- exe: @ " << color::cyan << print_hex(offsets.exeOffset) << color::reset;
 		if(offsets.exeCompressedSize) {
-			cout << "  compressed: " << color::cyan << PrintHex(offsets.exeCompressedSize)
+			cout << "  compressed: " << color::cyan << print_hex(offsets.exeCompressedSize)
 			     << color::reset;
 		}
-		cout << "  uncompressed: " << color::cyan << PrintBytes(offsets.exeUncompressedSize)
+		cout << "  uncompressed: " << color::cyan << print_bytes(offsets.exeUncompressedSize)
 		     << color::reset << endl;
 		cout << "- exe checksum: " << color::cyan << offsets.exeChecksum  << color::reset << endl;
 	}
-	cout << IfNotZero("- message offset", PrintHex(offsets.messageOffset));
-	cout << "- header offset: " << color::cyan << PrintHex(offsets.headerOffset)
+	cout << if_not_zero("- message offset", print_hex(offsets.messageOffset));
+	cout << "- header offset: " << color::cyan << print_hex(offsets.headerOffset)
 	     << color::reset << endl;
-	cout << IfNotZero("- data offset", PrintHex(offsets.dataOffset));
+	cout << if_not_zero("- data offset", print_hex(offsets.dataOffset));
 	
 	ifs.seekg(offsets.headerOffset);
 	
@@ -349,86 +347,86 @@ int main(int argc, char * argv[]) {
 	
 	cout << endl;
 	
-	cout << IfNotEmpty("App name", header.appName);
-	cout << IfNotEmpty("App ver name", header.appVerName);
-	cout << IfNotEmpty("App id", header.appId);
-	cout << IfNotEmpty("Copyright", header.appCopyright);
-	cout << IfNotEmpty("Publisher", header.appPublisher);
-	cout << IfNotEmpty("Publisher URL", header.appPublisherURL);
-	cout << IfNotEmpty("Support phone", header.appSupportPhone);
-	cout << IfNotEmpty("Support URL", header.appSupportURL);
-	cout << IfNotEmpty("Updates URL", header.appUpdatesURL);
-	cout << IfNotEmpty("Version", header.appVersion);
-	cout << IfNotEmpty("Default dir name", header.defaultDirName);
-	cout << IfNotEmpty("Default group name", header.defaultGroupName);
-	cout << IfNotEmpty("Uninstall icon name", header.uninstallIconName);
-	cout << IfNotEmpty("Base filename", header.baseFilename);
-	cout << IfNotEmpty("Uninstall files dir", header.uninstallFilesDir);
-	cout << IfNotEmpty("Uninstall display name", header.uninstallDisplayName);
-	cout << IfNotEmpty("Uninstall display icon", header.uninstallDisplayIcon);
-	cout << IfNotEmpty("App mutex", header.appMutex);
-	cout << IfNotEmpty("Default user name", header.defaultUserInfoName);
-	cout << IfNotEmpty("Default user org", header.defaultUserInfoOrg);
-	cout << IfNotEmpty("Default user serial", header.defaultUserInfoSerial);
-	cout << IfNotEmpty("Readme", header.appReadmeFile);
-	cout << IfNotEmpty("Contact", header.appContact);
-	cout << IfNotEmpty("Comments", header.appComments);
-	cout << IfNotEmpty("Modify path", header.appModifyPath);
-	cout << IfNotEmpty("Uninstall reg key", header.createUninstallRegKey);
-	cout << IfNotEmpty("Uninstallable", header.uninstallable);
-	cout << IfNotEmpty("License", header.licenseText);
-	cout << IfNotEmpty("Info before text", header.infoBeforeText);
-	cout << IfNotEmpty("Info after text", header.infoAfterText);
-	cout << IfNotEmpty("Uninstaller signature", header.signedUninstallerSignature);
-	cout << IfNotEmpty("Compiled code", header.compiledCodeText);
+	cout << if_not_empty("App name", header.appName);
+	cout << if_not_empty("App ver name", header.appVerName);
+	cout << if_not_empty("App id", header.appId);
+	cout << if_not_empty("Copyright", header.appCopyright);
+	cout << if_not_empty("Publisher", header.appPublisher);
+	cout << if_not_empty("Publisher URL", header.appPublisherURL);
+	cout << if_not_empty("Support phone", header.appSupportPhone);
+	cout << if_not_empty("Support URL", header.appSupportURL);
+	cout << if_not_empty("Updates URL", header.appUpdatesURL);
+	cout << if_not_empty("Version", header.appVersion);
+	cout << if_not_empty("Default dir name", header.defaultDirName);
+	cout << if_not_empty("Default group name", header.defaultGroupName);
+	cout << if_not_empty("Uninstall icon name", header.uninstallIconName);
+	cout << if_not_empty("Base filename", header.baseFilename);
+	cout << if_not_empty("Uninstall files dir", header.uninstallFilesDir);
+	cout << if_not_empty("Uninstall display name", header.uninstallDisplayName);
+	cout << if_not_empty("Uninstall display icon", header.uninstallDisplayIcon);
+	cout << if_not_empty("App mutex", header.appMutex);
+	cout << if_not_empty("Default user name", header.defaultUserInfoName);
+	cout << if_not_empty("Default user org", header.defaultUserInfoOrg);
+	cout << if_not_empty("Default user serial", header.defaultUserInfoSerial);
+	cout << if_not_empty("Readme", header.appReadmeFile);
+	cout << if_not_empty("Contact", header.appContact);
+	cout << if_not_empty("Comments", header.appComments);
+	cout << if_not_empty("Modify path", header.appModifyPath);
+	cout << if_not_empty("Uninstall reg key", header.createUninstallRegKey);
+	cout << if_not_empty("Uninstallable", header.uninstallable);
+	cout << if_not_empty("License", header.licenseText);
+	cout << if_not_empty("Info before text", header.infoBeforeText);
+	cout << if_not_empty("Info after text", header.infoAfterText);
+	cout << if_not_empty("Uninstaller signature", header.signedUninstallerSignature);
+	cout << if_not_empty("Compiled code", header.compiledCodeText);
 	
-	cout << IfNotZero("Lead bytes", header.leadBytes);
+	cout << if_not_zero("Lead bytes", header.leadBytes);
 	
-	cout << IfNotZero("Language entries", header.numLanguageEntries);
-	cout << IfNotZero("Custom message entries", header.numCustomMessageEntries);
-	cout << IfNotZero("Permission entries", header.numPermissionEntries);
-	cout << IfNotZero("Type entries", header.numTypeEntries);
-	cout << IfNotZero("Component entries", header.numComponentEntries);
-	cout << IfNotZero("Task entries", header.numTaskEntries);
-	cout << IfNotZero("Dir entries", header.numDirectoryEntries);
-	cout << IfNotZero("File entries", header.numFileEntries);
-	cout << IfNotZero("File location entries", header.numFileLocationEntries);
-	cout << IfNotZero("Icon entries", header.numIconEntries);
-	cout << IfNotZero("Ini entries", header.numIniEntries);
-	cout << IfNotZero("Registry entries", header.numRegistryEntries);
-	cout << IfNotZero("Delete entries", header.numDeleteEntries);
-	cout << IfNotZero("Uninstall delete entries", header.numUninstallDeleteEntries);
-	cout << IfNotZero("Run entries", header.numRunEntries);
-	cout << IfNotZero("Uninstall run entries", header.numUninstallRunEntries);
+	cout << if_not_zero("Language entries", header.numLanguageEntries);
+	cout << if_not_zero("Custom message entries", header.numCustomMessageEntries);
+	cout << if_not_zero("Permission entries", header.numPermissionEntries);
+	cout << if_not_zero("Type entries", header.numTypeEntries);
+	cout << if_not_zero("Component entries", header.numComponentEntries);
+	cout << if_not_zero("Task entries", header.numTaskEntries);
+	cout << if_not_zero("Dir entries", header.numDirectoryEntries);
+	cout << if_not_zero("File entries", header.numFileEntries);
+	cout << if_not_zero("File location entries", header.numFileLocationEntries);
+	cout << if_not_zero("Icon entries", header.numIconEntries);
+	cout << if_not_zero("Ini entries", header.numIniEntries);
+	cout << if_not_zero("Registry entries", header.numRegistryEntries);
+	cout << if_not_zero("Delete entries", header.numDeleteEntries);
+	cout << if_not_zero("Uninstall delete entries", header.numUninstallDeleteEntries);
+	cout << if_not_zero("Run entries", header.numRunEntries);
+	cout << if_not_zero("Uninstall run entries", header.numUninstallRunEntries);
 	
-	cout << IfNot("Min version", header.minVersion, WindowsVersion::none);
-	cout << IfNot("Only below version", header.onlyBelowVersion, WindowsVersion::none);
+	cout << if_not_equal("Min version", header.minVersion, WindowsVersion::none);
+	cout << if_not_equal("Only below version", header.onlyBelowVersion, WindowsVersion::none);
 	
-	cout << hex;
-	cout << IfNotZero("Back color", header.backColor);
-	cout << IfNotZero("Back color2", header.backColor2);
-	cout << IfNotZero("Wizard image back color", header.wizardImageBackColor);
-	cout << IfNotZero("Wizard small image back color", header.wizardSmallImageBackColor);
-	cout << dec;
+	cout << std::hex;
+	cout << if_not_zero("Back color", header.backColor);
+	cout << if_not_zero("Back color2", header.backColor2);
+	cout << if_not_zero("Wizard image back color", header.wizardImageBackColor);
+	cout << if_not_zero("Wizard small image back color", header.wizardSmallImageBackColor);
+	cout << std::dec;
 	
 	if(header.options & (SetupHeader::Password | SetupHeader::EncryptionUsed)) {
 		cout << "Password: " << color::cyan << header.password << color::reset << endl;
 		// TODO print salt
 	}
 	
-	cout << IfNotZero("Extra disk space required", header.extraDiskSpaceRequired);
-	cout << IfNotZero("Slices per disk", header.slicesPerDisk);
+	cout << if_not_zero("Extra disk space required", header.extraDiskSpaceRequired);
+	cout << if_not_zero("Slices per disk", header.slicesPerDisk);
 	
-	cout << IfNot("Install mode", header.installMode, SetupHeader::NormalInstallMode);
+	cout << if_not_equal("Install mode", header.installMode, SetupHeader::NormalInstallMode);
 	cout << "Uninstall log mode: " << color::cyan << header.uninstallLogMode
 	     << color::reset << endl;
 	cout << "Uninstall style: " << color::cyan << header.uninstallStyle << color::reset << endl;
 	cout << "Dir exists warning: " << color::cyan << header.dirExistsWarning
 	     << color::reset << endl;
-	cout << IfNot("Privileges required", header.privilegesRequired, SetupHeader::NoPrivileges);
+	cout << if_not_equal("Privileges required", header.privilegesRequired, SetupHeader::NoPrivileges);
 	cout << "Show language dialog: " << color::cyan << header.showLanguageDialog
 	     << color::reset << endl;
-	cout << IfNot("Danguage detection", header.languageDetectionMethod,
+	cout << if_not_equal("Danguage detection", header.languageDetectionMethod,
 	              SetupHeader::NoLanguageDetection);
 	cout << "Compression: " << color::cyan << header.compressMethod << color::reset << endl;
 	cout << "Architectures allowed: " << color::cyan << header.architecturesAllowed
@@ -437,15 +435,15 @@ int main(int argc, char * argv[]) {
 	     << header.architecturesInstallIn64BitMode << color::reset << endl;
 	
 	if(header.options & SetupHeader::SignedUninstaller) {
-		cout << IfNotZero("Size before signing uninstaller", header.signedUninstallerOrigSize);
-		cout << IfNotZero("Uninstaller header checksum", header.signedUninstallerHdrChecksum);
+		cout << if_not_zero("Size before signing uninstaller", header.signedUninstallerOrigSize);
+		cout << if_not_zero("Uninstaller header checksum", header.signedUninstallerHdrChecksum);
 	}
 	
 	cout << "Disable dir page: " << color::cyan << header.disableDirPage << color::reset << endl;
 	cout << "Disable program group page: " << color::cyan << header.disableProgramGroupPage
 	     << color::reset << endl;
 	
-	cout << IfNotZero("Uninstall display size", header.uninstallDisplaySize);
+	cout << if_not_zero("Uninstall display size", header.uninstallDisplaySize);
 	
 	cout << "Options: " << color::green << header.options << color::reset << endl;
 	
@@ -464,27 +462,27 @@ int main(int argc, char * argv[]) {
 			LogError << "error reading language entry #" << i;
 		}
 		
-		cout << " - " << Quoted(entry.name) << ':' << endl;
-		cout << IfNotEmpty("  Language name", entry.languageName);
-		cout << IfNotEmpty("  Dialog font", entry.dialogFontName);
-		cout << IfNotEmpty("  Title font", entry.titleFontName);
-		cout << IfNotEmpty("  Welcome font", entry.welcomeFontName);
-		cout << IfNotEmpty("  Copyright font", entry.copyrightFontName);
-		cout << IfNotEmpty("  Data", entry.data);
-		cout << IfNotEmpty("  License", entry.licenseText);
-		cout << IfNotEmpty("  Info before text", entry.infoBeforeText);
-		cout << IfNotEmpty("  Info after text", entry.infoAfterText);
+		cout << " - " << quoted(entry.name) << ':' << endl;
+		cout << if_not_empty("  Language name", entry.languageName);
+		cout << if_not_empty("  Dialog font", entry.dialogFontName);
+		cout << if_not_empty("  Title font", entry.titleFontName);
+		cout << if_not_empty("  Welcome font", entry.welcomeFontName);
+		cout << if_not_empty("  Copyright font", entry.copyrightFontName);
+		cout << if_not_empty("  Data", entry.data);
+		cout << if_not_empty("  License", entry.licenseText);
+		cout << if_not_empty("  Info before text", entry.infoBeforeText);
+		cout << if_not_empty("  Info after text", entry.infoAfterText);
 		
-		cout << "  Language id: " << color::cyan << hex << entry.languageId << dec
+		cout << "  Language id: " << color::cyan << std::hex << entry.languageId << std::dec
 		     << color::reset << endl;
 		
-		cout << IfNotZero("  Codepage", entry.codepage);
-		cout << IfNotZero("  Dialog font size", entry.dialogFontSize);
-		cout << IfNotZero("  Dialog font standard height", entry.dialogFontStandardHeight);
-		cout << IfNotZero("  Title font size", entry.titleFontSize);
-		cout << IfNotZero("  Welcome font size", entry.welcomeFontSize);
-		cout << IfNotZero("  Copyright font size", entry.copyrightFontSize);
-		cout << IfNot("  Right to left", entry.rightToLeft, false);
+		cout << if_not_zero("  Codepage", entry.codepage);
+		cout << if_not_zero("  Dialog font size", entry.dialogFontSize);
+		cout << if_not_zero("  Dialog font standard height", entry.dialogFontStandardHeight);
+		cout << if_not_zero("  Title font size", entry.titleFontSize);
+		cout << if_not_zero("  Welcome font size", entry.welcomeFontSize);
+		cout << if_not_zero("  Copyright font size", entry.copyrightFontSize);
+		cout << if_not_equal("  Right to left", entry.rightToLeft, false);
 		
 	};
 	
@@ -515,16 +513,16 @@ int main(int argc, char * argv[]) {
 		}
 		
 		string decoded;
-		toUtf8(entry.value, decoded, codepage);
+		to_utf8(entry.value, decoded, codepage);
 		
-		cout << " - " << Quoted(entry.name);
+		cout << " - " << quoted(entry.name);
 		if(entry.language < 0) {
 			cout << " (default) = ";
 		} else {
 			cout << " (" << color::cyan << languages[size_t(entry.language)].name
 			     << color::reset << ") = ";
 		}
-		cout << Quoted(decoded) << endl;
+		cout << quoted(decoded) << endl;
 		
 	}
 	
@@ -554,17 +552,17 @@ int main(int argc, char * argv[]) {
 			LogError << "error reading type entry #" << i;
 		}
 		
-		cout << " - " << Quoted(entry.name) << ':' << endl;
-		cout << IfNotEmpty("  Description", entry.description);
-		cout << IfNotEmpty("  Languages", entry.languages);
-		cout << IfNotEmpty("  Check", entry.check);
+		cout << " - " << quoted(entry.name) << ':' << endl;
+		cout << if_not_empty("  Description", entry.description);
+		cout << if_not_empty("  Languages", entry.languages);
+		cout << if_not_empty("  Check", entry.check);
 		
-		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
-		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
+		cout << if_not_equal("  Min version", entry.minVersion, header.minVersion);
+		cout << if_not_equal("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
 		
-		cout << IfNotZero("  Options", entry.options);
-		cout << IfNot("  Type", entry.type, SetupTypeEntry::User);
-		cout << IfNotZero("  Size", entry.size);
+		cout << if_not_zero("  Options", entry.options);
+		cout << if_not_equal("  Type", entry.type, SetupTypeEntry::User);
+		cout << if_not_zero("  Size", entry.size);
 		
 	}
 	
@@ -579,21 +577,21 @@ int main(int argc, char * argv[]) {
 			LogError << "error reading component entry #" << i;
 		}
 		
-		cout << " - " << Quoted(entry.name) << ':' << endl;
-		cout << IfNotEmpty("  Types", entry.types);
-		cout << IfNotEmpty("  Description", entry.description);
-		cout << IfNotEmpty("  Languages", entry.languages);
-		cout << IfNotEmpty("  Check", entry.check);
+		cout << " - " << quoted(entry.name) << ':' << endl;
+		cout << if_not_empty("  Types", entry.types);
+		cout << if_not_empty("  Description", entry.description);
+		cout << if_not_empty("  Languages", entry.languages);
+		cout << if_not_empty("  Check", entry.check);
 		
-		cout << IfNotZero("  Extra disk space required", entry.extraDiskSpaceRequired);
-		cout << IfNotZero("  Level", entry.level);
-		cout << IfNot("  Used", entry.used, true);
+		cout << if_not_zero("  Extra disk space required", entry.extraDiskSpaceRequired);
+		cout << if_not_zero("  Level", entry.level);
+		cout << if_not_equal("  Used", entry.used, true);
 		
-		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
-		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
+		cout << if_not_equal("  Min version", entry.minVersion, header.minVersion);
+		cout << if_not_equal("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
 		
-		cout << IfNotZero("  Options", entry.options);
-		cout << IfNotZero("  Size", entry.size);
+		cout << if_not_zero("  Options", entry.options);
+		cout << if_not_zero("  Size", entry.size);
 		
 	}
 	
@@ -608,20 +606,20 @@ int main(int argc, char * argv[]) {
 			LogError << "error reading task entry #" << i;
 		}
 		
-		cout << " - " << Quoted(entry.name) << ':' << endl;
-		cout << IfNotEmpty("  Description", entry.description);
-		cout << IfNotEmpty("  Group description", entry.groupDescription);
-		cout << IfNotEmpty("  Components", entry.components);
-		cout << IfNotEmpty("  Languages", entry.languages);
-		cout << IfNotEmpty("  Check", entry.check);
+		cout << " - " << quoted(entry.name) << ':' << endl;
+		cout << if_not_empty("  Description", entry.description);
+		cout << if_not_empty("  Group description", entry.groupDescription);
+		cout << if_not_empty("  Components", entry.components);
+		cout << if_not_empty("  Languages", entry.languages);
+		cout << if_not_empty("  Check", entry.check);
 		
-		cout << IfNotZero("  Level", entry.level);
-		cout << IfNot("  Used", entry.used, true);
+		cout << if_not_zero("  Level", entry.level);
+		cout << if_not_equal("  Used", entry.used, true);
 		
-		cout << IfNot("  Min version", entry.minVersion, header.minVersion);
-		cout << IfNot("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
+		cout << if_not_equal("  Min version", entry.minVersion, header.minVersion);
+		cout << if_not_equal("  Only below version", entry.onlyBelowVersion, header.onlyBelowVersion);
 		
-		cout << IfNotZero("  Options", entry.options);
+		cout << if_not_zero("  Options", entry.options);
 		
 	}
 	
@@ -638,7 +636,7 @@ int main(int argc, char * argv[]) {
 			LogError << "error reading directory entry #" << i;
 		}
 		
-		cout << " - " << Quoted(entry.name) << ':' << endl;
+		cout << " - " << quoted(entry.name) << ':' << endl;
 		
 		printSetupItem(cout, entry, header);
 		
@@ -647,11 +645,11 @@ int main(int argc, char * argv[]) {
 		}
 		
 		
-		cout << IfNotZero("  Attributes", entry.attributes);
+		cout << if_not_zero("  Attributes", entry.attributes);
 		
-		cout << IfNot("  Permission entry", entry.permission, -1);
+		cout << if_not_equal("  Permission entry", entry.permission, -1);
 		
-		cout << IfNotZero("  Options", entry.options);
+		cout << if_not_zero("  Options", entry.options);
 		
 	}
 	
@@ -671,27 +669,27 @@ int main(int argc, char * argv[]) {
 		if(entry.destination.empty()) {
 			cout << " - File #" << i;
 		} else {
-			cout << " - " << Quoted(entry.destination);
+			cout << " - " << quoted(entry.destination);
 		}
 		if(entry.location != uint32_t(-1)) {
 			cout << " (location: " << color::cyan << entry.location << color::reset << ')';
 		}
 		cout  << endl;
 		
-		cout << IfNotEmpty("  Source", entry.source);
-		cout << IfNotEmpty("  Install font name", entry.installFontName);
-		cout << IfNotEmpty("  Strong assembly name", entry.strongAssemblyName);
+		cout << if_not_empty("  Source", entry.source);
+		cout << if_not_empty("  Install font name", entry.installFontName);
+		cout << if_not_empty("  Strong assembly name", entry.strongAssemblyName);
 		
 		printSetupItem(cout, entry, header);
 		
-		cout << IfNotZero("  Attributes", entry.attributes);
-		cout << IfNotZero("  Size", entry.externalSize);
+		cout << if_not_zero("  Attributes", entry.attributes);
+		cout << if_not_zero("  Size", entry.externalSize);
 		
-		cout << IfNot("  Permission entry", entry.permission, -1);
+		cout << if_not_equal("  Permission entry", entry.permission, -1);
 		
-		cout << IfNotZero("  Options", entry.options);
+		cout << if_not_zero("  Options", entry.options);
 		
-		cout << IfNot("  Type", entry.type, FileEntry::UserFile);
+		cout << if_not_equal("  Type", entry.type, FileEntry::UserFile);
 		
 	}
 	
@@ -706,22 +704,22 @@ int main(int argc, char * argv[]) {
 			LogError << "error reading icon entry #" << i;
 		}
 		
-		cout << " - " << Quoted(entry.name) << " -> " << Quoted(entry.filename) << endl;
-		cout << IfNotEmpty("  Parameters", entry.parameters);
-		cout << IfNotEmpty("  Working directory", entry.workingDir);
-		cout << IfNotEmpty("  Icon file", entry.iconFilename);
-		cout << IfNotEmpty("  Comment", entry.comment);
-		cout << IfNotEmpty("  App user model id", entry.appUserModelId);
+		cout << " - " << quoted(entry.name) << " -> " << quoted(entry.filename) << endl;
+		cout << if_not_empty("  Parameters", entry.parameters);
+		cout << if_not_empty("  Working directory", entry.workingDir);
+		cout << if_not_empty("  Icon file", entry.iconFilename);
+		cout << if_not_empty("  Comment", entry.comment);
+		cout << if_not_empty("  App user model id", entry.appUserModelId);
 		
 		printSetupItem(cout, entry, header);
 		
-		cout << IfNotZero("  Icon index", entry.iconIndex);
-		cout << IfNot("  Show command", entry.showCmd, 1);
-		cout << IfNot("  Close on exit", entry.closeOnExit, IconEntry::NoSetting);
+		cout << if_not_zero("  Icon index", entry.iconIndex);
+		cout << if_not_equal("  Show command", entry.showCmd, 1);
+		cout << if_not_equal("  Close on exit", entry.closeOnExit, IconEntry::NoSetting);
 		
-		cout << IfNotZero("  Hotkey", entry.hotkey);
+		cout << if_not_zero("  Hotkey", entry.hotkey);
 		
-		cout << IfNotZero("  Options", entry.options);
+		cout << if_not_zero("  Options", entry.options);
 		
 	}
 	
@@ -736,13 +734,13 @@ int main(int argc, char * argv[]) {
 			LogError << "error reading ini entry #" << i;
 		}
 		
-		cout << " - in " << Quoted(entry.inifile);
-		cout << " set [" << Quoted(entry.section) << "] ";
-		cout << Quoted(entry.key) << " = " << Quoted(entry.value) << std::endl;
+		cout << " - in " << quoted(entry.inifile);
+		cout << " set [" << quoted(entry.section) << "] ";
+		cout << quoted(entry.key) << " = " << quoted(entry.value) << std::endl;
 		
 		printSetupItem(cout, entry, header);
 		
-		cout << IfNotZero("  Options", entry.options);
+		cout << if_not_zero("  Options", entry.options);
 		
 	}
 	
@@ -761,15 +759,15 @@ int main(int argc, char * argv[]) {
 		if(entry.hive != RegistryEntry::Unset) {
 			cout << entry.hive << '\\';
 		}
-		cout << Quoted(entry.key);
+		cout << quoted(entry.key);
 		cout << endl << "  ";
 		if(entry.name.empty()) {
 			cout << "(default)";
 		} else {
-			cout << Quoted(entry.name);
+			cout << quoted(entry.name);
 		}
 		if(!entry.value.empty()) {
-			cout << " = " << Quoted(entry.value);
+			cout << " = " << quoted(entry.value);
 		}
 		if(entry.type != RegistryEntry::None) {
 			cout << " (" << color::cyan << entry.type << color::reset << ')';
@@ -781,9 +779,9 @@ int main(int argc, char * argv[]) {
 		if(!entry.permissions.empty()) {
 			cout << "  Permissions: " << entry.permissions.length() << " bytes";
 		}
-		cout << IfNot("  Permission entry", entry.permission, -1);
+		cout << if_not_equal("  Permission entry", entry.permission, -1);
 		
-		cout << IfNotZero("  Options", entry.options);
+		cout << if_not_zero("  Options", entry.options);
 		
 	}
 	
@@ -798,7 +796,7 @@ int main(int argc, char * argv[]) {
 			LogError << "error reading install delete entry #" << i;
 		}
 		
-		cout << " - " << Quoted(entry.name)
+		cout << " - " << quoted(entry.name)
 		     << " (" << color::cyan << entry.type << color::reset << ')' << endl;
 		
 		printSetupItem(cout, entry, header);
@@ -816,7 +814,7 @@ int main(int argc, char * argv[]) {
 			LogError << "error reading uninstall delete entry #" << i;
 		}
 		
-		cout << " - " << Quoted(entry.name)
+		cout << " - " << quoted(entry.name)
 		     << " (" << color::cyan << entry.type << color::reset << ')' << endl;
 		
 		printSetupItem(cout, entry, header);
@@ -890,14 +888,14 @@ int main(int argc, char * argv[]) {
 		
 		cout << " - " << "File location #" << i << ':' << endl;
 		
-		cout << IfNotZero("  First slice", entry.firstSlice);
-		cout << IfNot("  Last slice", entry.lastSlice, entry.firstSlice);
+		cout << if_not_zero("  First slice", entry.firstSlice);
+		cout << if_not_equal("  Last slice", entry.lastSlice, entry.firstSlice);
 		
-		cout << "  Chunk: offset " << color::cyan << PrintHex(entry.chunkOffset) << color::reset
-		     << " size " << color::cyan << PrintHex(entry.chunkSize) << color::reset << std::endl;
+		cout << "  Chunk: offset " << color::cyan << print_hex(entry.chunkOffset) << color::reset
+		     << " size " << color::cyan << print_hex(entry.chunkSize) << color::reset << std::endl;
 		
-		cout << IfNotZero("  File offset", PrintHex(entry.fileOffset));
-		cout << IfNotZero("  File size", PrintBytes(entry.fileSize));
+		cout << if_not_zero("  File offset", print_hex(entry.fileOffset));
+		cout << if_not_zero("  File size", print_bytes(entry.fileSize));
 		
 		cout << "  Checksum: " << entry.checksum << endl;
 		
@@ -916,11 +914,11 @@ int main(int argc, char * argv[]) {
 		     << ':' << std::setfill('0') << std::setw(2) << t.tm_sec
 		     << color::reset << " +" << entry.timestamp.tv_nsec << endl;
 		
-		cout << IfNotZero("  Options", entry.options);
+		cout << if_not_zero("  Options", entry.options);
 		
 		if(entry.options & FileLocationEntry::VersionInfoValid) {
-			cout << IfNotZero("  File version LS", entry.fileVersionLS);
-			cout << IfNotZero("  File version MS", entry.fileVersionMS);
+			cout << if_not_zero("  File version LS", entry.fileVersionLS);
+			cout << if_not_zero("  File version MS", entry.fileVersionMS);
 		}
 		
 	}
@@ -971,8 +969,8 @@ int main(int argc, char * argv[]) {
 	BOOST_FOREACH(Chunks::value_type & chunk, chunks) {
 		
 		cout << "[starting " << (chunk.first.compressed ? header.compressMethod : SetupHeader::Stored)
-		     << " chunk @ " << chunk.first.firstSlice << " + " << PrintHex(offsets.dataOffset)
-		     << " + " << PrintHex(chunk.first.chunkOffset) << ']' << std::endl;
+		     << " chunk @ " << chunk.first.firstSlice << " + " << print_hex(offsets.dataOffset)
+		     << " + " << print_hex(chunk.first.chunkOffset) << ']' << std::endl;
 		
 		std::sort(chunk.second.begin(), chunk.second.end(), FileLocationComparer(locations));
 		
@@ -1033,8 +1031,8 @@ int main(int argc, char * argv[]) {
 			if(!named) {
 				std::cout << "unnamed file";
 			}
-			std::cout << " @ " << PrintHex(location.fileOffset)
-			          << " (" << PrintBytes(location.fileSize) << ')' << std::endl;
+			std::cout << " @ " << print_hex(location.fileOffset)
+			          << " (" << print_bytes(location.fileSize) << ')' << std::endl;
 			
 			Hasher hasher;
 			hasher.init(location.checksum.type);
@@ -1097,7 +1095,7 @@ int main(int argc, char * argv[]) {
 											last_rate = rate;
 											oss.str(string()); // clear the buffer
 											oss << std::right << std::fixed << std::setfill(' ') << std::setw(8)
-											    << PrintBytes(rate) << "/s";
+											    << print_bytes(rate) << "/s";
 										}
 									}
 									

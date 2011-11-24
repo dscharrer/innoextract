@@ -10,7 +10,7 @@ class Sha1Transform {
 public:
 	
 	typedef uint32_t HashWord;
-	typedef BigEndian ByteOrder;
+	typedef big_endian ByteOrder;
 	static const size_t BlockSize = 64;
 	static const size_t HashSize = 20;
 	

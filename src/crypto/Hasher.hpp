@@ -7,7 +7,7 @@
 #include "crypto/CRC32.hpp"
 #include "crypto/MD5.hpp"
 #include "crypto/SHA-1.hpp"
-#include "util/Enum.hpp"
+#include "util/enum.hpp"
 
 struct checksum_uninitialized_error { };
 

@@ -7,7 +7,7 @@
 
 #include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
-#include "util/Enum.hpp"
+#include "util/enum.hpp"
 
 struct DeleteEntry : public SetupItem {
 	

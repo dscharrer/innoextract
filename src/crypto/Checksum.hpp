@@ -5,8 +5,9 @@
 #include <stdint.h>
 #include <cstring>
 #include <iostream>
-#include "util/Endian.hpp"
-#include "util/Enum.hpp"
+
+#include "util/endian.hpp"
+#include "util/enum.hpp"
 
 struct Checksum {
 	
@@ -50,7 +51,7 @@ public:
 	template <typename Endianness, class T>
 	inline T process(T data) {
 		char buf[sizeof(data)];
-		T swapped = Endianness::byteSwapIfAlien(data);
+		T swapped = Endianness::byteswap_if_alien(data);
 		std::memcpy(buf, &swapped, sizeof(swapped));
 		this->impl().update(buf, sizeof(buf));
 		return data;
@@ -67,7 +68,7 @@ public:
 		is.read(buf, sizeof(buf));
 		this->impl().update(buf, sizeof(buf));
 		std::memcpy(&result, buf, sizeof(result));
-		return Endianness::byteSwapIfAlien(result);
+		return Endianness::byteswap_if_alien(result);
 	}
 	
 };

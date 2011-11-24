@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#include "util/LoadingUtils.hpp"
-#include "util/StoredEnum.hpp"
+#include "util/load.hpp"
+#include "util/storedenum.hpp"
 
 namespace {
 
@@ -42,18 +42,18 @@ void RegistryEntry::load(std::istream & is, const InnoVersion & version) {
 		::load<uint32_t>(is); // uncompressed size of the directory entry structure
 	}
 	
-	is >> EncodedString(key, version.codepage());
+	is >> encoded_string(key, version.codepage());
 	if(version.bits != 16) {
-		is >> EncodedString(name, version.codepage());
+		is >> encoded_string(name, version.codepage());
 	} else {
 		name.clear();
 	}
-	is >> EncodedString(value, version.codepage());
+	is >> encoded_string(value, version.codepage());
 	
 	loadConditionData(is, version);
 	
 	if(version >= INNO_VERSION(4, 0, 11) && version < INNO_VERSION(4, 1, 0)) {
-		is >> EncodedString(permissions, version.codepage());
+		is >> encoded_string(permissions, version.codepage());
 	} else {
 		permissions.clear();
 	}
@@ -61,26 +61,26 @@ void RegistryEntry::load(std::istream & is, const InnoVersion & version) {
 	loadVersionData(is, version);
 	
 	if(version.bits != 16) {
-		hive = Hive(loadNumber<uint32_t>(is) & ~0x80000000);
+		hive = Hive(load_number<uint32_t>(is) & ~0x80000000);
 	} else {
 		hive = Unset;
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		permission = loadNumber<int16_t>(is);
+		permission = load_number<int16_t>(is);
 	} else {
 		permission = -1;
 	}
 	
 	if(version >= INNO_VERSION(5, 2, 5)) {
-		type = StoredEnum<StoredRegistryEntryType2>(is).get();
+		type = stored_enum<StoredRegistryEntryType2>(is).get();
 	} else if(version.bits != 16) {
-		type = StoredEnum<StoredRegistryEntryType1>(is).get();
+		type = stored_enum<StoredRegistryEntryType1>(is).get();
 	} else {
-		type = StoredEnum<StoredRegistryEntryType0>(is).get();
+		type = stored_enum<StoredRegistryEntryType0>(is).get();
 	}
 	
-	StoredFlagReader<Options> flags(is);
+	stored_flag_reader<Options> flags(is);
 	
 	if(version.bits != 16) {
 		flags.add(CreateValueIfDoesntExist);
@@ -101,7 +101,7 @@ void RegistryEntry::load(std::istream & is, const InnoVersion & version) {
 		flags.add(Bits64);
 	}
 	
-	options = flags.get();
+	options = flags;
 }
 
 ENUM_NAMES(RegistryEntry::Options, "Registry Option",

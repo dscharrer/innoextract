@@ -8,8 +8,8 @@
 
 #include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
-#include "util/Enum.hpp"
-#include "util/Flags.hpp"
+#include "util/enum.hpp"
+#include "util/flags.hpp"
 
 struct FileEntry : public SetupItem {
 	

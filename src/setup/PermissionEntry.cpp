@@ -1,12 +1,12 @@
 
 #include "setup/PermissionEntry.hpp"
 
-#include "util/LoadingUtils.hpp"
+#include "util/load.hpp"
 
 void PermissionEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	(void)version;
 	
-	is >> BinaryString(permissions); // an array of TGrantPermissionEntry's
+	is >> binary_string(permissions); // an array of TGrantPermissionEntry's
 	
 }

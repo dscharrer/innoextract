@@ -1,6 +1,6 @@
 
-#ifndef INNOEXTRACT_UTIL_OUTPUT_HPP
-#define INNOEXTRACT_UTIL_OUTPUT_HPP
+#ifndef INNOEXTRACT_UTIL_COLOR_HPP
+#define INNOEXTRACT_UTIL_COLOR_HPP
 
 #include <iostream>
 #include <iomanip>
@@ -36,7 +36,7 @@ namespace color {
 	
 	extern shell_command current;
 	
-};
+} // namespace color
 
 inline std::ostream & operator<<(std::ostream & os, const color::shell_command command) {
 	color::current = command;
@@ -66,4 +66,4 @@ extern size_t total_errors;
 #define LogError (error_base(color::red), total_errors++, std::cerr)
 #define LogWarning (error_base(color::yellow), total_warnings++, std::cerr)
 
-#endif // INNOEXTRACT_UTIL_OUTPUT_HPP
+#endif // INNOEXTRACT_UTIL_COLOR_HPP

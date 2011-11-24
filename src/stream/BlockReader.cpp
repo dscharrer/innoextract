@@ -12,9 +12,9 @@
 #include "setup/Version.hpp"
 #include "stream/BlockFilter.hpp"
 #include "stream/LzmaFilter.hpp"
-#include "util/Enum.hpp"
-#include "util/LoadingUtils.hpp"
-#include "util/Utils.hpp"
+#include "util/enum.hpp"
+#include "util/load.hpp"
+#include "util/util.hpp"
 
 using std::cout;
 using std::endl;
@@ -37,7 +37,7 @@ ENUM_NAMES(BlockCompression, "Compression", "stored", "zlib", "lzma1")
 
 std::istream * BlockReader::get(std::istream & base, const InnoVersion & version) {
 	
-	uint32_t expectedCrc = loadNumber<uint32_t>(base);
+	uint32_t expectedCrc = load_number<uint32_t>(base);
 	Crc32 actualCrc;
 	actualCrc.init();
 	
@@ -45,14 +45,14 @@ std::istream * BlockReader::get(std::istream & base, const InnoVersion & version
 	BlockCompression compression;
 	
 	if(version >= INNO_VERSION(4, 0, 9)) {
-		storedSize = actualCrc.load<LittleEndian, uint32_t>(base);
-		uint8_t compressed = actualCrc.load<LittleEndian, uint8_t>(base);
+		storedSize = actualCrc.load<little_endian, uint32_t>(base);
+		uint8_t compressed = actualCrc.load<little_endian, uint8_t>(base);
 		compression = compressed ? (version >= INNO_VERSION(4, 1, 6) ? LZMA1 : Zlib) : Stored;
 		
 	} else {
 		
-		uint32_t compressedSize = actualCrc.load<LittleEndian, uint32_t>(base);
-		uint32_t uncompressedSize = actualCrc.load<LittleEndian, uint32_t>(base);
+		uint32_t compressedSize = actualCrc.load<little_endian, uint32_t>(base);
+		uint32_t uncompressedSize = actualCrc.load<little_endian, uint32_t>(base);
 		
 		if(compressedSize == uint32_t(-1)) {
 			storedSize = uncompressedSize, compression = Stored;

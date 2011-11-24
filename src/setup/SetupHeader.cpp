@@ -6,9 +6,112 @@
 
 #include <boost/static_assert.hpp>
 
-#include "setup/SetupHeaderFormat.hpp"
-#include "util/LoadingUtils.hpp"
-#include "util/Utils.hpp"
+#include "util/load.hpp"
+#include "util/storedenum.hpp"
+
+namespace {
+
+STORED_ENUM_MAP(StoredInstallMode, SetupHeader::NormalInstallMode,
+	SetupHeader::NormalInstallMode,
+	SetupHeader::SilentInstallMode,
+	SetupHeader::VerySilentInstallMode
+);
+
+STORED_ENUM_MAP(StoredUninstallLogMode, SetupHeader::AppendLog,
+	SetupHeader::AppendLog,
+	SetupHeader::NewLog,
+	SetupHeader::OverwriteLog
+);
+
+STORED_ENUM_MAP(StoredUninstallStyle, SetupHeader::ClassicStyle,
+	SetupHeader::ClassicStyle,
+	SetupHeader::ModernStyle
+);
+
+STORED_ENUM_MAP(StoredDirExistsWarning, SetupHeader::Auto,
+	SetupHeader::Auto,
+	SetupHeader::No,
+	SetupHeader::Yes
+);
+
+// pre- 5.3.7
+STORED_ENUM_MAP(StoredPrivileges0, SetupHeader::NoPrivileges,
+	SetupHeader::NoPrivileges,
+	SetupHeader::PowerUserPrivileges,
+	SetupHeader::AdminPriviliges,
+);
+
+// post- 5.3.7
+STORED_ENUM_MAP(StoredPrivileges1, SetupHeader::NoPrivileges,
+	SetupHeader::NoPrivileges,
+	SetupHeader::PowerUserPrivileges,
+	SetupHeader::AdminPriviliges,
+	SetupHeader::LowestPrivileges
+);
+
+STORED_ENUM_MAP(StoredShowLanguageDialog, SetupHeader::Yes,
+	SetupHeader::Yes,
+	SetupHeader::No,
+	SetupHeader::Auto
+);
+
+STORED_ENUM_MAP(StoredLanguageDetectionMethod, SetupHeader::UILanguage,
+	SetupHeader::UILanguage,
+	SetupHeader::LocaleLanguage,
+	SetupHeader::NoLanguageDetection
+);
+
+STORED_FLAGS_MAP(StoredArchitectures,
+	SetupHeader::ArchitectureUnknown,
+	SetupHeader::X86,
+	SetupHeader::Amd64,
+	SetupHeader::IA64
+);
+
+STORED_ENUM_MAP(StoredRestartComputer, SetupHeader::Auto,
+	SetupHeader::Auto,
+	SetupHeader::No,
+	SetupHeader::Yes
+);
+
+// pre-4.2.5
+STORED_ENUM_MAP(StoredCompressionMethod0, SetupHeader::Unknown,
+	SetupHeader::Zlib,
+	SetupHeader::BZip2,
+	SetupHeader::LZMA1
+);
+
+// 4.2.5
+STORED_ENUM_MAP(StoredCompressionMethod1, SetupHeader::Unknown,
+	SetupHeader::Stored,
+	SetupHeader::BZip2,
+	SetupHeader::LZMA1
+);
+
+// [4.2.6 5.3.9)
+STORED_ENUM_MAP(StoredCompressionMethod2, SetupHeader::Unknown,
+	SetupHeader::Stored,
+	SetupHeader::Zlib,
+	SetupHeader::BZip2,
+	SetupHeader::LZMA1
+);
+
+// 5.3.9+
+STORED_ENUM_MAP(StoredCompressionMethod3, SetupHeader::Unknown,
+	SetupHeader::Stored,
+	SetupHeader::Zlib,
+	SetupHeader::BZip2,
+	SetupHeader::LZMA1,
+	SetupHeader::LZMA2
+);
+
+STORED_ENUM_MAP(StoredDisablePage, SetupHeader::Auto,
+	SetupHeader::Auto,
+	SetupHeader::No,
+	SetupHeader::Yes
+);
+
+} // anonymous namespace
 
 void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	
@@ -18,108 +121,108 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		::load<uint32_t>(is); // uncompressed size of the setup header structure
 	}
 	
-	is >> EncodedString(appName, version.codepage());
-	is >> EncodedString(appVerName, version.codepage());
+	is >> encoded_string(appName, version.codepage());
+	is >> encoded_string(appVerName, version.codepage());
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		is >> EncodedString(appId, version.codepage());
+		is >> encoded_string(appId, version.codepage());
 	}
-	is >> EncodedString(appCopyright, version.codepage());
+	is >> encoded_string(appCopyright, version.codepage());
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		is >> EncodedString(appPublisher, version.codepage());
-		is >> EncodedString(appPublisherURL, version.codepage());
+		is >> encoded_string(appPublisher, version.codepage());
+		is >> encoded_string(appPublisherURL, version.codepage());
 	} else {
 		appPublisher.clear(), appPublisherURL.clear();
 	}
 	if(version >= INNO_VERSION(5, 1, 13)) {
-		is >> EncodedString(appSupportPhone, version.codepage());
+		is >> encoded_string(appSupportPhone, version.codepage());
 	} else {
 		appSupportPhone.clear();
 	}
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		is >> EncodedString(appSupportURL, version.codepage());
-		is >> EncodedString(appUpdatesURL, version.codepage());
-		is >> EncodedString(appVersion, version.codepage());
+		is >> encoded_string(appSupportURL, version.codepage());
+		is >> encoded_string(appUpdatesURL, version.codepage());
+		is >> encoded_string(appVersion, version.codepage());
 	} else {
 		appSupportURL.clear(), appUpdatesURL.clear(), appVersion.clear();
 	}
-	is >> EncodedString(defaultDirName, version.codepage());
-	is >> EncodedString(defaultGroupName, version.codepage());
+	is >> encoded_string(defaultDirName, version.codepage());
+	is >> encoded_string(defaultGroupName, version.codepage());
 	if(version < INNO_VERSION(3, 0, 0)) {
-		is >> AnsiString(uninstallIconName);
+		is >> ansi_string(uninstallIconName);
 	} else {
 		uninstallIconName.clear();
 	}
-	is >> EncodedString(baseFilename, version.codepage());
+	is >> encoded_string(baseFilename, version.codepage());
 	if(version >= INNO_VERSION(1, 3, 21)) {
 		if(version < INNO_VERSION(5, 2, 5)) {
-			is >> AnsiString(licenseText);
-			is >> AnsiString(infoBeforeText);
-			is >> AnsiString(infoAfterText);
+			is >> ansi_string(licenseText);
+			is >> ansi_string(infoBeforeText);
+			is >> ansi_string(infoAfterText);
 		}
-		is >> EncodedString(uninstallFilesDir, version.codepage());
-		is >> EncodedString(uninstallDisplayName, version.codepage());
-		is >> EncodedString(uninstallDisplayIcon, version.codepage());
-		is >> EncodedString(appMutex, version.codepage());
+		is >> encoded_string(uninstallFilesDir, version.codepage());
+		is >> encoded_string(uninstallDisplayName, version.codepage());
+		is >> encoded_string(uninstallDisplayIcon, version.codepage());
+		is >> encoded_string(appMutex, version.codepage());
 	} else {
 		licenseText.clear(), infoBeforeText.clear(), infoAfterText.clear();
 		uninstallFilesDir.clear(), uninstallDisplayName.clear();
 		uninstallDisplayIcon.clear(), appMutex.clear();
 	}
 	if(version >= INNO_VERSION(3, 0, 0)) {
-		is >> EncodedString(defaultUserInfoName, version.codepage());
-		is >> EncodedString(defaultUserInfoOrg, version.codepage());
+		is >> encoded_string(defaultUserInfoName, version.codepage());
+		is >> encoded_string(defaultUserInfoOrg, version.codepage());
 	} else {
 		defaultUserInfoName.clear(), defaultUserInfoOrg.clear();
 	}
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
-		is >> EncodedString(defaultUserInfoSerial, version.codepage());
+		is >> encoded_string(defaultUserInfoSerial, version.codepage());
 		if(version < INNO_VERSION(5, 2, 5)) {
-			is >> BinaryString(compiledCodeText);
+			is >> binary_string(compiledCodeText);
 		}
 	} else {
 		defaultUserInfoSerial.clear(), compiledCodeText.clear();
 	}
 	if(version >= INNO_VERSION(4, 2, 4)) {
-		is >> EncodedString(appReadmeFile, version.codepage());
-		is >> EncodedString(appContact, version.codepage());
-		is >> EncodedString(appComments, version.codepage());
-		is >> EncodedString(appModifyPath, version.codepage());
+		is >> encoded_string(appReadmeFile, version.codepage());
+		is >> encoded_string(appContact, version.codepage());
+		is >> encoded_string(appComments, version.codepage());
+		is >> encoded_string(appModifyPath, version.codepage());
 	} else {
 		appReadmeFile.clear(), appContact.clear();
 		appComments.clear(), appModifyPath.clear();
 	}
 	if(version >= INNO_VERSION(5, 3, 8)) {
-		is >> EncodedString(createUninstallRegKey, version.codepage());
+		is >> encoded_string(createUninstallRegKey, version.codepage());
 	} else {
 		createUninstallRegKey.clear();
 	}
 	if(version >= INNO_VERSION(5, 3, 10)) {
-		is >> EncodedString(uninstallable, version.codepage());
+		is >> encoded_string(uninstallable, version.codepage());
 	} else {
 		uninstallable.clear();
 	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
-		is >> AnsiString(licenseText);
-		is >> AnsiString(infoBeforeText);
-		is >> AnsiString(infoAfterText);
+		is >> ansi_string(licenseText);
+		is >> ansi_string(infoBeforeText);
+		is >> ansi_string(infoAfterText);
 	}
 	if(version >= INNO_VERSION(5, 2, 1) && version < INNO_VERSION(5, 3, 10)) {
-		is >> BinaryString(signedUninstallerSignature);
+		is >> binary_string(signedUninstallerSignature);
 	} else {
 		signedUninstallerSignature.clear();
 	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
-		is >> BinaryString(compiledCodeText);
+		is >> binary_string(compiledCodeText);
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 6) && !version.unicode) {
-		leadBytes = CharSet(is).getBitSet();
+		leadBytes = stored_char_set(is);
 	} else {
 		leadBytes = 0;
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		numLanguageEntries = loadNumber<uint32_t>(is);
+		numLanguageEntries = load_number<uint32_t>(is);
 	} else if(version >= INNO_VERSION(2, 0, 1)) {
 		numLanguageEntries = 1;
 	} else {
@@ -127,63 +230,63 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 2, 1)) {
-		numCustomMessageEntries = loadNumber<uint32_t>(is);
+		numCustomMessageEntries = load_number<uint32_t>(is);
 	} else {
 		numCustomMessageEntries = 0;
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		numPermissionEntries = loadNumber<uint32_t>(is);
+		numPermissionEntries = load_number<uint32_t>(is);
 	} else {
 		numPermissionEntries = 0;
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 0)) {
-		numTypeEntries = loadNumber<uint32_t>(is);
-		numComponentEntries = loadNumber<uint32_t>(is);
-		numTaskEntries = loadNumber<uint32_t>(is);
+		numTypeEntries = load_number<uint32_t>(is);
+		numComponentEntries = load_number<uint32_t>(is);
+		numTaskEntries = load_number<uint32_t>(is);
 	} else {
 		numTypeEntries = 0, numComponentEntries = 0, numTaskEntries = 0;
 	}
 	
-	numDirectoryEntries = loadNumber<uint32_t>(is, version.bits);
-	numFileEntries = loadNumber<uint32_t>(is, version.bits);
-	numFileLocationEntries = loadNumber<uint32_t>(is, version.bits);
-	numIconEntries = loadNumber<uint32_t>(is, version.bits);
-	numIniEntries = loadNumber<uint32_t>(is, version.bits);
-	numRegistryEntries = loadNumber<uint32_t>(is, version.bits);
-	numDeleteEntries = loadNumber<uint32_t>(is, version.bits);
-	numUninstallDeleteEntries = loadNumber<uint32_t>(is, version.bits);
-	numRunEntries = loadNumber<uint32_t>(is, version.bits);
-	numUninstallRunEntries = loadNumber<uint32_t>(is, version.bits);
+	numDirectoryEntries = load_number<uint32_t>(is, version.bits);
+	numFileEntries = load_number<uint32_t>(is, version.bits);
+	numFileLocationEntries = load_number<uint32_t>(is, version.bits);
+	numIconEntries = load_number<uint32_t>(is, version.bits);
+	numIniEntries = load_number<uint32_t>(is, version.bits);
+	numRegistryEntries = load_number<uint32_t>(is, version.bits);
+	numDeleteEntries = load_number<uint32_t>(is, version.bits);
+	numUninstallDeleteEntries = load_number<uint32_t>(is, version.bits);
+	numRunEntries = load_number<uint32_t>(is, version.bits);
+	numUninstallRunEntries = load_number<uint32_t>(is, version.bits);
 	
 	int32_t licenseSize;
 	int32_t infoBeforeSize;
 	int32_t infoAfterSize;
 	if(version < INNO_VERSION(1, 3, 21)) {
-		licenseSize = loadNumber<int32_t>(is, version.bits);
-		infoBeforeSize = loadNumber<int32_t>(is, version.bits);
-		infoAfterSize = loadNumber<int32_t>(is, version.bits);
+		licenseSize = load_number<int32_t>(is, version.bits);
+		infoBeforeSize = load_number<int32_t>(is, version.bits);
+		infoAfterSize = load_number<int32_t>(is, version.bits);
 	}
 	
 	minVersion.load(is, version);
 	onlyBelowVersion.load(is, version);
 	
-	backColor = loadNumber<uint32_t>(is);
+	backColor = load_number<uint32_t>(is);
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		backColor2 = loadNumber<uint32_t>(is);
+		backColor2 = load_number<uint32_t>(is);
 	} else {
 		backColor2 = 0;
 	}
-	wizardImageBackColor = loadNumber<uint32_t>(is);
+	wizardImageBackColor = load_number<uint32_t>(is);
 	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 4)) {
-		wizardSmallImageBackColor = loadNumber<uint32_t>(is);
+		wizardSmallImageBackColor = load_number<uint32_t>(is);
 	} else {
 		wizardSmallImageBackColor = 0;
 	}
 	
 	if(version < INNO_VERSION(4, 2, 0)) {
-		password.crc32 = loadNumber<uint32_t>(is), password.type = Checksum::Crc32;
+		password.crc32 = load_number<uint32_t>(is), password.type = Checksum::Crc32;
 	} else if(version < INNO_VERSION(5, 3, 9)) {
 		is.read(password.md5, sizeof(password.md5)), password.type = Checksum::MD5;
 	} else {
@@ -196,39 +299,39 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version < INNO_VERSION(4, 0, 0)) {
-		extraDiskSpaceRequired = loadNumber<int32_t>(is);
+		extraDiskSpaceRequired = load_number<int32_t>(is);
 		slicesPerDisk = 1;
 	} else {
-		extraDiskSpaceRequired = loadNumber<int64_t>(is);
-		slicesPerDisk = loadNumber<uint32_t>(is);
+		extraDiskSpaceRequired = load_number<int64_t>(is);
+		slicesPerDisk = load_number<uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 0)) {
-		installMode = StoredEnum<StoredInstallMode>(is).get();
+		installMode = stored_enum<StoredInstallMode>(is).get();
 	} else {
 		installMode = NormalInstallMode;
 	}
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		uninstallLogMode = StoredEnum<StoredUninstallLogMode>(is).get();
+		uninstallLogMode = stored_enum<StoredUninstallLogMode>(is).get();
 	} else {
 		uninstallLogMode = AppendLog;
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 0)) {
-		uninstallStyle = StoredEnum<StoredUninstallStyle>(is).get();
+		uninstallStyle = stored_enum<StoredUninstallStyle>(is).get();
 	} else {
 		uninstallStyle = (version < INNO_VERSION(5, 0, 0)) ? ClassicStyle : ModernStyle;
 	}
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		dirExistsWarning = StoredEnum<StoredDirExistsWarning>(is).get();
+		dirExistsWarning = stored_enum<StoredDirExistsWarning>(is).get();
 	} else {
 		dirExistsWarning = Auto;
 	}
 	
 	if(version >= INNO_VERSION(3, 0, 0) && version < INNO_VERSION(3, 0, 3)) {
-		AutoBoolean val = StoredEnum<StoredRestartComputer>(is).get();
+		AutoBoolean val = stored_enum<StoredRestartComputer>(is).get();
 		switch(val) {
 			case Yes: options |= AlwaysRestart; break;
 			case Auto: options |= RestartIfNeededByRun; break;
@@ -237,54 +340,54 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 7)) {
-		privilegesRequired = StoredEnum<StoredPrivileges1>(is).get();
+		privilegesRequired = stored_enum<StoredPrivileges1>(is).get();
 	} else if(version >= INNO_VERSION(3, 0, 4)) {
-		privilegesRequired = StoredEnum<StoredPrivileges0>(is).get();
+		privilegesRequired = stored_enum<StoredPrivileges0>(is).get();
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 10)) {
-		showLanguageDialog = StoredEnum<StoredShowLanguageDialog>(is).get();
-		languageDetectionMethod = StoredEnum<StoredLanguageDetectionMethod>(is).get();
+		showLanguageDialog = stored_enum<StoredShowLanguageDialog>(is).get();
+		languageDetectionMethod = stored_enum<StoredLanguageDetectionMethod>(is).get();
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 9)) {
-		compressMethod = StoredEnum<StoredCompressionMethod3>(is).get();
+		compressMethod = stored_enum<StoredCompressionMethod3>(is).get();
 	} else if(version >= INNO_VERSION(4, 2, 6)) {
-		compressMethod = StoredEnum<StoredCompressionMethod2>(is).get();
+		compressMethod = stored_enum<StoredCompressionMethod2>(is).get();
 	} else if(version >= INNO_VERSION(4, 2, 5)) {
-		compressMethod = StoredEnum<StoredCompressionMethod1>(is).get();
+		compressMethod = stored_enum<StoredCompressionMethod1>(is).get();
 	} else if(version >= INNO_VERSION(4, 1, 5)) {
-		compressMethod = StoredEnum<StoredCompressionMethod0>(is).get();
+		compressMethod = stored_enum<StoredCompressionMethod0>(is).get();
 	}
 	
 	if(version >= INNO_VERSION(5, 1, 0)) {
-		architecturesAllowed = StoredFlags<StoredArchitectures>(is).get();
-		architecturesInstallIn64BitMode = StoredFlags<StoredArchitectures>(is).get();
+		architecturesAllowed = stored_flags<StoredArchitectures>(is).get();
+		architecturesInstallIn64BitMode = stored_flags<StoredArchitectures>(is).get();
 	} else {
 		architecturesAllowed = Architectures::all();
 		architecturesInstallIn64BitMode = Architectures::all();
 	}
 	
 	if(version >= INNO_VERSION(5, 2, 1) && version < INNO_VERSION(5, 3, 10)) {
-		signedUninstallerOrigSize = loadNumber<uint32_t>(is);
-		signedUninstallerHdrChecksum = loadNumber<uint32_t>(is);
+		signedUninstallerOrigSize = load_number<uint32_t>(is);
+		signedUninstallerHdrChecksum = load_number<uint32_t>(is);
 	} else {
 		signedUninstallerOrigSize = signedUninstallerHdrChecksum = 0;
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 3)) {
-		disableDirPage = StoredEnum<StoredDisablePage>(is).get();
-		disableProgramGroupPage = StoredEnum<StoredDisablePage>(is).get();
+		disableDirPage = stored_enum<StoredDisablePage>(is).get();
+		disableProgramGroupPage = stored_enum<StoredDisablePage>(is).get();
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 6)) {
-		uninstallDisplaySize = loadNumber<uint32_t>(is);
+		uninstallDisplaySize = load_number<uint32_t>(is);
 	} else {
 		uninstallDisplaySize = 0;
 	}
 	
 	
-	StoredFlagReader<Options> flags(is);
+	stored_flag_reader<Options> flags(is);
 	
 	flags.add(DisableStartupPrompt);
 	if(version < INNO_VERSION(5, 3, 10)) {
@@ -434,7 +537,7 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		flags.add(DisableWelcomePage);
 	}
 	
-	options |= flags.get();
+	options |= flags;
 	
 	if(version < INNO_VERSION(3, 0, 4)) {
 		privilegesRequired = (options & AdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;
@@ -459,19 +562,19 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 			std::string temp;
 			temp.resize(size_t(licenseSize));
 			is.read(&temp[0], licenseSize);
-			toUtf8(temp, licenseText);
+			to_utf8(temp, licenseText);
 		}
 		if(infoBeforeSize > 0) {
 			std::string temp;
 			temp.resize(size_t(infoBeforeSize));
 			is.read(&temp[0], infoBeforeSize);
-			toUtf8(temp, infoBeforeText);
+			to_utf8(temp, infoBeforeText);
 		}
 		if(infoAfterSize > 0) {
 			std::string temp;
 			temp.resize(size_t(infoAfterSize));
 			is.read(&temp[0], infoAfterSize);
-			toUtf8(temp, infoAfterText);
+			to_utf8(temp, infoAfterText);
 		}
 	}
 	
@@ -536,8 +639,7 @@ ENUM_NAMES(SetupHeader::Options, "Setup Option",
 	"back solid",
 	"overwrite uninst reg entries",
 )
-BOOST_STATIC_ASSERT(EnumSize<SetupHeader::Options::Enum>::value
-                    == EnumNames<SetupHeader::Options::Enum>::count);
+BOOST_STATIC_ASSERT(SetupHeader::Options::bits == enum_names<SetupHeader::Options::Enum>::count);
 
 ENUM_NAMES(SetupHeader::Architectures, "Architecture",
 	"unknown",

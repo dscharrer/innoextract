@@ -14,7 +14,7 @@
 #include <boost/iostreams/read.hpp>
 
 #include "crypto/CRC32.hpp"
-#include "util/Endian.hpp"
+#include "util/endian.hpp"
 
 struct block_error : public std::ios_base::failure {
 	
@@ -56,7 +56,7 @@ public:
 			throw block_error("unexpected block end");
 		}
 		std::memcpy(&blockCrc32, temp, sizeof(blockCrc32));
-		blockCrc32 = LittleEndian::byteSwapIfAlien(blockCrc32);
+		blockCrc32 = little_endian::byteswap_if_alien(blockCrc32);
 		
 		length = size_t(boost::iostreams::read(src, buffer, sizeof(buffer)));
 		if(length == size_t(EOF)) {

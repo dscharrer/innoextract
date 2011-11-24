@@ -1,5 +1,5 @@
 
-#include "util/LoadingUtils.hpp"
+#include "util/load.hpp"
 
 #include <iterator>
 #include <map>
@@ -8,14 +8,13 @@
 #include <iconv.h>
 #include <errno.h>
 
-#include "util/Output.hpp"
-#include "util/Utils.hpp"
+#include "util/color.hpp"
 
 namespace {
 
 std::map<uint32_t, iconv_t> converters;
 
-iconv_t getConverter(uint32_t codepage) {
+iconv_t get_converter(uint32_t codepage) {
 	
 	std::map<uint32_t, iconv_t>::iterator i = converters.find(codepage);
 	
@@ -35,28 +34,29 @@ iconv_t getConverter(uint32_t codepage) {
 
 };
 
-void BinaryString::loadInto(std::istream & is, std::string & target) {
+void binary_string::load(std::istream & is, std::string & target) {
 	
-	int32_t length = loadNumber<int32_t>(is);
+	int32_t length = load_number<int32_t>(is);
 	if(is.fail() || length < 0) {
 		return;
 	}
 	
+	// TODO read / allocate huge strings in chunks
 	target.resize(size_t(length));
 	is.read(&target[0], length);
 }
 
-void EncodedString::loadInto(std::istream & is, std::string & target, uint32_t codepage) {
+void encoded_string::load(std::istream & is, std::string & target, uint32_t codepage) {
 	
 	std::string temp;
-	BinaryString::loadInto(is, temp);
+	binary_string::load(is, temp);
 	
-	toUtf8(temp, target, codepage);
+	to_utf8(temp, target, codepage);
 }
 
-void toUtf8(const std::string & from, std::string & to, uint32_t codepage) {
+void to_utf8(const std::string & from, std::string & to, uint32_t codepage) {
 	
-	iconv_t converter = getConverter(codepage);
+	iconv_t converter = get_converter(codepage);
 	
 	const char * inbuf = from.data();
 	size_t insize = from.size();

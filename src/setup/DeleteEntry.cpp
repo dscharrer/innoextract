@@ -1,8 +1,8 @@
 
 #include "setup/DeleteEntry.hpp"
 
-#include "util/LoadingUtils.hpp"
-#include "util/StoredEnum.hpp"
+#include "util/load.hpp"
+#include "util/storedenum.hpp"
 
 namespace {
 
@@ -20,13 +20,13 @@ void DeleteEntry::load(std::istream & is, const InnoVersion & version) {
 		::load<uint32_t>(is); // uncompressed size of the directory entry structure
 	}
 	
-	is >> EncodedString(name, version.codepage());
+	is >> encoded_string(name, version.codepage());
 	
 	loadConditionData(is, version);
 	
 	loadVersionData(is, version);
 	
-	type = StoredEnum<DeleteTypeMap>(is).get();
+	type = stored_enum<DeleteTypeMap>(is).get();
 }
 
 ENUM_NAMES(DeleteEntry::Type, "Delete Type",

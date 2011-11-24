@@ -2,21 +2,22 @@
 #include "setup/WindowsVersion.hpp"
 
 #include <stdint.h>
-#include "util/LoadingUtils.hpp"
-#include "util/Utils.hpp"
+
+#include "util/load.hpp"
+#include "util/util.hpp"
 
 const WindowsVersion WindowsVersion::none = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0 } };
 
 void WindowsVersion::Version::load(std::istream& is, const InnoVersion& version) {
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		build = loadNumber<uint16_t>(is);
+		build = load_number<uint16_t>(is);
 	} else {
 		build = 0;
 	}
 	
-	minor = loadNumber<uint8_t>(is);
-	major = loadNumber<uint8_t>(is);
+	minor = load_number<uint8_t>(is);
+	major = load_number<uint8_t>(is);
 	
 }
 
@@ -26,8 +27,8 @@ void WindowsVersion::load(std::istream & is, const InnoVersion & version) {
 	ntVersion.load(is, version);
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		ntServicePack.minor = loadNumber<uint8_t>(is);
-		ntServicePack.major = loadNumber<uint8_t>(is);
+		ntServicePack.minor = load_number<uint8_t>(is);
+		ntServicePack.major = load_number<uint8_t>(is);
 	} else {
 		ntServicePack.major = 0, ntServicePack.minor = 0;
 	}

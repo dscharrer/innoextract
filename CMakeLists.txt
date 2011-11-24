@@ -106,9 +106,8 @@ set(INNOEXTRACT_SOURCES
 	src/stream/LzmaFilter.cpp
 	src/stream/SliceReader.cpp
 	
-	src/util/LoadingUtils.cpp
-	src/util/Output.cpp
-	src/util/Utils.cpp
+	src/util/load.cpp
+	src/util/color.cpp
 	
 	src/InnoExtract.cpp
 )

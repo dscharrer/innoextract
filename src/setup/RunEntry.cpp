@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#include "util/LoadingUtils.hpp"
-#include "util/StoredEnum.hpp"
+#include "util/load.hpp"
+#include "util/storedenum.hpp"
 
 namespace {
 
@@ -22,26 +22,26 @@ void RunEntry::load(std::istream & is, const InnoVersion & version) {
 		::load<uint32_t>(is); // uncompressed size of the directory entry structure
 	}
 	
-	is >> EncodedString(name, version.codepage());
-	is >> EncodedString(parameters, version.codepage());
-	is >> EncodedString(workingDir, version.codepage());
+	is >> encoded_string(name, version.codepage());
+	is >> encoded_string(parameters, version.codepage());
+	is >> encoded_string(workingDir, version.codepage());
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		is >> EncodedString(runOnceId, version.codepage());
+		is >> encoded_string(runOnceId, version.codepage());
 	} else {
 		runOnceId.clear();
 	}
 	if(version >= INNO_VERSION(2, 0, 2)) {
-		is >> EncodedString(statusMessage, version.codepage());
+		is >> encoded_string(statusMessage, version.codepage());
 	} else {
 		statusMessage.clear();
 	}
 	if(version >= INNO_VERSION(5, 1, 13)) {
-		is >> EncodedString(verb, version.codepage());
+		is >> encoded_string(verb, version.codepage());
 	} else {
 		verb.clear();
 	}
 	if(version >= INNO_VERSION(2, 0, 0)) {
-		is >> EncodedString(description, version.codepage());
+		is >> encoded_string(description, version.codepage());
 	}
 	
 	loadConditionData(is, version);
@@ -49,14 +49,14 @@ void RunEntry::load(std::istream & is, const InnoVersion & version) {
 	loadVersionData(is, version);
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		showCmd = loadNumber<int32_t>(is);
+		showCmd = load_number<int32_t>(is);
 	} else {
 		showCmd = 0;
 	}
 	
-	wait = StoredEnum<StoredRunWait>(is).get();
+	wait = stored_enum<StoredRunWait>(is).get();
 	
-	StoredFlagReader<Options> flags(is);
+	stored_flag_reader<Options> flags(is);
 	
 	flags.add(ShellExec);
 	if(version >= INNO_VERSION(1, 3, 21)) {
@@ -66,7 +66,7 @@ void RunEntry::load(std::istream & is, const InnoVersion & version) {
 		flags.add(PostInstall);
 		flags.add(Unchecked);
 		flags.add(SkipIfSilent);
-		flags.add(SkipIfNotSilent);
+		flags.add(Skipif_not_equalSilent);
 	}
 	if(version >= INNO_VERSION(2, 0, 8)) {
 		flags.add(HideWizard);
@@ -79,7 +79,7 @@ void RunEntry::load(std::istream & is, const InnoVersion & version) {
 		flags.add(RunAsOriginalUser);
 	}
 	
-	options = flags.get();
+	options = flags;
 }
 
 ENUM_NAMES(RunEntry::Options, "Run Option",

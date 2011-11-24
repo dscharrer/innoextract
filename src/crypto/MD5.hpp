@@ -10,7 +10,7 @@ class Md5Transform {
 public:
 	
 	typedef uint32_t HashWord;
-	typedef LittleEndian ByteOrder;
+	typedef little_endian ByteOrder;
 	static const size_t BlockSize = 64;
 	static const size_t HashSize = 16;
 	
