@@ -7,7 +7,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/iostreams/chain.hpp>
 
-namespace crypto { class checksum; }
+namespace crypto { struct checksum; }
 struct FileLocationEntry;
 struct InnoVersion;
 

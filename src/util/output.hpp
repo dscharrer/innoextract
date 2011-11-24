@@ -70,10 +70,8 @@ struct if_not {
 	
 };
 
-}
-
 template <class T>
-inline std::ostream & operator<<(std::ostream & os, const detail::if_not<T> & s) {
+inline std::ostream & operator<<(std::ostream & os, const if_not<T> & s) {
 	if(s.value != s.excluded) {
 		color::shell_command prev = color::current;
 		return os << s.name << ": " << color::cyan << s.value << prev << std::endl;
@@ -81,6 +79,9 @@ inline std::ostream & operator<<(std::ostream & os, const detail::if_not<T> & s)
 		return os;
 	}
 }
+
+}
+
 
 template <class T>
 detail::if_not<T> if_not_equal(const std::string & name, T value, T excluded) {
@@ -106,10 +107,8 @@ struct print_hex {
 	
 };
 
-}
-
 template <class T>
-inline std::ostream & operator<<(std::ostream & os, const detail::print_hex<T> & s) {
+std::ostream & operator<<(std::ostream & os, const print_hex<T> & s) {
 	
 	std::ios_base::fmtflags old = os.flags();
 	
@@ -117,6 +116,8 @@ inline std::ostream & operator<<(std::ostream & os, const detail::print_hex<T> &
 	
 	os.setf(old, std::ios_base::basefield);
 	return os;
+}
+
 }
 
 template <class T>
@@ -146,10 +147,8 @@ struct print_bytes {
 	
 };
 
-}
-
 template <class T>
-inline std::ostream & operator<<(std::ostream & os, const detail::print_bytes<T> & s) {
+inline std::ostream & operator<<(std::ostream & os, const print_bytes<T> & s) {
 	
 	std::streamsize precision = os.precision();
 	
@@ -171,6 +170,8 @@ inline std::ostream & operator<<(std::ostream & os, const detail::print_bytes<T>
 	
 	os.precision(precision);
 	return os;
+}
+
 }
 
 template <class T>

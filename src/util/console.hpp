@@ -35,12 +35,12 @@ extern shell_command current;
 
 void init();
 
-} // namespace color
-
-inline std::ostream & operator<<(std::ostream & os, const color::shell_command command) {
+inline std::ostream & operator<<(std::ostream & os, const shell_command command) {
 	color::current = command;
 	return os << command.command;
 }
+
+} // namespace color
 
 namespace progress {
 

@@ -2,8 +2,8 @@
 #include "crypto/checksum.hpp"
 
 #include <cstring>
-
-#include "util/output.hpp"
+#include <ostream>
+#include <iomanip>
 
 namespace crypto {
 
@@ -38,11 +38,11 @@ std::ostream & operator<<(std::ostream & os, const crypto::checksum & checksum) 
 	
 	switch(checksum.type) {
 		case crypto::Adler32: {
-			os << print_hex(checksum.adler32);
+			os << "0x" << std::hex << std::setw(8) << checksum.adler32;
 			break;
 		}
 		case crypto::CRC32: {
-			os << print_hex(checksum.crc32);
+			os << "0x" << std::hex << std::setw(8) << checksum.crc32;
 			break;
 		}
 		case crypto::MD5: {

@@ -46,6 +46,8 @@ ENUM_NAMES(FileCopyMode, "File Copy Mode",
 
 void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	
+	(void)enum_names<FileCopyMode>::names;
+	
 	options = 0;
 	
 	if(version < INNO_VERSION(1, 3, 21)) {

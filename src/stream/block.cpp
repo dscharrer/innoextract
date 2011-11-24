@@ -130,6 +130,8 @@ namespace stream {
 
 block_reader::pointer block_reader::get(std::istream & base, const InnoVersion & version) {
 	
+	(void)enum_names<block_compression>::name;
+	
 	uint32_t expected_checksum = load_number<uint32_t>(base);
 	crypto::crc32 actual_checksum;
 	actual_checksum.init();
