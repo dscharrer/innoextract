@@ -1,8 +1,8 @@
 
 #include "setup/FileLocationEntry.hpp"
 
-#include "util/color.hpp"
 #include "util/load.hpp"
+#include "util/log.hpp"
 #include "util/storedenum.hpp"
 
 void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
@@ -11,9 +11,11 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 	lastSlice = load_number<uint32_t>(is, version.bits);
 	if(version < INNO_VERSION(4, 0, 0)) {
 		if(firstSlice < 1 || lastSlice < 1) {
-			LogWarning << "unexpected disk number: " << firstSlice << " / " << lastSlice;
+			log_warning << "[file location] unexpected disk number: " << firstSlice << " / "
+			            << lastSlice;
+		} else {
+			firstSlice--, lastSlice--;
 		}
-		firstSlice--, lastSlice--;
 	}
 	
 	chunkOffset = load_number<uint32_t>(is);
@@ -58,7 +60,7 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 		
 		static const int64_t FILETIME_OFFSET = 0x19DB1DED53E8000l;
 		if(filetime < FILETIME_OFFSET) {
-			LogWarning << "unexpected filetime: " << filetime;
+			log_warning << "[file location] unexpected filetime: " << filetime;
 		}
 		filetime -= FILETIME_OFFSET;
 		

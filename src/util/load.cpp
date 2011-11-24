@@ -8,7 +8,7 @@
 #include <iconv.h>
 #include <errno.h>
 
-#include "util/color.hpp"
+#include "util/log.hpp"
 
 namespace {
 
@@ -79,7 +79,7 @@ void to_utf8(const std::string & from, std::string & to, uint32_t codepage) {
 		
 		size_t ret = iconv(converter, const_cast<char**>(&inbuf), &insize, &outbuf, &outsize);
 		if(ret == size_t(-1) && errno != E2BIG) {
-			LogError << "iconv error while converting from CP" << codepage << ": " << errno;
+			log_error << "iconv error while converting from CP" << codepage << ": " << errno;
 			to.clear();
 			return;
 		}

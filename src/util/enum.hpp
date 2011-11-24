@@ -5,7 +5,7 @@
 #include <ostream>
 #include <boost/utility/enable_if.hpp>
 
-#include "util/color.hpp"
+#include "util/console.hpp"
 #include "util/flags.hpp"
 #include "util/util.hpp"
 

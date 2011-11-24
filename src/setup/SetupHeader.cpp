@@ -422,7 +422,6 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	flags.add(Password);
 	flags.add(AllowRootDirectory);
 	flags.add(DisableFinishedPage);
-	
 	if(version.bits != 16) {
 		if(version < INNO_VERSION(3, 0, 4)) {
 			flags.add(AdminPrivilegesRequired);
@@ -435,7 +434,6 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		}
 		flags.add(ChangesAssociations);
 	}
-	
 	if(version >= INNO_VERSION(1, 3, 21)) {
 		if(version < INNO_VERSION(5, 3, 8)) {
 			flags.add(CreateUninstallRegKey);
@@ -445,7 +443,6 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		flags.add(UsePreviousGroup);
 		flags.add(UpdateUninstallLogAppName);
 	}
-	
 	if(version >= INNO_VERSION(2, 0, 0)) {
 		flags.add(UsePreviousSetupType);
 		flags.add(DisableReadyMemo);
@@ -455,37 +452,29 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 		flags.add(UsePreviousTasks);
 		flags.add(DisableReadyPage);
 	}
-	
 	if(version >= INNO_VERSION(2, 0, 7)) {
 		flags.add(AlwaysShowDirOnReadyPage);
 		flags.add(AlwaysShowGroupOnReadyPage);
 	}
-	
 	if(version >= INNO_VERSION(2, 0, 17) && version < INNO_VERSION(4, 1, 5)) {
 		flags.add(BzipUsed);
 	}
-	
 	if(version >= INNO_VERSION(2, 0, 18)) {
 		flags.add(AllowUNCPath);
 	}
-	
 	if(version >= INNO_VERSION(3, 0, 0)) {
 		flags.add(UserInfoPage);
 		flags.add(UsePreviousUserInfo);
 	}
-	
 	if(version >= INNO_VERSION(3, 0, 1)) {
 		flags.add(UninstallRestartComputer);
 	}
-	
 	if(version >= INNO_VERSION(3, 0, 3)) {
 		flags.add(RestartIfNeededByRun);
 	}
-	
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
 		flags.add(ShowTasksTreeLines);
 	}
-	
 	if(version >= INNO_VERSION(4, 0, 0) && version < INNO_VERSION(4, 0, 10)) {
 		flags.add(ShowLanguageDialog);
 	}
@@ -493,46 +482,36 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	if(version >= INNO_VERSION(4, 0, 1) && version < INNO_VERSION(4, 0, 10)) {
 		flags.add(DetectLanguageUsingLocale);
 	}
-	
 	if(version >= INNO_VERSION(4, 0, 9)) {
 		flags.add(AllowCancelDuringInstall);
 	} else {
 		options |= AllowCancelDuringInstall;
 	}
-	
 	if(version >= INNO_VERSION(4, 1, 3)) {
 		flags.add(WizardImageStretch);
 	}
-	
 	if(version >= INNO_VERSION(4, 1, 8)) {
 		flags.add(AppendDefaultDirName);
 		flags.add(AppendDefaultGroupName);
 	}
-	
 	if(version >= INNO_VERSION(4, 2, 2)) {
 		flags.add(EncryptionUsed);
 	}
-	
 	if(version >= INNO_VERSION(5, 0, 4)) {
 		flags.add(ChangesEnvironment);
 	}
-	
 	if(version >= INNO_VERSION(5, 1, 7) && !version.unicode) {
 		flags.add(ShowUndisplayableLanguages);
 	}
-	
 	if(version >= INNO_VERSION(5, 1, 13)) {
 		flags.add(SetupLogging);
 	}
-	
 	if(version >= INNO_VERSION(5, 2, 1)) {
 		flags.add(SignedUninstaller);
 	}
-	
 	if(version >= INNO_VERSION(5, 3, 8)) {
 		flags.add(UsePreviousLanguage);
 	}
-	
 	if(version >= INNO_VERSION(5, 3, 9)) {
 		flags.add(DisableWelcomePage);
 	}

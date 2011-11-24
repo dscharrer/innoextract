@@ -6,7 +6,7 @@
 #include <iostream>
 #include <string>
 
-#include "util/color.hpp"
+#include "util/console.hpp"
 #include "util/util.hpp"
 
 struct quoted {

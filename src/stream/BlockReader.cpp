@@ -14,10 +14,8 @@
 #include "stream/LzmaFilter.hpp"
 #include "util/enum.hpp"
 #include "util/load.hpp"
+#include "util/log.hpp"
 #include "util/util.hpp"
-
-using std::cout;
-using std::endl;
 
 namespace io = boost::iostreams;
 
@@ -65,11 +63,11 @@ std::istream * BlockReader::get(std::istream & base, const InnoVersion & version
 	}
 	
 	if(actualCrc.finalize() != expectedCrc) {
-		LogError << "block CRC32 mismatch";
+		log_error << "block CRC32 mismatch";
 		return NULL;
 	}
 	
-	cout << "[block] size: " << storedSize << "  compression: " << compression << endl;
+	debug("[block] size: " << storedSize << "  compression: " << compression);
 	
 	io::filtering_istream * fis;
 	fis = new io::filtering_istream;

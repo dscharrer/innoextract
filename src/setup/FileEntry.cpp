@@ -2,6 +2,7 @@
 #include "setup/FileEntry.hpp"
 
 #include "util/load.hpp"
+#include "util/log.hpp"
 #include "util/storedenum.hpp"
 
 namespace {
@@ -161,7 +162,7 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 		// TODO find out where this byte comes from
 		int byte = is.get();
 		if(byte) {
-			LogWarning << "unknown byte: " << byte;
+			log_warning << "[file] unknown byte: " << byte;
 		}
 	}
 	

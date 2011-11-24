@@ -6,8 +6,9 @@
 #include <cstring>
 #include <limits>
 
-#include "util/color.hpp"
+#include "util/console.hpp"
 #include "util/load.hpp"
+#include "util/log.hpp"
 #include "util/util.hpp"
 
 using std::string;
@@ -45,7 +46,7 @@ bool SliceReader::seek(size_t slice) {
 	}
 	
 	if(dataOffset != 0) {
-		LogError << "[slice] cannot change slices in single-file setup";
+		log_error << "[slice] cannot change slices in single-file setup";
 		return false;
 	}
 	
@@ -54,7 +55,7 @@ bool SliceReader::seek(size_t slice) {
 
 bool SliceReader::openFile(const std::string & file) {
 	
-	std::cout << color::cyan << "\33[2K\r[slice] opening " << file << color::reset << std::endl;
+	log_info << "[slice] opening " << file;
 	
 	ifs.close();
 	
@@ -69,7 +70,7 @@ bool SliceReader::openFile(const std::string & file) {
 	char magic[8];
 	if(ifs.read(magic, 8).fail()) {
 		ifs.close();
-		LogError << "[slice] error reading magic number";
+		log_error << "[slice] error reading magic number";
 		return false;
 	}
 	bool found = false;
@@ -80,14 +81,14 @@ bool SliceReader::openFile(const std::string & file) {
 		}
 	}
 	if(!found) {
-		LogError << "[slice] bad magic number";
+		log_error << "[slice] bad magic number";
 		ifs.close();
 		return false;
 	}
 	
 	sliceSize = load_number<uint32_t>(ifs);
 	if(ifs.fail() || std::streampos(sliceSize) > fileSize) {
-		LogError << "[slice] bad slice size: " << sliceSize << " > " << fileSize;
+		log_error << "[slice] bad slice size: " << sliceSize << " > " << fileSize;
 		ifs.close();
 		return false;
 	}
@@ -110,7 +111,7 @@ bool SliceReader::open(size_t slice, const std::string & file) {
 	ifs.close();
 	
 	if(slicesPerDisk == 0) {
-		LogError << "[slice] slices per disk must not be zero";
+		log_error << "[slice] slices per disk must not be zero";
 		return false;
 	}
 	

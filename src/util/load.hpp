@@ -1,6 +1,6 @@
 
-#ifndef INNOEXTRACT_UTIL_LOADINGUTILS_HPP
-#define INNOEXTRACT_UTIL_LOADINGUTILS_HPP
+#ifndef INNOEXTRACT_UTIL_LOAD_HPP
+#define INNOEXTRACT_UTIL_LOAD_HPP
 
 #include <stdint.h>
 #include <cstring>
@@ -9,6 +9,7 @@
 
 #include "util/endian.hpp"
 #include "util/types.hpp"
+#include "util/util.hpp"
 
 struct binary_string {
 	
@@ -77,4 +78,14 @@ T load_number(std::istream & is, size_t bits) {
 	}
 }
 
-#endif // INNOEXTRACT_UTIL_LOADINGUTILS_HPP
+template <class T>
+void discard(T & is, uint64_t bytes) {
+	char buf[1024];
+	while(bytes) {
+		std::streamsize n = std::streamsize(std::min<uint64_t>(bytes, ARRAY_SIZE(buf)));
+		is.read(buf, n);
+		bytes -= uint64_t(n);
+	}
+}
+
+#endif // INNOEXTRACT_UTIL_LOAD_HPP

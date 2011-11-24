@@ -1,6 +1,6 @@
 
-#ifndef INNOEXTRACT_UTIL_ARRAY_HPP
-#define INNOEXTRACT_UTIL_ARRAY_HPP
+#ifndef INNOEXTRACT_UTIL_UTIL_HPP
+#define INNOEXTRACT_UTIL_UTIL_HPP
 
 #define ARRAY_SIZE(array) (sizeof(array)/sizeof(*(array)))
 
@@ -63,4 +63,4 @@ inline T safe_left_shift(T value) {
 	return detail::safe_shifter<(bits >= (8 * sizeof(T)))>::left_shift(value, bits);
 }
 
-#endif // INNOEXTRACT_UTIL_ARRAY_HPP
+#endif // INNOEXTRACT_UTIL_UTIL_HPP

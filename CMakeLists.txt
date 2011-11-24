@@ -5,6 +5,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 include(CompileCheck)
 include(VersionString) # TODO use this
+include(CheckSymbolExists)
 
 # Force re-checking libraries if the compiler or compiler flags change.
 if((NOT LAST_CMAKE_CXX_FLAGS STREQUAL CMAKE_CXX_FLAGS)
@@ -34,6 +35,7 @@ include_directories(SYSTEM "${LZMA_INCLUDE_DIR}")
 # TODO debugging-only
 add_cxxflag("-ggdb")
 add_cxxflag("-O3")
+add_definitions(-D_DEBUG)
 
 # TODO should probably be supplied by the user
 add_cxxflag("-march=native")
@@ -69,6 +71,9 @@ endif()
 if(UNITY_BUILD)
 	add_cxxflag("-fwhole-program")
 endif()
+
+check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
+check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
 
 set(INNOEXTRACT_SOURCES
 	
@@ -106,15 +111,18 @@ set(INNOEXTRACT_SOURCES
 	src/stream/LzmaFilter.cpp
 	src/stream/SliceReader.cpp
 	
+	src/util/console.cpp
 	src/util/load.cpp
-	src/util/color.cpp
+	src/util/log.cpp
 	
 	src/InnoExtract.cpp
 )
 
 file(GLOB_RECURSE ALL_INCLUDES "${CMAKE_SOURCE_DIR}/src/*.hpp")
 
-include_directories(src)
+include_directories(src ${CMAKE_CURRENT_BINARY_DIR})
+
+configure_file("src/configure.hpp.in" "configure.hpp")
 
 add_executable(innoextract ${INNOEXTRACT_SOURCES} ${ALL_INCLUDES})
 target_link_libraries(innoextract ${LIBRARIES})

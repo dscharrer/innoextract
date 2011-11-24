@@ -11,8 +11,6 @@
 #include <ctime>
 #include <map>
 
-#include <sys/ioctl.h>
-
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 #include <boost/ref.hpp>
@@ -56,74 +54,16 @@
 #include "stream/ChecksumFilter.hpp"
 #include "stream/InstructionFilter.hpp"
 
-#include "util/color.hpp"
+#include "util/console.hpp"
 #include "util/load.hpp"
+#include "util/log.hpp"
 #include "util/output.hpp"
-
-class progress {
-	
-public:
-	
-	static void show(float value, const std::string & label) {
-		
-		struct winsize w;
-		ioctl(0, TIOCGWINSZ, &w);
-		
-		clear();
-		
-		std::ios_base::fmtflags flags = std::cout.flags();
-		
-		size_t progress_length = w.ws_col - label.length() - 6 - 2 - 2 - 1;
-		
-		if(progress_length > 10) {
-			
-			size_t progress = size_t(ceil(float(progress_length) * value));
-			
-			std::cout << '[';
-			for(size_t i = 0; i < progress; i++) {
-				std::cout << '=';
-			}
-			std::cout << '>';
-			for(size_t i = progress; i < progress_length; i++) {
-				std::cout << ' ';
-			}
-			std::cout << ']';
-			
-		}
-		
-		std::cout << std::right << std::fixed << std::setprecision(1) << std::setfill(' ')
-		          << std::setw(5) << (value * 100) << "% " << label;
-		std::cout.flush();
-		
-		std::cout.flags(flags);
-		
-	}
-	
-	static void clear() {
-		std::cout << "\33[2K\r";
-	}
-	
-};
 
 using std::cout;
 using std::string;
 using std::endl;
 using std::setw;
 using std::setfill;
-
-template <class T>
-void discard(T & is, uint64_t bytes) {
-	
-	std::cout << "discarding " << print_bytes(bytes) << std::endl;
-	
-	char buf[1024];
-	while(bytes) {
-		std::streamsize n = std::streamsize(std::min<uint64_t>(bytes, ARRAY_SIZE(buf)));
-		is.read(buf, n);
-		bytes -= uint64_t(n);
-	}
-	
-}
 
 namespace io = boost::iostreams;
 namespace fs = boost::filesystem;
@@ -274,12 +214,16 @@ static void readWizardImageAndDecompressor(std::istream & is, const InnoVersion 
 	}
 	
 	if(is.fail()) {
-		LogError << "error reading misc setup data";
+		log_error << "error reading misc setup data";
 	}
 	
 }
 
 int main(int argc, char * argv[]) {
+	
+	color::init();
+	
+	logger::debug = true;
 	
 	if(argc <= 1) {
 		std::cout << "usage: innoextract <Inno Setup installer>" << endl;
@@ -289,7 +233,7 @@ int main(int argc, char * argv[]) {
 	std::ifstream ifs(argv[1], std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
 	
 	if(!ifs.is_open()) {
-		LogError << "error opening file";
+		log_error << "error opening file";
 		return 1;
 	}
 	
@@ -319,12 +263,12 @@ int main(int argc, char * argv[]) {
 	InnoVersion version;
 	version.load(ifs);
 	if(ifs.fail()) {
-		LogError << "error reading setup data version!";
+		log_error << "error reading setup data version!";
 		return 1;
 	}
 	
 	if(!version.known) {
-		LogError << "unknown version!";
+		log_error << "unknown version!";
 		return 1; // TODO
 	}
 	
@@ -332,7 +276,7 @@ int main(int argc, char * argv[]) {
 	
 	boost::shared_ptr<std::istream> is(BlockReader::get(ifs, version));
 	if(!is) {
-		LogError << "error reading block";
+		log_error << "error reading block";
 		return 1;
 	}
 	
@@ -341,7 +285,7 @@ int main(int argc, char * argv[]) {
 	SetupHeader header;
 	header.load(*is, version);
 	if(is->fail()) {
-		LogError << "error reading setup data header!";
+		log_error << "error reading setup data header!";
 		return 1;
 	}
 	
@@ -459,7 +403,7 @@ int main(int argc, char * argv[]) {
 		LanguageEntry & entry = languages[i];
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading language entry #" << i;
+			log_error << "error reading language entry #" << i;
 		}
 		
 		cout << " - " << quoted(entry.name) << ':' << endl;
@@ -498,11 +442,11 @@ int main(int argc, char * argv[]) {
 		MessageEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading custom message entry #" << i;
+			log_error << "error reading custom message entry #" << i;
 		}
 		
 		if(entry.language >= 0 ? size_t(entry.language) >= languages.size() : entry.language != -1) {
-			LogWarning << "unexpected language index: " << entry.language;
+			log_warning << "unexpected language index: " << entry.language;
 		}
 		
 		uint32_t codepage;
@@ -534,7 +478,7 @@ int main(int argc, char * argv[]) {
 		PermissionEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading permission entry #" << i;
+			log_error << "error reading permission entry #" << i;
 		}
 		
 		cout << " - " << entry.permissions.length() << " bytes";
@@ -549,7 +493,7 @@ int main(int argc, char * argv[]) {
 		SetupTypeEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading type entry #" << i;
+			log_error << "error reading type entry #" << i;
 		}
 		
 		cout << " - " << quoted(entry.name) << ':' << endl;
@@ -574,7 +518,7 @@ int main(int argc, char * argv[]) {
 		SetupComponentEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading component entry #" << i;
+			log_error << "error reading component entry #" << i;
 		}
 		
 		cout << " - " << quoted(entry.name) << ':' << endl;
@@ -603,7 +547,7 @@ int main(int argc, char * argv[]) {
 		SetupTaskEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading task entry #" << i;
+			log_error << "error reading task entry #" << i;
 		}
 		
 		cout << " - " << quoted(entry.name) << ':' << endl;
@@ -633,7 +577,7 @@ int main(int argc, char * argv[]) {
 		DirectoryEntry & entry = directories[i];
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading directory entry #" << i;
+			log_error << "error reading directory entry #" << i;
 		}
 		
 		cout << " - " << quoted(entry.name) << ':' << endl;
@@ -663,7 +607,7 @@ int main(int argc, char * argv[]) {
 		FileEntry & entry = files[i];
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading file entry #" << i;
+			log_error << "error reading file entry #" << i;
 		}
 		
 		if(entry.destination.empty()) {
@@ -701,7 +645,7 @@ int main(int argc, char * argv[]) {
 		IconEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading icon entry #" << i;
+			log_error << "error reading icon entry #" << i;
 		}
 		
 		cout << " - " << quoted(entry.name) << " -> " << quoted(entry.filename) << endl;
@@ -731,7 +675,7 @@ int main(int argc, char * argv[]) {
 		IniEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading ini entry #" << i;
+			log_error << "error reading ini entry #" << i;
 		}
 		
 		cout << " - in " << quoted(entry.inifile);
@@ -752,7 +696,7 @@ int main(int argc, char * argv[]) {
 		RegistryEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading registry entry #" << i;
+			log_error << "error reading registry entry #" << i;
 		}
 		
 		cout << " - ";
@@ -793,7 +737,7 @@ int main(int argc, char * argv[]) {
 		DeleteEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading install delete entry #" << i;
+			log_error << "error reading install delete entry #" << i;
 		}
 		
 		cout << " - " << quoted(entry.name)
@@ -811,7 +755,7 @@ int main(int argc, char * argv[]) {
 		DeleteEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading uninstall delete entry #" << i;
+			log_error << "error reading uninstall delete entry #" << i;
 		}
 		
 		cout << " - " << quoted(entry.name)
@@ -829,7 +773,7 @@ int main(int argc, char * argv[]) {
 		RunEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading install run entry #" << i;
+			log_error << "error reading install run entry #" << i;
 		}
 		
 		print(cout, entry, header);
@@ -844,7 +788,7 @@ int main(int argc, char * argv[]) {
 		RunEntry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading uninstall run entry #" << i;
+			log_error << "error reading uninstall run entry #" << i;
 		}
 		
 		print(cout, entry, header);
@@ -859,7 +803,7 @@ int main(int argc, char * argv[]) {
 		is->exceptions(std::ios_base::goodbit);
 		char dummy;
 		if(!is->get(dummy).eof()) {
-			LogWarning << "expected end of stream";
+			log_warning << "expected end of stream";
 		}
 	}
 	
@@ -867,7 +811,7 @@ int main(int argc, char * argv[]) {
 	
 	is.reset(BlockReader::get(ifs, version));
 	if(!is) {
-		LogError << "error reading block";
+		log_error << "error reading block";
 		return 1;
 	}
 	
@@ -883,7 +827,7 @@ int main(int argc, char * argv[]) {
 		FileLocationEntry & entry = locations[i];
 		entry.load(*is, version);
 		if(is->fail()) {
-			LogError << "error reading file location entry #" << i;
+			log_error << "error reading file location entry #" << i;
 		}
 		
 		cout << " - " << "File location #" << i << ':' << endl;
@@ -927,7 +871,7 @@ int main(int argc, char * argv[]) {
 		is->exceptions(std::ios_base::goodbit);
 		char dummy;
 		if(!is->get(dummy).eof()) {
-			LogWarning << "expected end of stream";
+			log_warning << "expected end of stream";
 		}
 	}
 	
@@ -975,7 +919,7 @@ int main(int argc, char * argv[]) {
 		std::sort(chunk.second.begin(), chunk.second.end(), FileLocationComparer(locations));
 		
 		if(!slice_reader->seek(chunk.first.firstSlice, chunk.first.chunkOffset)) {
-			LogError << "error seeking" << std::endl;
+			log_error << "error seeking";
 			return 1;
 		}
 		
@@ -983,7 +927,7 @@ int main(int argc, char * argv[]) {
 		
 		char magic[4];
 		if(slice_reader->read(magic, 4) != 4 || memcmp(magic, chunkId, 4)) {
-			LogError << "bad chunk id";
+			log_error << "bad chunk id";
 			return 1;
 		}
 		
@@ -997,7 +941,7 @@ int main(int argc, char * argv[]) {
 				case SetupHeader::BZip2: chunk_source.push(io::bzip2_decompressor(), 8192); break;
 				case SetupHeader::LZMA1: chunk_source.push(inno_lzma1_decompressor(), 8192); break;
 				case SetupHeader::LZMA2: chunk_source.push(inno_lzma2_decompressor(), 8192); break;
-				default: LogError << "unknown compression";
+				default: log_error << "unknown compression";
 			}
 		}
 		
@@ -1010,11 +954,12 @@ int main(int argc, char * argv[]) {
 			const FileLocationEntry & location = locations[location_i];
 			
 			if(location.fileOffset < offset) {
-				LogError << "bad offset";
+				log_error << "bad offset";
 				return 1;
 			}
 			
 			if(location.fileOffset > offset) {
+				std::cout << "discarding " << print_bytes(location.fileOffset - offset) << std::endl;
 				discard(chunk_source, location.fileOffset - offset);
 			}
 			offset = location.fileOffset + location.fileSize;
@@ -1115,30 +1060,30 @@ int main(int argc, char * argv[]) {
 			Checksum actual;
 			hasher.finalize(actual);
 			if(actual != location.checksum) {
-				LogWarning << "checksum mismatch:";
-				LogWarning << "actual:   " << actual;
-				LogWarning << "expected: " << location.checksum;
+				log_warning << "checksum mismatch:";
+				log_warning << "actual:   " << actual;
+				log_warning << "expected: " << location.checksum;
 			}
 		}
 	}
 	
 	} catch(io::bzip2_error e) {
-		LogError << e.what() << ": " <<
+		log_error << e.what() << ": " <<
 		e.error();
 	}
 	
 	std::cout << color::green << "Done" << color::reset << std::dec;
 	
-	if(total_errors || total_warnings) {
+	if(logger::total_errors || logger::total_warnings) {
 		std::cout << " with ";
-		if(total_errors) {
-			std::cout << color::red << total_errors << " errors" << color::reset;
+		if(logger::total_errors) {
+			std::cout << color::red << logger::total_errors << " errors" << color::reset;
 		}
-		if(total_errors && total_warnings) {
+		if(logger::total_errors && logger::total_warnings) {
 			std::cout << " and ";
 		}
-		if(total_warnings) {
-			std::cout << color::yellow << total_warnings << " warnings" << color::reset;
+		if(logger::total_warnings) {
+			std::cout << color::yellow << logger::total_warnings << " warnings" << color::reset;
 		}
 	}
 	

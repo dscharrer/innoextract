@@ -9,8 +9,8 @@
 #include "crypto/CRC32.hpp"
 #include "loader/ExeReader.hpp"
 #include "setup/Version.hpp"
-#include "util/color.hpp"
 #include "util/load.hpp"
+#include "util/log.hpp"
 
 namespace {
 
@@ -147,7 +147,7 @@ bool SetupLoader::loadOffsetsAt(std::istream & is, uint32_t pos) {
 			return false;
 		}
 		if(checksum.finalize() != expected) {
-			LogError << "[loader] CRC32 mismatch";
+			log_error << "[loader] CRC32 mismatch";
 			return false;
 		}
 	}
