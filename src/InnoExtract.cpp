@@ -1004,7 +1004,7 @@ int main(int argc, char * argv[]) {
 		}
 		
 		int64_t csize = int64_t(chunk.first.chunkSize);
-		chunk_source.push(io::restrict(boost::ref(*slice_reader.get()), 0, csize));
+		chunk_source.push(io::restrict(boost::ref(*slice_reader), 0, csize));
 		
 		uint64_t offset = 0;
 		
@@ -1129,7 +1129,7 @@ int main(int argc, char * argv[]) {
 		e.error();
 	}
 	
-	std::cout << color::green << "Done" << color::reset;
+	std::cout << color::green << "Done" << color::reset << std::dec;
 	
 	if(total_errors || total_warnings) {
 		std::cout << " with ";
