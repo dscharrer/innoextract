@@ -9,7 +9,6 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/static_assert.hpp>
 
-#include "util/load.hpp"
 #include "util/enum.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"

@@ -112,7 +112,7 @@ void show(float value, const std::string & label) {
 	}
 	
 	std::cout << std::right << std::fixed << std::setprecision(1) << std::setfill(' ')
-						<< std::setw(5) << (value * 100) << "% " << label;
+	          << std::setw(5) << (value * 100) << "% " << label;
 	std::cout.flush();
 	
 	std::cout.flags(flags);

@@ -54,7 +54,7 @@ public:
 	typedef base_type::char_type char_type;
 	typedef base_type::category category;
 	
-	inno_exe_decoder_5200(bool _flip_high_byte)
+	explicit inno_exe_decoder_5200(bool _flip_high_byte)
 		: flip_high_byte(_flip_high_byte) { close(0); }
 	
 	template<typename Source>
