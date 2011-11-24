@@ -20,8 +20,6 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/iostreams/copy.hpp>
 
-#include "crypto/hasher.hpp"
-
 #include "loader/SetupLoader.hpp"
 
 #include "setup/MessageEntry.hpp"
@@ -914,10 +912,10 @@ int main(int argc, char * argv[]) {
 			std::cout << " @ " << print_hex(location.fileOffset)
 			          << " (" << print_bytes(location.file_size) << ')' << std::endl;
 			
-			crypto::hasher hasher;
+			crypto::checksum checksum;
 			
 			stream::file_reader::pointer file_source;
-			file_source = stream::file_reader::get(*chunk_source, location, version, hasher);
+			file_source = stream::file_reader::get(*chunk_source, location, version, &checksum);
 			
 			BOOST_FOREACH(size_t file_i, files_for_location[location_i]) {
 				if(!files[file_i].destination.empty()) {
@@ -977,10 +975,9 @@ int main(int argc, char * argv[]) {
 			
 			progress::clear();
 			
-			crypto::checksum actual = hasher.finalize();
-			if(actual != location.checksum) {
+			if(checksum != location.checksum) {
 				log_warning << "checksum mismatch:";
-				log_warning << "actual:   " << actual;
+				log_warning << "actual:   " << checksum;
 				log_warning << "expected: " << location.checksum;
 			}
 		}

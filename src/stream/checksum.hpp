@@ -5,6 +5,7 @@
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/read.hpp>
 
+#include "crypto/checksum.hpp"
 #include "crypto/hasher.hpp"
 
 namespace stream {
@@ -20,16 +21,21 @@ public:
 	typedef base_type::char_type char_type;
 	typedef base_type::category category;
 	
-	inline checksum_filter(crypto::hasher * _hasher) : hasher(_hasher) { }
-	inline checksum_filter(const checksum_filter & o) : hasher(o.hasher) { }
+	inline checksum_filter(crypto::checksum * output, crypto::checksum_type type) : output(output) {
+		hasher.init(type);
+	}
+	inline checksum_filter(const checksum_filter & o) : hasher(o.hasher), output(o.output) { }
 	
 	template<typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n) {
 		
 		std::streamsize nread = boost::iostreams::read(src, dest, n);
 		
-		if(nread != EOF) {
-			hasher->update(dest, size_t(nread));
+		if(nread > 0) {
+			hasher.update(dest, size_t(nread));
+		} else if(output) {
+			*output = hasher.finalize();
+			output = NULL;
 		}
 		
 		return nread;
@@ -37,7 +43,9 @@ public:
 	
 private:
 	
-	crypto::hasher * hasher;
+	crypto::hasher hasher;
+	
+	crypto::checksum * output;
 	
 };
 

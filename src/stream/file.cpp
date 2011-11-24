@@ -228,13 +228,11 @@ std::streamsize inno_exe_decoder_5200::read(Source & src, char * dest, std::stre
 } // anonymous namespace
 
 file_reader::pointer file_reader::get(base_type & base, const FileLocationEntry & location,
-                                      const InnoVersion & version, crypto::hasher & hasher) {
-	
-	hasher.init(location.checksum.type);
+                                      const InnoVersion & version, crypto::checksum * checksum) {
 	
 	boost::shared_ptr<io::filtering_istream> result = boost::make_shared<io::filtering_istream>();
 	
-	result->push(stream::checksum_filter(&hasher), 8192);
+	result->push(stream::checksum_filter(checksum, location.checksum.type), 8192);
 	
 	if(location.options & FileLocationEntry::CallInstructionOptimized) {
 		if(version < INNO_VERSION(5, 2, 0)) {

@@ -19,6 +19,7 @@ public:
 	
 	inline hasher() { }
 	inline hasher(checksum_type type) { init(type); }
+	hasher(const hasher & o);
 	
 	void init(checksum_type type);
 	

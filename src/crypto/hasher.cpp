@@ -3,6 +3,18 @@
 
 namespace crypto {
 
+hasher::hasher(const hasher & o) {
+	
+	type = o.type;
+	
+	switch(type) {
+		case crypto::Adler32: adler32 = o.adler32; break;
+		case crypto::CRC32: crc32 = o.crc32; break;
+		case crypto::MD5: md5 = o.md5; break;
+		case crypto::SHA1: sha1 = o.sha1; break;
+	};
+}
+
 void hasher::init(checksum_type newType) {
 	
 	type = newType;
