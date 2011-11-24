@@ -128,6 +128,8 @@ configure_file("src/configure.hpp.in" "configure.hpp")
 add_executable(innoextract ${INNOEXTRACT_SOURCES} ${ALL_INCLUDES})
 target_link_libraries(innoextract ${LIBRARIES})
 
+install(TARGETS innoextract RUNTIME DESTINATION bin)
+
 # Additional targets.
 
 find_package(PythonInterp)
