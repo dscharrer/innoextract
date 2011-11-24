@@ -51,4 +51,17 @@ inline bool is_aligned(const void * p) {
 	return is_aligned_on(p, alignment_of<T>());
 }
 
+template <class Impl>
+class static_polymorphic {
+	
+protected:
+	
+	typedef Impl impl_type;
+	
+	inline impl_type & impl() { return *static_cast<impl_type *>(this); }
+	
+	inline const impl_type & impl() const { return *static_cast<const impl_type *>(this); }
+	
+};
+
 #endif // INNOEXTRACT_UTIL_TYPES_HPP

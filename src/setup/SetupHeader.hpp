@@ -8,7 +8,7 @@
 #include <string>
 #include <iosfwd>
 
-#include "crypto/Checksum.hpp"
+#include "crypto/checksum.hpp"
 #include "setup/Version.hpp"
 #include "setup/WindowsVersion.hpp"
 #include "stream/chunk.hpp"
@@ -152,7 +152,7 @@ struct SetupHeader {
 	Color wizardImageBackColor;
 	Color wizardSmallImageBackColor;
 	
-	Checksum password;
+	crypto::checksum password;
 	SetupSalt passwordSalt;
 	
 	int64_t extraDiskSpaceRequired;

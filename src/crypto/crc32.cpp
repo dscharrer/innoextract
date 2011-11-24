@@ -2,9 +2,11 @@
 // Taken from Crypto++ and modified to fit the project.
 // crc.cpp - written and placed in the public domain by Wei Dai
 
-#include "crypto/CRC32.hpp"
+#include "crypto/crc32.hpp"
 
 #include <boost/detail/endian.hpp>
+
+namespace crypto {
 
 #ifdef BOOST_LITTLE_ENDIAN
 #define CRC32_INDEX(c) (c & 0xff)
@@ -15,7 +17,7 @@
 #endif
 
 /* Table of CRC-32's of all single byte values (made by makecrc.c) */
-const uint32_t Crc32::table[] = {
+const uint32_t crc32::table[] = {
 #ifdef BOOST_LITTLE_ENDIAN
 	0x00000000L, 0x77073096L, 0xee0e612cL, 0x990951baL, 0x076dc419L,
 	0x706af48fL, 0xe963a535L, 0x9e6495a3L, 0x0edb8832L, 0x79dcb8a4L,
@@ -125,7 +127,7 @@ const uint32_t Crc32::table[] = {
 #endif
 };
 
-void Crc32::update(const char * s, size_t n) {
+void crc32::update(const char * s, size_t n) {
 	
 	for(; (size_t(s) % 4 != 0) && n > 0; n--) {
 		crc = table[CRC32_INDEX(crc) ^ uint8_t(*s++)] ^ CRC32_SHIFTED(crc);
@@ -148,3 +150,5 @@ void Crc32::update(const char * s, size_t n) {
 
 #undef CRC32_INDEX
 #undef CRC32_SHIFTED
+
+} // namespace crypto

@@ -228,7 +228,7 @@ std::streamsize inno_exe_decoder_5200::read(Source & src, char * dest, std::stre
 } // anonymous namespace
 
 file_reader::pointer file_reader::get(base_type & base, const FileLocationEntry & location,
-                                      const InnoVersion & version, Hasher & hasher) {
+                                      const InnoVersion & version, crypto::hasher & hasher) {
 	
 	hasher.init(location.checksum.type);
 	

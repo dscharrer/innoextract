@@ -16,7 +16,7 @@
 #include <boost/iostreams/read.hpp>
 #include <boost/make_shared.hpp>
 
-#include "crypto/CRC32.hpp"
+#include "crypto/crc32.hpp"
 #include "setup/Version.hpp"
 #include "stream/lzma.hpp"
 #include "util/endian.hpp"
@@ -78,7 +78,7 @@ public:
 			throw block_error("unexpected block end");
 		}
 		
-		Crc32 actual;
+		crypto::crc32 actual;
 		actual.init();
 		actual.update(buffer, length);
 		if(actual.finalize() != block_crc32) {
@@ -131,7 +131,7 @@ namespace stream {
 block_reader::pointer block_reader::get(std::istream & base, const InnoVersion & version) {
 	
 	uint32_t expected_checksum = load_number<uint32_t>(base);
-	Crc32 actual_checksum;
+	crypto::crc32 actual_checksum;
 	actual_checksum.init();
 	
 	uint32_t stored_size;

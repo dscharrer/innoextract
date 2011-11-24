@@ -286,11 +286,11 @@ void SetupHeader::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version < INNO_VERSION(4, 2, 0)) {
-		password.crc32 = load_number<uint32_t>(is), password.type = Checksum::Crc32;
+		password.crc32 = load_number<uint32_t>(is), password.type = crypto::CRC32;
 	} else if(version < INNO_VERSION(5, 3, 9)) {
-		is.read(password.md5, sizeof(password.md5)), password.type = Checksum::MD5;
+		is.read(password.md5, sizeof(password.md5)), password.type = crypto::MD5;
 	} else {
-		is.read(password.sha1, sizeof(password.sha1)), password.type = Checksum::Sha1;
+		is.read(password.sha1, sizeof(password.sha1)), password.type = crypto::SHA1;
 	}
 	if(version >= INNO_VERSION(4, 2, 2)) {
 		is.read(passwordSalt, sizeof(passwordSalt));

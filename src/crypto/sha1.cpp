@@ -2,9 +2,13 @@
 // Taken from Crypto++ and modified to fit the project.
 // sha.cpp - modified by Wei Dai from Steve Reid's public domain sha1.c
 
-#include "crypto/SHA-1.hpp"
+#include "crypto/sha1.hpp"
 
-void Sha1Transform::init(HashWord * state) {
+#include "util/util.hpp"
+
+namespace crypto {
+
+void sha1_transform::init(hash_word * state) {
 	state[0] = 0x67452301L;
 	state[1] = 0xEFCDAB89L;
 	state[2] = 0x98BADCFEL;
@@ -12,10 +16,10 @@ void Sha1Transform::init(HashWord * state) {
 	state[4] = 0xC3D2E1F0L;
 }
 
-void Sha1Transform::transform(HashWord * state, const HashWord * data) {
+void sha1_transform::transform(hash_word * state, const hash_word * data) {
 	
 #define blk0(i) (W[i] = data[i])
-#define blk1(i) (W[i & 15] = rotlFixed(W[(i + 13) & 15] ^ W[(i + 8) & 15] \
+#define blk1(i) (W[i & 15] = rotl_fixed(W[(i + 13) & 15] ^ W[(i + 8) & 15] \
                                        ^ W[(i + 2) & 15] ^ W[i & 15], 1))
 	
 #define f1(x, y, z) (z ^ (x & (y ^ z)))
@@ -24,25 +28,25 @@ void Sha1Transform::transform(HashWord * state, const HashWord * data) {
 #define f4(x, y, z) (x ^ y ^ z)
 	
 /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
-#define R0(v, w, x, y, z, i) z += f1(w, x, y) + blk0(i) + 0x5A827999 + rotlFixed(v, 5); \
-                             w = rotlFixed(w, 30);
-#define R1(v, w, x, y, z, i) z += f1(w, x, y) + blk1(i) + 0x5A827999 + rotlFixed(v, 5); \
-                             w = rotlFixed(w, 30);
-#define R2(v, w, x, y, z, i) z += f2(w, x, y) + blk1(i) + 0x6ED9EBA1 + rotlFixed(v, 5); \
-                             w = rotlFixed(w, 30);
-#define R3(v, w, x, y, z, i) z += f3(w, x, y) + blk1(i) + 0x8F1BBCDC + rotlFixed(v, 5); \
-                             w = rotlFixed(w, 30);
-#define R4(v, w, x, y, z, i) z += f4(w, x, y) + blk1(i) + 0xCA62C1D6 + rotlFixed(v, 5); \
-                             w = rotlFixed(w, 30);
+#define R0(v, w, x, y, z, i) z += f1(w, x, y) + blk0(i) + 0x5A827999 + rotl_fixed(v, 5); \
+                             w = rotl_fixed(w, 30);
+#define R1(v, w, x, y, z, i) z += f1(w, x, y) + blk1(i) + 0x5A827999 + rotl_fixed(v, 5); \
+                             w = rotl_fixed(w, 30);
+#define R2(v, w, x, y, z, i) z += f2(w, x, y) + blk1(i) + 0x6ED9EBA1 + rotl_fixed(v, 5); \
+                             w = rotl_fixed(w, 30);
+#define R3(v, w, x, y, z, i) z += f3(w, x, y) + blk1(i) + 0x8F1BBCDC + rotl_fixed(v, 5); \
+                             w = rotl_fixed(w, 30);
+#define R4(v, w, x, y, z, i) z += f4(w, x, y) + blk1(i) + 0xCA62C1D6 + rotl_fixed(v, 5); \
+                             w = rotl_fixed(w, 30);
 	
-	HashWord W[16];
+	hash_word W[16];
 	
 	/* Copy context->state[] to working vars */
-	HashWord a = state[0];
-	HashWord b = state[1];
-	HashWord c = state[2];
-	HashWord d = state[3];
-	HashWord e = state[4];
+	hash_word a = state[0];
+	hash_word b = state[1];
+	hash_word c = state[2];
+	hash_word d = state[3];
+	hash_word e = state[4];
 	
 	/* 4 rounds of 20 operations each. Loop unrolled. */
 	
@@ -168,3 +172,5 @@ void Sha1Transform::transform(HashWord * state, const HashWord * data) {
 #undef blk0
 	
 }
+
+} // namespace crypto

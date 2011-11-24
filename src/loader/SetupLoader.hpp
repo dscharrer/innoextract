@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <iostream>
 
-#include "crypto/Checksum.hpp"
+#include "crypto/checksum.hpp"
 
 struct SetupLoader {
 	
@@ -13,7 +13,7 @@ struct SetupLoader {
 	uint32_t exeCompressedSize; //!< Size of setup.e32 after compression (0 = unknown)
 	uint32_t exeUncompressedSize; //!< Size of setup.e32 before compression
 	
-	Checksum exeChecksum; //!< Checksum of setup.e32 before compression
+	crypto::checksum exeChecksum; //!< Checksum of setup.e32 before compression
 	
 	uint32_t messageOffset;
 	

@@ -7,7 +7,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/iostreams/chain.hpp>
 
-class Hasher;
+namespace crypto { class hasher; }
 struct FileLocationEntry;
 struct InnoVersion;
 
@@ -23,7 +23,7 @@ public:
 	typedef boost::shared_ptr<type> pointer;
 	
 	static pointer get(base_type & base, const FileLocationEntry & location,
-	                   const InnoVersion & version, Hasher & hasher);
+	                   const InnoVersion & version, crypto::hasher & hasher);
 	
 };
 

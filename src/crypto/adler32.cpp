@@ -2,11 +2,13 @@
 // Taken from Crypto++ and modified to fit the project.
 // adler32.cpp - written and placed in the public domain by Wei Dai
 
-#include "crypto/Adler-32.hpp"
+#include "crypto/adler32.hpp"
 
-void Adler32::update(const char * input, size_t length) {
+namespace crypto {
+
+void adler32::update(const char * input, size_t length) {
 	
-	const uint_fast32_t BASE = 65521;
+	const uint_fast32_t base = 65521;
 	
 	uint_fast32_t s1 = this->s1;
 	uint_fast32_t s2 = this->s2;
@@ -19,11 +21,11 @@ void Adler32::update(const char * input, size_t length) {
 			length--;
 		} while(length % 8 != 0);
 		
-		if(s1 >= BASE) {
-			s1 -= BASE;
+		if(s1 >= base) {
+			s1 -= base;
 		}
 		
-		s2 %= BASE;
+		s2 %= base;
 	}
 	
 	while(length > 0) {
@@ -40,15 +42,17 @@ void Adler32::update(const char * input, size_t length) {
 		length -= 8;
 		input += 8;
 		
-		if(s1 >= BASE) {
-			s1 -= BASE;
+		if(s1 >= base) {
+			s1 -= base;
 		}
 		
 		if(length % 0x8000 == 0) {
-			s2 %= BASE;
+			s2 %= base;
 		}
 	}
 	
 	this->s1 = uint16_t(s1);
 	this->s2 = uint16_t(s2);
 }
+
+} // namespace crypto

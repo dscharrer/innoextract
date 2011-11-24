@@ -3,16 +3,20 @@
 // md5.cpp - modified by Wei Dai from Colin Plumb's public domain md5.c
 // any modifications are placed in the public domain
 
-#include "crypto/MD5.hpp"
+#include "crypto/md5.hpp"
 
-void Md5Transform::init(HashWord * state) {
+#include "util/util.hpp"
+
+namespace crypto {
+
+void md5_transform::init(hash_word * state) {
 	state[0] = 0x67452301L;
 	state[1] = 0xefcdab89L;
 	state[2] = 0x98badcfeL;
 	state[3] = 0x10325476L;
 }
 
-void Md5Transform::transform(HashWord * digest, const HashWord * in) {
+void md5_transform::transform(hash_word * digest, const hash_word * in) {
 	
 #define F1(x, y, z) (z ^ (x & (y ^ z)))
 #define F2(x, y, z) F1(z, x, y)
@@ -20,9 +24,9 @@ void Md5Transform::transform(HashWord * digest, const HashWord * in) {
 #define F4(x, y, z) (y ^ (x | ~z))
 	
 #define MD5STEP(f, w, x, y, z, data, s) \
-	w = rotlFixed(w + f(x, y, z) + data, s) + x
+	w = rotl_fixed(w + f(x, y, z) + data, s) + x
 	
-	HashWord a, b, c, d;
+	hash_word a, b, c, d;
 	
 	a = digest[0];
 	b = digest[1];
@@ -109,3 +113,5 @@ void Md5Transform::transform(HashWord * digest, const HashWord * in) {
 #undef F1
 	
 }
+
+} // namespace crypto

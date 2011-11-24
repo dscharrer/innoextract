@@ -3,10 +3,13 @@
 #define INNOEXTRACT_CRYPTO_CRC32_HPP
 
 #include <stdint.h>
-#include "crypto/Checksum.hpp"
+
+#include "crypto/checksum.hpp"
+
+namespace crypto {
 
 //! CRC32 checksum calculation
-struct Crc32 : public ChecksumBase<Crc32> {
+struct crc32 : public checksum_base<crc32> {
 	
 	inline void init() { crc = CRC32_NEGL; }
 	
@@ -21,5 +24,7 @@ private:
 	static const uint32_t table[256];
 	uint32_t crc;
 };
+
+} // namespace crypto
 
 #endif // INNOEXTRACT_CRYPTO_CRC32_HPP

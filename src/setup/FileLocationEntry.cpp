@@ -35,13 +35,13 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 9)) {
-		is.read(checksum.sha1, sizeof(checksum.sha1)), checksum.type = Checksum::Sha1;
+		is.read(checksum.sha1, sizeof(checksum.sha1)), checksum.type = crypto::SHA1;
 	} else if(version >= INNO_VERSION(4, 2, 0)) {
-		is.read(checksum.md5, sizeof(checksum.md5)), checksum.type = Checksum::MD5;
+		is.read(checksum.md5, sizeof(checksum.md5)), checksum.type = crypto::MD5;
 	} else if(version >= INNO_VERSION(4, 0, 1)) {
-		checksum.crc32 = load_number<uint32_t>(is), checksum.type = Checksum::Crc32;
+		checksum.crc32 = load_number<uint32_t>(is), checksum.type = crypto::CRC32;
 	} else {
-		checksum.adler32 = load_number<uint32_t>(is), checksum.type = Checksum::Adler32;
+		checksum.adler32 = load_number<uint32_t>(is), checksum.type = crypto::Adler32;
 	}
 	
 	if(version.bits == 16) {

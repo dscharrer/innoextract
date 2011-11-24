@@ -4,10 +4,13 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "crypto/Checksum.hpp"
+
+#include "crypto/checksum.hpp"
+
+namespace crypto {
 
 //! ADLER-32 checksum calculations
-struct Adler32 : public ChecksumBase<Adler32> {
+struct adler32 : public checksum_base<adler32> {
 	
 	void init() { s1 = 1, s2 = 0; }
 	
@@ -19,5 +22,7 @@ private:
 	
 	uint16_t s1, s2;
 };
+
+} // namespace crypto
 
 #endif // INNOEXTRACT_CRYPTO_ADLER32_HPP

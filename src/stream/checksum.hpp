@@ -5,7 +5,7 @@
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/read.hpp>
 
-#include "crypto/Hasher.hpp"
+#include "crypto/hasher.hpp"
 
 namespace stream {
 
@@ -20,7 +20,7 @@ public:
 	typedef base_type::char_type char_type;
 	typedef base_type::category category;
 	
-	inline checksum_filter(Hasher * _hasher) : hasher(_hasher) { }
+	inline checksum_filter(crypto::hasher * _hasher) : hasher(_hasher) { }
 	inline checksum_filter(const checksum_filter & o) : hasher(o.hasher) { }
 	
 	template<typename Source>
@@ -37,7 +37,7 @@ public:
 	
 private:
 	
-	Hasher * hasher;
+	crypto::hasher * hasher;
 	
 };
 

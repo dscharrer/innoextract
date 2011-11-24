@@ -6,7 +6,7 @@
 
 #include <boost/static_assert.hpp>
 
-#include "crypto/CRC32.hpp"
+#include "crypto/crc32.hpp"
 #include "loader/ExeReader.hpp"
 #include "setup/Version.hpp"
 #include "util/load.hpp"
@@ -95,7 +95,7 @@ bool SetupLoader::loadOffsetsAt(std::istream & is, uint32_t pos) {
 		return false;
 	}
 	
-	Crc32 checksum;
+	crypto::crc32 checksum;
 	checksum.init();
 	checksum.update(magic, ARRAY_SIZE(magic));
 	
@@ -119,10 +119,10 @@ bool SetupLoader::loadOffsetsAt(std::istream & is, uint32_t pos) {
 	exeUncompressedSize = checksum.load<little_endian, uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 0, 3)) {
-		exeChecksum.type = Checksum::Crc32;
+		exeChecksum.type = crypto::CRC32;
 		exeChecksum.crc32 = checksum.load<little_endian, uint32_t>(is);
 	} else {
-		exeChecksum.type = Checksum::Adler32;
+		exeChecksum.type = crypto::Adler32;
 		exeChecksum.adler32 = checksum.load<little_endian, uint32_t>(is);
 	}
 	

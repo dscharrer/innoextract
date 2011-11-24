@@ -6,7 +6,7 @@
 #include <ctime>
 #include <iosfwd>
 
-#include "crypto/Checksum.hpp"
+#include "crypto/checksum.hpp"
 #include "setup/SetupItem.hpp"
 #include "setup/Version.hpp"
 #include "util/enum.hpp"
@@ -39,7 +39,7 @@ struct FileLocationEntry : public SetupItem {
 	uint64_t fileOffset; //!< offset of this file within the decompressed chunk
 	uint64_t file_size; //!< decompressed size of this file
 	
-	Checksum checksum;
+	crypto::checksum checksum;
 	
 	timespec timestamp;
 	

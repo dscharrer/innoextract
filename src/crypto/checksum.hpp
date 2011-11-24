@@ -9,15 +9,18 @@
 
 #include "util/endian.hpp"
 #include "util/enum.hpp"
+#include "util/types.hpp"
 
-struct Checksum {
-	
-	enum Type {
-		Adler32,
-		Crc32,
-		MD5,
-		Sha1,
-	};
+namespace crypto {
+
+enum checksum_type {
+	Adler32,
+	CRC32,
+	MD5,
+	SHA1,
+};
+
+struct checksum {
 	
 	union {
 		uint32_t adler32;
@@ -26,26 +29,15 @@ struct Checksum {
 		char sha1[20];
 	};
 	
-	Type type;
+	checksum_type type;
 	
-	bool operator==(const Checksum & other) const;
-	inline bool operator!=(const Checksum & other) const { return !(*this == other); }
-	
-};
-
-template <class Base>
-class StaticPolymorphic {
-	
-protected:
-	
-	inline Base & impl() { return *static_cast<Base *>(this); }
-	
-	inline const Base & impl() const { return *static_cast<const Base *>(this); }
+	bool operator==(const checksum & other) const;
+	inline bool operator!=(const checksum & other) const { return !(*this == other); }
 	
 };
 
-template <class Base>
-class ChecksumBase : public StaticPolymorphic<Base> {
+template <class Impl>
+class checksum_base : public static_polymorphic<Impl> {
 	
 public:
 	
@@ -74,8 +66,10 @@ public:
 	
 };
 
-NAMED_ENUM(Checksum::Type)
+} // namespace crypto
 
-std::ostream & operator<<(std::ostream & os, const Checksum & checksum);
+NAMED_ENUM(crypto::checksum_type)
+
+std::ostream & operator<<(std::ostream & os, const crypto::checksum & checksum);
 
 #endif // INNOEXTRACT_CRYPTO_CHECKSUM_HPP

@@ -77,12 +77,12 @@ check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
 
 set(INNOEXTRACT_SOURCES
 	
-	src/crypto/Adler-32.cpp
-	src/crypto/Checksum.cpp
-	src/crypto/CRC32.cpp
-	src/crypto/Hasher.cpp
-	src/crypto/MD5.cpp
-	src/crypto/SHA-1.cpp
+	src/crypto/adler32.cpp
+	src/crypto/checksum.cpp
+	src/crypto/crc32.cpp
+	src/crypto/hasher.cpp
+	src/crypto/md5.cpp
+	src/crypto/sha1.cpp
 	
 	src/loader/ExeReader.cpp
 	src/loader/SetupLoader.cpp
