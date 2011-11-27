@@ -60,22 +60,32 @@ inline T load(std::istream & is) {
 	return value;
 }
 
-template <class T>
+template <class T, class Endianness>
 inline T load_number(std::istream & is) {
-	return little_endian::byteswap_if_alien(load<T>(is));
+	return Endianness::byteswap_if_alien(load<T>(is));
 }
 
 template <class T>
+inline T load_number(std::istream & is) {
+	return load_number<T, little_endian>(is);
+}
+
+template <class T, class Endianness>
 T load_number(std::istream & is, size_t bits) {
 	if(bits == 8) {
-		return load_number<typename compatible_integer<T, 8>::type>(is);
+		return load_number<typename compatible_integer<T, 8>::type, Endianness>(is);
 	} else if(bits == 16) {
-		return load_number<typename compatible_integer<T, 16>::type>(is);
+		return load_number<typename compatible_integer<T, 16>::type, Endianness>(is);
 	} else if(bits == 32) {
-		return load_number<typename compatible_integer<T, 32>::type>(is);
+		return load_number<typename compatible_integer<T, 32>::type, Endianness>(is);
 	} else {
-		return load_number<typename compatible_integer<T, 64>::type>(is);
+		return load_number<typename compatible_integer<T, 64>::type, Endianness>(is);
 	}
+}
+
+template <class T>
+inline T load_number(std::istream & is, size_t bits) {
+	return load_number<T, little_endian>(is, bits);
 }
 
 template <class T>

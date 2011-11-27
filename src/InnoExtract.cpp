@@ -20,7 +20,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/iostreams/copy.hpp>
 
-#include "loader/SetupLoader.hpp"
+#include "loader/offsets.hpp"
 
 #include "setup/MessageEntry.hpp"
 #include "setup/DeleteEntry.hpp"
@@ -192,28 +192,28 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 	
-	SetupLoader offsets;
+	loader::offsets offsets;
 	offsets.load(ifs);
 	
 	cout << std::boolalpha;
 	
 	cout << "loaded offsets:" << endl;
-	if(offsets.exeOffset) {
-		cout << "- exe: @ " << color::cyan << print_hex(offsets.exeOffset) << color::reset;
-		if(offsets.exeCompressedSize) {
-			cout << "  compressed: " << color::cyan << print_hex(offsets.exeCompressedSize)
+	if(offsets.exe_offset) {
+		cout << "- exe: @ " << color::cyan << print_hex(offsets.exe_offset) << color::reset;
+		if(offsets.exe_compressed_size) {
+			cout << "  compressed: " << color::cyan << print_hex(offsets.exe_compressed_size)
 			     << color::reset;
 		}
-		cout << "  uncompressed: " << color::cyan << print_bytes(offsets.exeUncompressedSize)
+		cout << "  uncompressed: " << color::cyan << print_bytes(offsets.exe_uncompressed_size)
 		     << color::reset << endl;
-		cout << "- exe checksum: " << color::cyan << offsets.exeChecksum  << color::reset << endl;
+		cout << "- exe checksum: " << color::cyan << offsets.exe_checksum  << color::reset << endl;
 	}
-	cout << if_not_zero("- message offset", print_hex(offsets.messageOffset));
-	cout << "- header offset: " << color::cyan << print_hex(offsets.headerOffset)
+	cout << if_not_zero("- message offset", print_hex(offsets.message_offset));
+	cout << "- header offset: " << color::cyan << print_hex(offsets.header_offset)
 	     << color::reset << endl;
-	cout << if_not_zero("- data offset", print_hex(offsets.dataOffset));
+	cout << if_not_zero("- data offset", print_hex(offsets.data_offset));
 	
-	ifs.seekg(offsets.headerOffset);
+	ifs.seekg(offsets.header_offset);
 	
 	InnoVersion version;
 	version.load(ifs);
@@ -859,8 +859,8 @@ int main(int argc, char * argv[]) {
 	
 	boost::shared_ptr<stream::slice_reader> slice_reader;
 	
-	if(offsets.dataOffset) {
-		slice_reader = boost::make_shared<stream::slice_reader>(argv[1], offsets.dataOffset);
+	if(offsets.data_offset) {
+		slice_reader = boost::make_shared<stream::slice_reader>(argv[1], offsets.data_offset);
 	} else {
 		fs::path path(argv[1]);
 		slice_reader = boost::make_shared<stream::slice_reader>(path.parent_path().string() + '/',
@@ -873,7 +873,7 @@ int main(int argc, char * argv[]) {
 	BOOST_FOREACH(Chunks::value_type & chunk, chunks) {
 		
 		cout << "[starting " << chunk.first.compression
-		     << " chunk @ " << chunk.first.first_slice << " + " << print_hex(offsets.dataOffset)
+		     << " chunk @ " << chunk.first.first_slice << " + " << print_hex(offsets.data_offset)
 		     << " + " << print_hex(chunk.first.offset) << ']' << std::endl;
 		
 		std::sort(chunk.second.begin(), chunk.second.end(), FileLocationComparer(locations));

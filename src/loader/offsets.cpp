@@ -1,20 +1,24 @@
 
-#include <loader/SetupLoader.hpp>
+#include "loader/offsets.hpp"
 
 #include <stdint.h>
 #include <cstring>
 
 #include <boost/static_assert.hpp>
 
+#include <stddef.h>
+
 #include "crypto/crc32.hpp"
-#include "loader/ExeReader.hpp"
+#include "loader/exereader.hpp"
 #include "setup/Version.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
 
+namespace loader {
+
 namespace {
 
-struct SetupLoaderVersion {
+struct setup_loader_version {
 	
 	unsigned char magic[12];
 	
@@ -23,7 +27,7 @@ struct SetupLoaderVersion {
 	
 };
 
-const SetupLoaderVersion knownSetupLoaderVersions[] = {
+const setup_loader_version known_setup_loader_versions[] = {
 	{ { 'r', 'D', 'l', 'P', 't', 'S', '0', '2', 0x87, 'e', 'V', 'x' },    INNO_VERSION(1, 2, 10) },
 	{ { 'r', 'D', 'l', 'P', 't', 'S', '0', '4', 0x87, 'e', 'V', 'x' },    INNO_VERSION(4, 0,  0) },
 	{ { 'r', 'D', 'l', 'P', 't', 'S', '0', '5', 0x87, 'e', 'V', 'x' },    INNO_VERSION(4, 0,  3) },
@@ -39,7 +43,7 @@ const uint32_t SetupLoaderHeaderMagic = 0x6f6e6e49;
 
 }; // anonymous namespace
 
-bool SetupLoader::loadFromExeFile(std::istream & is) {
+bool offsets::load_from_exe_file(std::istream & is) {
 	
 	is.seekg(SetupLoaderHeaderOffset);
 	
@@ -49,28 +53,28 @@ bool SetupLoader::loadFromExeFile(std::istream & is) {
 		return false;
 	}
 	
-	uint32_t offsetTableOffset = load_number<uint32_t>(is);
-	uint32_t notOffsetTableOffset = load_number<uint32_t>(is);
-	if(is.fail() || offsetTableOffset != ~notOffsetTableOffset) {
+	uint32_t offset_table_offset = load_number<uint32_t>(is);
+	uint32_t not_offset_table_offset = load_number<uint32_t>(is);
+	if(is.fail() || offset_table_offset != ~not_offset_table_offset) {
 		is.clear();
 		return false;
 	}
 	
-	return loadOffsetsAt(is, offsetTableOffset);
+	return load_offsets_at(is, offset_table_offset);
 }
 
-bool SetupLoader::loadFromExeResource(std::istream & is) {
+bool offsets::load_from_exe_resource(std::istream & is) {
 	
-	ExeReader::Resource resource = ExeReader::findResource(is, ResourceNameInstaller);
+	exe_reader::resource resource = exe_reader::find_resource(is, ResourceNameInstaller);
 	if(!resource.offset) {
 		is.clear();
 		return false;
 	}
 	
-	return loadOffsetsAt(is, resource.offset);
+	return load_offsets_at(is, resource.offset);
 }
 
-bool SetupLoader::loadOffsetsAt(std::istream & is, uint32_t pos) {
+bool offsets::load_offsets_at(std::istream & is, uint32_t pos) {
 	
 	if(is.seekg(pos).fail()) {
 		is.clear();
@@ -84,10 +88,10 @@ bool SetupLoader::loadOffsetsAt(std::istream & is, uint32_t pos) {
 	}
 	
 	InnoVersionConstant version = 0;
-	for(size_t i = 0; i < ARRAY_SIZE(knownSetupLoaderVersions); i++) {
-		BOOST_STATIC_ASSERT(ARRAY_SIZE(knownSetupLoaderVersions[i].magic) == ARRAY_SIZE(magic));
-		if(!memcmp(magic, knownSetupLoaderVersions[i].magic, ARRAY_SIZE(magic))) {
-			version = knownSetupLoaderVersions[i].version;
+	for(size_t i = 0; i < ARRAY_SIZE(known_setup_loader_versions); i++) {
+		BOOST_STATIC_ASSERT(ARRAY_SIZE(known_setup_loader_versions[i].magic) == ARRAY_SIZE(magic));
+		if(!memcmp(magic, known_setup_loader_versions[i].magic, ARRAY_SIZE(magic))) {
+			version = known_setup_loader_versions[i].version;
 			break;
 		}
 	}
@@ -100,40 +104,40 @@ bool SetupLoader::loadOffsetsAt(std::istream & is, uint32_t pos) {
 	checksum.update(magic, ARRAY_SIZE(magic));
 	
 	if(version >= INNO_VERSION(5, 1,  5)) {
-		uint32_t revision = checksum.load<little_endian, uint32_t>(is);
+		uint32_t revision = checksum.load_number<uint32_t>(is);
 		if(is.fail() || revision != 1) {
 			is.clear();
 			return false;
 		}
 	}
 	
-	(void)checksum.load<little_endian, uint32_t>(is);
-	exeOffset = checksum.load<little_endian, uint32_t>(is);
+	(void)checksum.load_number<uint32_t>(is);
+	exe_offset = checksum.load_number<uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 1, 6)) {
-		exeCompressedSize = 0;
+		exe_compressed_size = 0;
 	} else {
-		exeCompressedSize = checksum.load<little_endian, uint32_t>(is);
+		exe_compressed_size = checksum.load_number<uint32_t>(is);
 	}
 	
-	exeUncompressedSize = checksum.load<little_endian, uint32_t>(is);
+	exe_uncompressed_size = checksum.load_number<uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 0, 3)) {
-		exeChecksum.type = crypto::CRC32;
-		exeChecksum.crc32 = checksum.load<little_endian, uint32_t>(is);
+		exe_checksum.type = crypto::CRC32;
+		exe_checksum.crc32 = checksum.load_number<uint32_t>(is);
 	} else {
-		exeChecksum.type = crypto::Adler32;
-		exeChecksum.adler32 = checksum.load<little_endian, uint32_t>(is);
+		exe_checksum.type = crypto::Adler32;
+		exe_checksum.adler32 = checksum.load_number<uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		messageOffset = 0;
+		message_offset = 0;
 	} else {
-		messageOffset = load_number<uint32_t>(is);
+		message_offset = load_number<uint32_t>(is);
 	}
 	
-	headerOffset = checksum.load<little_endian, uint32_t>(is);
-	dataOffset = checksum.load<little_endian, uint32_t>(is);
+	header_offset = checksum.load_number<uint32_t>(is);
+	data_offset = checksum.load_number<uint32_t>(is);
 	
 	if(is.fail()) {
 		is.clear();
@@ -155,13 +159,13 @@ bool SetupLoader::loadOffsetsAt(std::istream & is, uint32_t pos) {
 	return true;
 }
 
-void SetupLoader::load(std::istream & is) {
+void offsets::load(std::istream & is) {
 	
 	/*
 	 * Try to load the offset table by following a pointer at a constant offset.
 	 * This method of storing the offset table is used in versions before 5.1.5
 	 */
-	if(loadFromExeFile(is)) {
+	if(load_from_exe_file(is)) {
 		return;
 	}
 	
@@ -169,7 +173,7 @@ void SetupLoader::load(std::istream & is) {
 	 * Try to load an offset table located in a PE/COFF (.exe) resource entry.
 	 * This method of storing the offset table was introduced in version 5.1.5
 	 */
-	if(loadFromExeResource(is)) {
+	if(load_from_exe_resource(is)) {
 		return;
 	}
 	
@@ -178,11 +182,13 @@ void SetupLoader::load(std::istream & is) {
 	 * In that case, the setup headers start at the beginning of the file.
 	 */
 	
-	exeCompressedSize = exeUncompressedSize = exeOffset = 0; // No embedded setup exe.
+	exe_compressed_size = exe_uncompressed_size = exe_offset = 0; // No embedded setup exe.
 	
-	messageOffset = 0; // No embedded messages.
+	message_offset = 0; // No embedded messages.
 	
-	headerOffset = 0; // Whole file contains just the setup headers.
+	header_offset = 0; // Whole file contains just the setup headers.
 	
-	dataOffset = 0; // No embedded setup data.
+	data_offset = 0; // No embedded setup data.
 }
+
+} // namespace loader

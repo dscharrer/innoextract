@@ -3,6 +3,7 @@
 #define INNOEXTRACT_UTIL_ENUM_HPP
 
 #include <ostream>
+
 #include <boost/utility/enable_if.hpp>
 
 #include "util/console.hpp"

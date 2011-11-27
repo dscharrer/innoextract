@@ -93,17 +93,27 @@ struct endianness<true> {
 	
 };
 
-struct little_endian : public endianness<BOOST_BYTE_ORDER == 1234> {
+#ifndef LITTLE_ENDIAN
+#define LITTLE_ENDIAN 1234
+#endif
+
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN    4321
+#endif
+
+#define ENDIANNESS    BOOST_BYTE_ORDER
+
+struct little_endian : public endianness<ENDIANNESS == LITTLE_ENDIAN> {
 	static const size_t offset = 0;
 };
 
-struct big_endian : public endianness<BOOST_BYTE_ORDER == 4321> {
+struct big_endian : public endianness<ENDIANNESS == BIG_ENDIAN> {
 	static const size_t offset = 1;
 };
 
-#if defined(BOOST_LITTLE_ENDIAN)
+#if ENDIANNESS == LITTLE_ENDIAN
 typedef little_endian native_endian;
-#elif defined(BOOST_BIG_ENDIAN)
+#elif ENDIANNESS == BIG_ENDIAN
 typedef big_endian native_endian;
 #else
 #error "Unsupported host endianness."

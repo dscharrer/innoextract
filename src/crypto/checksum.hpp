@@ -41,27 +41,27 @@ class checksum_base : public static_polymorphic<Impl> {
 	
 public:
 	
-	template <typename Endianness, class T>
-	inline T process(T data) {
-		char buf[sizeof(data)];
-		T swapped = Endianness::byteswap_if_alien(data);
-		std::memcpy(buf, &swapped, sizeof(swapped));
-		this->impl().update(buf, sizeof(buf));
-		return data;
-	}
-	
 	/*!
 	 * Load the data and process it.
 	 * Data is processed as-is and then converted according to Endianness.
 	 */
-	template <typename Endianness, class T>
-	inline T load(std::istream & is) {
+	template <class T, class Endianness>
+	inline T load_number(std::istream & is) {
 		T result;
 		char buf[sizeof(result)];
 		is.read(buf, sizeof(buf));
 		this->impl().update(buf, sizeof(buf));
 		std::memcpy(&result, buf, sizeof(result));
-		return Endianness::byteswap_if_alien(result);
+		return little_endian::byteswap_if_alien(result);
+	}
+	
+	/*!
+	 * Load the data and process it.
+	 * Data is processed as-is and then converted if the host endianness is not little_endian.
+	 */
+	template <class T>
+	inline T load_number(std::istream & is) {
+		return load_number<T, little_endian>(is);
 	}
 	
 };

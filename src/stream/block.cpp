@@ -141,15 +141,15 @@ block_reader::pointer block_reader::get(std::istream & base, const InnoVersion &
 	
 	if(version >= INNO_VERSION(4, 0, 9)) {
 		
-		stored_size = actual_checksum.load<little_endian, uint32_t>(base);
-		uint8_t compressed = actual_checksum.load<little_endian, uint8_t>(base);
+		stored_size = actual_checksum.load_number<uint32_t>(base);
+		uint8_t compressed = actual_checksum.load_number<uint8_t>(base);
 		
 		compression = compressed ? (version >= INNO_VERSION(4, 1, 6) ? LZMA1 : Zlib) : Stored;
 		
 	} else {
 		
-		uint32_t compressed_size = actual_checksum.load<little_endian, uint32_t>(base);
-		uint32_t uncompressed_size = actual_checksum.load<little_endian, uint32_t>(base);
+		uint32_t compressed_size = actual_checksum.load_number<uint32_t>(base);
+		uint32_t uncompressed_size = actual_checksum.load_number<uint32_t>(base);
 		
 		if(compressed_size == uint32_t(-1)) {
 			stored_size = uncompressed_size, compression = Stored;

@@ -4,16 +4,18 @@
 
 #include "crypto/crc32.hpp"
 
-#include <boost/detail/endian.hpp>
+#include "util/endian.hpp"
 
 namespace crypto {
 
-#ifdef BOOST_LITTLE_ENDIAN
+#if ENDIANNESS == LITTLE_ENDIAN
 #define CRC32_INDEX(c) (c & 0xff)
 #define CRC32_SHIFTED(c) (c >> 8)
-#else
+#elif ENDIANNESS == BIG_ENDIAN
 #define CRC32_INDEX(c) (c >> 24)
 #define CRC32_SHIFTED(c) (c << 8)
+#else
+#error "Unsupported host endianness."
 #endif
 
 /* Table of CRC-32's of all single byte values (made by makecrc.c) */

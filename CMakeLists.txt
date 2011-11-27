@@ -84,8 +84,8 @@ set(INNOEXTRACT_SOURCES
 	src/crypto/md5.cpp
 	src/crypto/sha1.cpp
 	
-	src/loader/ExeReader.cpp
-	src/loader/SetupLoader.cpp
+	src/loader/exereader.cpp
+	src/loader/offsets.cpp
 	
 	src/setup/DeleteEntry.cpp
 	src/setup/DirectoryEntry.cpp

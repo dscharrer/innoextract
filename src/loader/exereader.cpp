@@ -1,5 +1,5 @@
 
-#include <loader/ExeReader.hpp>
+#include "loader/exereader.hpp"
 
 #include <stdint.h>
 #include <iostream>
@@ -9,11 +9,13 @@
 
 #include "util/load.hpp"
 
+namespace loader {
+
 namespace {
 
 static const char PE_MAGIC[] = { 'P', 'E', 0, 0 };
 
-inline bool getResourceTable(uint32_t & entry, uint32_t resource_offset) {
+inline bool get_resource_table(uint32_t & entry, uint32_t resource_offset) {
 	
 	bool is_table = (entry & (uint32_t(1) << 31));
 	
@@ -24,17 +26,20 @@ inline bool getResourceTable(uint32_t & entry, uint32_t resource_offset) {
 
 } // anonymous namespace
 
-struct ExeReader::CoffFileHeader {
+struct exe_reader::header {
 	
 	//! Number of CoffSection structures following this header after optionalHeaderSize bytes.
 	uint16_t nsections;
 	
-	//! Offset from the end of this header to the start of the section table.
-	uint16_t optional_header_size;
+	//! Offset of the section table in the file.
+	uint32_t section_table_offset;
+	
+	//! Virtual memory address of the resource root table.
+	uint32_t resource_table_address;
 	
 };
 
-struct ExeReader::CoffSection {
+struct exe_reader::section {
 	
 	uint32_t virtual_size; //!< Section size in virtual memory.
 	uint32_t virtual_address; //!< Base virtual memory address.
@@ -43,7 +48,7 @@ struct ExeReader::CoffSection {
 	
 };
 
-uint32_t ExeReader::findResourceEntry(std::istream & is, uint32_t needle) {
+uint32_t exe_reader::find_resource_entry(std::istream & is, uint32_t needle) {
 	
 	// skip: characteristics + timestamp + major version + minor version
 	if(is.seekg(4 + 4 + 2 + 2, std::ios_base::cur).fail()) {
@@ -79,19 +84,65 @@ uint32_t ExeReader::findResourceEntry(std::istream & is, uint32_t needle) {
 	return 0;
 }
 
-bool ExeReader::loadSectionTable(std::istream & is, uint32_t peOffset,
-                                 const CoffFileHeader & coff, CoffSectionTable & table) {
+bool exe_reader::load_header(std::istream & is, header & coff) {
 	
-	// machine + nsections + creation time + symbol table offset + nsymbols
-	// + optional header size + characteristics
-	const uint32_t file_header_size = 2 + 2 + 4 + 4 + 4 + 2 + 2;
-	uint32_t section_table_offset = peOffset + uint32_t(sizeof(PE_MAGIC)) + file_header_size
-	                              + coff.optional_header_size;
-	is.seekg(section_table_offset);
+	// Skip the DOS stub.
+	uint16_t peOffset = load_number<uint16_t>(is.seekg(0x3c));
+	if(is.fail()) {
+		return false;
+	}
+	
+	char magic[sizeof(PE_MAGIC)];
+	if(is.seekg(peOffset).read(magic, sizeof(magic)).fail()) {
+		return false;
+	}
+	if(std::memcmp(magic, PE_MAGIC, sizeof(PE_MAGIC))) {
+		return false;
+	}
+	
+	is.seekg(2, std::ios_base::cur); // machine
+	coff.nsections = load_number<uint16_t>(is);
+	is.seekg(4 + 4 + 4, std::ios_base::cur); // creation time + symbol table offset + nbsymbols
+	uint16_t optional_header_size = load_number<uint16_t>(is);
+	is.seekg(2, std::ios_base::cur); // characteristics
+	
+	coff.section_table_offset = uint32_t(is.tellg()) + optional_header_size;
+	
+	// Skip the optional header.
+	uint16_t optionalHeaderMagic = load_number<uint16_t>(is);
+	if(is.fail()) {
+		return false;
+	}
+	if(optionalHeaderMagic == 0x20b) { // PE32+
+		is.seekg(106, std::ios_base::cur);
+	} else {
+		is.seekg(90, std::ios_base::cur);
+	}
+	
+	uint32_t ndirectories = load_number<uint32_t>(is);
+	if(is.fail() || ndirectories < 3) {
+		return false;
+	}
+	const uint32_t directory_header_size = 4 + 4; // address + size
+	is.seekg(2 * directory_header_size, std::ios_base::cur);
+	
+	// Virtual memory address and size of the start of resource directory.
+	coff.resource_table_address = load_number<uint32_t>(is);
+	uint32_t resource_size = load_number<uint32_t>(is);
+	if(is.fail() || !coff.resource_table_address || !resource_size) {
+		return false;
+	}
+	
+	return true;
+}
+
+bool exe_reader::load_section_list(std::istream & is, const header & coff, section_list & table) {
+	
+	is.seekg(coff.section_table_offset);
 	
 	table.resize(coff.nsections);
-	for(CoffSectionTable::iterator i = table.begin(); i != table.end(); ++i) {
-		CoffSection & section = *i;
+	for(section_list::iterator i = table.begin(); i != table.end(); ++i) {
+		section & section = *i;
 		
 		is.seekg(8, std::ios_base::cur); // name
 		
@@ -109,98 +160,54 @@ bool ExeReader::loadSectionTable(std::istream & is, uint32_t peOffset,
 	return !is.fail();
 }
 
-uint32_t ExeReader::memoryAddressToFileOffset(const CoffSectionTable & sections, uint32_t memory) {
+uint32_t exe_reader::to_file_offset(const section_list & sections, uint32_t memory) {
 	
-	for(CoffSectionTable::const_iterator i = sections.begin(); i != sections.end(); ++i) {
-		const CoffSection & section = *i;
-		
-		if(memory >= section.virtual_address
-			 && memory < section.virtual_address + section.virtual_size) {
-			return memory + section.raw_address - section.virtual_address;
+	for(section_list::const_iterator i = sections.begin(); i != sections.end(); ++i) {
+		const section & s = *i;
+		if(memory >= s.virtual_address && memory < s.virtual_address + s.virtual_size) {
+			return memory + s.raw_address - s.virtual_address;
 		}
-		
 	}
 	
 	return 0;
 }
 
-ExeReader::Resource ExeReader::findResource(std::istream & is, uint32_t name,
-                                            uint32_t type, uint32_t language) {
+exe_reader::resource exe_reader::find_resource(std::istream & is, uint32_t name,
+                                               uint32_t type, uint32_t language) {
 	
-	Resource result;
+	resource result;
 	result.offset = result.size = 0;
 	
-	// Skip the DOS stub.
-	uint16_t peOffset = load_number<uint16_t>(is.seekg(0x3c));
-	if(is.fail()) {
+	header coff;
+	if(!load_header(is, coff)) {
 		return result;
 	}
 	
-	char magic[sizeof(PE_MAGIC)];
-	if(is.seekg(peOffset).read(magic, sizeof(magic)).fail()) {
-		return result;
-	}
-	if(std::memcmp(magic, PE_MAGIC, sizeof(PE_MAGIC))) {
+	section_list sections;
+	if(!load_section_list(is, coff, sections)) {
 		return result;
 	}
 	
-	CoffFileHeader coff;
-	is.seekg(2, std::ios_base::cur); // machine
-	coff.nsections = load_number<uint16_t>(is);
-	is.seekg(4 + 4 + 4, std::ios_base::cur); // creation time + symbol table offset + nbsymbols
-	coff.optional_header_size = load_number<uint16_t>(is);
-	is.seekg(2, std::ios_base::cur); // characteristics
-	
-	// Skip the optional header.
-	uint16_t optionalHeaderMagic = load_number<uint16_t>(is);
-	if(is.fail()) {
-		return result;
-	}
-	if(optionalHeaderMagic == 0x20b) { // PE32+
-		is.seekg(106, std::ios_base::cur);
-	} else {
-		is.seekg(90, std::ios_base::cur);
-	}
-	
-	uint32_t ndirectories = load_number<uint32_t>(is);
-	if(is.fail() || ndirectories < 3) {
-		return result;
-	}
-	const uint32_t directory_header_size = 4 + 4; // address + size
-	is.seekg(2 * directory_header_size, std::ios_base::cur);
-	
-	// Virtual memory address and size of the start of resource directory.
-	uint32_t resource_address = load_number<uint32_t>(is);
-	uint32_t resource_size = load_number<uint32_t>(is);
-	if(is.fail() || !resource_address || !resource_size) {
-		return result;
-	}
-	
-	CoffSectionTable sections;
-	if(!loadSectionTable(is, peOffset, coff, sections)) {
-		return result;
-	}
-	
-	uint32_t resource_offset = memoryAddressToFileOffset(sections, resource_address);
+	uint32_t resource_offset = to_file_offset(sections, coff.resource_table_address);
 	if(!resource_offset) {
 		return result;
 	}
 	
 	is.seekg(resource_offset);
-	uint32_t type_offset = findResourceEntry(is, type);
-	if(!getResourceTable(type_offset, resource_offset)) {
+	uint32_t type_offset = find_resource_entry(is, type);
+	if(!get_resource_table(type_offset, resource_offset)) {
 		return result;
 	}
 	
 	is.seekg(type_offset);
-	uint32_t name_offset = findResourceEntry(is, name);
-	if(!getResourceTable(name_offset, resource_offset)) {
+	uint32_t name_offset = find_resource_entry(is, name);
+	if(!get_resource_table(name_offset, resource_offset)) {
 		return result;
 	}
 	
 	is.seekg(name_offset);
-	uint32_t leaf_offset = findResourceEntry(is, language);
-	if(!leaf_offset || getResourceTable(leaf_offset, resource_offset)) {
+	uint32_t leaf_offset = find_resource_entry(is, language);
+	if(!leaf_offset || get_resource_table(leaf_offset, resource_offset)) {
 		return result;
 	}
 	
@@ -213,7 +220,7 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, uint32_t name,
 		return result;
 	}
 	
-	uint32_t data_offset = memoryAddressToFileOffset(sections, data_address);
+	uint32_t data_offset = to_file_offset(sections, data_address);
 	if(!data_offset) {
 		return result;
 	}
@@ -223,3 +230,5 @@ ExeReader::Resource ExeReader::findResource(std::istream & is, uint32_t name,
 	
 	return result;
 }
+
+} // namespace loader

@@ -2,6 +2,7 @@
 #ifndef INNOEXTRACT_UTIL_FLAGS_HPP
 #define INNOEXTRACT_UTIL_FLAGS_HPP
 
+#include <stddef.h>
 #include <bitset>
 
 // loosely based on Qflags from Qt
