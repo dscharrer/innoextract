@@ -22,11 +22,11 @@
 
 #include "loader/offsets.hpp"
 
+#include "setup/data.hpp"
+#include "setup/delete.hpp"
+#include "setup/directory.hpp"
+#include "setup/file.hpp"
 #include "setup/MessageEntry.hpp"
-#include "setup/DeleteEntry.hpp"
-#include "setup/DirectoryEntry.hpp"
-#include "setup/FileEntry.hpp"
-#include "setup/FileLocationEntry.hpp"
 #include "setup/IconEntry.hpp"
 #include "setup/IniEntry.hpp"
 #include "setup/LanguageEntry.hpp"
@@ -37,7 +37,7 @@
 #include "setup/SetupHeader.hpp"
 #include "setup/SetupTaskEntry.hpp"
 #include "setup/SetupTypeEntry.hpp"
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 
 #include "stream/block.hpp"
 #include "stream/chunk.hpp"
@@ -60,13 +60,13 @@ namespace fs = boost::filesystem;
 
 struct FileLocationComparer {
 	
-	const std::vector<FileLocationEntry> & locations;
+	const std::vector<setup::data_entry> & locations;
 	
-	explicit FileLocationComparer(const std::vector<FileLocationEntry> & loc) : locations(loc) { }
+	explicit FileLocationComparer(const std::vector<setup::data_entry> & loc) : locations(loc) { }
 	FileLocationComparer(const FileLocationComparer & o) : locations(o.locations) { }
 	
 	bool operator()(size_t a, size_t b) {
-		return (locations[a].fileOffset < locations[b].fileOffset);
+		return (locations[a].file_offset < locations[b].file_offset);
 	}
 	
 };
@@ -150,7 +150,7 @@ static void dump(std::istream & is, const string & file) {
 	ofs << data;
 };
 
-static void readWizardImageAndDecompressor(std::istream & is, const InnoVersion & version,
+static void readWizardImageAndDecompressor(std::istream & is, const inno_version & version,
                                            const SetupHeader & header) {
 	
 	cout << endl;
@@ -215,7 +215,7 @@ int main(int argc, char * argv[]) {
 	
 	ifs.seekg(offsets.header_offset);
 	
-	InnoVersion version;
+	inno_version version;
 	version.load(ifs);
 	if(ifs.fail()) {
 		log_error << "error reading setup data version!";
@@ -525,11 +525,9 @@ int main(int argc, char * argv[]) {
 	if(header.numDirectoryEntries) {
 		cout << endl << "Directory entries:" << endl;
 	}
-	std::vector<DirectoryEntry> directories;
-	directories.resize(header.numDirectoryEntries);
 	for(size_t i = 0; i < header.numDirectoryEntries; i++) {
 		
-		DirectoryEntry & entry = directories[i];
+		setup::directory_entry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
 			log_error << "error reading directory entry #" << i;
@@ -555,11 +553,11 @@ int main(int argc, char * argv[]) {
 	if(header.numFileEntries) {
 		cout << endl << "File entries:" << endl;
 	}
-	std::vector<FileEntry> files;
+	std::vector<setup::file_entry> files;
 	files.resize(header.numFileEntries);
 	for(size_t i = 0; i < header.numFileEntries; i++) {
 		
-		FileEntry & entry = files[i];
+		setup::file_entry & entry = files[i];
 		entry.load(*is, version);
 		if(is->fail()) {
 			log_error << "error reading file entry #" << i;
@@ -576,19 +574,19 @@ int main(int argc, char * argv[]) {
 		cout  << endl;
 		
 		cout << if_not_empty("  Source", entry.source);
-		cout << if_not_empty("  Install font name", entry.installFontName);
-		cout << if_not_empty("  Strong assembly name", entry.strongAssemblyName);
+		cout << if_not_empty("  Install font name", entry.install_font_name);
+		cout << if_not_empty("  Strong assembly name", entry.strong_assembly_name);
 		
 		print(cout, entry, header);
 		
 		cout << if_not_zero("  Attributes", entry.attributes);
-		cout << if_not_zero("  Size", entry.externalSize);
+		cout << if_not_zero("  Size", entry.external_size);
 		
 		cout << if_not_equal("  Permission entry", entry.permission, -1);
 		
 		cout << if_not_zero("  Options", entry.options);
 		
-		cout << if_not_equal("  Type", entry.type, FileEntry::UserFile);
+		cout << if_not_equal("  Type", entry.type, setup::file_entry::UserFile);
 		
 	}
 	
@@ -689,7 +687,7 @@ int main(int argc, char * argv[]) {
 	}
 	for(size_t i = 0; i < header.numDeleteEntries; i++) {
 		
-		DeleteEntry entry;
+		setup::delete_entry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
 			log_error << "error reading install delete entry #" << i;
@@ -707,7 +705,7 @@ int main(int argc, char * argv[]) {
 	}
 	for(size_t i = 0; i < header.numUninstallDeleteEntries; i++) {
 		
-		DeleteEntry entry;
+		setup::delete_entry entry;
 		entry.load(*is, version);
 		if(is->fail()) {
 			log_error << "error reading uninstall delete entry #" << i;
@@ -775,11 +773,11 @@ int main(int argc, char * argv[]) {
 	if(header.numFileLocationEntries) {
 		cout << endl << "File location entries:" << endl;
 	}
-	std::vector<FileLocationEntry> locations;
+	std::vector<setup::data_entry> locations;
 	locations.resize(header.numFileLocationEntries);
 	for(size_t i = 0; i < header.numFileLocationEntries; i++) {
 		
-		FileLocationEntry & entry = locations[i];
+		setup::data_entry & entry = locations[i];
 		entry.load(*is, version);
 		if(is->fail()) {
 			log_error << "error reading file location entry #" << i;
@@ -787,19 +785,19 @@ int main(int argc, char * argv[]) {
 		
 		cout << " - " << "File location #" << i << ':' << endl;
 		
-		cout << if_not_zero("  First slice", entry.firstSlice);
-		cout << if_not_equal("  Last slice", entry.lastSlice, entry.firstSlice);
+		cout << if_not_zero("  First slice", entry.first_slice);
+		cout << if_not_equal("  Last slice", entry.last_slice, entry.first_slice);
 		
-		cout << "  Chunk: offset " << color::cyan << print_hex(entry.chunkOffset) << color::reset
-		     << " size " << color::cyan << print_hex(entry.chunkSize) << color::reset << std::endl;
+		cout << "  Chunk: offset " << color::cyan << print_hex(entry.chunk_offset) << color::reset
+		     << " size " << color::cyan << print_hex(entry.chunk_size) << color::reset << std::endl;
 		
-		cout << if_not_zero("  File offset", print_hex(entry.fileOffset));
+		cout << if_not_zero("  File offset", print_hex(entry.file_offset));
 		cout << if_not_zero("  File size", print_bytes(entry.file_size));
 		
 		cout << "  Checksum: " << entry.checksum << endl;
 		
 		std::tm t;
-		if(entry.options & FileLocationEntry::TimeStampInUTC) {
+		if(entry.options & setup::data_entry::TimeStampInUTC) {
 			gmtime_r(&entry.timestamp.tv_sec, &t);
 		} else {
 			localtime_r(&entry.timestamp.tv_sec, &t);
@@ -815,9 +813,9 @@ int main(int argc, char * argv[]) {
 		
 		cout << if_not_zero("  Options", entry.options);
 		
-		if(entry.options & FileLocationEntry::VersionInfoValid) {
-			cout << if_not_zero("  File version LS", entry.fileVersionLS);
-			cout << if_not_zero("  File version MS", entry.fileVersionMS);
+		if(entry.options & setup::data_entry::VersionInfoValid) {
+			cout << if_not_zero("  File version LS", entry.file_version_ls);
+			cout << if_not_zero("  File version MS", entry.file_version_ms);
 		}
 		
 	}
@@ -843,18 +841,18 @@ int main(int argc, char * argv[]) {
 	typedef std::map<stream::chunk, std::vector<size_t> > Chunks;
 	Chunks chunks;
 	for(size_t i = 0; i < locations.size(); i++) {
-		const FileLocationEntry & location = locations[i];
+		const setup::data_entry & location = locations[i];
 		
 		stream::chunk::compression_method compression = stream::chunk::Stored;
-		if(location.options & FileLocationEntry::ChunkCompressed) {
+		if(location.options & setup::data_entry::ChunkCompressed) {
 			compression = header.compressMethod;
 		}
 		
-		chunks[stream::chunk(location.firstSlice, location.chunkOffset, location.chunkSize,
-		                     compression, location.options & FileLocationEntry::ChunkEncrypted)
+		chunks[stream::chunk(location.first_slice, location.chunk_offset, location.chunk_size,
+		                     compression, location.options & setup::data_entry::ChunkEncrypted)
 		      ].push_back(i);
 		assert(header.compressMethod == stream::chunk::BZip2
-		       || !(location.options & FileLocationEntry::BZipped));
+		       || !(location.options & setup::data_entry::BZipped));
 	}
 	
 	boost::shared_ptr<stream::slice_reader> slice_reader;
@@ -884,18 +882,18 @@ int main(int argc, char * argv[]) {
 		uint64_t offset = 0;
 		
 		BOOST_FOREACH(size_t location_i, chunk.second) {
-			const FileLocationEntry & location = locations[location_i];
+			const setup::data_entry & location = locations[location_i];
 			
-			if(location.fileOffset < offset) {
+			if(location.file_offset < offset) {
 				log_error << "bad offset";
 				return 1;
 			}
 			
-			if(location.fileOffset > offset) {
-				std::cout << "discarding " << print_bytes(location.fileOffset - offset) << std::endl;
-				discard(*chunk_source, location.fileOffset - offset);
+			if(location.file_offset > offset) {
+				std::cout << "discarding " << print_bytes(location.file_offset - offset) << std::endl;
+				discard(*chunk_source, location.file_offset - offset);
 			}
-			offset = location.fileOffset + location.file_size;
+			offset = location.file_offset + location.file_size;
 			
 			std::cout << "-> reading ";
 			bool named = false;
@@ -909,7 +907,7 @@ int main(int argc, char * argv[]) {
 			if(!named) {
 				std::cout << "unnamed file";
 			}
-			std::cout << " @ " << print_hex(location.fileOffset)
+			std::cout << " @ " << print_hex(location.file_offset)
 			          << " (" << print_bytes(location.file_size) << ')' << std::endl;
 			
 			crypto::checksum checksum;

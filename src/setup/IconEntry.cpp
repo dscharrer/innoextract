@@ -14,7 +14,7 @@ STORED_ENUM_MAP(StoredCloseOnExit, IconEntry::NoSetting,
 
 } // anonymous namespace
 
-void IconEntry::load(std::istream & is, const InnoVersion & version) {
+void IconEntry::load(std::istream & is, const inno_version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<uint32_t>(is); // uncompressed size of the icon entry structure
@@ -27,7 +27,7 @@ void IconEntry::load(std::istream & is, const InnoVersion & version) {
 	is >> encoded_string(iconFilename, version.codepage());
 	is >> encoded_string(comment, version.codepage());
 	
-	loadConditionData(is, version);
+	load_condition_data(is, version);
 	
 	if(version >= INNO_VERSION(5, 3, 5)) {
 		is >> encoded_string(appUserModelId, version.codepage());
@@ -35,7 +35,7 @@ void IconEntry::load(std::istream & is, const InnoVersion & version) {
 		appUserModelId.clear();
 	}
 	
-	loadVersionData(is, version);
+	load_version_data(is, version);
 	
 	iconIndex = load_number<int32_t>(is, version.bits);
 	

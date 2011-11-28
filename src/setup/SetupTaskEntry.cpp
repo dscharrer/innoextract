@@ -6,7 +6,7 @@
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
 
-void SetupTaskEntry::load(std::istream & is, const InnoVersion & version) {
+void SetupTaskEntry::load(std::istream & is, const inno_version & version) {
 	
 	is >> encoded_string(name, version.codepage());
 	is >> encoded_string(description, version.codepage());

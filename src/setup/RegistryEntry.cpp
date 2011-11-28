@@ -36,7 +36,7 @@ STORED_ENUM_MAP(StoredRegistryEntryType2, RegistryEntry::None,
 
 } // anonymous namespace
 
-void RegistryEntry::load(std::istream & is, const InnoVersion & version) {
+void RegistryEntry::load(std::istream & is, const inno_version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<uint32_t>(is); // uncompressed size of the directory entry structure
@@ -50,7 +50,7 @@ void RegistryEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 	is >> encoded_string(value, version.codepage());
 	
-	loadConditionData(is, version);
+	load_condition_data(is, version);
 	
 	if(version >= INNO_VERSION(4, 0, 11) && version < INNO_VERSION(4, 1, 0)) {
 		is >> encoded_string(permissions, version.codepage());
@@ -58,7 +58,7 @@ void RegistryEntry::load(std::istream & is, const InnoVersion & version) {
 		permissions.clear();
 	}
 	
-	loadVersionData(is, version);
+	load_version_data(is, version);
 	
 	if(version.bits != 16) {
 		hive = Hive(load_number<uint32_t>(is) & ~0x80000000);

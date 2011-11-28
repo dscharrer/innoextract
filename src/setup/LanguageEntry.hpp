@@ -6,7 +6,7 @@
 #include <string>
 #include <iosfwd>
 
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 
 struct LanguageEntry {
 	
@@ -33,7 +33,7 @@ struct LanguageEntry {
 	
 	bool rightToLeft;
 	
-	void load(std::istream & is, const InnoVersion & version);
+	void load(std::istream & is, const inno_version & version);
 	
 };
 

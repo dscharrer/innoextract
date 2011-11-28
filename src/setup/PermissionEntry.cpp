@@ -3,7 +3,7 @@
 
 #include "util/load.hpp"
 
-void PermissionEntry::load(std::istream & is, const InnoVersion & version) {
+void PermissionEntry::load(std::istream & is, const inno_version & version) {
 	
 	(void)version;
 	

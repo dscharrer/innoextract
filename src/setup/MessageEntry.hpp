@@ -5,7 +5,7 @@
 #include <string>
 #include <iosfwd>
 
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 
 struct MessageEntry {
 	
@@ -20,7 +20,7 @@ struct MessageEntry {
 	// Index into the default language entry list or -1.
 	int language;
 	
-	void load(std::istream & is, const InnoVersion & version);
+	void load(std::istream & is, const inno_version & version);
 	
 };
 

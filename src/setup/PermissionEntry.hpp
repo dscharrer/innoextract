@@ -5,7 +5,7 @@
 #include <string>
 #include <iosfwd>
 
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 
 struct PermissionEntry {
 	
@@ -13,7 +13,7 @@ struct PermissionEntry {
 	
 	std::string permissions;
 	
-	void load(std::istream & is, const InnoVersion & version);
+	void load(std::istream & is, const inno_version & version);
 	
 };
 

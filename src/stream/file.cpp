@@ -5,8 +5,8 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/restrict.hpp>
 
-#include "setup/FileLocationEntry.hpp"
-#include "setup/Version.hpp"
+#include "setup/data.hpp"
+#include "setup/version.hpp"
 #include "stream/checksum.hpp"
 #include "stream/exefilter.hpp"
 
@@ -14,14 +14,14 @@ namespace io = boost::iostreams;
 
 namespace stream {
 
-file_reader::pointer file_reader::get(base_type & base, const FileLocationEntry & location,
-                                      const InnoVersion & version, crypto::checksum * checksum) {
+file_reader::pointer file_reader::get(base_type & base, const setup::data_entry & location,
+                                      const inno_version & version, crypto::checksum * checksum) {
 	
 	boost::shared_ptr<io::filtering_istream> result = boost::make_shared<io::filtering_istream>();
 	
 	result->push(stream::checksum_filter(checksum, location.checksum.type), 8192);
 	
-	if(location.options & FileLocationEntry::CallInstructionOptimized) {
+	if(location.options & setup::data_entry::CallInstructionOptimized) {
 		if(version < INNO_VERSION(5, 2, 0)) {
 			result->push(inno_exe_decoder_4108(), 8192);
 		} else {

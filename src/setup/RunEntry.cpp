@@ -16,7 +16,7 @@ STORED_ENUM_MAP(StoredRunWait, RunEntry::WaitUntilTerminated,
 
 } // anonymous namespace
 
-void RunEntry::load(std::istream & is, const InnoVersion & version) {
+void RunEntry::load(std::istream & is, const inno_version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<uint32_t>(is); // uncompressed size of the directory entry structure
@@ -44,9 +44,9 @@ void RunEntry::load(std::istream & is, const InnoVersion & version) {
 		is >> encoded_string(description, version.codepage());
 	}
 	
-	loadConditionData(is, version);
+	load_condition_data(is, version);
 	
-	loadVersionData(is, version);
+	load_version_data(is, version);
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
 		showCmd = load_number<int32_t>(is);

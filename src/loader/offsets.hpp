@@ -3,7 +3,7 @@
 #define INNOEXTRACT_LOADER_OFFSETS_HPP
 
 #include <stdint.h>
-#include <istream>
+#include <iosfwd>
 
 #include "crypto/checksum.hpp"
 

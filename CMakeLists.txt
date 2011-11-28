@@ -87,10 +87,10 @@ set(INNOEXTRACT_SOURCES
 	src/loader/exereader.cpp
 	src/loader/offsets.cpp
 	
-	src/setup/DeleteEntry.cpp
-	src/setup/DirectoryEntry.cpp
-	src/setup/FileEntry.cpp
-	src/setup/FileLocationEntry.cpp
+	src/setup/data.cpp
+	src/setup/delete.cpp
+	src/setup/directory.cpp
+	src/setup/file.cpp
 	src/setup/IconEntry.cpp
 	src/setup/IniEntry.cpp
 	src/setup/LanguageEntry.cpp
@@ -103,7 +103,7 @@ set(INNOEXTRACT_SOURCES
 	src/setup/SetupItem.cpp
 	src/setup/SetupTaskEntry.cpp
 	src/setup/SetupTypeEntry.cpp
-	src/setup/Version.cpp
+	src/setup/version.cpp
 	src/setup/WindowsVersion.cpp
 	
 	src/stream/block.cpp

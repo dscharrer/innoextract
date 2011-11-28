@@ -9,7 +9,7 @@
 #include <iosfwd>
 
 #include "crypto/checksum.hpp"
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 #include "setup/WindowsVersion.hpp"
 #include "stream/chunk.hpp"
 #include "util/enum.hpp"
@@ -218,7 +218,7 @@ struct SetupHeader {
 	
 	Options options;
 	
-	void load(std::istream & is, const InnoVersion & version);
+	void load(std::istream & is, const inno_version & version);
 	
 };
 

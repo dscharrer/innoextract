@@ -1,5 +1,5 @@
 
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 
 #include <cstring>
 #include <algorithm>
@@ -112,7 +112,7 @@ const KnownSetupDataVersion knownSetupDataVersions[] = {
 	{ "Inno Setup Setup Data (5.4.2) (u)",             INNO_VERSION_EXT(5, 4,  2, 0), true  },
 };
 
-std::ostream & operator<<(std::ostream & os, const InnoVersion & v) {
+std::ostream & operator<<(std::ostream & os, const inno_version & v) {
 	
 	os << v.a() << '.' << v.b() << '.' << v.c();
 	if(v.d()) {
@@ -134,7 +134,7 @@ std::ostream & operator<<(std::ostream & os, const InnoVersion & v) {
 	return os;
 }
 
-void InnoVersion::load(std::istream & is) {
+void inno_version::load(std::istream & is) {
 	
 	BOOST_STATIC_ASSERT(sizeof(StoredLegacySetupDataVersion) <= sizeof(StoredSetupDataVersion));
 	
@@ -192,7 +192,7 @@ void InnoVersion::load(std::istream & is) {
 	throw new string("bad version");
 }
 
-bool InnoVersion::isSuspicious() const {
+bool inno_version::isSuspicious() const {
 	
 	if(version == INNO_VERSION(2, 0, 1)) {
 		// might be either 2.0.1 or 2.0.2

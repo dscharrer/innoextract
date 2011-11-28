@@ -18,7 +18,7 @@ STORED_FLAGS_MAP(StoredIniOptions,
 
 } // anonymous namespace
 
-void IniEntry::load(std::istream & is, const InnoVersion & version) {
+void IniEntry::load(std::istream & is, const inno_version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<uint32_t>(is); // uncompressed size of the ini entry structure
@@ -32,9 +32,9 @@ void IniEntry::load(std::istream & is, const InnoVersion & version) {
 	is >> encoded_string(key, version.codepage());
 	is >> encoded_string(value, version.codepage());
 	
-	loadConditionData(is, version);
+	load_condition_data(is, version);
 	
-	loadVersionData(is, version);
+	load_version_data(is, version);
 	
 	options = stored_flags<StoredIniOptions>(is).get();
 }

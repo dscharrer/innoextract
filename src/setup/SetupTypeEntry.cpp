@@ -19,7 +19,7 @@ STORED_ENUM_MAP(StoredSetupType, SetupTypeEntry::User,
 
 } // anonymous namespace
 
-void SetupTypeEntry::load(std::istream & is, const InnoVersion & version) {
+void SetupTypeEntry::load(std::istream & is, const inno_version & version) {
 	
 	is >> encoded_string(name, version.codepage());
 	is >> encoded_string(description, version.codepage());

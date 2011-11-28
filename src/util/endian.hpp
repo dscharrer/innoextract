@@ -55,8 +55,8 @@ inline int64_t byteswap(int64_t value) {
 }
 
 template <class T>
-void byteswap(T * out, const T * in, size_t byteCount) {
-	for(size_t i = 0; i < byteCount / sizeof(T); i++) {
+void byteswap(T * out, const T * in, size_t byte_count) {
+	for(size_t i = 0; i < byte_count / sizeof(T); i++) {
 		out[i] = byteswap(in[i]);
 	}
 }
@@ -70,8 +70,8 @@ struct endianness {
 	static T byteswap_if_alien(T value) { return byteswap(value); }
 	
 	template <class T>
-	static void byteswap_if_alien(const T * in, T * out, size_t byteCount) {
-		byteswap(out, in, byteCount);
+	static void byteswap_if_alien(const T * in, T * out, size_t byte_count) {
+		byteswap(out, in, byte_count);
 	}
 	
 };
@@ -85,9 +85,9 @@ struct endianness<true> {
 	static T byteswap_if_alien(T value) { return value; }
 	
 	template <class T>
-	static void byteswap_if_alien(const T * in, T * out, size_t byteCount) {
+	static void byteswap_if_alien(const T * in, T * out, size_t byte_count) {
 		if(in != out) {
-			std::memcpy(out, in, byteCount);
+			std::memcpy(out, in, byte_count);
 		}
 	}
 	

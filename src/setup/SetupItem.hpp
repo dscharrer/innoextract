@@ -5,7 +5,7 @@
 #include <string>
 #include <iosfwd>
 
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 #include "setup/WindowsVersion.hpp"
 
 struct SetupItem {
@@ -23,9 +23,9 @@ struct SetupItem {
 	
 protected:
 	
-	void loadConditionData(std::istream & is, const InnoVersion & version);
+	void load_condition_data(std::istream & is, const inno_version & version);
 	
-	void loadVersionData(std::istream & is, const InnoVersion & version);
+	void load_version_data(std::istream & is, const inno_version & version);
 	
 };
 

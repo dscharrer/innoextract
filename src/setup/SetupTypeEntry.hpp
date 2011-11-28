@@ -6,7 +6,7 @@
 #include <string>
 #include <iosfwd>
 
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 #include "setup/WindowsVersion.hpp"
 #include "util/enum.hpp"
 #include "util/flags.hpp"
@@ -40,7 +40,7 @@ struct SetupTypeEntry {
 	
 	uint64_t size;
 	
-	void load(std::istream & is, const InnoVersion & version);
+	void load(std::istream & is, const inno_version & version);
 	
 };
 

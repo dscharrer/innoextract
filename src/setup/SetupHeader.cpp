@@ -113,7 +113,7 @@ STORED_ENUM_MAP(StoredDisablePage, SetupHeader::Auto,
 
 } // anonymous namespace
 
-void SetupHeader::load(std::istream & is, const InnoVersion & version) {
+void SetupHeader::load(std::istream & is, const inno_version & version) {
 	
 	options = 0;
 	

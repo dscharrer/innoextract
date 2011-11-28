@@ -10,7 +10,7 @@
 
 #include "crypto/crc32.hpp"
 #include "loader/exereader.hpp"
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
 

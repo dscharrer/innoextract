@@ -8,7 +8,7 @@
 
 void convert(iconv_t converter, const std::string & from, std::string & to);
 
-void LanguageEntry::load(std::istream & is, const InnoVersion & version) {
+void LanguageEntry::load(std::istream & is, const inno_version & version) {
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
 		is >> encoded_string(name, version.codepage());

@@ -1,19 +1,21 @@
 
-#ifndef INNOEXTRACT_SETUP_FILEENTRY_HPP
-#define INNOEXTRACT_SETUP_FILEENTRY_HPP
+#ifndef INNOEXTRACT_SETUP_FILE_HPP
+#define INNOEXTRACT_SETUP_FILE_HPP
 
 #include <stdint.h>
 #include <string>
 #include <iosfwd>
 
 #include "setup/SetupItem.hpp"
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 #include "util/enum.hpp"
 #include "util/flags.hpp"
 
-struct FileEntry : public SetupItem {
+namespace setup {
+
+struct file_entry : public SetupItem {
 	
-	FLAGS(Options,
+	FLAGS(flags,
 		
 		ConfirmOverwrite,
 		NeverUninstall,
@@ -52,7 +54,7 @@ struct FileEntry : public SetupItem {
 		IsReadmeFile
 	);
 	
-	enum Type {
+	enum file_type {
 		UserFile,
 		UninstExe,
 		RegSvrExe,
@@ -60,26 +62,28 @@ struct FileEntry : public SetupItem {
 	
 	std::string source;
 	std::string destination;
-	std::string installFontName;
-	std::string strongAssemblyName;
+	std::string install_font_name;
+	std::string strong_assembly_name;
 	
 	uint32_t location; //!< index into the file location entry list
 	uint32_t attributes;
-	uint64_t externalSize;
+	uint64_t external_size;
 	
 	int permission; //!< index into the permission entry list
 	
-	Options options;
+	flags options;
 	
-	Type type;
+	file_type type;
 	
-	void load(std::istream & is, const InnoVersion & version);
+	void load(std::istream & is, const inno_version & version);
 	
 };
 
-FLAGS_OVERLOADS(FileEntry::Options)
-NAMED_ENUM(FileEntry::Options)
+} // namespace setup
 
-NAMED_ENUM(FileEntry::Type)
+FLAGS_OVERLOADS(setup::file_entry::flags)
+NAMED_ENUM(setup::file_entry::flags)
 
-#endif // INNOEXTRACT_SETUP_FILEENTRY_HPP
+NAMED_ENUM(setup::file_entry::file_type)
+
+#endif // INNOEXTRACT_SETUP_FILE_HPP

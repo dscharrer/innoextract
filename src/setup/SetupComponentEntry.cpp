@@ -31,7 +31,7 @@ STORED_FLAGS_MAP(StoredSetupComponentOptions2,
 
 } // anonymous namespace
 
-void SetupComponentEntry::load(std::istream & is, const InnoVersion & version) {
+void SetupComponentEntry::load(std::istream & is, const inno_version & version) {
 	
 	is >> encoded_string(name, version.codepage());
 	is >> encoded_string(description, version.codepage());

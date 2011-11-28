@@ -3,7 +3,7 @@
 #define INNOEXTRACT_SETUP_WINDOWSVERSION_HPP
 
 #include <ostream>
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 
 struct WindowsVersion {
 	
@@ -21,7 +21,7 @@ struct WindowsVersion {
 			return !(*this == o);
 		}
 		
-		void load(std::istream & is, const InnoVersion & version);
+		void load(std::istream & is, const inno_version & version);
 		
 	};
 	
@@ -45,7 +45,7 @@ struct WindowsVersion {
 	
 	ServicePack ntServicePack;
 	
-	void load(std::istream & is, const InnoVersion & version);
+	void load(std::istream & is, const inno_version & version);
 	
 	inline bool operator==(const WindowsVersion & o) const {
 		return (winVersion == o.winVersion

@@ -3,7 +3,7 @@
 
 #include "util/load.hpp"
 
-void SetupItem::loadConditionData(std::istream & is, const InnoVersion & version) {
+void SetupItem::load_condition_data(std::istream & is, const inno_version & version) {
 	
 	if(version >= INNO_VERSION(2, 0, 0)) {
 		is >> encoded_string(components, version.codepage());
@@ -31,7 +31,7 @@ void SetupItem::loadConditionData(std::istream & is, const InnoVersion & version
 	
 }
 
-void SetupItem::loadVersionData(std::istream & is, const InnoVersion & version) {
+void SetupItem::load_version_data(std::istream & is, const inno_version & version) {
 	
 	minVersion.load(is, version);
 	onlyBelowVersion.load(is, version);

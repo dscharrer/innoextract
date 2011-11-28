@@ -1,52 +1,58 @@
 
-#include "setup/FileEntry.hpp"
+#include "setup/file.hpp"
 
 #include "util/load.hpp"
 #include "util/log.hpp"
 #include "util/storedenum.hpp"
 
+namespace setup {
+
 namespace {
 
-enum FileCopyMode {
+enum file_copy_mode {
 	cmNormal,
 	cmIfDoesntExist,
 	cmAlwaysOverwrite,
 	cmAlwaysSkipIfSameOrOlder,
 };
 
-STORED_ENUM_MAP(StoredFileCopyMode, cmNormal,
+STORED_ENUM_MAP(stored_file_copy_mode, cmNormal,
 	cmNormal,
 	cmIfDoesntExist,
 	cmAlwaysOverwrite,
 	cmAlwaysSkipIfSameOrOlder,
 );
 
-STORED_ENUM_MAP(StoredFileType0, FileEntry::UserFile,
-	FileEntry::UserFile,
-	FileEntry::UninstExe,
+STORED_ENUM_MAP(stored_file_type_0, file_entry::UserFile,
+	file_entry::UserFile,
+	file_entry::UninstExe,
 );
 
 // win32, before 5.0.0
-STORED_ENUM_MAP(StoredFileType1, FileEntry::UserFile,
-	FileEntry::UserFile,
-	FileEntry::UninstExe,
-	FileEntry::RegSvrExe,
+STORED_ENUM_MAP(stored_file_type_1, file_entry::UserFile,
+	file_entry::UserFile,
+	file_entry::UninstExe,
+	file_entry::RegSvrExe,
 );
 
 } // anonymous namespace
 
-NAMED_ENUM(FileCopyMode)
+} // namespace setup
 
-ENUM_NAMES(FileCopyMode, "File Copy Mode",
+NAMED_ENUM(setup::file_copy_mode)
+
+ENUM_NAMES(setup::file_copy_mode, "File Copy Mode",
 	"normal",
 	"if doesn't exist",
 	"always overwrite",
 	"always skip if same or older",
 )
 
-void FileEntry::load(std::istream & is, const InnoVersion & version) {
+namespace setup {
+
+void file_entry::load(std::istream & is, const inno_version & version) {
 	
-	(void)enum_names<FileCopyMode>::names;
+	(void)enum_names<file_copy_mode>::names;
 	
 	options = 0;
 	
@@ -56,24 +62,24 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	
 	is >> encoded_string(source, version.codepage());
 	is >> encoded_string(destination, version.codepage());
-	is >> encoded_string(installFontName, version.codepage());
+	is >> encoded_string(install_font_name, version.codepage());
 	if(version >= INNO_VERSION(5, 2, 5)) {
-		is >> encoded_string(strongAssemblyName, version.codepage());
+		is >> encoded_string(strong_assembly_name, version.codepage());
 	} else {
-		strongAssemblyName.clear();
+		strong_assembly_name.clear();
 	}
 	
-	loadConditionData(is, version);
+	load_condition_data(is, version);
 	
-	loadVersionData(is, version);
+	load_version_data(is, version);
 	
 	location = load_number<uint32_t>(is, version.bits);
 	attributes = load_number<uint32_t>(is, version.bits);
-	externalSize = (version >= INNO_VERSION(4, 0, 0)) ? load_number<uint64_t>(is)
+	external_size = (version >= INNO_VERSION(4, 0, 0)) ? load_number<uint64_t>(is)
 	                                                  : load_number<uint32_t>(is);
 	
 	if(version < INNO_VERSION(3, 0, 5)) {
-		FileCopyMode copyMode = stored_enum<StoredFileCopyMode>(is).get();
+		file_copy_mode copyMode = stored_enum<stored_file_copy_mode>(is).get();
 		switch(copyMode) {
 			case cmNormal: options |= PromptIfOlder; break;
 			case cmIfDoesntExist: options |= OnlyIfDoesntExist | PromptIfOlder; break;
@@ -88,7 +94,7 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 		permission = -1;
 	}
 	
-	stored_flag_reader<Options> flags(is);
+	stored_flag_reader<flags> flags(is);
 	
 	flags.add(ConfirmOverwrite);
 	flags.add(NeverUninstall);
@@ -169,13 +175,15 @@ void FileEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 	
 	if(version.bits == 16 || version >= INNO_VERSION(5, 0, 0)) {
-		type = stored_enum<StoredFileType0>(is).get();
+		type = stored_enum<stored_file_type_0>(is).get();
 	} else {
-		type = stored_enum<StoredFileType1>(is).get();
+		type = stored_enum<stored_file_type_1>(is).get();
 	}
 }
 
-ENUM_NAMES(FileEntry::Options, "File Option",
+} // namespace setup
+
+ENUM_NAMES(setup::file_entry::flags, "File Option",
 	"confirm overwrite",
 	"never uninstall",
 	"restart replace",
@@ -211,7 +219,7 @@ ENUM_NAMES(FileEntry::Options, "File Option",
 	"readme",
 )
 
-ENUM_NAMES(FileEntry::Type, "File Entry Type",
+ENUM_NAMES(setup::file_entry::file_type, "File Entry Type",
 	"user file",
 	"uninstaller exe",
 	"reg server exe",

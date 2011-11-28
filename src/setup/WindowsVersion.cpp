@@ -8,7 +8,7 @@
 
 const WindowsVersion WindowsVersion::none = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0 } };
 
-void WindowsVersion::Version::load(std::istream& is, const InnoVersion& version) {
+void WindowsVersion::Version::load(std::istream& is, const inno_version& version) {
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
 		build = load_number<uint16_t>(is);
@@ -21,7 +21,7 @@ void WindowsVersion::Version::load(std::istream& is, const InnoVersion& version)
 	
 }
 
-void WindowsVersion::load(std::istream & is, const InnoVersion & version) {
+void WindowsVersion::load(std::istream & is, const inno_version & version) {
 	
 	winVersion.load(is, version);
 	ntVersion.load(is, version);

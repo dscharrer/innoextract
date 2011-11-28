@@ -17,7 +17,7 @@
 #include <boost/make_shared.hpp>
 
 #include "crypto/crc32.hpp"
-#include "setup/Version.hpp"
+#include "setup/version.hpp"
 #include "stream/lzma.hpp"
 #include "util/endian.hpp"
 #include "util/enum.hpp"
@@ -128,7 +128,7 @@ ENUM_NAMES(stream::block_compression, "Compression", "stored", "zlib", "lzma1")
 
 namespace stream {
 
-block_reader::pointer block_reader::get(std::istream & base, const InnoVersion & version) {
+block_reader::pointer block_reader::get(std::istream & base, const inno_version & version) {
 	
 	(void)enum_names<block_compression>::name;
 	

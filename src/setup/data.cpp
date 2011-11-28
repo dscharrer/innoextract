@@ -1,37 +1,39 @@
 
-#include "setup/FileLocationEntry.hpp"
+#include "setup/data.hpp"
 
 #include "util/load.hpp"
 #include "util/log.hpp"
 #include "util/storedenum.hpp"
 
-void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
+namespace setup {
+
+void data_entry::load(std::istream & is, const inno_version & version) {
 	
-	firstSlice = load_number<uint32_t>(is, version.bits);
-	lastSlice = load_number<uint32_t>(is, version.bits);
+	first_slice = load_number<uint32_t>(is, version.bits);
+	last_slice = load_number<uint32_t>(is, version.bits);
 	if(version < INNO_VERSION(4, 0, 0)) {
-		if(firstSlice < 1 || lastSlice < 1) {
-			log_warning << "[file location] unexpected disk number: " << firstSlice << " / "
-			            << lastSlice;
+		if(first_slice < 1 || last_slice < 1) {
+			log_warning << "[file location] unexpected disk number: " << first_slice << " / "
+			            << last_slice;
 		} else {
-			firstSlice--, lastSlice--;
+			first_slice--, last_slice--;
 		}
 	}
 	
-	chunkOffset = load_number<uint32_t>(is);
+	chunk_offset = load_number<uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 0, 1)) {
-		fileOffset = load_number<uint64_t>(is);
+		file_offset = load_number<uint64_t>(is);
 	} else {
-		fileOffset = 0;
+		file_offset = 0;
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
 		file_size = load_number<uint64_t>(is);
-		chunkSize = load_number<uint64_t>(is);
+		chunk_size = load_number<uint64_t>(is);
 	} else {
 		file_size = load_number<uint32_t>(is);
-		chunkSize = load_number<uint32_t>(is);
+		chunk_size = load_number<uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 9)) {
@@ -68,12 +70,12 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 		timestamp.tv_nsec = int32_t(filetime % 10000000) * 100;
 	}
 	
-	fileVersionMS = load_number<uint32_t>(is);
-	fileVersionLS = load_number<uint32_t>(is);
+	file_version_ms = load_number<uint32_t>(is);
+	file_version_ls = load_number<uint32_t>(is);
 	
 	options = 0;
 	
-	stored_flag_reader<Options> flags(is);
+	stored_flag_reader<flags> flags(is);
 	
 	flags.add(VersionInfoValid);
 	flags.add(VersionInfoNotValid);
@@ -111,7 +113,9 @@ void FileLocationEntry::load(std::istream & is, const InnoVersion & version) {
 	}
 }
 
-ENUM_NAMES(FileLocationEntry::Options, "File Location Option",
+} // namespace setup
+
+ENUM_NAMES(setup::data_entry::flags, "File Location Option",
 	"version info valid",
 	"version info not valid",
 	"timestamp in UTC",

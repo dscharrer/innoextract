@@ -8,8 +8,8 @@
 #include <boost/iostreams/chain.hpp>
 
 namespace crypto { struct checksum; }
-struct FileLocationEntry;
-struct InnoVersion;
+namespace setup { struct data_entry; }
+struct inno_version;
 
 namespace stream {
 
@@ -22,8 +22,8 @@ public:
 	typedef std::istream type;
 	typedef boost::shared_ptr<type> pointer;
 	
-	static pointer get(base_type & base, const FileLocationEntry & location,
-	                   const InnoVersion & version, crypto::checksum * checksum_output);
+	static pointer get(base_type & base, const setup::data_entry & location,
+	                   const inno_version & version, crypto::checksum * checksum_output);
 	
 };
 
