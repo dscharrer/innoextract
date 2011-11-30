@@ -6,14 +6,15 @@
 #include <string>
 #include <iosfwd>
 
-#include "setup/SetupItem.hpp"
-#include "setup/version.hpp"
+#include "setup/item.hpp"
 #include "util/enum.hpp"
 #include "util/flags.hpp"
 
 namespace setup {
 
-struct directory_entry : public SetupItem {
+struct version;
+
+struct directory_entry : public item {
 	
 	FLAGS(flags,
 		NeverUninstall,
@@ -32,13 +33,12 @@ struct directory_entry : public SetupItem {
 	
 	flags options;
 	
-	void load(std::istream & is, const inno_version & version);
+	void load(std::istream & is, const version & version);
 	
 };
 
 } // namespace setup
 
-FLAGS_OVERLOADS(setup::directory_entry::flags)
-NAMED_ENUM(setup::directory_entry::flags)
+NAMED_FLAGS(setup::directory_entry::flags)
 
 #endif // INNOEXTRACT_SETUP_DIRECTORY_HPP

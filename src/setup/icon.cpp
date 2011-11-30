@@ -1,20 +1,23 @@
 
-#include "setup/IconEntry.hpp"
+#include "setup/icon.hpp"
 
+#include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
 
+namespace setup {
+
 namespace {
 
-STORED_ENUM_MAP(StoredCloseOnExit, IconEntry::NoSetting,
-	IconEntry::NoSetting,
-	IconEntry::Yes,
-	IconEntry::No,
+STORED_ENUM_MAP(stored_close_setting, icon_entry::NoSetting,
+	icon_entry::NoSetting,
+	icon_entry::CloseOnExit,
+	icon_entry::DontCloseOnExit,
 );
 
 } // anonymous namespace
 
-void IconEntry::load(std::istream & is, const inno_version & version) {
+void icon_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<uint32_t>(is); // uncompressed size of the icon entry structure
@@ -23,27 +26,27 @@ void IconEntry::load(std::istream & is, const inno_version & version) {
 	is >> encoded_string(name, version.codepage());
 	is >> encoded_string(filename, version.codepage());
 	is >> encoded_string(parameters, version.codepage());
-	is >> encoded_string(workingDir, version.codepage());
-	is >> encoded_string(iconFilename, version.codepage());
+	is >> encoded_string(working_dir, version.codepage());
+	is >> encoded_string(icon_file, version.codepage());
 	is >> encoded_string(comment, version.codepage());
 	
 	load_condition_data(is, version);
 	
 	if(version >= INNO_VERSION(5, 3, 5)) {
-		is >> encoded_string(appUserModelId, version.codepage());
+		is >> encoded_string(app_user_model_id, version.codepage());
 	} else {
-		appUserModelId.clear();
+		app_user_model_id.clear();
 	}
 	
 	load_version_data(is, version);
 	
-	iconIndex = load_number<int32_t>(is, version.bits);
+	icon_index = load_number<int32_t>(is, version.bits);
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		showCmd = load_number<int32_t>(is);
-		closeOnExit = stored_enum<StoredCloseOnExit>(is).get();
+		show_command = load_number<int32_t>(is);
+		close_on_exit = stored_enum<stored_close_setting>(is).get();
 	} else {
-		showCmd = 1, closeOnExit = NoSetting;
+		show_command = 1, close_on_exit = NoSetting;
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 7)) {
@@ -52,7 +55,7 @@ void IconEntry::load(std::istream & is, const inno_version & version) {
 		hotkey = 0;
 	}
 	
-	stored_flag_reader<Options> flags(is);
+	stored_flag_reader<flags> flags(is);
 	
 	flags.add(NeverUninstall);
 	if(version >= INNO_VERSION(1, 3, 21)) {
@@ -72,7 +75,9 @@ void IconEntry::load(std::istream & is, const inno_version & version) {
 	options = flags;
 }
 
-ENUM_NAMES(IconEntry::Options, "Icon Option",
+} // namespace setup
+
+NAMES(setup::icon_entry::flags, "Icon Option",
 	"never uninstall",
 	"create only if file exists",
 	"use app paths",
@@ -81,8 +86,8 @@ ENUM_NAMES(IconEntry::Options, "Icon Option",
 	"run minimized",
 )
 
-ENUM_NAMES(IconEntry::CloseOnExit, "Close on Exit",
+NAMES(setup::icon_entry::close_setting, "Close on Exit",
 	"no setting",
-	"yes",
-	"no",
+	"close on exit",
+	"don't close on exit",
 )

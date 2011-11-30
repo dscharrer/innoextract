@@ -6,7 +6,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-struct inno_version;
+namespace setup { struct version; }
 
 namespace stream {
 
@@ -26,7 +26,7 @@ public:
 	typedef std::istream type;
 	typedef boost::shared_ptr<type> pointer;
 	
-	static pointer get(std::istream & base, const inno_version & version);
+	static pointer get(std::istream & base, const setup::version & version);
 	
 };
 

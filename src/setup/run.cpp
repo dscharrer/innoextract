@@ -1,22 +1,25 @@
 
-#include "setup/RunEntry.hpp"
+#include "setup/run.hpp"
 
 #include <stdint.h>
 
+#include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
 
+namespace setup {
+
 namespace {
 
-STORED_ENUM_MAP(StoredRunWait, RunEntry::WaitUntilTerminated,
-	RunEntry::WaitUntilTerminated,
-	RunEntry::NoWait,
-	RunEntry::WaitUntilIdle,
+STORED_ENUM_MAP(stored_run_wait_condition, run_entry::WaitUntilTerminated,
+	run_entry::WaitUntilTerminated,
+	run_entry::NoWait,
+	run_entry::WaitUntilIdle,
 );
 
 } // anonymous namespace
 
-void RunEntry::load(std::istream & is, const inno_version & version) {
+void run_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<uint32_t>(is); // uncompressed size of the directory entry structure
@@ -24,16 +27,16 @@ void RunEntry::load(std::istream & is, const inno_version & version) {
 	
 	is >> encoded_string(name, version.codepage());
 	is >> encoded_string(parameters, version.codepage());
-	is >> encoded_string(workingDir, version.codepage());
+	is >> encoded_string(working_dir, version.codepage());
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		is >> encoded_string(runOnceId, version.codepage());
+		is >> encoded_string(run_once_id, version.codepage());
 	} else {
-		runOnceId.clear();
+		run_once_id.clear();
 	}
 	if(version >= INNO_VERSION(2, 0, 2)) {
-		is >> encoded_string(statusMessage, version.codepage());
+		is >> encoded_string(status_message, version.codepage());
 	} else {
-		statusMessage.clear();
+		status_message.clear();
 	}
 	if(version >= INNO_VERSION(5, 1, 13)) {
 		is >> encoded_string(verb, version.codepage());
@@ -49,14 +52,14 @@ void RunEntry::load(std::istream & is, const inno_version & version) {
 	load_version_data(is, version);
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		showCmd = load_number<int32_t>(is);
+		show_command = load_number<int32_t>(is);
 	} else {
-		showCmd = 0;
+		show_command = 0;
 	}
 	
-	wait = stored_enum<StoredRunWait>(is).get();
+	wait = stored_enum<stored_run_wait_condition>(is).get();
 	
-	stored_flag_reader<Options> flags(is);
+	stored_flag_reader<flags> flags(is);
 	
 	flags.add(ShellExec);
 	if(version >= INNO_VERSION(1, 3, 21)) {
@@ -82,7 +85,9 @@ void RunEntry::load(std::istream & is, const inno_version & version) {
 	options = flags;
 }
 
-ENUM_NAMES(RunEntry::Options, "Run Option",
+} // namespace setup
+
+NAMES(setup::run_entry::flags, "Run Option",
 	"shell exec",
 	"skip if doesn't exist",
 	"post install",
@@ -95,7 +100,7 @@ ENUM_NAMES(RunEntry::Options, "Run Option",
 	"run as original user",
 )
 
-ENUM_NAMES(RunEntry::Wait, "Run Wait Type",
+NAMES(setup::run_entry::wait_condition, "Run Wait Type",
 	"wait until terminated",
 	"no wait",
 	"wait until idle",

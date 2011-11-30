@@ -1,11 +1,14 @@
 
-#include "setup/MessageEntry.hpp"
+#include "setup/message.hpp"
 
 #include <stdint.h>
 
+#include "setup/version.hpp"
 #include "util/load.hpp"
 
-void MessageEntry::load(std::istream & is, const inno_version & version) {
+namespace setup {
+
+void message_entry::load(std::istream & is, const version & version) {
 	
 	is >> encoded_string(name, version.codepage());
 	is >> binary_string(value); // encoding depends on the codepage in the LanguageEntry
@@ -13,3 +16,5 @@ void MessageEntry::load(std::istream & is, const inno_version & version) {
 	language = load_number<int32_t>(is);
 	
 }
+
+} // namespace setup

@@ -6,14 +6,15 @@
 #include <string>
 #include <iosfwd>
 
-#include "setup/SetupItem.hpp"
-#include "setup/version.hpp"
+#include "setup/item.hpp"
 #include "util/enum.hpp"
 #include "util/flags.hpp"
 
 namespace setup {
 
-struct file_entry : public SetupItem {
+struct version;
+
+struct file_entry : public item {
 	
 	FLAGS(flags,
 		
@@ -75,15 +76,13 @@ struct file_entry : public SetupItem {
 	
 	file_type type;
 	
-	void load(std::istream & is, const inno_version & version);
+	void load(std::istream & is, const version & version);
 	
 };
 
 } // namespace setup
 
-FLAGS_OVERLOADS(setup::file_entry::flags)
-NAMED_ENUM(setup::file_entry::flags)
-
+NAMED_FLAGS(setup::file_entry::flags)
 NAMED_ENUM(setup::file_entry::file_type)
 
 #endif // INNOEXTRACT_SETUP_FILE_HPP

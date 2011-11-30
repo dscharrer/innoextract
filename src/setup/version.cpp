@@ -3,45 +3,53 @@
 
 #include <cstring>
 #include <algorithm>
-#include <iostream>
+#include <istream>
+#include <ostream>
 
 #include <boost/static_assert.hpp>
+#include <boost/lexical_cast.hpp>
 
-#include <util/util.hpp>
+#include "util/util.hpp"
 
-using std::cout;
 using std::string;
-using std::endl;
 
-typedef char StoredLegacySetupDataVersion[12];
+namespace setup {
 
-struct KnownLegacySetupDataVersion {
+namespace {
+
+typedef char stored_legacy_version[12];
+
+struct known_legacy_version {
 	
 	char name[13]; // terminating 0 byte is ignored
 	
-	InnoVersionConstant version;
+	version_constant version;
 	
 	unsigned char bits;
 	
+	operator version_constant() const { return version; }
+	
 };
 
-const KnownLegacySetupDataVersion knownLegacySetupDataVersions[] = {
+const known_legacy_version legacy_versions[] = {
 	{ "i1.2.10--16\x1a", INNO_VERSION(1, 2, 10), 16 },
 	{ "i1.2.10--32\x1a", INNO_VERSION(1, 2, 10), 32 },
 };
 
-typedef char StoredSetupDataVersion[64];
+typedef char stored_version[64];
 
-struct KnownSetupDataVersion {
+struct known_version {
 	
-	StoredSetupDataVersion name;
+	stored_version name;
 	
-	InnoVersionConstant version;
+	version_constant version;
 	bool unicode;
+	
+	operator version_constant() const { return version; }
 	
 };
 
-const KnownSetupDataVersion knownSetupDataVersions[] = {
+const known_version versions[] = {
 	{ "Inno Setup Setup Data (1.3.21)",                INNO_VERSION_EXT(1, 3, 21, 0), false },
 	{ "Inno Setup Setup Data (1.3.25)",                INNO_VERSION_EXT(1, 3, 25, 0), false },
 	{ "Inno Setup Setup Data (2.0.0)",                 INNO_VERSION_EXT(2, 0,  0, 0), false },
@@ -112,7 +120,9 @@ const KnownSetupDataVersion knownSetupDataVersions[] = {
 	{ "Inno Setup Setup Data (5.4.2) (u)",             INNO_VERSION_EXT(5, 4,  2, 0), true  },
 };
 
-std::ostream & operator<<(std::ostream & os, const inno_version & v) {
+} // anonymous namespace
+
+std::ostream & operator<<(std::ostream & os, const version & v) {
 	
 	os << v.a() << '.' << v.b() << '.' << v.c();
 	if(v.d()) {
@@ -134,80 +144,177 @@ std::ostream & operator<<(std::ostream & os, const inno_version & v) {
 	return os;
 }
 
-void inno_version::load(std::istream & is) {
+void version::load(std::istream & is) {
 	
-	BOOST_STATIC_ASSERT(sizeof(StoredLegacySetupDataVersion) <= sizeof(StoredSetupDataVersion));
+	static const char digits[] = "0123456789";
 	
-	StoredLegacySetupDataVersion legacyVersion;
-	is.read(legacyVersion, sizeof(legacyVersion));
+	BOOST_STATIC_ASSERT(sizeof(stored_legacy_version) <= sizeof(stored_version));
 	
-	if(legacyVersion[0] == 'i' && legacyVersion[sizeof(legacyVersion) - 1] == '\x1a') {
+	stored_legacy_version legacy_version;
+	is.read(legacy_version, sizeof(legacy_version));
+	
+	if(legacy_version[0] == 'i' && legacy_version[sizeof(legacy_version) - 1] == '\x1a') {
 		
-		cout << "found legacy version: \""
-		     << std::string(legacyVersion, sizeof(legacyVersion) - 1) << '"' << endl;
-		
-		for(size_t i = 0; i < ARRAY_SIZE(knownLegacySetupDataVersions); i++) {
-			if(!memcmp(legacyVersion, knownLegacySetupDataVersions[i].name, sizeof(legacyVersion))) {
-				version = knownLegacySetupDataVersions[i].version;
-				bits = knownLegacySetupDataVersions[i].bits;
+		for(size_t i = 0; i < ARRAY_SIZE(legacy_versions); i++) {
+			if(!memcmp(legacy_version, legacy_versions[i].name, sizeof(legacy_version))) {
+				value = legacy_versions[i].version;
+				bits = legacy_versions[i].bits;
 				unicode = false;
 				known = true;
-				cout << "-> version is known" << endl;
 				return;
 			}
 		}
 		
-		// TODO autodetect version
+		if(legacy_version[0] != 'i' || legacy_version[2] != '.' || legacy_version[4] != '.'
+		   || legacy_version[7] != '-' || legacy_version[8] != '-') {
+			throw version_error();
+		}
 		
+		if(legacy_version[9] == '1' && legacy_version[10] == '6') {
+			bits = 16;
+		} else if(legacy_version[9] == '3' && legacy_version[10] == '2') {
+			bits = 32;
+		} else {
+			throw version_error();
+		}
+		
+		std::string version_str(legacy_version, legacy_version + ARRAY_SIZE(legacy_version) + 1);
+		
+		try {
+			unsigned a = boost::lexical_cast<unsigned>(version_str.substr(1, 1));
+			unsigned b = boost::lexical_cast<unsigned>(version_str.substr(3, 1));
+			unsigned c = boost::lexical_cast<unsigned>(version_str.substr(5, 2));
+			value = INNO_VERSION(a, b, c);
+		} catch(boost::bad_lexical_cast) {
+			throw version_error();
+		}
+		
+		unicode = false;
 		known = false;
 		
-		cout << "-> unknown version" << endl;
-		throw new string("bad version");
+		return;
 	}
 	
-	StoredSetupDataVersion storedVersion;
-	memcpy(storedVersion, legacyVersion, sizeof(legacyVersion));
-	is.read(storedVersion + sizeof(legacyVersion), sizeof(storedVersion) - sizeof(legacyVersion));
+	stored_version version;
+	memcpy(version, legacy_version, sizeof(legacy_version));
+	is.read(version + sizeof(legacy_version), sizeof(version) - sizeof(legacy_version));
 	
-	char * end = std::find(storedVersion, storedVersion + ARRAY_SIZE(storedVersion) - 1, '\0');
-	std::string versionstr(storedVersion, end);
-	cout << "found version: \"" << versionstr << '"' << endl;
 	
-	for(size_t i = 0; i < ARRAY_SIZE(knownSetupDataVersions); i++) {
-		if(!memcmp(storedVersion, knownSetupDataVersions[i].name, sizeof(storedVersion))) {
-			version = knownSetupDataVersions[i].version;
+	for(size_t i = 0; i < ARRAY_SIZE(versions); i++) {
+		if(!memcmp(version, versions[i].name, sizeof(version))) {
+			value = versions[i].version;
 			bits = 32;
-			unicode = knownSetupDataVersions[i].unicode;
+			unicode = versions[i].unicode;
 			known = true;
-			cout << "-> version is known" << endl;
 			return;
 		}
 	}
 	
-	// TODO autodetect version
+	char * end = std::find(version, version + ARRAY_SIZE(version), '\0');
+	string version_str(version, end);
+	if(version_str.find("Inno Setup") == string::npos) {
+		throw version_error();
+	}
 	
+	size_t bracket = version_str.find('(');
+	for(; bracket != string::npos; bracket = version_str.find('(', bracket + 1)) {
+		
+		if(version_str.length() - bracket < 6) {
+			continue;
+		}
+		
+		try {
+			
+			size_t a_start = bracket + 1;
+			size_t a_end = version_str.find_first_not_of(digits, a_start);
+			if(a_end == string::npos || version_str[a_end] != '.') {
+				continue;
+			}
+			unsigned a = boost::lexical_cast<unsigned>(version_str.substr(a_start, a_end - a_start));
+			
+			size_t b_start = a_end + 1;
+			size_t b_end = version_str.find_first_not_of(digits, b_start);
+			if(b_end == string::npos || version_str[b_end] != '.') {
+				continue;
+			}
+			unsigned b = boost::lexical_cast<unsigned>(version_str.substr(b_start, b_end - b_start));
+			
+			size_t c_start = b_end + 1;
+			size_t c_end = version_str.find_first_not_of(digits, c_start);
+			if(c_end == string::npos) {
+				continue;
+			}
+			unsigned c = boost::lexical_cast<unsigned>(version_str.substr(c_start, c_end - c_start));
+			
+			size_t d_start = c_end;
+			if(version_str[d_start] == 'a') {
+				if(d_start + 1 >= version_str.length()) {
+					continue;
+				}
+				d_start++;
+			}
+			
+			unsigned d = 0;
+			if(version_str[d_start] == '.') {
+				d_start++;
+				size_t d_end = version_str.find_first_not_of(digits, d_start);
+				if(d_end != string::npos && d_end != d_start) {
+					d = boost::lexical_cast<unsigned>(version_str.substr(d_start, d_end - d_start));
+				}
+			}
+			
+			value = INNO_VERSION_EXT(a, b, c, d);
+			break;
+			
+		} catch(boost::bad_lexical_cast) {
+			continue;
+		}
+	}
+	if(bracket == string::npos) {
+		throw version_error();
+	}
+	
+	bits = 32;
+	unicode = (version_str.find("(u)") != string::npos);
 	known = false;
-	
-	cout << "-> unknown version" << endl;
-	throw new string("bad version");
 }
 
-bool inno_version::isSuspicious() const {
+bool version::is_ambiguous() const {
 	
-	if(version == INNO_VERSION(2, 0, 1)) {
+	if(value == INNO_VERSION(2, 0, 1)) {
 		// might be either 2.0.1 or 2.0.2
 		return true;
 	}
 	
-	if(version == INNO_VERSION(3, 0, 3)) {
+	if(value == INNO_VERSION(3, 0, 3)) {
 		// might be either 3.0.3 or 3.0.4
 		return true;
 	}
 	
-	if(version == INNO_VERSION(4, 2, 3)) {
+	if(value == INNO_VERSION(4, 2, 3)) {
 		// might be either 4.2.3 or 4.2.4
 		return true;
 	}
 	
 	return false;
 }
+
+version_constant version::next() {
+	
+	const known_legacy_version * legacy_end = legacy_versions + ARRAY_SIZE(legacy_versions);
+	const known_legacy_version * legacy_version;
+	legacy_version = std::upper_bound(legacy_versions, legacy_end, value);
+	if(legacy_version != legacy_end) {
+		return value = legacy_version->version;
+	}
+	
+	const known_version * end = versions + ARRAY_SIZE(versions);
+	const known_version * version = std::upper_bound(versions, end, value);
+	if(version != end) {
+		return version->version;
+	}
+	
+	return 0;
+}
+
+} // namespace setup

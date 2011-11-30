@@ -1,6 +1,7 @@
 
 #include "setup/delete.hpp"
 
+#include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
 
@@ -16,7 +17,7 @@ STORED_ENUM_MAP(delete_target_type_map, delete_entry::Files,
 
 } // anonymous namespace
 
-void delete_entry::load(std::istream & is, const inno_version & version) {
+void delete_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<uint32_t>(is); // uncompressed size of the directory entry structure
@@ -33,7 +34,7 @@ void delete_entry::load(std::istream & is, const inno_version & version) {
 
 } // namespace setup
 
-ENUM_NAMES(setup::delete_entry::target_type, "Delete Type",
+NAMES(setup::delete_entry::target_type, "Delete Type",
 	"files",
 	"files and subdirs",
 	"dir if empty",

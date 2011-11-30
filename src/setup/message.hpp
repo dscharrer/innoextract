@@ -1,13 +1,15 @@
 
-#ifndef INNOEXTRACT_SETUP_CUSTOMMESSAGEENTRY_HPP
-#define INNOEXTRACT_SETUP_CUSTOMMESSAGEENTRY_HPP
+#ifndef INNOEXTRACT_SETUP_MESSAGE_HPP
+#define INNOEXTRACT_SETUP_MESSAGE_HPP
 
 #include <string>
 #include <iosfwd>
 
-#include "setup/version.hpp"
+namespace setup {
 
-struct MessageEntry {
+struct version;
+
+struct message_entry {
 	
 	// introduced in 4.2.1
 	
@@ -20,8 +22,10 @@ struct MessageEntry {
 	// Index into the default language entry list or -1.
 	int language;
 	
-	void load(std::istream & is, const inno_version & version);
+	void load(std::istream & is, const version & version);
 	
 };
 
-#endif // INNOEXTRACT_SETUP_CUSTOMMESSAGEENTRY_HPP
+} // namespace setup
+
+#endif // INNOEXTRACT_SETUP_MESSAGE_HPP

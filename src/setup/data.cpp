@@ -1,49 +1,50 @@
 
 #include "setup/data.hpp"
 
+#include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
 #include "util/storedenum.hpp"
 
 namespace setup {
 
-void data_entry::load(std::istream & is, const inno_version & version) {
+void data_entry::load(std::istream & is, const version & version) {
 	
-	first_slice = load_number<uint32_t>(is, version.bits);
-	last_slice = load_number<uint32_t>(is, version.bits);
+	chunk.first_slice = load_number<uint32_t>(is, version.bits);
+	chunk.last_slice = load_number<uint32_t>(is, version.bits);
 	if(version < INNO_VERSION(4, 0, 0)) {
-		if(first_slice < 1 || last_slice < 1) {
-			log_warning << "[file location] unexpected disk number: " << first_slice << " / "
-			            << last_slice;
+		if(chunk.first_slice < 1 || chunk.last_slice < 1) {
+			log_warning << "[file location] unexpected disk number: " << chunk.first_slice << " / "
+			            << chunk.last_slice;
 		} else {
-			first_slice--, last_slice--;
+			chunk.first_slice--, chunk.last_slice--;
 		}
 	}
 	
-	chunk_offset = load_number<uint32_t>(is);
+	chunk.offset = load_number<uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 0, 1)) {
-		file_offset = load_number<uint64_t>(is);
+		file.offset = load_number<uint64_t>(is);
 	} else {
-		file_offset = 0;
+		file.offset = 0;
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		file_size = load_number<uint64_t>(is);
-		chunk_size = load_number<uint64_t>(is);
+		file.size = load_number<uint64_t>(is);
+		chunk.size = load_number<uint64_t>(is);
 	} else {
-		file_size = load_number<uint32_t>(is);
-		chunk_size = load_number<uint32_t>(is);
+		file.size = load_number<uint32_t>(is);
+		chunk.size = load_number<uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 9)) {
-		is.read(checksum.sha1, sizeof(checksum.sha1)), checksum.type = crypto::SHA1;
+		is.read(file.checksum.sha1, sizeof(file.checksum.sha1)), file.checksum.type = crypto::SHA1;
 	} else if(version >= INNO_VERSION(4, 2, 0)) {
-		is.read(checksum.md5, sizeof(checksum.md5)), checksum.type = crypto::MD5;
+		is.read(file.checksum.md5, sizeof(file.checksum.md5)), file.checksum.type = crypto::MD5;
 	} else if(version >= INNO_VERSION(4, 0, 1)) {
-		checksum.crc32 = load_number<uint32_t>(is), checksum.type = crypto::CRC32;
+		file.checksum.crc32 = load_number<uint32_t>(is), file.checksum.type = crypto::CRC32;
 	} else {
-		checksum.adler32 = load_number<uint32_t>(is), checksum.type = crypto::Adler32;
+		file.checksum.adler32 = load_number<uint32_t>(is), file.checksum.type = crypto::Adler32;
 	}
 	
 	if(version.bits == 16) {
@@ -108,14 +109,30 @@ void data_entry::load(std::istream & is, const inno_version & version) {
 	
 	options |= flags;
 	
+	chunk.compression = (options & ChunkCompressed) ? stream::UnknownCompression : stream::Stored;
 	if(options & BZipped) {
 		options |= ChunkCompressed;
+		chunk.compression = stream::BZip2;
+	}
+	
+	chunk.encrypted = (options & ChunkEncrypted);
+	
+	if(options & CallInstructionOptimized) {
+		if(version < INNO_VERSION(5, 2, 0)) {
+			file.filter = stream::InstructionFilter4108;
+		} else if(version < INNO_VERSION(5, 3, 9)) {
+			file.filter = stream::InstructionFilter5200;
+		} else {
+			file.filter = stream::InstructionFilter5309;
+		}
+	} else {
+		file.filter = stream::NoFilter;
 	}
 }
 
-} // namespace setup
+} // namespace setup;
 
-ENUM_NAMES(setup::data_entry::flags, "File Location Option",
+NAMES(setup::data_entry::flags, "File Location Option",
 	"version info valid",
 	"version info not valid",
 	"timestamp in UTC",

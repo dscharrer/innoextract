@@ -7,11 +7,30 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/iostreams/chain.hpp>
 
-namespace crypto { struct checksum; }
-namespace setup { struct data_entry; }
-struct inno_version;
+#include "crypto/checksum.hpp"
 
 namespace stream {
+
+enum compression_filter {
+	NoFilter,
+	InstructionFilter4108,
+	InstructionFilter5200,
+	InstructionFilter5309,
+};
+
+struct file {
+	
+	uint64_t offset; //!< Offset of this file within the decompressed chunk.
+	uint64_t size; //!< Decompressed size of this file.
+	
+	crypto::checksum checksum;
+	
+	compression_filter filter; //!< Additional filter used before compression.
+	
+	bool operator<(const file & o) const;
+	bool operator==(const file & o) const;
+	
+};
 
 class file_reader {
 	
@@ -22,8 +41,7 @@ public:
 	typedef std::istream type;
 	typedef boost::shared_ptr<type> pointer;
 	
-	static pointer get(base_type & base, const setup::data_entry & location,
-	                   const inno_version & version, crypto::checksum * checksum_output);
+	static pointer get(base_type & base, const file & file, crypto::checksum * checksum_output);
 	
 };
 

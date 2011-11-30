@@ -5,13 +5,14 @@
 #include <string>
 #include <iosfwd>
 
-#include "setup/SetupItem.hpp"
-#include "setup/version.hpp"
+#include "setup/item.hpp"
 #include "util/enum.hpp"
 
 namespace setup {
 
-struct delete_entry : public SetupItem {
+struct version;
+
+struct delete_entry : public item {
 	
 	enum target_type {
 		Files,
@@ -23,7 +24,7 @@ struct delete_entry : public SetupItem {
 	
 	target_type type;
 	
-	void load(std::istream & is, const inno_version & version);
+	void load(std::istream & is, const version & version);
 	
 };
 

@@ -8,14 +8,16 @@
 #include <iosfwd>
 
 #include "crypto/checksum.hpp"
-#include "setup/SetupItem.hpp"
-#include "setup/version.hpp"
+#include "stream/chunk.hpp"
+#include "stream/file.hpp"
 #include "util/enum.hpp"
 #include "util/flags.hpp"
 
 namespace setup {
 
-struct data_entry : public SetupItem {
+struct version;
+
+struct data_entry {
 	
 	FLAGS(flags,
 		
@@ -33,16 +35,9 @@ struct data_entry : public SetupItem {
 		BZipped
 	);
 	
-	size_t first_slice;
-	size_t last_slice;
+	stream::chunk chunk;
 	
-	uint32_t chunk_offset; //!< offset of the compressed chunk in firstSlice
-	uint64_t chunk_size; //! total compressed size of the chunk
-	
-	uint64_t file_offset; //!< offset of this file within the decompressed chunk
-	uint64_t file_size; //!< decompressed size of this file
-	
-	crypto::checksum checksum;
+	stream::file file;
 	
 	timespec timestamp;
 	
@@ -51,13 +46,12 @@ struct data_entry : public SetupItem {
 	
 	flags options;
 	
-	void load(std::istream & is, const inno_version & version);
+	void load(std::istream & is, const version & version);
 	
 };
 
 } // namespace setup
 
-FLAGS_OVERLOADS(setup::data_entry::flags)
-NAMED_ENUM(setup::data_entry::flags)
+NAMED_FLAGS(setup::data_entry::flags)
 
 #endif // INNOEXTRACT_SETUP_DATA_HPP

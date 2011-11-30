@@ -18,11 +18,6 @@ namespace stream {
 
 static const char chunk_id[4] = { 'z', 'l', 'b', 0x1a };
 
-chunk::chunk(size_t first_slice, uint32_t offset, uint64_t size,
-             compression_method compression, bool encrypted)
-	: first_slice(first_slice), offset(offset), size(size),
-	  compression(compression), encrypted(encrypted) { }
-
 bool chunk::operator<(const chunk & o) const {
 	
 	if(first_slice != o.first_slice) {
@@ -62,11 +57,11 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 	pointer result = boost::make_shared<type>();
 	
 	switch(chunk.compression) {
-		case chunk::Stored: break;
-		case chunk::Zlib: result->push(io::zlib_decompressor(), 8192); break;
-		case chunk::BZip2: result->push(io::bzip2_decompressor(), 8192); break;
-		case chunk::LZMA1: result->push(inno_lzma1_decompressor(), 8192); break;
-		case chunk::LZMA2: result->push(inno_lzma2_decompressor(), 8192); break;
+		case Stored: break;
+		case Zlib:   result->push(io::zlib_decompressor(), 8192); break;
+		case BZip2:  result->push(io::bzip2_decompressor(), 8192); break;
+		case LZMA1:  result->push(inno_lzma1_decompressor(), 8192); break;
+		case LZMA2:  result->push(inno_lzma2_decompressor(), 8192); break;
 		default: throw chunk_error("unknown compression");
 	}
 	
@@ -77,7 +72,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 
 } // namespace stream
 
-ENUM_NAMES(stream::chunk::compression_method, "Compression Method",
+NAMES(stream::compression_method, "Compression Method",
 	"stored",
 	"zlib",
 	"bzip2",

@@ -1,42 +1,45 @@
 
-#include "setup/RegistryEntry.hpp"
+#include "setup/registry.hpp"
 
 #include <stdint.h>
 
+#include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
+
+namespace setup {
 
 namespace {
 
 // 16-bit
-STORED_ENUM_MAP(StoredRegistryEntryType0, RegistryEntry::None,
-	RegistryEntry::None,
-	RegistryEntry::String,
+STORED_ENUM_MAP(stored_registry_entry_type_0, registry_entry::None,
+	registry_entry::None,
+	registry_entry::String,
 );
 
-STORED_ENUM_MAP(StoredRegistryEntryType1, RegistryEntry::None,
-	RegistryEntry::None,
-	RegistryEntry::String,
-	RegistryEntry::ExpandString,
-	RegistryEntry::DWord,
-	RegistryEntry::Binary,
-	RegistryEntry::MultiString,
+STORED_ENUM_MAP(stored_registry_entry_type_1, registry_entry::None,
+	registry_entry::None,
+	registry_entry::String,
+	registry_entry::ExpandString,
+	registry_entry::DWord,
+	registry_entry::Binary,
+	registry_entry::MultiString,
 );
 
 // starting with version 5.2.5
-STORED_ENUM_MAP(StoredRegistryEntryType2, RegistryEntry::None,
-	RegistryEntry::None,
-	RegistryEntry::String,
-	RegistryEntry::ExpandString,
-	RegistryEntry::DWord,
-	RegistryEntry::Binary,
-	RegistryEntry::MultiString,
-	RegistryEntry::QWord,
+STORED_ENUM_MAP(stored_registry_entry_type_2, registry_entry::None,
+	registry_entry::None,
+	registry_entry::String,
+	registry_entry::ExpandString,
+	registry_entry::DWord,
+	registry_entry::Binary,
+	registry_entry::MultiString,
+	registry_entry::QWord,
 );
 
 } // anonymous namespace
 
-void RegistryEntry::load(std::istream & is, const inno_version & version) {
+void registry_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<uint32_t>(is); // uncompressed size of the directory entry structure
@@ -61,7 +64,7 @@ void RegistryEntry::load(std::istream & is, const inno_version & version) {
 	load_version_data(is, version);
 	
 	if(version.bits != 16) {
-		hive = Hive(load_number<uint32_t>(is) & ~0x80000000);
+		hive = hive_name(load_number<uint32_t>(is) & ~0x80000000);
 	} else {
 		hive = Unset;
 	}
@@ -73,14 +76,14 @@ void RegistryEntry::load(std::istream & is, const inno_version & version) {
 	}
 	
 	if(version >= INNO_VERSION(5, 2, 5)) {
-		type = stored_enum<StoredRegistryEntryType2>(is).get();
+		type = stored_enum<stored_registry_entry_type_2>(is).get();
 	} else if(version.bits != 16) {
-		type = stored_enum<StoredRegistryEntryType1>(is).get();
+		type = stored_enum<stored_registry_entry_type_1>(is).get();
 	} else {
-		type = stored_enum<StoredRegistryEntryType0>(is).get();
+		type = stored_enum<stored_registry_entry_type_0>(is).get();
 	}
 	
-	stored_flag_reader<Options> flags(is);
+	stored_flag_reader<flags> flags(is);
 	
 	if(version.bits != 16) {
 		flags.add(CreateValueIfDoesntExist);
@@ -104,7 +107,9 @@ void RegistryEntry::load(std::istream & is, const inno_version & version) {
 	options = flags;
 }
 
-ENUM_NAMES(RegistryEntry::Options, "Registry Option",
+} // namespace setup
+
+NAMES(setup::registry_entry::flags, "Registry Option",
 	"create value if doesn't exist",
 	"uninstall delete value",
 	"uninstall clear value",
@@ -119,7 +124,7 @@ ENUM_NAMES(RegistryEntry::Options, "Registry Option",
 	"64 bit",
 )
 
-ENUM_NAMES(RegistryEntry::Hive, "Registry Hive",
+NAMES(setup::registry_entry::hive_name, "Registry Hive",
 	"HKCR",
 	"HKCU",
 	"HKLM",
@@ -130,7 +135,7 @@ ENUM_NAMES(RegistryEntry::Hive, "Registry Hive",
 	"Unset",
 )
 
-ENUM_NAMES(RegistryEntry::Type, "Registry Entry Type",
+NAMES(setup::registry_entry::value_type, "Registry Entry Type",
 	"none",
 	"string",
 	"expand string",

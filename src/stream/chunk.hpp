@@ -21,27 +21,25 @@ struct chunk_error : public std::ios_base::failure {
 	
 };
 
+enum compression_method {
+	Stored,
+	Zlib,
+	BZip2,
+	LZMA1,
+	LZMA2,
+	UnknownCompression
+};
+
 struct chunk {
 	
-	enum compression_method {
-		Stored,
-		Zlib,
-		BZip2,
-		LZMA1,
-		LZMA2,
-		Unknown
-	};
-	
 	size_t first_slice; //!< Slice where the chunk starts.
+	size_t last_slice;
 	
 	uint32_t offset;    //!< Offset of the compressed chunk in firstSlice.
 	uint64_t size;      //! Total compressed size of the chunk.
 	
 	compression_method compression;
 	bool encrypted;
-	
-	chunk(size_t first_slice, uint32_t offset, uint64_t size,
-	      compression_method compression, bool encrypted);
 	
 	bool operator<(const chunk & o) const;
 	bool operator==(const chunk & o) const;
@@ -62,6 +60,6 @@ public:
 
 } // namespace stream
 
-NAMED_ENUM(stream::chunk::compression_method)
+NAMED_ENUM(stream::compression_method)
 
 #endif // INNOEXTRACT_STREAM_CHUNK_HPP

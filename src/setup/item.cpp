@@ -1,9 +1,12 @@
 
-#include "setup/SetupItem.hpp"
+#include "setup/item.hpp"
 
+#include "setup/version.hpp"
 #include "util/load.hpp"
 
-void SetupItem::load_condition_data(std::istream & is, const inno_version & version) {
+namespace setup {
+
+void item::load_condition_data(std::istream & is, const version & version) {
 	
 	if(version >= INNO_VERSION(2, 0, 0)) {
 		is >> encoded_string(components, version.codepage());
@@ -23,17 +26,12 @@ void SetupItem::load_condition_data(std::istream & is, const inno_version & vers
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		is >> encoded_string(afterInstall, version.codepage());
-		is >> encoded_string(beforeInstall, version.codepage());
+		is >> encoded_string(after_install, version.codepage());
+		is >> encoded_string(before_install, version.codepage());
 	} else {
-		afterInstall.clear(), beforeInstall.clear();
+		after_install.clear(), before_install.clear();
 	}
 	
 }
 
-void SetupItem::load_version_data(std::istream & is, const inno_version & version) {
-	
-	minVersion.load(is, version);
-	onlyBelowVersion.load(is, version);
-	
-}
+} // namespace setup

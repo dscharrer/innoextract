@@ -23,7 +23,7 @@ bool checksum::operator==(const checksum & o) const {
 
 } // namespace crypto
 
-ENUM_NAMES(crypto::checksum_type, "Checksum Type",
+NAMES(crypto::checksum_type, "Checksum Type",
 	"Adler32",
 	"CRC32",
 	"MD5",

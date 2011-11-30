@@ -1,6 +1,7 @@
 
 #include "setup/directory.hpp"
 
+#include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
 
@@ -25,7 +26,7 @@ STORED_FLAGS_MAP(stored_inno_directory_options_1,
 
 } // anonymous namespace
 
-void directory_entry::load(std::istream & is, const inno_version & version) {
+void directory_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<uint32_t>(is); // uncompressed size of the directory entry structure
@@ -65,7 +66,7 @@ void directory_entry::load(std::istream & is, const inno_version & version) {
 
 } // namespace setup
 
-ENUM_NAMES(setup::directory_entry::flags, "Directory Option",
+NAMES(setup::directory_entry::flags, "Directory Option",
 	"never uninstall",
 	"delete after install",
 	"always uninstall",

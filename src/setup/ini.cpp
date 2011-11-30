@@ -1,24 +1,27 @@
 
-#include "setup/IniEntry.hpp"
+#include "setup/ini.hpp"
 
 #include <stdint.h>
 
+#include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
 
+namespace setup {
+
 namespace {
 
-STORED_FLAGS_MAP(StoredIniOptions,
-	IniEntry::CreateKeyIfDoesntExist,
-	IniEntry::UninsDeleteEntry,
-	IniEntry::UninsDeleteEntireSection,
-	IniEntry::UninsDeleteSectionIfEmpty,
-	IniEntry::HasValue,
+STORED_FLAGS_MAP(stored_ini_flags,
+	ini_entry::CreateKeyIfDoesntExist,
+	ini_entry::UninsDeleteEntry,
+	ini_entry::UninsDeleteEntireSection,
+	ini_entry::UninsDeleteSectionIfEmpty,
+	ini_entry::HasValue,
 );
 
 } // anonymous namespace
 
-void IniEntry::load(std::istream & is, const inno_version & version) {
+void ini_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
 		::load<uint32_t>(is); // uncompressed size of the ini entry structure
@@ -36,10 +39,12 @@ void IniEntry::load(std::istream & is, const inno_version & version) {
 	
 	load_version_data(is, version);
 	
-	options = stored_flags<StoredIniOptions>(is).get();
+	options = stored_flags<stored_ini_flags>(is).get();
 }
 
-ENUM_NAMES(IniEntry::Options, "Ini Option",
+} // namespace setup
+
+NAMES(setup::ini_entry::flags, "Ini Option",
 	"create key if doesn't exist",
 	"uninstall delete entry",
 	"uninstall delete section",

@@ -1,19 +1,22 @@
 
-#ifndef INNOEXTRACT_SETUP_REGISTRYENTRY_HPP
-#define INNOEXTRACT_SETUP_REGISTRYENTRY_HPP
+#ifndef INNOEXTRACT_SETUP_REGISTRY_HPP
+#define INNOEXTRACT_SETUP_REGISTRY_HPP
 
 #include <string>
 #include <iosfwd>
 
-#include "setup/SetupItem.hpp"
-#include "setup/version.hpp"
-#include "setup/WindowsVersion.hpp"
+#include "setup/item.hpp"
+#include "setup/windows.hpp"
 #include "util/enum.hpp"
 #include "util/flags.hpp"
 
-struct RegistryEntry : public SetupItem {
+namespace setup {
+
+struct version;
+
+struct registry_entry : public item {
 	
-	FLAGS(Options,
+	FLAGS(flags,
 		CreateValueIfDoesntExist,
 		UninsDeleteValue,
 		UninsClearValue,
@@ -28,7 +31,7 @@ struct RegistryEntry : public SetupItem {
 		Bits64
 	);
 	
-	enum Hive {
+	enum hive_name {
 		HKCR,
 		HKCU,
 		HKLM,
@@ -39,7 +42,7 @@ struct RegistryEntry : public SetupItem {
 		Unset,
 	};
 	
-	enum Type {
+	enum value_type {
 		None,
 		String,
 		ExpandString,
@@ -55,23 +58,22 @@ struct RegistryEntry : public SetupItem {
 	
 	std::string permissions;
 	
-	Hive hive;
+	hive_name hive;
 	
 	int permission; //!< index into the permission entry list
 	
-	Type type;
+	value_type type;
 	
-	Options options;
+	flags options;
 	
-	void load(std::istream & is, const inno_version & version);
+	void load(std::istream & is, const version & version);
 	
 };
 
-FLAGS_OVERLOADS(RegistryEntry::Options)
-NAMED_ENUM(RegistryEntry::Options)
+} // namespace setup
 
-NAMED_ENUM(RegistryEntry::Hive)
+NAMED_FLAGS(setup::registry_entry::flags)
+NAMED_ENUM(setup::registry_entry::hive_name)
+NAMED_ENUM(setup::registry_entry::value_type)
 
-NAMED_ENUM(RegistryEntry::Type)
-
-#endif // INNOEXTRACT_SETUP_REGISTRYENTRY_HPP
+#endif // INNOEXTRACT_SETUP_REGISTRY_HPP

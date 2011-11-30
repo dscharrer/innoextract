@@ -1,6 +1,7 @@
 
 #include "setup/file.hpp"
 
+#include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
 #include "util/storedenum.hpp"
@@ -41,7 +42,7 @@ STORED_ENUM_MAP(stored_file_type_1, file_entry::UserFile,
 
 NAMED_ENUM(setup::file_copy_mode)
 
-ENUM_NAMES(setup::file_copy_mode, "File Copy Mode",
+NAMES(setup::file_copy_mode, "File Copy Mode",
 	"normal",
 	"if doesn't exist",
 	"always overwrite",
@@ -50,7 +51,7 @@ ENUM_NAMES(setup::file_copy_mode, "File Copy Mode",
 
 namespace setup {
 
-void file_entry::load(std::istream & is, const inno_version & version) {
+void file_entry::load(std::istream & is, const version & version) {
 	
 	(void)enum_names<file_copy_mode>::names;
 	
@@ -183,7 +184,7 @@ void file_entry::load(std::istream & is, const inno_version & version) {
 
 } // namespace setup
 
-ENUM_NAMES(setup::file_entry::flags, "File Option",
+NAMES(setup::file_entry::flags, "File Option",
 	"confirm overwrite",
 	"never uninstall",
 	"restart replace",
@@ -219,7 +220,7 @@ ENUM_NAMES(setup::file_entry::flags, "File Option",
 	"readme",
 )
 
-ENUM_NAMES(setup::file_entry::file_type, "File Entry Type",
+NAMES(setup::file_entry::file_type, "File Entry Type",
 	"user file",
 	"uninstaller exe",
 	"reg server exe",

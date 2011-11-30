@@ -23,7 +23,7 @@ struct setup_loader_version {
 	unsigned char magic[12];
 	
 	// Earliest known version with that ID.
-	InnoVersionConstant version;
+	setup::version_constant version;
 	
 };
 
@@ -87,7 +87,7 @@ bool offsets::load_offsets_at(std::istream & is, uint32_t pos) {
 		return false;
 	}
 	
-	InnoVersionConstant version = 0;
+	setup::version_constant version = 0;
 	for(size_t i = 0; i < ARRAY_SIZE(known_setup_loader_versions); i++) {
 		BOOST_STATIC_ASSERT(ARRAY_SIZE(known_setup_loader_versions[i].magic) == ARRAY_SIZE(magic));
 		if(!memcmp(magic, known_setup_loader_versions[i].magic, ARRAY_SIZE(magic))) {

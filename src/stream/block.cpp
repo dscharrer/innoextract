@@ -124,11 +124,15 @@ private:
 
 NAMED_ENUM(stream::block_compression)
 
-ENUM_NAMES(stream::block_compression, "Compression", "stored", "zlib", "lzma1")
+NAMES(stream::block_compression, "Compression",
+	"stored",
+	"zlib",
+	"lzma1",
+)
 
 namespace stream {
 
-block_reader::pointer block_reader::get(std::istream & base, const inno_version & version) {
+block_reader::pointer block_reader::get(std::istream & base, const setup::version & version) {
 	
 	(void)enum_names<block_compression>::name;
 	

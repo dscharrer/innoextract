@@ -37,8 +37,12 @@ struct enum_names {
 		static const char * names[]; \
 		static const size_t count; \
 	};
+	
+#define NAMED_FLAGS(Flags) \
+	FLAGS_OVERLOADS(Flags) \
+	NAMED_ENUM(Flags)
 
-#define ENUM_NAMES(Enum, Name, ...) \
+#define NAMES(Enum, Name, ...) \
 	const char * enum_names<get_enum<Enum>::type>::name = (Name); \
 	const char * enum_names<get_enum<Enum>::type>::names[] = { __VA_ARGS__ }; \
 	const size_t enum_names<get_enum<Enum>::type>::count \

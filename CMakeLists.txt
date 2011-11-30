@@ -87,24 +87,24 @@ set(INNOEXTRACT_SOURCES
 	src/loader/exereader.cpp
 	src/loader/offsets.cpp
 	
+	src/setup/component.cpp
 	src/setup/data.cpp
 	src/setup/delete.cpp
 	src/setup/directory.cpp
 	src/setup/file.cpp
-	src/setup/IconEntry.cpp
-	src/setup/IniEntry.cpp
-	src/setup/LanguageEntry.cpp
-	src/setup/MessageEntry.cpp
-	src/setup/PermissionEntry.cpp
-	src/setup/RegistryEntry.cpp
-	src/setup/RunEntry.cpp
-	src/setup/SetupComponentEntry.cpp
-	src/setup/SetupHeader.cpp
-	src/setup/SetupItem.cpp
-	src/setup/SetupTaskEntry.cpp
-	src/setup/SetupTypeEntry.cpp
+	src/setup/header.cpp
+	src/setup/icon.cpp
+	src/setup/ini.cpp
+	src/setup/item.cpp
+	src/setup/language.cpp
+	src/setup/message.cpp
+	src/setup/permission.cpp
+	src/setup/registry.cpp
+	src/setup/run.cpp
+	src/setup/task.cpp
+	src/setup/type.cpp
 	src/setup/version.cpp
-	src/setup/WindowsVersion.cpp
+	src/setup/windows.cpp
 	
 	src/stream/block.cpp
 	src/stream/chunk.cpp

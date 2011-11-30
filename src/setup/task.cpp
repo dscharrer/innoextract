@@ -1,16 +1,19 @@
 
-#include "setup/SetupTaskEntry.hpp"
+#include "setup/task.hpp"
 
 #include <stdint.h>
 
+#include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
 
-void SetupTaskEntry::load(std::istream & is, const inno_version & version) {
+namespace setup {
+
+void task_entry::load(std::istream & is, const version & version) {
 	
 	is >> encoded_string(name, version.codepage());
 	is >> encoded_string(description, version.codepage());
-	is >> encoded_string(groupDescription, version.codepage());
+	is >> encoded_string(group_description, version.codepage());
 	is >> encoded_string(components, version.codepage());
 	if(version >= INNO_VERSION(4, 0, 1)) {
 		is >> encoded_string(languages, version.codepage());
@@ -25,10 +28,9 @@ void SetupTaskEntry::load(std::istream & is, const inno_version & version) {
 		check.clear(), level = 0, used = true;
 	}
 	
-	minVersion.load(is, version);
-	onlyBelowVersion.load(is, version);
+	winver.load(is, version);
 	
-	stored_flag_reader<Options> flags(is);
+	stored_flag_reader<flags> flags(is);
 	
 	flags.add(Exclusive);
 	flags.add(Unchecked);
@@ -45,7 +47,9 @@ void SetupTaskEntry::load(std::istream & is, const inno_version & version) {
 	options = flags;
 }
 
-ENUM_NAMES(SetupTaskEntry::Options, "Setup Task Option",
+} // namespace setup
+
+NAMES(setup::task_entry::flags, "Setup Task Option",
 	"exclusive",
 	"unchecked",
 	"restart",
