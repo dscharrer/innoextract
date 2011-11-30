@@ -4,6 +4,7 @@
 #include <iterator>
 #include <map>
 #include <sstream>
+#include <algorithm>
 
 #include <iconv.h>
 #include <errno.h>
@@ -37,13 +38,19 @@ iconv_t get_converter(uint32_t codepage) {
 void binary_string::load(std::istream & is, std::string & target) {
 	
 	int32_t length = load_number<int32_t>(is);
-	if(is.fail() || length < 0) {
+	if(is.fail()) {
 		return;
 	}
 	
-	// TODO read / allocate huge strings in chunks
-	target.resize(size_t(length));
-	is.read(&target[0], length);
+	target.clear();
+	
+	while(length) {
+		char buffer[10 * 1024];
+		int32_t buf_size = std::min(length, int32_t(sizeof(buffer)));
+		is.read(buffer, buf_size);
+		target.append(buffer, size_t(buf_size));
+		length -= buf_size;
+	}
 }
 
 void encoded_string::load(std::istream & is, std::string & target, uint32_t codepage) {
