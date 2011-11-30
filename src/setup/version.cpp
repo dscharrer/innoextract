@@ -54,6 +54,7 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (1.3.25)",                INNO_VERSION_EXT(1, 3, 25, 0), false },
 	{ "Inno Setup Setup Data (2.0.0)",                 INNO_VERSION_EXT(2, 0,  0, 0), false },
 	{ "Inno Setup Setup Data (2.0.1)",                 INNO_VERSION_EXT(2, 0,  1, 0), false },
+	{ "Inno Setup Setup Data (2.0.2)",                 INNO_VERSION_EXT(2, 0,  2, 0), false }, // !
 	{ "Inno Setup Setup Data (2.0.5)",                 INNO_VERSION_EXT(2, 0,  5, 0), false },
 	{ "Inno Setup Setup Data (2.0.6a)",                INNO_VERSION_EXT(2, 0,  6, 0), false },
 	{ "Inno Setup Setup Data (2.0.7)",                 INNO_VERSION_EXT(2, 0,  7, 0), false },
@@ -64,6 +65,7 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (3.0.0a)",                INNO_VERSION_EXT(3, 0,  0, 0), false },
 	{ "Inno Setup Setup Data (3.0.1)",                 INNO_VERSION_EXT(3, 0,  1, 0), false },
 	{ "Inno Setup Setup Data (3.0.3)",                 INNO_VERSION_EXT(3, 0,  3, 0), false },
+	{ "Inno Setup Setup Data (3.0.4)",                 INNO_VERSION_EXT(3, 0,  4, 0), false }, // !
 	{ "Inno Setup Setup Data (3.0.5)",                 INNO_VERSION_EXT(3, 0,  5, 0), false },
 	{ "My Inno Setup Extensions Setup Data (3.0.6.1)", INNO_VERSION_EXT(3, 0,  6, 1), false },
 	{ "Inno Setup Setup Data (4.0.0a)",                INNO_VERSION_EXT(4, 0,  0, 0), false },
@@ -84,6 +86,7 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (4.2.1)",                 INNO_VERSION_EXT(4, 2,  1, 0), false },
 	{ "Inno Setup Setup Data (4.2.2)",                 INNO_VERSION_EXT(4, 2,  2, 0), false },
 	{ "Inno Setup Setup Data (4.2.3)",                 INNO_VERSION_EXT(4, 2,  3, 0), false },
+	{ "Inno Setup Setup Data (4.2.4)",                 INNO_VERSION_EXT(4, 2,  4, 0), false }, // !
 	{ "Inno Setup Setup Data (4.2.5)",                 INNO_VERSION_EXT(4, 2,  5, 0), false },
 	{ "Inno Setup Setup Data (4.2.6)",                 INNO_VERSION_EXT(4, 2,  6, 0), false },
 	{ "Inno Setup Setup Data (5.0.0)",                 INNO_VERSION_EXT(5, 0,  0, 0), false },

@@ -77,6 +77,8 @@ check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
 
 set(INNOEXTRACT_SOURCES
 	
+	src/cli/debug.cpp
+	
 	src/crypto/adler32.cpp
 	src/crypto/checksum.cpp
 	src/crypto/crc32.cpp
@@ -94,6 +96,7 @@ set(INNOEXTRACT_SOURCES
 	src/setup/file.cpp
 	src/setup/header.cpp
 	src/setup/icon.cpp
+	src/setup/info.cpp
 	src/setup/ini.cpp
 	src/setup/item.cpp
 	src/setup/language.cpp

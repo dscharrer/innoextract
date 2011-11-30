@@ -48,9 +48,9 @@ inline std::ostream & operator<<(std::ostream & os, const if_not_empty & s) {
 	if(s.value.length() > 100) {
 		color::shell_command prev = color::current;
 		return os << s.name << ": " << color::white << s.value.length() << prev
-		          << " bytes" << std::endl;
+		          << " bytes" << '\n';
 	} else if(!s.value.empty()) {
-		return os << s.name << ": " << quoted(s.value) << std::endl;
+		return os << s.name << ": " << quoted(s.value) << '\n';
 	} else {
 		return os;
 	}
@@ -74,7 +74,7 @@ template <class T>
 inline std::ostream & operator<<(std::ostream & os, const if_not<T> & s) {
 	if(s.value != s.excluded) {
 		color::shell_command prev = color::current;
-		return os << s.name << ": " << color::cyan << s.value << prev << std::endl;
+		return os << s.name << ": " << color::cyan << s.value << prev << '\n';
 	} else {
 		return os;
 	}

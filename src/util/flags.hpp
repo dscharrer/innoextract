@@ -17,12 +17,12 @@ struct enum_size {
  * 
  * This type should not be used directly, only through DECLARE_FLAGS.
  */
-template <typename _Enum, size_t Bits = enum_size<_Enum>::value>
+template <typename Enum, size_t Bits = enum_size<Enum>::value>
 class flags {
 	
 public:
 	
-	typedef _Enum Enum;
+	typedef Enum enum_type;
 	static const size_t bits = Bits;
 	typedef std::bitset<bits> Type;
 	
@@ -37,7 +37,7 @@ private:
 	
 public:
 	
-	inline flags(Enum flag) : _flags(Type().set(size_t(flag))) { }
+	inline flags(enum_type flag) : _flags(Type().set(size_t(flag))) { }
 	
 	inline flags(Zero = 0) : _flags() { }
 	
@@ -47,7 +47,7 @@ public:
 		return flags(_flags, true);
 	}
 	
-	inline bool has(Enum flag) const {
+	inline bool has(enum_type flag) const {
 		return _flags.test(size_t(flag));
 	}
 	
@@ -94,28 +94,28 @@ public:
 		return *this;
 	}
 	
-	inline flags operator&(Enum flag) const {
+	inline flags operator&(enum_type flag) const {
 		return operator&(flags(flag));
 	}
 	
-	inline flags operator|(Enum flag) const {
+	inline flags operator|(enum_type flag) const {
 		return operator|(flags(flag));
 	}
 	
-	inline flags operator^(Enum flag) const {
+	inline flags operator^(enum_type flag) const {
 		return operator^(flags(flag));
 	}
 	
-	inline flags & operator&=(Enum flag) {
+	inline flags & operator&=(enum_type flag) {
 		
 		return operator&=(flags(flag));
 	}
 	
-	inline flags & operator|=(Enum flag) {
+	inline flags & operator|=(enum_type flag) {
 		return operator|=(flags(flag));
 	}
 	
-	inline flags & operator^=(Enum flag) {
+	inline flags & operator^=(enum_type flag) {
 		return operator^=(flag);
 	}
 	
@@ -150,13 +150,13 @@ public:
  * Declare overloaded operators for a given flag type.
  */
 #define DECLARE_FLAGS_OPERATORS(Flagname) \
-	inline Flagname operator|(Flagname::Enum a, Flagname::Enum b) { \
+	inline Flagname operator|(Flagname::enum_type a, Flagname::enum_type b) { \
 		return Flagname(a) | b; \
 	} \
-	inline Flagname operator|(Flagname::Enum a, Flagname b) { \
+	inline Flagname operator|(Flagname::enum_type a, Flagname b) { \
 		return b | a; \
 	} \
-	inline Flagname operator~(Flagname::Enum a) { \
+	inline Flagname operator~(Flagname::enum_type a) { \
 		return ~Flagname(a); \
 	}
 // TODO prevent combination with integers!
