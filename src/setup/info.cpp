@@ -124,26 +124,24 @@ void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
 		throw std::ios_base::failure("expected end of stream");
 	}
 	
-	if(e & Messages) {
-		BOOST_FOREACH(setup::message_entry & entry, messages) {
-			
-			if(entry.language >= 0 ? size_t(entry.language) >= languages.size()
+	BOOST_FOREACH(setup::message_entry & entry, messages) {
+		
+		if(entry.language >= 0 ? size_t(entry.language) >= languages.size()
 														: entry.language != -1) {
-				log_warning << "unexpected language index: " << entry.language;
-				continue;
-			}
-			
-			uint32_t codepage;
-			if(entry.language < 0) {
-				codepage = v.codepage();
-			} else {
-				codepage = languages[size_t(entry.language)].codepage;
-			}
-			
-			std::string decoded;
-			to_utf8(entry.value, decoded, codepage);
-			entry.value = decoded;
+			log_warning << "unexpected language index: " << entry.language;
+			continue;
 		}
+		
+		uint32_t codepage;
+		if(entry.language < 0) {
+			codepage = v.codepage();
+		} else {
+			codepage = languages[size_t(entry.language)].codepage;
+		}
+		
+		std::string decoded;
+		to_utf8(entry.value, decoded, codepage);
+		entry.value = decoded;
 	}
 }
 

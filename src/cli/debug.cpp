@@ -501,14 +501,20 @@ static void print_aux(const setup::info & info) {
 	
 	cout << '\n';
 	
-	cout << "Wizard image: " << print_bytes(info.wizard_image.length()) << " ("
-	     << guess_extension(info.wizard_image) << ")\n";
+	if(!info.wizard_image.empty()) {
+		cout << "Wizard image: " << print_bytes(info.wizard_image.length()) << " ("
+		     << guess_extension(info.wizard_image) << ")\n";
+	}
 	
-	cout << "Wizard small image: " << print_bytes(info.wizard_image_small.length()) << " ("
-	     << guess_extension(info.wizard_image_small) << ")\n";
+	if(!info.wizard_image_small.empty()) {
+		cout << "Wizard small image: " << print_bytes(info.wizard_image_small.length()) << " ("
+		     << guess_extension(info.wizard_image_small) << ")\n";
+	}
 	
-	cout << "Decompressor dll: " << print_bytes(info.decompressor_dll.length()) << " ("
-	     << guess_extension(info.decompressor_dll) << ")\n";
+	if(!info.decompressor_dll.empty()) {
+		cout << "Decompressor dll: " << print_bytes(info.decompressor_dll.length()) << " ("
+		     << guess_extension(info.decompressor_dll) << ")\n";
+	}
 	
 }
 

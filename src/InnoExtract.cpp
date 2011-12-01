@@ -51,7 +51,7 @@ int main(int argc, char * argv[]) {
 	
 	color::init();
 	
-	logger::debug = true;
+	// logger::debug = true;
 	
 	if(argc <= 1) {
 		std::cout << "usage: innoextract <Inno Setup installer>" << endl;
@@ -59,9 +59,8 @@ int main(int argc, char * argv[]) {
 	}
 	
 	std::ifstream ifs(argv[1], std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
-	
 	if(!ifs.is_open()) {
-		log_error << "error opening file";
+		log_error << "error opening file \"" << argv[1] << '"';
 		return 1;
 	}
 	
@@ -70,18 +69,26 @@ int main(int argc, char * argv[]) {
 	
 	cout << std::boolalpha;
 	
-	print_offsets(offsets);
+	if(logger::debug) {
+		print_offsets(offsets);
+		cout << '\n';
+	}
 	
 	ifs.seekg(offsets.header_offset);
-	
 	setup::info info;
 	info.load(ifs);
 	
-	cout << "version: " << color::white << info.version << color::reset << '\n';
+	const std::string & name = info.header.app_versioned_name.empty()
+	                           ? info.header.app_name : info.header.app_versioned_name;
+	cout << "Extracting \"" << color::green << name << color::reset
+	     << "\" - setup data version " << color::white << info.version << color::reset << std::endl;
+	
+	if(logger::debug) {
+		cout << '\n';
+		print_info(info);
+	}
 	
 	cout << '\n';
-	
-	print_info(info);
 	
 	std::vector<std::vector<size_t> > files_for_location;
 	files_for_location.resize(info.data_entries.size());
