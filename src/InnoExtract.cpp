@@ -3,7 +3,6 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
-#include <sstream>
 #include <algorithm>
 #include <cstring>
 #include <vector>
@@ -17,8 +16,6 @@
 #include <boost/make_shared.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/iostreams/copy.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include "version.hpp"
 
@@ -178,59 +175,23 @@ int main(int argc, char * argv[]) {
 				if(!info.files[file_i].destination.empty()) {
 					std::ofstream ofs(info.files[file_i].destination.c_str());
 					
+					progress extract_progress(file.size);
+					
 					char buffer[8192 * 10];
 					
-					float status = 0.f;
-					uint64_t total = 0;
-					
-					std::ostringstream oss;
-					float last_rate = 0;
-					
-					int64_t last_milliseconds = 0;
-					
-					boost::posix_time::ptime start(boost::posix_time::microsec_clock::universal_time());
-					
 					while(!file_source->eof()) {
-						
 						std::streamsize n = file_source->read(buffer, ARRAY_SIZE(buffer)).gcount();
-						
 						if(n > 0) {
-							
 							ofs.write(buffer, n);
-							
-							total += uint64_t(n);
-							float new_status = float(size_t(1000.f * float(total) / float(file.size)))
-							                   * (1 / 1000.f);
-							if(status != new_status && new_status != 100.f) {
-								
-								boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
-								int64_t milliseconds = (now - start).total_milliseconds();
-								
-								if(milliseconds - last_milliseconds > 200) {
-									last_milliseconds = milliseconds;
-									
-									if(total >= 10 * 1024 && milliseconds > 0) {
-										float rate = 1000.f * float(total) / float(milliseconds);
-										if(rate != last_rate) {
-											last_rate = rate;
-											oss.str(string()); // clear the buffer
-											oss << std::right << std::fixed << std::setfill(' ') << std::setw(8)
-											    << print_bytes(rate) << "/s";
-										}
-									}
-									
-									status = new_status;
-									progress::show(status, oss.str());
-								}
-							}
+							extract_progress.update(uint64_t(n));
 						}
 					}
+					
+					extract_progress.clear();
 					
 					break; // TODO ...
 				}
 			}
-			
-			progress::clear();
 			
 			if(checksum != file.checksum) {
 				log_warning << "checksum mismatch:";

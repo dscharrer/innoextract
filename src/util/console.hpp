@@ -2,8 +2,13 @@
 #ifndef INNOEXTRACT_UTIL_CONSOLE_HPP
 #define INNOEXTRACT_UTIL_CONSOLE_HPP
 
+#include <stddef.h>
+#include <stdint.h>
 #include <ostream>
 #include <iomanip>
+#include <sstream>
+
+#include <boost/date_time/posix_time/ptime.hpp>
 
 namespace color {
 
@@ -42,12 +47,36 @@ inline std::ostream & operator<<(std::ostream & os, const shell_command command)
 
 } // namespace color
 
-namespace progress {
-
-void show(float value, const std::string & label);
-
-void clear();
-
-} // namespace
+class progress {
+	
+	uint64_t max;
+	uint64_t value;
+	bool show_rate;
+	
+	boost::posix_time::ptime start_time;
+	
+	float last_status;
+	uint64_t last_time;
+	
+	float last_rate;
+	std::ostringstream label;
+	
+public:
+	
+	progress(uint64_t max = 0, bool show_rate = true);
+	progress(const progress & o)
+		: max(o.max), value(o.value), show_rate(o.show_rate), start_time(o.start_time),
+		  last_status(o.last_status), last_time(o.last_time),
+		  last_rate(o.last_rate), label(o.label.str()) { }
+	
+	void update(uint64_t delta = 0, bool force = false);
+	
+	static void show(float value, const std::string & label = std::string());
+	
+	static void show_unbounded(float value, const std::string & label = std::string());
+	
+	static void clear();
+	
+};
 
 #endif // INNOEXTRACT_UTIL_CONSOLE_HPP
