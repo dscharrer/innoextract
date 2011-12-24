@@ -15,7 +15,7 @@ typedef uint32_t version_constant;
 	  (::setup::version_constant(a) << 24) \
 	| (::setup::version_constant(b) << 16) \
 	| (::setup::version_constant(c) <<  8) \
-	| (::setup::version_constant(d)      ) \
+	| (::setup::version_constant(d) <<  0) \
 )
 #define INNO_VERSION(a, b, c) INNO_VERSION_EXT(a, b, c, 0)
 

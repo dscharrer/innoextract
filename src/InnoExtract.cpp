@@ -20,6 +20,8 @@
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
+#include "version.hpp"
+
 #include "cli/debug.hpp"
 
 #include "loader/offsets.hpp"
@@ -54,7 +56,12 @@ int main(int argc, char * argv[]) {
 	// logger::debug = true;
 	
 	if(argc <= 1) {
-		std::cout << "usage: innoextract <Inno Setup installer>" << endl;
+		cout << "usage: innoextract <Inno Setup installer>" << endl;
+		return 1;
+	}
+	
+	if(!strcmp(argv[1], "-v") || !strcmp(argv[1], "--version")) {
+		cout << innoextract_version << endl;
 		return 1;
 	}
 	

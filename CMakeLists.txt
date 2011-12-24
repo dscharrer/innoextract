@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.6)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 include(CompileCheck)
-include(VersionString) # TODO use this
+include(VersionString)
 include(CheckSymbolExists)
 
 # Force re-checking libraries if the compiler or compiler flags change.
@@ -19,7 +19,7 @@ endif()
 
 unset(LIBRARIES)
 
-find_package(Boost REQUIRED COMPONENTS iostreams filesystem date_time)
+find_package(Boost REQUIRED COMPONENTS iostreams filesystem date_time system)
 check_link_library(Boost Boost_LIBRARIES)
 list(APPEND LIBRARIES "${Boost_LIBRARIES}")
 link_directories("${Boost_LIBRARY_DIRS}")
@@ -128,6 +128,10 @@ include_directories(src ${CMAKE_CURRENT_BINARY_DIR})
 
 configure_file("src/configure.hpp.in" "configure.hpp")
 
+set(VERSION_FILE "${CMAKE_BINARY_DIR}/version.cpp")
+version_file("src/version.cpp.in" "${VERSION_FILE}" "VERSION" ".git")
+list(APPEND INNOEXTRACT_SOURCES "${VERSION_FILE}")
+
 add_executable(innoextract ${INNOEXTRACT_SOURCES} ${ALL_INCLUDES})
 target_link_libraries(innoextract ${LIBRARIES})
 
@@ -172,9 +176,6 @@ if(PYTHONINTERP_FOUND)
 	
 	# TODO add copyright notices
 	set(STYLE_FILTER ${STYLE_FILTER},-legal/copyright)
-	
-	# TODO split up main()
-	set(STYLE_FILTER ${STYLE_FILTER},-readability/fn_size)
 	
 	add_custom_target(style
 		COMMAND cmake -E chdir "${CMAKE_SOURCE_DIR}" "${PYTHON_EXECUTABLE}" "${CMAKE_MODULE_PATH}/cpplint.py" "--filter=${STYLE_FILTER}" ${INNOEXTRACT_SOURCES} ${ALL_INCLUDES}

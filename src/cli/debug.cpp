@@ -441,7 +441,8 @@ static void print_header(const setup::header & header) {
 	cout << "Uninstall style: " << color::cyan << header.uninstall_style << color::reset << '\n';
 	cout << "Dir exists warning: " << color::cyan << header.dir_exists_warning
 	     << color::reset << '\n';
-	cout << if_not_equal("Privileges required", header.privileges_required, setup::header::NoPrivileges);
+	cout << if_not_equal("Privileges required", header.privileges_required,
+	                                            setup::header::NoPrivileges);
 	cout << "Show language dialog: " << color::cyan << header.show_language_dialog
 	     << color::reset << '\n';
 	cout << if_not_equal("Danguage detection", header.language_detection,

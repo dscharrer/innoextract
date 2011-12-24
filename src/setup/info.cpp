@@ -127,7 +127,7 @@ void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
 	BOOST_FOREACH(setup::message_entry & entry, messages) {
 		
 		if(entry.language >= 0 ? size_t(entry.language) >= languages.size()
-														: entry.language != -1) {
+		                       : entry.language != -1) {
 			log_warning << "unexpected language index: " << entry.language;
 			continue;
 		}
