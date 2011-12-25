@@ -39,14 +39,22 @@ list(APPEND LIBRARIES "${Boost_LIBRARIES}")
 link_directories("${Boost_LIBRARY_DIRS}")
 include_directories(SYSTEM "${Boost_INCLUDE_DIR}")
 
-# TODO debugging-only
-add_cxxflag("-ggdb")
-add_cxxflag("-O3")
-add_definitions(-D_DEBUG)
-
-# TODO should probably be supplied by the user
-add_cxxflag("-march=native")
-add_cxxflag("-Wl,--as-needed")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	
+	message("Debug Build")
+	add_definitions(-D_DEBUG)
+	
+	check_compiler_flag(RESULT "-g3")
+	if(NOT RESULT STREQUAL "")
+		string(REGEX REPLACE "-g(|[0-9]|gdb)" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${RESULT}")
+	endif()
+	
+	check_compiler_flag(RESULT "-O0")
+	string(REGEX REPLACE "-O[0-9]" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${RESULT}")
+	
+endif()
 
 add_cxxflag("-Wall")
 add_cxxflag("-Wextra")
