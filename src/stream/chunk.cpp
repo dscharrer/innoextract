@@ -60,12 +60,13 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 		case Stored: break;
 		case Zlib:   result->push(io::zlib_decompressor(), 8192); break;
 		case BZip2:  result->push(io::bzip2_decompressor(), 8192); break;
-#ifdef HAVE_LZMA
+	#ifdef HAVE_LZMA
 		case LZMA1:  result->push(inno_lzma1_decompressor(), 8192); break;
 		case LZMA2:  result->push(inno_lzma2_decompressor(), 8192); break;
-#else
-		case LZMA1: case LZMA2: throw chunk_error("LZMA decompression not supported by this Inno Extract build");
-#endif
+	#else
+		case LZMA1: case LZMA2:
+			throw chunk_error("LZMA decompression not supported by this Inno Extract build");
+	#endif
 		default: throw chunk_error("unknown compression");
 	}
 	

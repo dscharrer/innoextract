@@ -2,7 +2,8 @@
 #ifndef INNOEXTRACT_STREAM_BLOCK_HPP
 #define INNOEXTRACT_STREAM_BLOCK_HPP
 
-#include <iosfwd>
+#include <ios>
+#include <string>
 
 #include <boost/shared_ptr.hpp>
 
@@ -16,9 +17,7 @@ struct block_error : public std::ios_base::failure {
 	
 };
 
-/*!
- * Reads a compressed and checksumed block of data used to store the setup headers.
- */
+//! Reads a compressed and checksumed block of data used to store the setup headers.
 class block_reader {
 	
 public:

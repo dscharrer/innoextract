@@ -13,7 +13,7 @@
 #cmakedefine GIT_COMMIT
 
 #ifdef GIT_COMMIT
-#define GIT_SUFFIX " + ${GIT_COMMIT_PREFIX_5}";
+#define GIT_SUFFIX " + ${GIT_COMMIT_PREFIX_5}"
 #else
 #define GIT_SUFFIX ""
 #endif
