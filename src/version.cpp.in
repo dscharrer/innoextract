@@ -13,7 +13,9 @@
 #cmakedefine GIT_COMMIT
 
 #ifdef GIT_COMMIT
-const std::string innoextract_version = "${BASE_VERSION} + ${GIT_COMMIT_PREFIX_5}";
+#define GIT_SUFFIX " + ${GIT_COMMIT_PREFIX_5}";
 #else
-const std::string innoextract_version = "${BASE_VERSION}";
+#define GIT_SUFFIX ""
 #endif
+
+const std::string innoextract_version = "${BASE_VERSION}" GIT_SUFFIX;

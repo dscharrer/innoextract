@@ -78,6 +78,7 @@ check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
 set(INNOEXTRACT_SOURCES
 	
 	src/cli/debug.cpp
+	src/cli/main.cpp
 	
 	src/crypto/adler32.cpp
 	src/crypto/checksum.cpp
@@ -119,7 +120,6 @@ set(INNOEXTRACT_SOURCES
 	src/util/load.cpp
 	src/util/log.cpp
 	
-	src/InnoExtract.cpp
 )
 
 file(GLOB_RECURSE ALL_INCLUDES "${CMAKE_SOURCE_DIR}/src/*.hpp")
