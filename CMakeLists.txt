@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 2.6)
 # For custom cmake modules.
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+option(USE_LZMA "Build lzma decompression support." ON)
+
 include(CompileCheck)
 include(VersionString)
 include(CheckSymbolExists)
@@ -19,18 +21,23 @@ endif()
 
 unset(LIBRARIES)
 
+if(USE_LZMA)
+	find_package(LZMA REQUIRED)
+	check_link_library(LZMA LZMA_LIBRARIES)
+	list(APPEND LIBRARIES "${LZMA_LIBRARIES}")
+	include_directories(SYSTEM "${LZMA_INCLUDE_DIR}")
+	set(HAVE_LZMA 1)
+else()
+	message(WARNING "\nDisabling LZMA decompression support.\n"
+	                "You won't be able to extract most newer Inno Setup installers.")
+	set(HAVE_LZMA 0)
+endif()
+
 find_package(Boost REQUIRED COMPONENTS iostreams filesystem date_time system)
 check_link_library(Boost Boost_LIBRARIES)
 list(APPEND LIBRARIES "${Boost_LIBRARIES}")
 link_directories("${Boost_LIBRARY_DIRS}")
 include_directories(SYSTEM "${Boost_INCLUDE_DIR}")
-
-find_package(LZMA)
-check_link_library(LZMA LZMA_LIBRARIES)
-list(APPEND LIBRARIES "${LZMA_LIBRARIES}")
-include_directories(SYSTEM "${LZMA_INCLUDE_DIR}")
-
-# TODO make LZMA optional
 
 # TODO debugging-only
 add_cxxflag("-ggdb")

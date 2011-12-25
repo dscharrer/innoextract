@@ -1,6 +1,8 @@
 
 #include "stream/lzma.hpp"
 
+#ifdef HAVE_LZMA
+
 #include <stdint.h>
 
 #include <lzma.h>
@@ -128,3 +130,5 @@ bool inno_lzma2_decompressor_impl::filter(const char * & begin_in, const char * 
 }
 
 } // namespace stream
+
+#endif // HAVE_LZMA

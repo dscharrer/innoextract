@@ -4,5 +4,6 @@
 
 #cmakedefine HAVE_ISATTY
 #cmakedefine HAVE_IOCTL
+#cmakedefine HAVE_LZMA
 
 #endif // INNOEXTRACT_CONFIGURE_HPP

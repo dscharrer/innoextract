@@ -2,6 +2,10 @@
 #ifndef INNOEXTRACT_STREAM_LZMA_HPP
 #define INNOEXTRACT_STREAM_LZMA_HPP
 
+#include "configure.hpp"
+
+#ifdef HAVE_LZMA
+
 #include <stddef.h>
 #include <iosfwd>
 
@@ -99,5 +103,7 @@ typedef lzma_decompressor<inno_lzma1_decompressor_impl> inno_lzma1_decompressor;
 typedef lzma_decompressor<inno_lzma2_decompressor_impl> inno_lzma2_decompressor;
 
 } // namespace stream
+
+#endif // HAVE_LZMA
 
 #endif // INNOEXTRACT_STREAM_LZMA_HPP
