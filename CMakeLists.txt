@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 
 # For custom cmake modules.
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -188,9 +188,6 @@ if(PYTHONINTERP_FOUND)
 	# Why?
 	set(STYLE_FILTER ${STYLE_FILTER},-whitespace/todo)
 	set(STYLE_FILTER ${STYLE_FILTER},-readability/todo)
-	
-	# TODO add copyright notices
-	set(STYLE_FILTER ${STYLE_FILTER},-legal/copyright)
 	
 	add_custom_target(style
 		COMMAND cmake -E chdir "${CMAKE_SOURCE_DIR}" "${PYTHON_EXECUTABLE}" "${CMAKE_MODULE_PATH}/cpplint.py" "--filter=${STYLE_FILTER}" ${INNOEXTRACT_SOURCES} ${ALL_INCLUDES}
