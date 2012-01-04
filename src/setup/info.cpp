@@ -130,8 +130,6 @@ void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
 		throw std::ios_base::failure("expected end of stream");
 	}
 	
-	// TODO skip to end if not there yet
-	
 	is = stream::block_reader::get(ifs, v);
 	assert(is);
 	is->exceptions(std::ios_base::badbit | std::ios_base::failbit);

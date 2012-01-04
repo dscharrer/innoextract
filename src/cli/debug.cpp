@@ -448,7 +448,6 @@ static void print_header(const setup::header & header) {
 	
 	if(header.options & (setup::header::Password | setup::header::EncryptionUsed)) {
 		cout << "Password: " << color::cyan << header.password << color::reset << '\n';
-		// TODO print salt
 	}
 	
 	cout << if_not_zero("Extra disk space required", header.extra_disk_space_required);

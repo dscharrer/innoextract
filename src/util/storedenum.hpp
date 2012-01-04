@@ -67,7 +67,6 @@ public:
 	static const size_t size = Mapping::count;
 	
 	inline stored_enum(std::istream & is) {
-		 // TODO use larger types for larger enums
 		BOOST_STATIC_ASSERT(size <= (1 << 8));
 		value = load_number<uint8_t>(is);
 	}

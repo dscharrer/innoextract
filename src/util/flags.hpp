@@ -178,7 +178,6 @@ public:
 	inline Flagname operator~(Flagname::enum_type a) { \
 		return ~Flagname(a); \
 	}
-// TODO prevent combination with integers!
 
 #define FLAGS_ENUM(Flagname) Flagname ## __Enum
 #define FLAGS(Flagname, ...) \
