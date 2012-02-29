@@ -1,5 +1,5 @@
 
-# Copyright (C) 2011 Daniel Scharrer
+# Copyright (C) 2011-2012 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -29,34 +29,42 @@ endif()
 file(READ "${VERSION_FILE}" BASE_VERSION)
 string(STRIP "${BASE_VERSION}" BASE_VERSION)
 
+# Split the version file into lines.
+string(REGEX MATCHALL "[^\r\n]+" version_lines "${BASE_VERSION}")
+set(BASE_VERSION_COUNT 0)
+foreach(version_line IN LISTS version_lines)
+	set(BASE_VERSION_${BASE_VERSION_COUNT} "${version_line}")
+	math(EXPR BASE_VERSION_COUNT "${BASE_VERSION_COUNT} + 1")
+endforeach()
+
+# Check for a git directory and fill in the git commit hash if one exists.
+unset(GIT_COMMIT)
 if(EXISTS "${GIT_DIR}")
 	
-	file(READ "${GIT_DIR}/HEAD" GIT_HEAD)
-	string(STRIP "${GIT_HEAD}" GIT_HEAD)
+	file(READ "${GIT_DIR}/HEAD" git_head)
+	string(STRIP "${git_head}" git_head)
 	
-	unset(GIT_COMMIT)
-	
-	if("${GIT_HEAD}" MATCHES "^ref\\:")
+	if("${git_head}" MATCHES "^ref\\:")
 		
-		# Remove the first for characters from GIT_HEAD to get GIT_REF.
+		# Remove the first for characters from git_head to get git_ref.
 		# We can't use a length of -1 for string(SUBSTRING) as cmake < 2.8.5 doesn't support it.
-		string(LENGTH "${GIT_HEAD}" GIT_HEAD_LENGTH)
-		math(EXPR GIT_REF_LENGTH "${GIT_HEAD_LENGTH} - 4")
-		string(SUBSTRING "${GIT_HEAD}" 4 ${GIT_REF_LENGTH} GIT_REF)
+		string(LENGTH "${git_head}" git_head_length)
+		math(EXPR git_ref_length "${git_head_length} - 4")
+		string(SUBSTRING "${git_head}" 4 ${git_ref_length} git_ref)
 		
-		string(STRIP "${GIT_REF}" GIT_REF)
+		string(STRIP "${git_ref}" git_ref)
 		
-		file(READ "${GIT_DIR}/${GIT_REF}" GIT_HEAD)
-		string(STRIP "${GIT_HEAD}" GIT_HEAD)
+		file(READ "${GIT_DIR}/${git_ref}" git_head)
+		string(STRIP "${git_head}" git_head)
 	endif()
 	
-	string(REGEX MATCH "[0-9A-Za-z]+" GIT_COMMIT "${GIT_HEAD}")
+	string(REGEX MATCH "[0-9A-Za-z]+" GIT_COMMIT "${git_head}")
 	
 	# Create variables for all prefixes of the git comit ID.
 	if(GIT_COMMIT)
 		string(TOLOWER "${GIT_COMMIT}" GIT_COMMIT)
-		string(LENGTH "${GIT_COMMIT}" GIT_COMMIT_LENGTH)
-		foreach(i RANGE "${GIT_COMMIT_LENGTH}")
+		string(LENGTH "${GIT_COMMIT}" git_commit_length)
+		foreach(i RANGE "${git_commit_length}")
 			string(SUBSTRING "${GIT_COMMIT}" 0 ${i} GIT_COMMIT_PREFIX_${i})
 		endforeach()
 	endif()

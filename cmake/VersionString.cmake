@@ -1,5 +1,5 @@
 
-# Copyright (C) 2011 Daniel Scharrer
+# Copyright (C) 2011-2012 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -35,9 +35,19 @@ function(version_file SRC DST VERSION_FILE GIT_DIR)
 	get_filename_component(ABS_VERSION_FILE "${VERSION_FILE}" ABSOLUTE)
 	get_filename_component(ABS_GIT_DIR "${GIT_DIR}" ABSOLUTE)
 	
+	set(dependencies "${ABS_VERSION_FILE}" "${CMAKE_MODULE_PATH}/VersionScript.cmake")
+	
+	if(EXISTS "${ABS_GIT_DIR}/HEAD")
+		list(APPEND dependencies "${ABS_GIT_DIR}/HEAD")
+	endif()
+	
+	if(EXISTS "${ABS_GIT_DIR}/logs/HEAD")
+		list(APPEND dependencies "${ABS_GIT_DIR}/logs/HEAD")
+	endif()
+	
 	add_custom_command(
 		OUTPUT
-			"${DST}"
+			"${ABS_DST}"
 		COMMAND
 			${CMAKE_COMMAND}
 			"-DINPUT=${ABS_SRC}"
@@ -46,12 +56,9 @@ function(version_file SRC DST VERSION_FILE GIT_DIR)
 			"-DGIT_DIR=${ABS_GIT_DIR}"
 			-P "${CMAKE_MODULE_PATH}/VersionScript.cmake"
 		MAIN_DEPENDENCY
-			"${SRC}"
+			"${ABS_SRC}"
 		DEPENDS
-			"${GIT_DIR}/HEAD"
-			"${GIT_DIR}/logs/HEAD"
-			"${VERSION_FILE}"
-			"${CMAKE_MODULE_PATH}/VersionScript.cmake"
+			${dependencies}
 		COMMENT ""
 		VERBATIM
 	)

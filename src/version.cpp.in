@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -24,6 +24,8 @@
  * This file is automatically processed by cmake if the version or commit id changes.
  * Available variables:
  * - BASE_VERSION: The contents of the VERSION file.
+ * - BASE_VERSION_COUNT: Number of lines in the VERSION file.
+ * - BASE_VERSION_i: The i-th line of the VERSION file.
  * - GIT_COMMIT: The current git commit. This variable is not defined if there is no .git directory.
  * - GIT_COMMIT_PREFIX_i: The first i characters of the git commit (i=0..39).
  * For the exact syntax see the documentation of the configure_file() cmake command.
@@ -31,10 +33,16 @@
 
 #cmakedefine GIT_COMMIT
 
+#if ${BASE_VERSION_COUNT} != 2
+#error "Configure error - the VERSION file should specify exactly two lines!"
+#endif
+
 #ifdef GIT_COMMIT
 #define GIT_SUFFIX " + ${GIT_COMMIT_PREFIX_5}"
 #else
 #define GIT_SUFFIX ""
 #endif
 
-const std::string innoextract_version = "${BASE_VERSION}" GIT_SUFFIX;
+const std::string innoextract_version = "${BASE_VERSION_0}" GIT_SUFFIX;
+
+const std::string innosetup_versions = "${BASE_VERSION_1}";

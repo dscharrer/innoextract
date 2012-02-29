@@ -25,4 +25,6 @@
 
 extern const std::string innoextract_version;
 
+extern const std::string innosetup_versions;
+
 #endif // INNOEXTRACT_VERSION_HPP
