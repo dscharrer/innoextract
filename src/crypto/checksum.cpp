@@ -37,6 +37,7 @@ bool checksum::operator==(const checksum & o) const {
 		case CRC32: return (crc32 == o.crc32);
 		case MD5: return !memcmp(md5, o.md5, ARRAY_SIZE(md5));
 		case SHA1: return !memcmp(sha1, o.sha1, ARRAY_SIZE(sha1));
+		default: return false;
 	};
 }
 
