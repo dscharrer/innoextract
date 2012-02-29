@@ -57,7 +57,13 @@ extern shell_command dim_white;
 
 extern shell_command current;
 
-void init();
+enum is_enabled {
+	enable,
+	disable,
+	automatic
+};
+
+void init(is_enabled color = automatic, is_enabled progress = automatic);
 
 inline std::ostream & operator<<(std::ostream & os, const shell_command command) {
 	color::current = command;
@@ -95,6 +101,8 @@ public:
 	static void show_unbounded(float value, const std::string & label = std::string());
 	
 	static void clear();
+	
+	static void set_enabled(bool enable);
 	
 };
 

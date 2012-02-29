@@ -38,7 +38,7 @@
 
 #include "util/output.hpp"
 
-static bool native_console = true;
+static bool show_progress = true;
 
 namespace color {
 
@@ -64,45 +64,44 @@ shell_command dim_white = { "\x1b[0;37m" };
 
 shell_command current = reset;
 
-void init() {
+void init(is_enabled color, is_enabled progress) {
 	
-#ifdef HAVE_ISATTY
-	if(isatty(1) && isatty(2)) {
-		return;
+	bool is_tty = isatty(1) && isatty(2);
+	
+	show_progress = (progress == enable) || (progress == automatic && is_tty);
+	
+	if(color == disable || (color == automatic && !is_tty)) {
+		
+		reset.command = "";
+		
+		black.command = "";
+		red.command = "";
+		green.command = "";
+		yellow.command = "";
+		blue.command = "";
+		magenta.command = "";
+		cyan.command = "";
+		white.command = "";
+		
+		dim_black.command = "";
+		dim_red.command = "";
+		dim_green.command = "";
+		dim_yellow.command = "";
+		dim_blue.command = "";
+		dim_magenta.command = "";
+		dim_cyan.command = "";
+		dim_white.command = "";
+		
+		current = reset;
+		
 	}
-#endif
-	
-	native_console = false;
-	
-	reset.command = "";
-	
-	black.command = "";
-	red.command = "";
-	green.command = "";
-	yellow.command = "";
-	blue.command = "";
-	magenta.command = "";
-	cyan.command = "";
-	white.command = "";
-	
-	dim_black.command = "";
-	dim_red.command = "";
-	dim_green.command = "";
-	dim_yellow.command = "";
-	dim_blue.command = "";
-	dim_magenta.command = "";
-	dim_cyan.command = "";
-	dim_white.command = "";
-	
-	current = reset;
-	
 }
 
 } // namespace color
 
 void progress::show(float value, const std::string & label) {
 	
-	if(!native_console) {
+	if(!show_progress) {
 		return;
 	}
 	
@@ -145,7 +144,7 @@ void progress::show(float value, const std::string & label) {
 
 void progress::show_unbounded(float value, const std::string & label) {
 	
-	if(!native_console) {
+	if(!show_progress) {
 		return;
 	}
 	
@@ -192,7 +191,7 @@ void progress::show_unbounded(float value, const std::string & label) {
 
 void progress::clear() {
 	
-	if(!native_console) {
+	if(!show_progress) {
 		return;
 	}
 	
@@ -211,7 +210,7 @@ progress::progress(uint64_t max, bool show_rate)
 
 void progress::update(uint64_t delta, bool force) {
 	
-	if(!native_console) {
+	if(!show_progress) {
 		return;
 	}
 	

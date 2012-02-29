@@ -126,7 +126,6 @@ public:
 	}
 	
 	inline flags & operator&=(enum_type flag) {
-		
 		return operator&=(flags(flag));
 	}
 	
