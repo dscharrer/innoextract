@@ -23,6 +23,7 @@
 
 #include <limits>
 
+#include <boost/version.hpp>
 #include <boost/integer/static_min_max.hpp>
 #include <boost/integer.hpp>
 
@@ -34,16 +35,77 @@ struct compatible_integer {
 	typedef void type;
 };
 
+#if BOOST_VERSION < 104200
+
+namespace detail {
+	
+	template <size_t Bits>
+	struct uint_t { };
+	
+	template <>
+	struct uint_t<8> : public boost::uint_t<8> {
+		typedef uint8_t exact;
+	};
+	
+	template <>
+	struct uint_t<16> : public boost::uint_t<16> {
+		typedef uint16_t exact;
+	};
+	
+	template <>
+	struct uint_t<32> : public boost::uint_t<32> {
+		typedef uint32_t exact;
+	};
+	
+	template <>
+	struct uint_t<64> : public boost::uint_t<64> {
+		typedef uint64_t exact;
+	};
+	
+	template <size_t Bits>
+	struct int_t { };
+	
+	template <>
+	struct int_t<8> : public boost::int_t<8> {
+		typedef int8_t exact;
+	};
+	
+	template <>
+	struct int_t<16> : public boost::int_t<16> {
+		typedef int16_t exact;
+	};
+	
+	template <>
+	struct int_t<32> : public boost::int_t<32> {
+		typedef int32_t exact;
+	};
+	
+	template <>
+	struct int_t<64> : public boost::int_t<64> {
+		typedef int64_t exact;
+	};
+	
+}
+
+#else
+
+namespace detail {
+	using boost::uint_t;
+	using boost::int_t;
+}
+
+#endif
+
 template <class Base, size_t Bits>
 struct compatible_integer<Base, Bits, false> {
-	typedef typename boost::uint_t<
+	typedef typename detail::uint_t<
 		boost::static_unsigned_min<Bits, sizeof(Base) * 8>::value
 	>::exact type;
 };
 
 template <class Base, size_t Bits>
 struct compatible_integer<Base, Bits, true> {
-	typedef typename boost::int_t<
+	typedef typename detail::int_t<
 		boost::static_unsigned_min<Bits, sizeof(Base) * 8>::value
 	>::exact type;
 };
