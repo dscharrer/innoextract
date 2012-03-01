@@ -52,6 +52,7 @@
 #include "stream/file.hpp"
 #include "stream/slice.hpp"
 
+#include "util/boostfs_compat.hpp"
 #include "util/console.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
