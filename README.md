@@ -1,5 +1,5 @@
 
-# Inno Extract 1.0 - A tool to extract installer executables created by Inno Setup. 
+# Inno Extract - A tool to extract installers created by Inno Setup. 
 
 [Inno Setup](http://www.jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. Inno Extracts allows to extract such installers under non-windows systems without running the actual installer using wine. Inno Extract currently supports installers created by Inno Setup 1.2.10 to 5.4.3.
 
@@ -59,4 +59,4 @@ A list of available options can be retrieved using
 
 * Inno Extract does not check if an installer includes multiple files with the same name and will continually overwrite the destination file when extracting.
 
-A perhaps more complete, but windows-only tool to extract Inno Setup files is [innounp](http://innounp.sourceforge.net/)
+A perhaps more complete, but windows-only tool to extract Inno Setup files is [innounp](http://innounp.sourceforge.net/).
