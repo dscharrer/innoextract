@@ -13,6 +13,7 @@ include(VersionString)
 include(CheckSymbolExists)
 include(BuildType)
 include(StyleCheck)
+include(TestBigEndian)
 
 # Force re-checking libraries if the compiler or compiler flags change.
 if((NOT LAST_CMAKE_CXX_FLAGS STREQUAL CMAKE_CXX_FLAGS)
@@ -83,6 +84,8 @@ endif()
 
 check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
 check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
+
+test_big_endian(HAVE_BIG_ENDIAN)
 
 set(INNOEXTRACT_SOURCES
 	

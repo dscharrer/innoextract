@@ -23,7 +23,7 @@
 
 #include <cstdlib>
 
-#include <boost/detail/endian.hpp>
+#include "configure.hpp"
 
 inline uint8_t byteswap(uint8_t value) {
 	return value;
@@ -120,7 +120,12 @@ struct endianness<true> {
 #define BIG_ENDIAN    4321
 #endif
 
-#define ENDIANNESS    BOOST_BYTE_ORDER
+#ifdef HAVE_BIG_ENDIAN
+#define ENDIANNESS    BIG_ENDIAN
+#else
+#define ENDIANNESS    LITTLE_ENDIAN
+#endif
+
 
 struct little_endian : public endianness<ENDIANNESS == LITTLE_ENDIAN> {
 	static const size_t offset = 0;
