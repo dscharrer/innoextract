@@ -30,7 +30,8 @@
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/fstream.hpp>
 
@@ -152,13 +153,12 @@ static void process_file(const fs::path & file, const options & o) {
 		chunks[location.chunk][location.file] = i;
 	}
 	
-	boost::shared_ptr<stream::slice_reader> slice_reader;
+	boost::scoped_ptr<stream::slice_reader> slice_reader;
 	if(offsets.data_offset) {
-		slice_reader = boost::make_shared<stream::slice_reader>(file, offsets.data_offset);
+		slice_reader.reset(new stream::slice_reader(file, offsets.data_offset));
 	} else {
-		slice_reader = boost::make_shared<stream::slice_reader>(file.parent_path(),
-		                                                        file.stem(),
-		                                                        info.header.slices_per_disk);
+		slice_reader.reset(new stream::slice_reader(file.parent_path(), file.stem(),
+		                                            info.header.slices_per_disk));
 	}
 	
 	BOOST_FOREACH(const Chunks::value_type & chunk, chunks) {
@@ -190,10 +190,12 @@ static void process_file(const fs::path & file, const options & o) {
 			bool named = false;
 			BOOST_FOREACH(size_t file_i, files_for_location[location.second]) {
 				if(!info.files[file_i].destination.empty()) {
+					if(named) {
+						std::cout << ", ";
+					}
 					std::cout << '"' << color::white << info.files[file_i].destination
 					          << color::reset << '"';
 					named = true;
-					break;
 				}
 			}
 			if(!named) {
@@ -210,27 +212,39 @@ static void process_file(const fs::path & file, const options & o) {
 			stream::file_reader::pointer file_source;
 			file_source = stream::file_reader::get(*chunk_source, file, &checksum);
 			
-			BOOST_FOREACH(size_t file_i, files_for_location[location.second]) {
+			boost::ptr_vector<std::ofstream> output;
+			output.resize(files_for_location[location.second].size());
+			
+			for(size_t i = 0; i < files_for_location[location.second].size(); i++) {
+				size_t file_i = files_for_location[location.second][i];
 				if(!info.files[file_i].destination.empty()) {
-					std::ofstream ofs(info.files[file_i].destination.c_str());
+					output.replace(i, new std::ofstream(info.files[file_i].destination.c_str()));
+					if(!output[i].is_open()) {
+						throw std::runtime_error("error opening output file \""
+						                         + info.files[file_i].destination + '"');
+					}
+				}
+			}
+			
+			progress extract_progress(file.size);
+			
+			char buffer[8192 * 10];
+			
+			while(!file_source->eof()) {
+				std::streamsize n = file_source->read(buffer, ARRAY_SIZE(buffer)).gcount();
+				if(n > 0) {
 					
-					progress extract_progress(file.size);
-					
-					char buffer[8192 * 10];
-					
-					while(!file_source->eof()) {
-						std::streamsize n = file_source->read(buffer, ARRAY_SIZE(buffer)).gcount();
-						if(n > 0) {
-							ofs.write(buffer, n);
-							extract_progress.update(uint64_t(n));
+					for(size_t i = 0; i < files_for_location[location.second].size(); i++) {
+						if(!output.is_null(i)) {
+							output[i].write(buffer, n);
 						}
 					}
 					
-					extract_progress.clear();
-					
-					break; // TODO ...
+					extract_progress.update(uint64_t(n));
 				}
 			}
+			
+			extract_progress.clear();
 			
 			if(checksum != file.checksum) {
 				log_warning << "checksum mismatch:";
@@ -245,8 +259,6 @@ static void process_file(const fs::path & file, const options & o) {
 int main(int argc, char * argv[]) {
 	
 	::options o;
-	
-	// TODO don't use boost::program_options - the maintainer is a cunt
 	
 	po::options_description generic("Generic options");
 	generic.add_options()
