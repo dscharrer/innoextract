@@ -7,7 +7,7 @@ Inno Extract is available under the ZLIB license - see the LICENSE file.
 
 ## Contact
 
-[GitHub project](https://github.com/dscharrer/InnoExtract)
+[Website](http://innoextract.constexpr.org/)
 
 Author: [Daniel Scharrer](mailto:Daniel Scharrer <daniel@constexpr.org>)
 
