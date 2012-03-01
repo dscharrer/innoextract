@@ -186,26 +186,30 @@ static void process_file(const fs::path & file, const options & o) {
 			}
 			offset = file.offset + file.size;
 			
-			std::cout << " - ";
-			bool named = false;
-			BOOST_FOREACH(size_t file_i, files_for_location[location.second]) {
-				if(!info.files[file_i].destination.empty()) {
-					if(named) {
-						std::cout << ", ";
+			if(!o.silent) {
+				
+				std::cout << " - ";
+				bool named = false;
+				BOOST_FOREACH(size_t file_i, files_for_location[location.second]) {
+					if(!info.files[file_i].destination.empty()) {
+						if(named) {
+							std::cout << ", ";
+						}
+						std::cout << '"' << color::white << info.files[file_i].destination
+						          << color::reset << '"';
+						named = true;
 					}
-					std::cout << '"' << color::white << info.files[file_i].destination
-					          << color::reset << '"';
-					named = true;
 				}
+				if(!named) {
+					std::cout << color::white << "unnamed file" << color::reset;
+				}
+	#ifdef DEBUG
+				std::cout << " @ " << print_hex(file.offset);
+	#endif
+				std::cout << " (" << color::dim_cyan << print_bytes(file.size)
+				          << color::reset << ')' << std::endl;
+				
 			}
-			if(!named) {
-				std::cout << color::white << "unnamed file" << color::reset;
-			}
-#ifdef DEBUG
-			std::cout << " @ " << print_hex(file.offset);
-#endif
-			std::cout << " (" << color::dim_cyan << print_bytes(file.size)
-			          << color::reset << ')' << std::endl;
 			
 			crypto::checksum checksum;
 			
@@ -228,9 +232,8 @@ static void process_file(const fs::path & file, const options & o) {
 			
 			progress extract_progress(file.size);
 			
-			char buffer[8192 * 10];
-			
 			while(!file_source->eof()) {
+				char buffer[8192 * 10];
 				std::streamsize n = file_source->read(buffer, ARRAY_SIZE(buffer)).gcount();
 				if(n > 0) {
 					
