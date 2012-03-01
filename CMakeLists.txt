@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 2.8)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 option(USE_LZMA "Build lzma decompression support." ON)
+option(DEBUG_EXTRA "Expensive debug options" OFF)
 
 include(CompileCheck)
 include(VersionString)
