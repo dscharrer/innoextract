@@ -256,8 +256,8 @@ void progress::update(uint64_t delta, bool force) {
 			if(rate != last_rate) {
 				last_rate = rate;
 				label.str(std::string()); // clear the buffer
-				label << std::right << std::fixed << std::setfill(' ') << std::setw(8)
-				      << print_bytes(rate) << "/s";
+				label << std::right << std::fixed << std::setfill(' ') << std::setw(5)
+				      << print_bytes(rate, 1) << "/s";
 			}
 		}
 	}

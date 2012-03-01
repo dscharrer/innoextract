@@ -158,8 +158,9 @@ template <class T>
 struct print_bytes {
 	
 	T value;
+	int precision;
 	
-	explicit print_bytes(T data) : value(data) { }
+	explicit print_bytes(T data, int precision) : value(data), precision(precision) { }
 	
 	bool operator==(const print_bytes & o) const { return value == o.value; }
 	bool operator!=(const print_bytes & o) const { return value != o.value; }
@@ -185,7 +186,7 @@ inline std::ostream & operator<<(std::ostream & os, const print_bytes<T> & s) {
 	
 	float num = float(whole) + (float(frac) / 1024.f);
 	
-	os << std::setprecision(3) << num << ' ' << byte_size_units[i];
+	os << std::setprecision(s.precision) << num << ' ' << byte_size_units[i];
 	
 	os.precision(precision);
 	return os;
@@ -194,8 +195,8 @@ inline std::ostream & operator<<(std::ostream & os, const print_bytes<T> & s) {
 }
 
 template <class T>
-detail::print_bytes<T> print_bytes(T value) {
-	return detail::print_bytes<T>(value);
+detail::print_bytes<T> print_bytes(T value, int precision = 3) {
+	return detail::print_bytes<T>(value, precision);
 }
 
 #endif // INNOEXTRACT_UTIL_OUTPUT_HPP
