@@ -160,7 +160,7 @@ struct print_bytes {
 	T value;
 	int precision;
 	
-	explicit print_bytes(T data, int precision) : value(data), precision(precision) { }
+	explicit print_bytes(T data, int precision = 3) : value(data), precision(precision) { }
 	
 	bool operator==(const print_bytes & o) const { return value == o.value; }
 	bool operator!=(const print_bytes & o) const { return value != o.value; }
