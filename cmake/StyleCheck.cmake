@@ -32,6 +32,9 @@ set(STYLE_FILTER ${STYLE_FILTER},-runtime/arrays)
 set(STYLE_FILTER ${STYLE_FILTER},-whitespace/todo)
 set(STYLE_FILTER ${STYLE_FILTER},-readability/todo)
 
+# Annoyting to use with boost::program_options
+set(STYLE_FILTER ${STYLE_FILTER},-whitespace/semicolon)
+
 function(add_style_check_target TARGET_NAME SOURCES_LIST INCLUDES_LIST)
 	
 	if(PYTHONINTERP_FOUND)

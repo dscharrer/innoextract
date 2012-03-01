@@ -313,7 +313,7 @@ int main(int argc, char * argv[]) {
 	generic.add_options()
 		("help,h", "Show supported options.")
 		("version,v", "Print the version information.")
-		/**/;
+	;
 	
 	po::options_description action("Actions");
 	action.add_options()
@@ -322,7 +322,7 @@ int main(int argc, char * argv[]) {
 		("extract,e", "Extract files (default action).")
 		("list,l", "Only list files, don't write anything.")
 		("lowercase,w", "Convert extracted filenames to lowercase.")
-		/**/;
+	;
 	
 	po::options_description io("I/O options");
 	io.add_options()
@@ -334,7 +334,7 @@ int main(int argc, char * argv[]) {
 		#ifdef DEBUG
 			("debug,g", "Output debug information.")
 		#endif
-		/**/;
+	;
 	
 	po::options_description hidden("Hidden options");
 	hidden.add_options()
