@@ -103,7 +103,7 @@ set(INNOEXTRACT_SOURCES
 	src/setup/delete.cpp
 	src/setup/directory.cpp
 	src/setup/file.cpp
-	src/setup/filename_map.cpp
+	src/setup/filename.cpp
 	src/setup/header.cpp
 	src/setup/icon.cpp
 	src/setup/info.cpp

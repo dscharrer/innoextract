@@ -44,9 +44,9 @@
 
 #include "setup/data.hpp"
 #include "setup/file.hpp"
+#include "setup/filename.hpp"
 #include "setup/info.hpp"
 #include "setup/version.hpp"
-#include "setup/filename_map.hpp"
 
 #include "stream/chunk.hpp"
 #include "stream/file.hpp"

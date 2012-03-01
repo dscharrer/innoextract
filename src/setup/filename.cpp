@@ -18,7 +18,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#include "setup/filename_map.hpp"
+#include "setup/filename.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -45,8 +45,9 @@ fs::path filename_map::convert(const string & name) const {
 		
 		size_t pos = name.find_first_of("{\\", start);
 		
-		// Directory segment without constant
 		if(pos == string::npos || name[pos] == '\\') {
+			
+			// Directory segment without constant
 			
 			size_t n = (pos == string::npos) ? string::npos : pos - start;
 			string segment = name.substr(start, n);
@@ -70,20 +71,39 @@ fs::path filename_map::convert(const string & name) const {
 			
 		} else {
 			
+			// Constant or escape sequence
+			
 			string segment = name.substr(start, pos - start);
 			if(lowercase) {
 				std::transform(segment.begin(), segment.end(), segment.begin(), ::tolower);
 			}
 			buffer += segment;
 			
-			size_t end = name.find('}', pos + 1);
-			if(end == string::npos) {
-				start = pos + 1;
+			if(pos + 1 < name.length() && name[pos + 1] == '{') {
+				
+				// Handle '{{' escape sequence
+				buffer += '{';
+				start = pos + 2;
+				
 			} else {
-				string key = name.substr(pos + 1, end - pos - 1);
-				std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-				buffer += lookup(key);
-				start = end + 1;
+				
+				// Handle nested constants.
+				size_t count = 1;
+				size_t end = pos;
+				do {
+					end = name.find_first_of("}{", end + 1);
+					(name[end] == '}') ? count-- : count++;
+				} while(count > 0 && end != string::npos);
+				
+				if(end == string::npos) {
+					start = pos + 1;
+				} else {
+					string key = name.substr(pos + 1, end - pos - 1);
+					std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+					buffer += lookup(key);
+					start = end + 1;
+				}
+				
 			}
 		}
 		
