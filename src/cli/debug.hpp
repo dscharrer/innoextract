@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -23,10 +23,16 @@
 
 #include <iosfwd>
 
+#include "configure.hpp"
+
+#ifdef DEBUG
+
 namespace loader { struct offsets; }
 namespace setup { struct info; }
 
 void print_offsets(const loader::offsets & offsets);
 void print_info(const setup::info & info);
+
+#endif // DEBUG
 
 #endif // INNOEXTRACT_CLI_DEBUG_HPP

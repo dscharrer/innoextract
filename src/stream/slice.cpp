@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -30,8 +30,6 @@
 #include "util/log.hpp"
 #include "util/util.hpp"
 
-using std::string;
-
 namespace stream {
 
 namespace {
@@ -43,11 +41,11 @@ const char slice_ids[][8] = {
 
 } // anonymous namespace
 
-slice_reader::slice_reader(const string & setup_file, uint32_t data_offset)
+slice_reader::slice_reader(const path_type & setup_file, uint32_t data_offset)
 	: dir(), last_dir(), base_file(), data_offset(data_offset), slices_per_disk(1),
 	  current_slice(0) {
 	
-	ifs.open(setup_file.c_str(), std::ios_base::binary | std::ios_base::in | std::ios_base::ate);
+	ifs.open(setup_file, std::ios_base::binary | std::ios_base::in | std::ios_base::ate);
 	
 	slice_size = uint32_t(std::min<std::streampos>(ifs.tellg(), std::numeric_limits<int32_t>::max()));
 	if(ifs.seekg(data_offset).fail()) {
@@ -55,10 +53,10 @@ slice_reader::slice_reader(const string & setup_file, uint32_t data_offset)
 	}
 }
 
-slice_reader::slice_reader(const std::string & dir, const std::string & base_file,
+slice_reader::slice_reader(const path_type & dir, const path_type & base_file,
                            size_t slices_per_disk)
-	: dir(dir), last_dir(dir), base_file(base_file), data_offset(0), slices_per_disk(slices_per_disk),
-	  current_slice(0) { }
+	: dir(dir), last_dir(dir), base_file(base_file), data_offset(0),
+	  slices_per_disk(slices_per_disk), current_slice(0) { }
 
 bool slice_reader::seek(size_t slice) {
 	
@@ -71,12 +69,12 @@ bool slice_reader::seek(size_t slice) {
 		return false;
 	}
 	
-	return open(slice, string());
+	return open(slice, path_type());
 }
 
-bool slice_reader::openFile(const std::string & file) {
+bool slice_reader::open_file(const path_type & file) {
 	
-	log_info << "[slice] opening " << file;
+	log_info << "opening \"" << color::cyan << file.string() << color::reset << '"';
 	
 	ifs.close();
 	
@@ -116,17 +114,12 @@ bool slice_reader::openFile(const std::string & file) {
 	
 	slice_file = file;
 	
-	size_t dirpos = file.find_last_of('/');
-	if(dirpos == string::npos) {
-		last_dir.clear();
-	} else {
-		last_dir = file.substr(0, dirpos + 1);
-	}
+	last_dir = file.parent_path();
 	
 	return true;
 }
 
-bool slice_reader::open(size_t slice, const std::string & file) {
+bool slice_reader::open(size_t slice, const path_type & file) {
 	
 	current_slice = slice;
 	ifs.close();
@@ -136,12 +129,12 @@ bool slice_reader::open(size_t slice, const std::string & file) {
 		return false;
 	}
 	
-	std::string sliceFile = file;
+	path_type slice_file = file;
 	
-	if(sliceFile.empty()) {
+	if(slice_file.empty()) {
 		
 		std::ostringstream oss;
-		oss << base_file << '-';
+		oss << base_file.string() << '-';
 		if(slices_per_disk == 1) {
 			oss << (slice + 1);
 		} else {
@@ -151,18 +144,18 @@ bool slice_reader::open(size_t slice, const std::string & file) {
 		}
 		oss << ".bin";
 		
-		sliceFile = oss.str();
+		slice_file = oss.str();
 	}
 	
-	if(sliceFile[0] == '/') {
-		return openFile(sliceFile);
+	if(slice_file.is_absolute()) {
+		return open_file(slice_file);
 	}
 	
-	if(openFile(last_dir + sliceFile)) {
+	if(open_file(last_dir / slice_file)) {
 		return true;
 	}
 	
-	if(dir != last_dir && openFile(dir + sliceFile)) {
+	if(dir != last_dir && open_file(dir / slice_file)) {
 		return true;
 	}
 	

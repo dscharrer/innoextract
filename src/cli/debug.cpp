@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -19,6 +19,8 @@
  */
 
 #include "cli/debug.hpp"
+
+#ifdef DEBUG
 
 #include <ctime>
 
@@ -560,3 +562,5 @@ void print_info(const setup::info & info) {
 	
 	print_aux(info);
 }
+
+#endif

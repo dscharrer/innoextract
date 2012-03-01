@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -25,16 +25,14 @@
 #include <algorithm>
 #include <cstring>
 #include <vector>
-#include <bitset>
-#include <ctime>
 #include <map>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
-#include <boost/ref.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/iostreams/copy.hpp>
+#include <boost/filesystem/fstream.hpp>
 
 #include "version.hpp"
 
@@ -64,27 +62,39 @@ using std::setfill;
 
 namespace io = boost::iostreams;
 namespace fs = boost::filesystem;
+namespace po = boost::program_options;
 
-int main(int argc, char * argv[]) {
+static void print_version() {
+	std::cout << color::white << innoextract_version << color::reset << '\n';
+	std::cout << "Extracts installers created by " << color::cyan
+	          << innosetup_versions << color::reset << '\n';
+}
+
+static void print_help(const char * name, const po::options_description & visible) {
+	std::cout << color::white << "Usage: " << name << " [options] <setup file(s)>\n\n"
+	          << color::reset;
+	std::cout << "Extract files from an Inno Setup installer.\n";
+	std::cout << "For multi-part installers only specify the exe file.\n";
+	std::cout << visible << '\n';
+	print_version();
+}
+
+struct options {
 	
-	color::init();
+	bool silent; // TODO
+	bool quiet;
 	
-	// logger::debug = true;
+	bool dump;
+	bool list; // TODO
+	bool extract; // TODO
 	
-	if(argc <= 1) {
-		cout << "usage: innoextract <Inno Setup installer>" << endl;
-		return 1;
-	}
+};
+
+static void process_file(const fs::path & file, const options & o) {
 	
-	if(!strcmp(argv[1], "-v") || !strcmp(argv[1], "--version")) {
-		cout << innoextract_version << endl;
-		return 1;
-	}
-	
-	std::ifstream ifs(argv[1], std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
+	fs::ifstream ifs(file, std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
 	if(!ifs.is_open()) {
-		log_error << "error opening file \"" << argv[1] << '"';
-		return 1;
+		throw std::runtime_error("error opening file \"" + file.string() + '"');
 	}
 	
 	loader::offsets offsets;
@@ -92,28 +102,34 @@ int main(int argc, char * argv[]) {
 	
 	cout << std::boolalpha;
 	
+#ifdef DEBUG
 	if(logger::debug) {
 		print_offsets(offsets);
 		cout << '\n';
 	}
+#endif
 	
 	ifs.seekg(offsets.header_offset);
 	setup::info info;
 	info.load(ifs);
 	
-	const std::string & name = info.header.app_versioned_name.empty()
-	                           ? info.header.app_name : info.header.app_versioned_name;
-	cout << "Extracting \"" << color::green << name << color::reset
-	     << "\" - setup data version " << color::white << info.version << color::reset << std::endl;
+	if(!o.quiet) {
+		const std::string & name = info.header.app_versioned_name.empty()
+		                           ? info.header.app_name : info.header.app_versioned_name;
+		cout << "Extracting \"" << color::green << name << color::reset
+		     << "\" - setup data version " << color::white << info.version << color::reset
+		     << std::endl;
+	}
 	
+#ifdef DEBUG
 	if(logger::debug) {
 		cout << '\n';
 		print_info(info);
 	}
-	
 	cout << '\n';
+#endif
 	
-	std::vector<std::vector<size_t> > files_for_location;
+	std::vector< std::vector<size_t> > files_for_location;
 	files_for_location.resize(info.data_entries.size());
 	for(size_t i = 0; i < info.files.size(); i++) {
 		if(info.files[i].location < files_for_location.size()) {
@@ -133,23 +149,19 @@ int main(int argc, char * argv[]) {
 	}
 	
 	boost::shared_ptr<stream::slice_reader> slice_reader;
-	
 	if(offsets.data_offset) {
-		slice_reader = boost::make_shared<stream::slice_reader>(argv[1], offsets.data_offset);
+		slice_reader = boost::make_shared<stream::slice_reader>(file, offsets.data_offset);
 	} else {
-		fs::path path(argv[1]);
-		slice_reader = boost::make_shared<stream::slice_reader>(path.parent_path().string() + '/',
-		                                                        path.stem().string(),
+		slice_reader = boost::make_shared<stream::slice_reader>(file.parent_path(),
+		                                                        file.stem(),
 		                                                        info.header.slices_per_disk);
 	}
 	
-	try {
-	
 	BOOST_FOREACH(const Chunks::value_type & chunk, chunks) {
 		
-		cout << "[starting " << chunk.first.compression << " chunk @ " << chunk.first.first_slice
-		     << " + " << print_hex(offsets.data_offset) << " + " << print_hex(chunk.first.offset)
-		     << ']' << std::endl;
+		debug("[starting " << chunk.first.compression << " chunk @ " << chunk.first.first_slice
+		      << " + " << print_hex(offsets.data_offset) << " + " << print_hex(chunk.first.offset)
+		      << ']' << std::endl);
 		
 		stream::chunk_reader::pointer chunk_source;
 		chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);
@@ -161,7 +173,7 @@ int main(int argc, char * argv[]) {
 			
 			if(file.offset < offset) {
 				log_error << "bad offset";
-				return 1;
+				throw std::runtime_error("unexpected error");
 			}
 			
 			if(file.offset > offset) {
@@ -170,20 +182,24 @@ int main(int argc, char * argv[]) {
 			}
 			offset = file.offset + file.size;
 			
-			std::cout << "-> reading ";
+			std::cout << " - ";
 			bool named = false;
 			BOOST_FOREACH(size_t file_i, files_for_location[location.second]) {
 				if(!info.files[file_i].destination.empty()) {
-					std::cout << '"' << info.files[file_i].destination << '"';
+					std::cout << '"' << color::white << info.files[file_i].destination
+					          << color::reset << '"';
 					named = true;
 					break;
 				}
 			}
 			if(!named) {
-				std::cout << "unnamed file";
+				std::cout << color::white << "unnamed file" << color::reset;
 			}
-			std::cout << " @ " << print_hex(file.offset)
-			          << " (" << print_bytes(file.size) << ')' << std::endl;
+#ifdef DEBUG
+			std::cout << " @ " << print_hex(file.offset);
+#endif
+			std::cout << " (" << color::dim_cyan << print_bytes(file.size)
+			          << color::reset << ')' << std::endl;
 			
 			crypto::checksum checksum;
 			
@@ -220,26 +236,153 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	
+}
+
+int main(int argc, char * argv[]) {
+	
+	::options o;
+	
+	// TODO don't use boost::program_options - the maintainer is a cunt
+	
+	po::options_description generic("Generic options");
+	generic.add_options()
+		("help,h", "Show supported options.")
+		("version,v", "Print the version information.")
+		;
+	
+	po::options_description action("Actions");
+	action.add_options()
+		("dump", "Dump contents without converting filenames.")
+		("extract,e", "Extract files (default action).")
+		("list,l", "Only list files, don't write anything.")
+		;
+	
+	po::options_description io("I/O options");
+	io.add_options()
+		("quiet,q", "Output less information.")
+		("silent,s", "Output only error/warning information.")
+		("batch,b", "Never wait for user input.")
+		("color,c", po::value<bool>()->implicit_value(true), "Enable/disable color output.")
+		("progress,p", po::value<bool>()->implicit_value(true), "Enable/disable the progress bar.")
+#ifdef DEBUG
+		("debug,g", "Output debug information.")
+#endif
+	;
+	
+	po::options_description hidden("Hidden options");
+	hidden.add_options()
+		("setup-files", po::value< std::vector<string> >(), "Setup files to be extracted.")
+		;
+	
+	po::options_description options_desc;
+	options_desc.add(generic).add(action).add(io).add(hidden);
+	
+	po::options_description visible;
+	visible.add(generic).add(action).add(io);
+	
+	po::positional_options_description p;
+	p.add("setup-files", -1);
+	
+	po::variables_map options;
+	
+	// Parse the command-line.
+	try {
+		po::store(po::command_line_parser(argc, argv).options(options_desc).positional(p).run(),
+		          options);
+		po::notify(options);
+	}catch(po::error & e) {
+		std::cerr << "Error parsing command-line: " << e.what() << "\n\n";
+		print_help(argv[0], visible);
+		return 1;
+	}
+	
+	// Verbosity settings.
+	o.silent = options.count("silent");
+	o.quiet = o.silent || options.count("quiet");
+#ifdef DEBUG
+	if(options.count("debug")) {
+		logger::debug = true;
+	}
+#endif
+	
+	// Color / progress bar settings.
+	color::is_enabled color_e;
+	po::variables_map::const_iterator color_i = options.find("color");
+	if(color_i == options.end()) {
+		color_e = o.silent ? color::disable : color::automatic;
+	} else {
+		color_e = color_i->second.as<bool>() ? color::enable : color::disable;
+	}
+	color::is_enabled progress_e;
+	po::variables_map::const_iterator progress_i = options.find("progress");
+	if(progress_i == options.end()) {
+		progress_e = color::automatic;
+	} else {
+		progress_e = progress_i->second.as<bool>() ? color::enable : color::disable;
+	}
+	color::init(color_e, progress_e);
+	
+	// Help output.
+	if(options.count("help")) {
+		print_help(argv[0], visible);
+		return 0;
+	}
+	
+	// Main action.
+	o.dump = options.count("dump");
+	o.list = options.count("list");
+	o.extract = options.count("extract");
+	bool explicit_action = o.dump || o.list || o.extract;
+	if(!explicit_action) {
+		o.extract = true;
+	}
+	
+	// List version.
+	if(options.count("version")) {
+		print_version();
+		if(!explicit_action) {
+			return 0;
+		}
+	}
+	
+	if(!options.count("setup-files")) {
+		if(!o.silent) {
+			std::cout << "no input files specified\n";
+		}
+		return 0;
+	}
+	
+	const std::vector<string> & files = options["setup-files"].as< std::vector<string> >();
+	
+	try {
+		BOOST_FOREACH(const std::string & file, files) {
+			process_file(file, o);
+		}
 	} catch(std::ios_base::failure e) {
 		log_error << e.what();
+	} catch(std::runtime_error e) {
+		log_error << e.what();
+	} catch(setup::version_error e) {
+		log_error << "not a supported Inno Setup installer";
 	}
 	
-	std::cout << color::green << "Done" << color::reset << std::dec;
-	
-	if(logger::total_errors || logger::total_warnings) {
-		std::cout << " with ";
-		if(logger::total_errors) {
-			std::cout << color::red << logger::total_errors << " errors" << color::reset;
+	if(!o.quiet || logger::total_errors || logger::total_warnings) {
+		// TODO statistics
+		std::cout << color::green << "Done" << color::reset << std::dec;
+		if(logger::total_errors || logger::total_warnings) {
+			std::cout << " with ";
+			if(logger::total_errors) {
+				std::cout << color::red << logger::total_errors << " errors" << color::reset;
+			}
+			if(logger::total_errors && logger::total_warnings) {
+				std::cout << " and ";
+			}
+			if(logger::total_warnings) {
+				std::cout << color::yellow << logger::total_warnings << " warnings" << color::reset;
+			}
 		}
-		if(logger::total_errors && logger::total_warnings) {
-			std::cout << " and ";
-		}
-		if(logger::total_warnings) {
-			std::cout << color::yellow << logger::total_warnings << " warnings" << color::reset;
-		}
+		std::cout << '.' << std::endl;
 	}
-	
-	std::cout << '.' << std::endl;
 	
 	return 0;
 }

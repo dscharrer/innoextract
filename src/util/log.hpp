@@ -24,7 +24,7 @@
 #include <sstream>
 #include <string>
 
-#ifdef _DEBUG
+#ifdef DEBUG
 #define debug(...)    \
 	if(::logger::debug) \
 		::logger(__FILE__, __LINE__, ::logger::Debug) << __VA_ARGS__
@@ -54,7 +54,7 @@ public:
 	
 private:
 	
-#ifdef _DEBUG
+#ifdef DEBUG
 	const char * const file;
 	const int line;
 #endif
@@ -70,7 +70,7 @@ public:
 	
 	static bool debug;
 	
-#ifdef _DEBUG
+#ifdef DEBUG
 	inline logger(const char * _file, int _line, log_level _level)
 		: file(_file), line(_line), level(_level) { }
 #else

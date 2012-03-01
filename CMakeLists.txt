@@ -33,16 +33,19 @@ else()
 	set(HAVE_LZMA 0)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS iostreams filesystem date_time system)
+find_package(Boost REQUIRED COMPONENTS iostreams filesystem date_time system program_options)
 check_link_library(Boost Boost_LIBRARIES)
 list(APPEND LIBRARIES "${Boost_LIBRARIES}")
 link_directories("${Boost_LIBRARY_DIRS}")
 include_directories(SYSTEM "${Boost_INCLUDE_DIR}")
 
+if(CMAKE_BUILD_TYPE STREQUAL "")
+	set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	
-	message("Debug Build")
-	add_definitions(-D_DEBUG)
+	add_definitions(-DDEBUG)
 	
 	check_compiler_flag(RESULT "-g3")
 	if(NOT RESULT STREQUAL "")
@@ -76,11 +79,14 @@ add_cxxflag("-Wredundant-decls")
 if(DEBUG_EXTRA)
 	add_definitions(-D_GLIBCXX_DEBUG) # Runtime checks for STL containers.
 	add_cxxflag("-ftrapv") # to add checks for (undefined) signed integer overflow
-	add_cxxflag("-fcatch-undefined-behavior") # (clang)
 	add_cxxflag("-fbounds-checking")
+	add_cxxflag("-fcatch-undefined-behavior")
+	add_cxxflag("-Wstrict-aliasing=1")
 else()
 	# -Wuninitialized causes too many false positives - thanks very much, gcc
 	add_cxxflag("-Wno-uninitialized")
+		# (clang only) Conflicts with using const variables for configuration.
+		add_cxxflag("-Wno-constant-logical-operand")
 endif()
 
 if(UNITY_BUILD)

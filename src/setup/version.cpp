@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -200,7 +200,7 @@ void version::load(std::istream & is) {
 			throw version_error();
 		}
 		
-		std::string version_str(legacy_version, legacy_version + ARRAY_SIZE(legacy_version) + 1);
+		std::string version_str(legacy_version, legacy_version + ARRAY_SIZE(legacy_version));
 		
 		try {
 			unsigned a = boost::lexical_cast<unsigned>(version_str.substr(1, 1));

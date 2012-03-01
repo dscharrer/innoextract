@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -37,8 +37,10 @@ logger::~logger() {
 	switch(level) {
 		case Debug:   std::cout << color::cyan   << buffer.str() << std::endl; break;
 		case Info:    std::cout << color::white  << buffer.str() << std::endl; break;
-		case Warning: std::cerr << color::yellow << buffer.str() << std::endl; break;
-		case Error:   std::cerr << color::red    << buffer.str() << std::endl; break;
+		case Warning: std::cerr << color::yellow << buffer.str() << std::endl;
+		              total_warnings++; break;
+		case Error:   std::cerr << color::red    << buffer.str() << std::endl;
+		              total_errors++; break;
 	}
 	
 	std::cout << previous;
