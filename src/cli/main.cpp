@@ -92,6 +92,29 @@ static void print_help(const char * name, const po::options_description & visibl
 	std::cout << "This is free software with ABSOLUTELY NO WARRANTY.\n";
 }
 
+static void print_license() {
+	
+	std::cout << color::white << innoextract_version << color::reset
+	          << ' ' << innoextract_copyright << '\n';
+	std::cout << '\n';
+	std::cout << "This software is provided 'as-is', without any express or implied\n"
+	             "warranty.  In no event will the author(s) be held liable for any damages\n"
+	             "arising from the use of this software.\n"
+	             "\n"
+	             "Permission is granted to anyone to use this software for any purpose,\n"
+	             "including commercial applications, and to alter it and redistribute it\n"
+	             "freely, subject to the following restrictions:\n"
+	             "\n"
+	             "1. The origin of this software must not be misrepresented; you must not\n"
+	             "   claim that you wrote the original software. If you use this software\n"
+	             "   in a product, an acknowledgment in the product documentation would be\n"
+	             "   appreciated but is not required.\n"
+	             "2. Altered source versions must be plainly marked as such, and must not be\n"
+	             "   misrepresented as being the original software.\n"
+	             "3. This notice may not be removed or altered from any source distribution.\n"
+	;
+}
+
 struct options {
 	
 	bool silent;
@@ -318,6 +341,7 @@ int main(int argc, char * argv[]) {
 	generic.add_options()
 		("help,h", "Show supported options.")
 		("version,v", "Print the version information.")
+		("license", "Show license information.")
 	;
 	
 	po::options_description action("Actions");
@@ -362,7 +386,7 @@ int main(int argc, char * argv[]) {
 		po::store(po::command_line_parser(argc, argv).options(options_desc).positional(p).run(),
 		          options);
 		po::notify(options);
-	}catch(po::error & e) {
+	} catch(po::error & e) {
 		std::cerr << "Error parsing command-line: " << e.what() << "\n\n";
 		print_help(argv[0], visible);
 		return 1;
@@ -397,6 +421,12 @@ int main(int argc, char * argv[]) {
 	// Help output.
 	if(options.count("help")) {
 		print_help(argv[0], visible);
+		return 0;
+	}
+	
+	// License output
+	if(options.count("license")) {
+		print_license();
 		return 0;
 	}
 	
