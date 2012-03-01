@@ -270,9 +270,9 @@ void header::load(std::istream & is, const version & version) {
 	run_entry_count = load_number<uint32_t>(is, version.bits);
 	uninstall_run_entry_count = load_number<uint32_t>(is, version.bits);
 	
-	int32_t license_size;
-	int32_t info_before_size;
-	int32_t info_after_size;
+	int32_t license_size = 0;
+	int32_t info_before_size = 0;
+	int32_t info_after_size = 0;
 	if(version < INNO_VERSION(1, 3, 21)) {
 		license_size = load_number<int32_t>(is, version.bits);
 		info_before_size = load_number<int32_t>(is, version.bits);

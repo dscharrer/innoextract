@@ -224,7 +224,7 @@ void progress::update(uint64_t delta, bool force) {
 	
 	value += delta;
 	
-	float status;
+	float status = 0.f;
 	if(max) {
 		status = float(std::min(value, max)) / float(max);
 		status = float(size_t(1000.f * status)) * (1.f / 1000.f);
