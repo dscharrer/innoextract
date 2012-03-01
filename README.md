@@ -9,7 +9,7 @@ Inno Extract is available under the ZLIB license - see the LICENSE file.
 
 [Website](http://innoextract.constexpr.org/)
 
-Author: Daniel Scharrer <daniel@constexpr.org>
+Author: [Daniel Scharrer](mailto:Daniel Scharrer <daniel@constexpr.org&gt;)
 
 ## Dependencies
 
