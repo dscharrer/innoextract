@@ -238,9 +238,9 @@ static void process_file(const fs::path & file, const options & o) {
 					std::cout << color::white << "unnamed file" << color::reset;
 				}
 				if(!o.quiet) {
-	#ifdef DEBUG
-				std::cout << " @ " << print_hex(file.offset);
-	#endif
+				#ifdef DEBUG
+					std::cout << " @ " << print_hex(file.offset);
+				#endif
 				std::cout << " (" << color::dim_cyan << print_bytes(file.size)
 				          << color::reset << ")";
 				}
@@ -313,7 +313,7 @@ int main(int argc, char * argv[]) {
 	generic.add_options()
 		("help,h", "Show supported options.")
 		("version,v", "Print the version information.")
-		;
+		/**/;
 	
 	po::options_description action("Actions");
 	action.add_options()
@@ -322,7 +322,7 @@ int main(int argc, char * argv[]) {
 		("extract,e", "Extract files (default action).")
 		("list,l", "Only list files, don't write anything.")
 		("lowercase,w", "Convert extracted filenames to lowercase.")
-		;
+		/**/;
 	
 	po::options_description io("I/O options");
 	io.add_options()
@@ -331,15 +331,15 @@ int main(int argc, char * argv[]) {
 		("batch,b", "Never wait for user input.")
 		("color,c", po::value<bool>()->implicit_value(true), "Enable/disable color output.")
 		("progress,p", po::value<bool>()->implicit_value(true), "Enable/disable the progress bar.")
-#ifdef DEBUG
-		("debug,g", "Output debug information.")
-#endif
-	;
+		#ifdef DEBUG
+			("debug,g", "Output debug information.")
+		#endif
+		/**/;
 	
 	po::options_description hidden("Hidden options");
 	hidden.add_options()
 		("setup-files", po::value< std::vector<string> >(), "Setup files to be extracted.")
-		;
+		/**/;
 	
 	po::options_description options_desc;
 	options_desc.add(generic).add(action).add(io).add(hidden);

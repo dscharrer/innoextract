@@ -37,10 +37,16 @@ logger::~logger() {
 	switch(level) {
 		case Debug:   std::cout << color::cyan   << buffer.str() << std::endl; break;
 		case Info:    std::cout << color::white  << buffer.str() << std::endl; break;
-		case Warning: std::cerr << color::yellow << buffer.str() << std::endl;
-		              total_warnings++; break;
-		case Error:   std::cerr << color::red    << buffer.str() << std::endl;
-		              total_errors++; break;
+		case Warning: {
+			std::cerr << color::yellow << buffer.str() << std::endl;
+			total_warnings++;
+			break;
+		}
+		case Error: {
+			std::cerr << color::red << buffer.str() << std::endl;
+			total_errors++;
+			break;
+		}
 	}
 	
 	std::cout << previous;
