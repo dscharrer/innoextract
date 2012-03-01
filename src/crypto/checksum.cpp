@@ -20,6 +20,7 @@
 
 #include "crypto/checksum.hpp"
 
+#include <ios>
 #include <cstring>
 #include <ostream>
 #include <iomanip>
