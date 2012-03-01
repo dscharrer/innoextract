@@ -8,6 +8,7 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	
 	add_definitions(-DDEBUG)
+	set(DEBUG 1)
 	
 	check_compiler_flag(RESULT "-g3")
 	if(NOT RESULT STREQUAL "")
