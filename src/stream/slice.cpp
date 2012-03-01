@@ -78,7 +78,7 @@ bool slice_reader::open_file(const path_type & file) {
 	
 	ifs.close();
 	
-	ifs.open(file.c_str(), std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
+	ifs.open(file, std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
 	if(ifs.fail()) {
 		return false;
 	}
@@ -145,10 +145,6 @@ bool slice_reader::open(size_t slice, const path_type & file) {
 		oss << ".bin";
 		
 		slice_file = oss.str();
-	}
-	
-	if(slice_file.is_absolute()) {
-		return open_file(slice_file);
 	}
 	
 	if(open_file(last_dir / slice_file)) {
