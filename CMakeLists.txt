@@ -48,6 +48,8 @@ check_link_library(Boost Boost_LIBRARIES)
 list(APPEND LIBRARIES "${Boost_LIBRARIES}")
 link_directories("${Boost_LIBRARY_DIRS}")
 include_directories(SYSTEM "${Boost_INCLUDE_DIR}")
+add_definitions(-DBOOST_FILESYSTEM_VERSION=3)
+add_definitions(-DBOOST_FILESYSTEM_NO_DEPRECATED)
 
 add_cxxflag("-Wall")
 add_cxxflag("-Wextra")

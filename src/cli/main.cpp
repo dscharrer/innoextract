@@ -90,7 +90,7 @@ struct options {
 	bool quiet;
 	
 	bool dump;
-	bool list; // TODO
+	bool list;
 	bool extract; // TODO
 	
 	bool lowercase;
@@ -158,11 +158,13 @@ static void process_file(const fs::path & file, const options & o) {
 	}
 	
 	boost::scoped_ptr<stream::slice_reader> slice_reader;
-	if(offsets.data_offset) {
-		slice_reader.reset(new stream::slice_reader(file, offsets.data_offset));
-	} else {
-		slice_reader.reset(new stream::slice_reader(file.parent_path(), file.stem(),
-		                                            info.header.slices_per_disk));
+	if(!o.list) {
+		if(offsets.data_offset) {
+			slice_reader.reset(new stream::slice_reader(file, offsets.data_offset));
+		} else {
+			slice_reader.reset(new stream::slice_reader(file.parent_path(), file.stem(),
+																									info.header.slices_per_disk));
+		}
 	}
 	
 	progress extract_progress(total_size);
@@ -174,23 +176,29 @@ static void process_file(const fs::path & file, const options & o) {
 		      << ']');
 		
 		stream::chunk_reader::pointer chunk_source;
-		chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);
+		if(!o.list) {
+			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);
+		}
 		
 		uint64_t offset = 0;
 		
 		BOOST_FOREACH(const Files::value_type & location, chunk.second) {
 			const stream::file & file = location.first;
 			
-			if(file.offset < offset) {
-				log_error << "bad offset";
-				throw std::runtime_error("unexpected error");
+			if(!o.list) {
+				
+				if(file.offset < offset) {
+					log_error << "bad offset";
+					throw std::runtime_error("unexpected error");
+				}
+				
+				if(file.offset > offset) {
+					log_warning << "discarding " << print_bytes(file.offset - offset);
+					discard(*chunk_source, file.offset - offset);
+				}
+				offset = file.offset + file.size;
+				
 			}
-			
-			if(file.offset > offset) {
-				log_warning << "discarding " << print_bytes(file.offset - offset);
-				discard(*chunk_source, file.offset - offset);
-			}
-			offset = file.offset + file.size;
 			
 			if(!o.silent) {
 				
@@ -220,7 +228,13 @@ static void process_file(const fs::path & file, const options & o) {
 				}
 				std::cout << '\n';
 				
-				extract_progress.update(0, true);
+				if(!o.list) {
+					extract_progress.update(0, true);
+				}
+			}
+			
+			if(o.list) {
+				continue;
 			}
 			
 			crypto::checksum checksum;
