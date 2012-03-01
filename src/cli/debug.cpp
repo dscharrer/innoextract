@@ -20,8 +20,6 @@
 
 #include "cli/debug.hpp"
 
-#ifdef DEBUG
-
 #include <ctime>
 
 #include <boost/foreach.hpp>
@@ -562,5 +560,3 @@ void print_info(const setup::info & info) {
 	
 	print_aux(info);
 }
-
-#endif

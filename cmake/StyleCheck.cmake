@@ -42,8 +42,8 @@ function(add_style_check_target TARGET_NAME SOURCES_LIST INCLUDES_LIST)
 				"${PYTHON_EXECUTABLE}"
 				"${CMAKE_MODULE_PATH}/cpplint.py"
 				"--filter=${STYLE_FILTER}"
-				${INCLUDES_LIST}
-				${INCLUDES_LIST}
+				${SOURCES_LIST} ${INCLUDES_LIST}
+			DEPENDS ${SOURCES_LIST} ${INCLUDES_LIST} VERBATIM
 		)
 		
 	endif()

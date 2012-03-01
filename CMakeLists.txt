@@ -84,11 +84,8 @@ endif()
 check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
 check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
 
-check_symbol_exists(__builtin_bswap32 "" HAVE_BUILTIN_BSWAP32)
-
 set(INNOEXTRACT_SOURCES
 	
-	src/cli/debug.cpp
 	src/cli/main.cpp
 	
 	src/crypto/adler32.cpp
@@ -125,16 +122,26 @@ set(INNOEXTRACT_SOURCES
 	src/stream/block.cpp
 	src/stream/chunk.cpp
 	src/stream/file.cpp
-	src/stream/lzma.cpp
-	src/stream/slice.cpp
 	
+	src/stream/slice.cpp
 	src/util/console.cpp
 	src/util/load.cpp
 	src/util/log.cpp
 	
 )
 
+if(DEBUG)
+	list(APPEND INNOEXTRACT_SOURCES src/cli/debug.cpp)
+endif()
+
+if(LZMA_FOUND)
+	list(APPEND INNOEXTRACT_SOURCES src/stream/lzma.cpp)
+endif()
+
 file(GLOB_RECURSE ALL_INCLUDES "${CMAKE_SOURCE_DIR}/src/*.hpp")
+
+list(SORT INNOEXTRACT_SOURCES)
+list(SORT ALL_INCLUDES)
 
 include_directories(src ${CMAKE_CURRENT_BINARY_DIR})
 
