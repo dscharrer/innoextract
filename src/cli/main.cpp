@@ -84,7 +84,12 @@ static void print_help(const char * name, const po::options_description & visibl
 	std::cout << "Extract files from an Inno Setup installer.\n";
 	std::cout << "For multi-part installers only specify the exe file.\n";
 	std::cout << visible << '\n';
-	print_version();
+	std::cout << "Extracts installers created by " << color::cyan
+	          << innosetup_versions << color::reset << '\n';
+	std::cout << '\n';
+	std::cout << color::white << innoextract_version << color::reset
+	          << ' ' << innoextract_copyright << '\n';
+	std::cout << "This is free software with ABSOLUTELY NO WARRANTY.\n";
 }
 
 struct options {
@@ -321,7 +326,7 @@ int main(int argc, char * argv[]) {
 		("test,t", "Only verify checksums, don't write anything.")
 		("extract,e", "Extract files (default action).")
 		("list,l", "Only list files, don't write anything.")
-		("lowercase,w", "Convert extracted filenames to lower-case.")
+		("lowercase,L", "Convert extracted filenames to lower-case.")
 	;
 	
 	po::options_description io("I/O options");

@@ -33,7 +33,7 @@
 
 #cmakedefine GIT_COMMIT
 
-#if ${BASE_VERSION_COUNT} != 2
+#if ${BASE_VERSION_COUNT} != 3
 #error "Configure error - the VERSION file should specify exactly two lines!"
 #endif
 
@@ -46,3 +46,5 @@
 const std::string innoextract_version = "${BASE_VERSION_0}" GIT_SUFFIX;
 
 const std::string innosetup_versions = "${BASE_VERSION_1}";
+
+const std::string innoextract_copyright = "${BASE_VERSION_2}";
