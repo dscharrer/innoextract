@@ -70,7 +70,7 @@ struct enum_names {
 template <class Enum>
 typename boost::enable_if_c<enum_names<Enum>::named, std::ostream &>::type
 operator<<(std::ostream & os, Enum value) {
-	if(value < enum_names<Enum>::count) {
+	if(value >= 0 && size_t(value) < enum_names<Enum>::count) {
 		return os << enum_names<Enum>::names[value];
 	} else {
 		return os << "(unknown:" << int(value) << ')';
