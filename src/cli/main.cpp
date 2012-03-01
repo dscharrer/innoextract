@@ -211,11 +211,14 @@ static void process_file(const fs::path & file, const options & o) {
 				if(!named) {
 					std::cout << color::white << "unnamed file" << color::reset;
 				}
+				if(!o.quiet) {
 	#ifdef DEBUG
 				std::cout << " @ " << print_hex(file.offset);
 	#endif
 				std::cout << " (" << color::dim_cyan << print_bytes(file.size)
-				          << color::reset << ")\n";
+				          << color::reset << ")";
+				}
+				std::cout << '\n';
 				
 				extract_progress.update(0, true);
 			}
@@ -400,7 +403,6 @@ int main(int argc, char * argv[]) {
 	}
 	
 	if(!o.quiet || logger::total_errors || logger::total_warnings) {
-		// TODO statistics
 		progress::clear();
 		std::cout << color::green << "Done" << color::reset << std::dec;
 		if(logger::total_errors || logger::total_warnings) {
