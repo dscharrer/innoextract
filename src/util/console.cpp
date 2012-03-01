@@ -189,6 +189,8 @@ void progress::show_unbounded(float value, const std::string & label) {
 	
 }
 
+static bool progress_cleared = true;
+
 void progress::clear() {
 	
 	if(!show_progress) {
@@ -199,8 +201,9 @@ void progress::clear() {
 	
 	std::cout << "\33[2K\r";
 	
-#endif
+	progress_cleared = true;
 	
+#endif
 }
 
 progress::progress(uint64_t max, bool show_rate)
@@ -215,6 +218,9 @@ void progress::update(uint64_t delta, bool force) {
 	}
 	
 #if defined(HAVE_IOCTL) && defined(TIOCGWINSZ)
+	
+	force = force || progress_cleared;
+	progress_cleared = false;
 	
 	value += delta;
 	

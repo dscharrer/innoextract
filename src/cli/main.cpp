@@ -86,13 +86,14 @@ static void print_help(const char * name, const po::options_description & visibl
 
 struct options {
 	
-	bool silent; // TODO
+	bool silent;
 	bool quiet;
 	
 	bool dump;
 	bool list; // TODO
 	bool extract; // TODO
 	
+	bool lowercase;
 };
 
 static void process_file(const fs::path & file, const options & o) {
@@ -134,6 +135,8 @@ static void process_file(const fs::path & file, const options & o) {
 	cout << '\n';
 #endif
 	
+	uint64_t total_size = 0;
+	
 	std::vector< std::vector<size_t> > files_for_location;
 	files_for_location.resize(info.data_entries.size());
 	for(size_t i = 0; i < info.files.size(); i++) {
@@ -151,6 +154,7 @@ static void process_file(const fs::path & file, const options & o) {
 			location.chunk.compression = info.header.compression;
 		}
 		chunks[location.chunk][location.file] = i;
+		total_size += location.file.size;
 	}
 	
 	boost::scoped_ptr<stream::slice_reader> slice_reader;
@@ -160,6 +164,8 @@ static void process_file(const fs::path & file, const options & o) {
 		slice_reader.reset(new stream::slice_reader(file.parent_path(), file.stem(),
 		                                            info.header.slices_per_disk));
 	}
+	
+	progress extract_progress(total_size);
 	
 	BOOST_FOREACH(const Chunks::value_type & chunk, chunks) {
 		
@@ -181,12 +187,14 @@ static void process_file(const fs::path & file, const options & o) {
 			}
 			
 			if(file.offset > offset) {
-				std::cout << "discarding " << print_bytes(file.offset - offset) << std::endl;
+				log_warning << "discarding " << print_bytes(file.offset - offset);
 				discard(*chunk_source, file.offset - offset);
 			}
 			offset = file.offset + file.size;
 			
 			if(!o.silent) {
+				
+				progress::clear();
 				
 				std::cout << " - ";
 				bool named = false;
@@ -207,8 +215,9 @@ static void process_file(const fs::path & file, const options & o) {
 				std::cout << " @ " << print_hex(file.offset);
 	#endif
 				std::cout << " (" << color::dim_cyan << print_bytes(file.size)
-				          << color::reset << ')' << std::endl;
+				          << color::reset << ")\n";
 				
+				extract_progress.update(0, true);
 			}
 			
 			crypto::checksum checksum;
@@ -230,8 +239,6 @@ static void process_file(const fs::path & file, const options & o) {
 				}
 			}
 			
-			progress extract_progress(file.size);
-			
 			while(!file_source->eof()) {
 				char buffer[8192 * 10];
 				std::streamsize n = file_source->read(buffer, ARRAY_SIZE(buffer)).gcount();
@@ -247,8 +254,6 @@ static void process_file(const fs::path & file, const options & o) {
 				}
 			}
 			
-			extract_progress.clear();
-			
 			if(checksum != file.checksum) {
 				log_warning << "checksum mismatch:";
 				log_warning << "actual:   " << checksum;
@@ -257,6 +262,7 @@ static void process_file(const fs::path & file, const options & o) {
 		}
 	}
 	
+	extract_progress.clear();
 }
 
 int main(int argc, char * argv[]) {
@@ -274,6 +280,7 @@ int main(int argc, char * argv[]) {
 		("dump", "Dump contents without converting filenames.")
 		("extract,e", "Extract files (default action).")
 		("list,l", "Only list files, don't write anything.")
+		("lowercase,w", "Convert extracted filenames to lowercase.")
 		;
 	
 	po::options_description io("I/O options");
@@ -335,7 +342,7 @@ int main(int argc, char * argv[]) {
 	color::is_enabled progress_e;
 	po::variables_map::const_iterator progress_i = options.find("progress");
 	if(progress_i == options.end()) {
-		progress_e = color::automatic;
+		progress_e = o.silent ? color::disable : color::automatic;
 	} else {
 		progress_e = progress_i->second.as<bool>() ? color::enable : color::disable;
 	}
@@ -355,6 +362,13 @@ int main(int argc, char * argv[]) {
 	if(!explicit_action) {
 		o.extract = true;
 	}
+	if(o.dump + o.list + o.extract > 1) {
+		log_error << "cannot specify multiple actions";
+		return 0;
+	}
+	
+	// Additional actions.
+	o.lowercase = options.count("lowercase");
 	
 	// List version.
 	if(options.count("version")) {
@@ -387,6 +401,7 @@ int main(int argc, char * argv[]) {
 	
 	if(!o.quiet || logger::total_errors || logger::total_warnings) {
 		// TODO statistics
+		progress::clear();
 		std::cout << color::green << "Done" << color::reset << std::dec;
 		if(logger::total_errors || logger::total_warnings) {
 			std::cout << " with ";
