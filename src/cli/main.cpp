@@ -65,7 +65,11 @@ namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 static void print_version() {
-	std::cout << color::white << innoextract_version << color::reset << '\n';
+	std::cout << color::white << innoextract_version << color::reset
+#ifdef DEBUG
+	          << " (with debug output)"
+#endif
+	          << '\n';
 	std::cout << "Extracts installers created by " << color::cyan
 	          << innosetup_versions << color::reset << '\n';
 }
@@ -161,7 +165,7 @@ static void process_file(const fs::path & file, const options & o) {
 		
 		debug("[starting " << chunk.first.compression << " chunk @ " << chunk.first.first_slice
 		      << " + " << print_hex(offsets.data_offset) << " + " << print_hex(chunk.first.offset)
-		      << ']' << std::endl);
+		      << ']');
 		
 		stream::chunk_reader::pointer chunk_source;
 		chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);

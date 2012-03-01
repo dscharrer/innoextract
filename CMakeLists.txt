@@ -1,3 +1,5 @@
+project(InnoExtract)
+
 cmake_minimum_required(VERSION 2.8)
 
 # For custom cmake modules.
@@ -8,16 +10,18 @@ option(USE_LZMA "Build lzma decompression support." ON)
 include(CompileCheck)
 include(VersionString)
 include(CheckSymbolExists)
+include(BuildType)
+include(StyleCheck)
 
 # Force re-checking libraries if the compiler or compiler flags change.
 if((NOT LAST_CMAKE_CXX_FLAGS STREQUAL CMAKE_CXX_FLAGS)
    OR (NOT LAST_CMAKE_CXX_COMPILER STREQUAL CMAKE_CXX_COMPILER))
+	force_recheck_library(LZMA)
 	force_recheck_library(Boost)
 	unset(Boost_INCLUDE_DIR CACHE)
 	set(LAST_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE INTERNAL "The last C++ compiler flags.")
 	set(LAST_CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE INTERNAL "The last C++ compiler.")
 endif()
-
 
 unset(LIBRARIES)
 
@@ -33,31 +37,17 @@ else()
 	set(HAVE_LZMA 0)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS iostreams filesystem date_time system program_options)
+find_package(Boost REQUIRED COMPONENTS
+	iostreams
+	filesystem
+	date_time
+	system
+	program_options
+)
 check_link_library(Boost Boost_LIBRARIES)
 list(APPEND LIBRARIES "${Boost_LIBRARIES}")
 link_directories("${Boost_LIBRARY_DIRS}")
 include_directories(SYSTEM "${Boost_INCLUDE_DIR}")
-
-if(CMAKE_BUILD_TYPE STREQUAL "")
-	set(CMAKE_BUILD_TYPE "Release")
-endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	
-	add_definitions(-DDEBUG)
-	
-	check_compiler_flag(RESULT "-g3")
-	if(NOT RESULT STREQUAL "")
-		string(REGEX REPLACE "-g(|[0-9]|gdb)" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${RESULT}")
-	endif()
-	
-	check_compiler_flag(RESULT "-O0")
-	string(REGEX REPLACE "-O[0-9]" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${RESULT}")
-	
-endif()
 
 add_cxxflag("-Wall")
 add_cxxflag("-Wextra")
@@ -77,7 +67,6 @@ add_cxxflag("-Wmissing-declarations")
 add_cxxflag("-Wredundant-decls")
 
 if(DEBUG_EXTRA)
-	add_definitions(-D_GLIBCXX_DEBUG) # Runtime checks for STL containers.
 	add_cxxflag("-ftrapv") # to add checks for (undefined) signed integer overflow
 	add_cxxflag("-fbounds-checking")
 	add_cxxflag("-fcatch-undefined-behavior")
@@ -87,10 +76,6 @@ else()
 	add_cxxflag("-Wno-uninitialized")
 		# (clang only) Conflicts with using const variables for configuration.
 		add_cxxflag("-Wno-constant-logical-operand")
-endif()
-
-if(UNITY_BUILD)
-	add_cxxflag("-fwhole-program")
 endif()
 
 check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
@@ -160,43 +145,4 @@ install(TARGETS innoextract RUNTIME DESTINATION bin)
 
 # Additional targets.
 
-find_package(PythonInterp)
-
-if(PYTHONINTERP_FOUND)
-	
-	unset(STYLE_FILTER)
-	
-	# Complains about any c-style cast -> too annoying.
-	set(STYLE_FILTER ${STYLE_FILTER},-readability/casting)
-	
-	# Insists on including evrything in the .cpp file even if it is included in the header.
-	# This behaviour conflicts with orther tools.
-	set(STYLE_FILTER ${STYLE_FILTER},-build/include_what_you_use)
-	
-	# Too many false positives and not very helpful error messages.
-	set(STYLE_FILTER ${STYLE_FILTER},-build/include_order)
-	
-	# No thanks.
-	set(STYLE_FILTER ${STYLE_FILTER},-readability/streams)
-	
-	# Ugh!
-	set(STYLE_FILTER ${STYLE_FILTER},-whitespace/tab)
-	
-	# Yes it is!
-	set(STYLE_FILTER ${STYLE_FILTER},-whitespace/blank_line)
-	
-	# Suggessts excessive indentation.
-	set(STYLE_FILTER ${STYLE_FILTER},-whitespace/labels)
-	
-	# Don't tell me how to name my variables.
-	set(STYLE_FILTER ${STYLE_FILTER},-runtime/arrays)
-	
-	# Why?
-	set(STYLE_FILTER ${STYLE_FILTER},-whitespace/todo)
-	set(STYLE_FILTER ${STYLE_FILTER},-readability/todo)
-	
-	add_custom_target(style
-		COMMAND cmake -E chdir "${CMAKE_SOURCE_DIR}" "${PYTHON_EXECUTABLE}" "${CMAKE_MODULE_PATH}/cpplint.py" "--filter=${STYLE_FILTER}" ${INNOEXTRACT_SOURCES} ${ALL_INCLUDES}
-	)
-	
-endif()
+add_style_check_target(style "${INNOEXTRACT_SOURCES}" "${ALL_INCLUDES}")
