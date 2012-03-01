@@ -8,6 +8,9 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 option(USE_LZMA "Build lzma decompression support." ON)
 option(DEBUG_EXTRA "Expensive debug options" OFF)
 
+set(MAN_DIR "share/man" CACHE STRING "Install location for man pages (relative to prefix).")
+mark_as_advanced(MAN_DIR)
+
 include(CompileCheck)
 include(VersionString)
 include(CheckSymbolExists)
@@ -158,6 +161,8 @@ add_executable(innoextract ${INNOEXTRACT_SOURCES} ${ALL_INCLUDES})
 target_link_libraries(innoextract ${LIBRARIES})
 
 install(TARGETS innoextract RUNTIME DESTINATION bin)
+
+install(FILES doc/innoextract.1 DESTINATION ${MAN_DIR}/man1 OPTIONAL)
 
 # Additional targets.
 

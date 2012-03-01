@@ -1,5 +1,5 @@
 
-# Inno Extract - A tool to extract installers created by Inno Setup. 
+# Inno Extract - tool to extract installers created by Inno Setup
 
 [Inno Setup](http://www.jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. Inno Extracts allows to extract such installers under non-windows systems without running the actual installer using wine. Inno Extract currently supports installers created by Inno Setup 1.2.10 to 5.4.3.
 
@@ -37,6 +37,7 @@ Build options:
 * `CMAKE_BUILD_TYPE` (default=Release): Set to `Debug` to enable debug output.
 * `CMAKE_INSTALL_PREFIX` (default: `/usr/local` on UNIX): Where to install Inno Extract.
 * `DEBUG_EXTRA` (default=OFF): Expensive debug options
+* `MAN_DIR` (default: `share/man`): Install location for man pages (relative to prefix).
 
 Enable by passing `-D<option>=1` to cmake, disable using `-D<option>=0`
 
@@ -49,6 +50,10 @@ To extract a setup file run:
 A list of available options can be retrieved using
 
     $ innoextract --help
+
+Documentation is also available as a man page:
+
+    $ man 1 innoextract
 
 ## Limitations
 

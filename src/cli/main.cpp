@@ -26,6 +26,7 @@
 #include <cstring>
 #include <vector>
 #include <map>
+#include <cctype>
 
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
@@ -239,7 +240,11 @@ static void process_file(const fs::path & file, const options & o) {
 				size_t file_i = files_for_location[location.second][i];
 				if(!info.files[file_i].destination.empty()) {
 					if(o.dump) {
-						output_names.push_back(info.files[file_i].destination);
+						std::string file = info.files[file_i].destination;
+						if(o.filenames.lowercase) {
+							std::transform(file.begin(), file.end(), file.begin(), ::tolower);
+						}
+						output_names.push_back(file);
 					} else {
 						output_names.push_back(o.filenames.convert(info.files[file_i].destination));
 					}
@@ -357,7 +362,6 @@ int main(int argc, char * argv[]) {
 	io.add_options()
 		("quiet,q", "Output less information.")
 		("silent,s", "Output only error/warning information.")
-		("batch,b", "Never wait for user input.")
 		("color,c", po::value<bool>()->implicit_value(true), "Enable/disable color output.")
 		("progress,p", po::value<bool>()->implicit_value(true), "Enable/disable the progress bar.")
 		#ifdef DEBUG

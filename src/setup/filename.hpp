@@ -29,11 +29,11 @@ namespace setup {
 
 class filename_map : public std::map<std::string, std::string> {
 	
-	bool lowercase;
-	
 	const std::string & lookup(const std::string & key) const;
 	
 public:
+	
+	bool lowercase;
 	
 	filename_map() : lowercase(false) { }
 	
