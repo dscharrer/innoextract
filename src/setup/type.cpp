@@ -60,7 +60,7 @@ void type_entry::load(std::istream & is, const version & version) {
 	} else {
 		languages.clear();
 	}
-	if(version >= INNO_VERSION(3, 0, 8)) {
+	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
 		is >> encoded_string(check, version.codepage());
 	} else {
 		check.clear();

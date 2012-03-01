@@ -307,12 +307,12 @@ void header::load(std::istream & is, const version & version) {
 		memset(password_salt, 0, sizeof(password_salt));
 	}
 	
-	if(version < INNO_VERSION(4, 0, 0)) {
-		extra_disk_space_required = load_number<int32_t>(is);
-		slices_per_disk = 1;
-	} else {
+	if(version >= INNO_VERSION(4, 0, 0)) {
 		extra_disk_space_required = load_number<int64_t>(is);
 		slices_per_disk = load_number<uint32_t>(is);
+	} else {
+		extra_disk_space_required = load_number<int32_t>(is);
+		slices_per_disk = 1;
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 0)) {

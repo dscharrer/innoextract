@@ -150,7 +150,7 @@ void file_entry::load(std::istream & is, const version & version) {
 		flags.add(IgnoreVersion);
 		flags.add(PromptIfOlder);
 	}
-	if(version >= INNO_VERSION(3, 0, 8)) {
+	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
 		flags.add(DontCopy);
 	}
 	if(version >= INNO_VERSION(4, 0, 5)) {

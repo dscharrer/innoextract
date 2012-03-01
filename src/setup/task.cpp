@@ -39,7 +39,7 @@ void task_entry::load(std::istream & is, const version & version) {
 	} else {
 		languages.clear();
 	}
-	if(version >= INNO_VERSION(3, 0, 8)) {
+	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
 		is >> encoded_string(check, version.codepage());
 		level = load_number<int32_t>(is);
 		used = load_number<uint8_t>(is);

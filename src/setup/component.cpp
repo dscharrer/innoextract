@@ -63,7 +63,7 @@ void component_entry::load(std::istream & is, const version & version) {
 	} else {
 		languages.clear();
 	}
-	if(version >= INNO_VERSION(3, 0, 8)) {
+	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
 		is >> encoded_string(check, version.codepage());
 	} else {
 		check.clear();
@@ -75,7 +75,7 @@ void component_entry::load(std::istream & is, const version & version) {
 		extra_disk_pace_required = load_number<uint32_t>(is);
 	}
 	
-	if(version >= INNO_VERSION(3, 0, 8)) {
+	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
 		level = load_number<int32_t>(is);
 		used = load_number<uint8_t>(is);
 	} else {
@@ -86,7 +86,7 @@ void component_entry::load(std::istream & is, const version & version) {
 	
 	if(version >= INNO_VERSION(4, 2, 3)) {
 		options = stored_flags<stored_component_flags_2>(is).get();
-	} else if(version >= INNO_VERSION(3, 0, 8)) {
+	} else if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
 		options = stored_flags<stored_component_flags_1>(is).get();
 	} else {
 		options = stored_flags<stored_component_flags_0>(is).get();

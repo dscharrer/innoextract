@@ -29,6 +29,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "util/util.hpp"
+#include "util/log.hpp"
 
 using std::string;
 
@@ -183,9 +184,13 @@ void version::load(std::istream & is) {
 				bits = legacy_versions[i].bits;
 				unicode = false;
 				known = true;
+				debug("known legacy version: \"" << versions[i].name << '"');
 				return;
 			}
 		}
+		
+		debug("unknown legacy version: \""
+		      << std::string(legacy_version, ARRAY_SIZE(legacy_version)) << '"');
 		
 		if(legacy_version[0] != 'i' || legacy_version[2] != '.' || legacy_version[4] != '.'
 		   || legacy_version[7] != '-' || legacy_version[8] != '-') {
@@ -228,12 +233,14 @@ void version::load(std::istream & is) {
 			bits = 32;
 			unicode = versions[i].unicode;
 			known = true;
+			debug("known version: \"" << versions[i].name << '"');
 			return;
 		}
 	}
 	
 	char * end = std::find(version, version + ARRAY_SIZE(version), '\0');
 	string version_str(version, end);
+	debug("unknown version: \"" << version_str << '"');
 	if(version_str.find("Inno Setup") == string::npos) {
 		throw version_error();
 	}
