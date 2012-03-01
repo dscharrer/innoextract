@@ -21,6 +21,7 @@
 #ifndef INNOEXTRACT_UTIL_ENUM_HPP
 #define INNOEXTRACT_UTIL_ENUM_HPP
 
+#include <stddef.h>
 #include <ostream>
 
 #include <boost/utility/enable_if.hpp>
@@ -70,11 +71,13 @@ struct enum_names {
 template <class Enum>
 typename boost::enable_if_c<enum_names<Enum>::named, std::ostream &>::type
 operator<<(std::ostream & os, Enum value) {
-	if(value >= 0 && size_t(value) < enum_names<Enum>::count) {
-		return os << enum_names<Enum>::names[value];
-	} else {
-		return os << "(unknown:" << int(value) << ')';
+	if(value >= Enum(0)) {
+		size_t i = size_t(value);
+		if(i < enum_names<Enum>::count) {
+			return os << enum_names<Enum>::names[value];
+		}
 	}
+	return os << "(unknown:" << int(value) << ')';
 }
 
 template <class Enum>
