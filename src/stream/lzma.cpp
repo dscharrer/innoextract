@@ -137,7 +137,7 @@ bool inno_lzma2_decompressor_impl::filter(const char * & begin_in, const char * 
 		if(prop == 40) {
 			options.dict_size = 0xffffffff;
 		} else {
-			options.dict_size = (((uint32_t)2 | ((prop) & 1)) << ((prop) / 2 + 11));
+			options.dict_size = ((uint32_t(2) | uint32_t((prop) & 1)) << ((prop) / 2 + 11));
 		}
 		
 		stream = init_raw_lzma_stream(LZMA_FILTER_LZMA2, options);

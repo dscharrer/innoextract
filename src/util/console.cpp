@@ -162,7 +162,7 @@ void progress::show_unbounded(float value, const std::string & label) {
 	if(progress_length > 10) {
 		
 		size_t progress = std::min(size_t(std::ceil(float(progress_length) * value)),
-		                  size_t(progress_length) - 1);
+		                  size_t(progress_length) - 1ul);
 		
 		std::cout << '[';
 		for(size_t i = 0; i < progress; i++) {

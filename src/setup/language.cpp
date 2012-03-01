@@ -33,7 +33,7 @@ void language_entry::load(std::istream & is, const version & version) {
 		name = "default";
 	}
 	
-	is >> encoded_string(language_name, (version >= INNO_VERSION(4, 2, 2)) ? 1200 : 1252);
+	is >> encoded_string(language_name, (version >= INNO_VERSION(4, 2, 2)) ? 1200u : 1252u);
 	
 	is >> encoded_string(dialog_font, version.codepage());
 	is >> encoded_string(title_font, version.codepage());
