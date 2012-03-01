@@ -331,6 +331,9 @@ static void process_file(const fs::path & file, const options & o) {
 				log_warning << "checksum mismatch:";
 				log_warning << "actual:   " << checksum;
 				log_warning << "expected: " << file.checksum;
+				if(o.test) {
+					throw new std::runtime_error("integrity test failed");
+				}
 			}
 		}
 	}
@@ -498,5 +501,5 @@ int main(int argc, char * argv[]) {
 		std::cout << '.' << std::endl;
 	}
 	
-	return 0;
+	return logger::total_errors == 0 ? 0 : 1;
 }
