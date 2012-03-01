@@ -135,8 +135,8 @@ static void process_file(const fs::path & file, const options & o) {
 	if(logger::debug) {
 		cout << '\n';
 		print_info(info);
+		cout << '\n';
 	}
-	cout << '\n';
 #endif
 	
 	uint64_t total_size = 0;
