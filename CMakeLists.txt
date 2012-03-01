@@ -75,8 +75,10 @@ if(DEBUG_EXTRA)
 else()
 	# -Wuninitialized causes too many false positives - thanks very much, gcc
 	add_cxxflag("-Wno-uninitialized")
-		# (clang only) Conflicts with using const variables for configuration.
-		add_cxxflag("-Wno-constant-logical-operand")
+	# (clang only) Conflicts with using const variables for configuration.
+	add_cxxflag("-Wno-constant-logical-operand")
+	add_cxxflag("-Wno-unneeded-internal-declaration")
+	add_cxxflag("-Wno-unused-function")
 endif()
 
 check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
