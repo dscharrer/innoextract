@@ -15,7 +15,7 @@ Author: [Daniel Scharrer](mailto:Daniel Scharrer <daniel@constexpr.org>)
 * **Boost 1.37** or newer
 * **liblzma** from [xz-utils](http://tukaani.org/xz/) *(optional)*
 
-For Boost you will need the headers as well as the `iostreams`, `filesystem`, `date_time`, `system` and `program_options` libraries. Older Boost version may work but are not actively supported. The boost `iostreams` library needs to be build with bzip2 
+For Boost you will need the headers as well as the `iostreams`, `filesystem`, `date_time`, `system` and `program_options` libraries. Older Boost version may work but are not actively supported. The boost `iostreams` library needs to be build with zlib and bzip2 support.
 
 While the liblzma dependency is optional, it is highly recommended and you won't be able to extract most installers created by newer Inno Setup versions without it.
 
