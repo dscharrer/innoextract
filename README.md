@@ -8,6 +8,7 @@ Inno Extract is available under the ZLIB license - see the LICENSE file.
 ## Contact
 
 [GitHub project](https://github.com/dscharrer/InnoExtract)
+
 Author: [Daniel Scharrer](mailto:Daniel Scharrer <daniel@constexpr.org>)
 
 ## Dependencies
@@ -59,4 +60,4 @@ A list of available options can be retrieved using
 
 * Inno Extract does not check if an installer includes multiple files with the same name and will continually overwrite the destination file when extracting.
 
-A perhaps more complete, but windows-only tool to extract Inno Setup files is [innounp](http://innounp.sourceforge.net/).
+A perhaps more complete, but windows-only, tool to extract Inno Setup files is [innounp](http://innounp.sourceforge.net/).

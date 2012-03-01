@@ -321,7 +321,7 @@ int main(int argc, char * argv[]) {
 		("test,t", "Only verify checksums, don't write anything.")
 		("extract,e", "Extract files (default action).")
 		("list,l", "Only list files, don't write anything.")
-		("lowercase,w", "Convert extracted filenames to lowercase.")
+		("lowercase,w", "Convert extracted filenames to lower-case.")
 	;
 	
 	po::options_description io("I/O options");
