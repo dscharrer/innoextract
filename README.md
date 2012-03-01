@@ -65,4 +65,8 @@ Documentation is also available as a man page:
 
 * Inno Extract does not check if an installer includes multiple files with the same name and will continually overwrite the destination file when extracting.
 
+* Names for data files in multi-file installers must follow the standard naming scheme.
+
+* Encrypted installers are not supported.
+
 A perhaps more complete, but windows-only, tool to extract Inno Setup files is [innounp](http://innounp.sourceforge.net/).
