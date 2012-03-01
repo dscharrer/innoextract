@@ -39,7 +39,7 @@ Build options:
 * `DEBUG_EXTRA` (default=OFF): Expensive debug options
 * `MAN_DIR` (default: `share/man`): Install location for man pages (relative to prefix).
 
-Enable by passing `-D<option>=1` to cmake, disable using `-D<option>=0`
+Set options by passing `-D<option>=<value>` to cmake.
 
 ## Run
 
