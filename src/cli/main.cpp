@@ -34,6 +34,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #include "version.hpp"
 
@@ -45,6 +46,7 @@
 #include "setup/file.hpp"
 #include "setup/info.hpp"
 #include "setup/version.hpp"
+#include "setup/filename_map.hpp"
 
 #include "stream/chunk.hpp"
 #include "stream/file.hpp"
@@ -91,9 +93,10 @@ struct options {
 	
 	bool dump;
 	bool list;
-	bool extract; // TODO
+	bool test;
 	
-	bool lowercase;
+	setup::filename_map filenames;
+	
 };
 
 static void process_file(const fs::path & file, const options & o) {
@@ -163,7 +166,7 @@ static void process_file(const fs::path & file, const options & o) {
 			slice_reader.reset(new stream::slice_reader(file, offsets.data_offset));
 		} else {
 			slice_reader.reset(new stream::slice_reader(file.parent_path(), file.stem(),
-																									info.header.slices_per_disk));
+			                                            info.header.slices_per_disk));
 		}
 	}
 	
@@ -185,6 +188,7 @@ static void process_file(const fs::path & file, const options & o) {
 		BOOST_FOREACH(const Files::value_type & location, chunk.second) {
 			const stream::file & file = location.first;
 			
+			// Seek to the correct position within the chunk
 			if(!o.list) {
 				
 				if(file.offset < offset) {
@@ -200,19 +204,32 @@ static void process_file(const fs::path & file, const options & o) {
 				
 			}
 			
+			// Convert output filenames
+			std::vector<fs::path> output_names;
+			for(size_t i = 0; i < files_for_location[location.second].size(); i++) {
+				size_t file_i = files_for_location[location.second][i];
+				if(!info.files[file_i].destination.empty()) {
+					if(o.dump) {
+						output_names.push_back(info.files[file_i].destination);
+					} else {
+						output_names.push_back(o.filenames.convert(info.files[file_i].destination));
+					}
+				}
+			}
+			
+			// Print filename and size
 			if(!o.silent) {
 				
 				progress::clear();
 				
 				std::cout << " - ";
 				bool named = false;
-				BOOST_FOREACH(size_t file_i, files_for_location[location.second]) {
-					if(!info.files[file_i].destination.empty()) {
+				BOOST_FOREACH(const fs::path & path, output_names) {
+					if(!path.empty()) {
 						if(named) {
 							std::cout << ", ";
 						}
-						std::cout << '"' << color::white << info.files[file_i].destination
-						          << color::reset << '"';
+						std::cout << '"' << color::white << path.string() << color::reset << '"';
 						named = true;
 					}
 				}
@@ -239,32 +256,37 @@ static void process_file(const fs::path & file, const options & o) {
 			
 			crypto::checksum checksum;
 			
+			// Open input file
 			stream::file_reader::pointer file_source;
 			file_source = stream::file_reader::get(*chunk_source, file, &checksum);
 			
-			boost::ptr_vector<std::ofstream> output;
-			output.resize(files_for_location[location.second].size());
-			
-			for(size_t i = 0; i < files_for_location[location.second].size(); i++) {
-				size_t file_i = files_for_location[location.second][i];
-				if(!info.files[file_i].destination.empty()) {
-					output.replace(i, new std::ofstream(info.files[file_i].destination.c_str()));
-					if(!output[i].is_open()) {
+			// Open output files
+			boost::ptr_vector<fs::ofstream> output;
+			if(!o.test) {
+				output.reserve(output_names.size());
+				BOOST_FOREACH(const fs::path & path, output_names) {
+					try {
+						fs::create_directories(path.parent_path());
+					} catch(...) {
+						throw std::runtime_error("error creating directories for \""
+						                         + path.string() + '"');
+					}
+					output.push_back(new fs::ofstream(path));
+					if(!output.back().is_open()) {
 						throw std::runtime_error("error opening output file \""
-						                         + info.files[file_i].destination + '"');
+						                        + path.string() + '"');
 					}
 				}
 			}
 			
+			// Copy data
 			while(!file_source->eof()) {
 				char buffer[8192 * 10];
 				std::streamsize n = file_source->read(buffer, ARRAY_SIZE(buffer)).gcount();
 				if(n > 0) {
 					
-					for(size_t i = 0; i < files_for_location[location.second].size(); i++) {
-						if(!output.is_null(i)) {
-							output[i].write(buffer, n);
-						}
+					BOOST_FOREACH(fs::ofstream & ofs, output) {
+						ofs.write(buffer, n);
 					}
 					
 					extract_progress.update(uint64_t(n));
@@ -295,6 +317,7 @@ int main(int argc, char * argv[]) {
 	po::options_description action("Actions");
 	action.add_options()
 		("dump", "Dump contents without converting filenames.")
+		("test,t", "Only verify checksums, don't write anything.")
 		("extract,e", "Extract files (default action).")
 		("list,l", "Only list files, don't write anything.")
 		("lowercase,w", "Convert extracted filenames to lowercase.")
@@ -372,20 +395,21 @@ int main(int argc, char * argv[]) {
 	}
 	
 	// Main action.
-	o.dump = options.count("dump");
 	o.list = options.count("list");
-	o.extract = options.count("extract");
-	bool explicit_action = o.dump || o.list || o.extract;
+	bool extract = options.count("extract");
+	o.test = options.count("test");
+	bool explicit_action = o.list || extract || o.test;
 	if(!explicit_action) {
-		o.extract = true;
+		extract = true;
 	}
-	if(o.dump + o.list + o.extract > 1) {
+	if(o.list + extract + o.test > 1) {
 		log_error << "cannot specify multiple actions";
 		return 0;
 	}
 	
 	// Additional actions.
-	o.lowercase = options.count("lowercase");
+	o.dump = options.count("dump");
+	o.filenames.set_lowercase(options.count("lowercase"));
 	
 	// List version.
 	if(options.count("version")) {
