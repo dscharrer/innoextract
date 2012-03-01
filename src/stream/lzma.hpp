@@ -35,7 +35,8 @@ namespace stream {
 
 struct lzma_error : public std::ios_base::failure {
 	
-	inline lzma_error(std::string msg, int code) : failure(msg), error_code(code) { }
+	inline lzma_error(std::string msg, int code)
+		: std::ios_base::failure(msg), error_code(code) { }
 	
 	inline int error() const { return error_code; }
 	

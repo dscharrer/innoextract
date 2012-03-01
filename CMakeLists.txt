@@ -84,6 +84,8 @@ endif()
 check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
 check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
 
+check_symbol_exists(__builtin_bswap32 "" HAVE_BUILTIN_BSWAP32)
+
 set(INNOEXTRACT_SOURCES
 	
 	src/cli/debug.cpp
