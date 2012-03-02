@@ -33,10 +33,10 @@ To install the binaries system-wide, run as root:
 
 Build options:
 
-* `USE_LZMA` (default=ON): Use *liblzma* if available.
-* `CMAKE_BUILD_TYPE` (default=Release): Set to `Debug` to enable debug output.
+* `USE_LZMA` (default: `ON`): Use *liblzma* if available.
+* `CMAKE_BUILD_TYPE` (default: `Release`): Set to `Debug` to enable debug output.
 * `CMAKE_INSTALL_PREFIX` (default: `/usr/local` on UNIX): Where to install Inno Extract.
-* `DEBUG_EXTRA` (default=OFF): Expensive debug options
+* `DEBUG_EXTRA` (default: `OFF`): Expensive debug options
 * `MAN_DIR` (default: `share/man`): Install location for man pages (relative to prefix).
 
 Set options by passing `-D<option>=<value>` to cmake.
