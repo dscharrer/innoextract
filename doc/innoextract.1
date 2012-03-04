@@ -1,6 +1,6 @@
 .\" Manpage for innoextract.
 .\" Contact daniel@constexpr.org to correct errors or typos.
-.TH INNOEXTRACT 1 "2012-03-01" "1.0"
+.TH INNOEXTRACT 1 "2012-03-04" "1.0"
 .SH NAME
 innoextract \- tool to extract installers created by Inno Setup
 .SH SYNOPSIS
@@ -23,7 +23,7 @@ To extract a multi-part installer with external data files, only the executable 
 .B \-c --color [enable]
 By default
 .B innoextract
-will try to detect if the terminal supported shell escape codes and enable or disable color output accordingly. Pass
+will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Pass
 .B 1
 or
 .B true
@@ -66,7 +66,7 @@ Convert filenames stored in the installer to lower-case before extracting.
 .B \-p --progress [enable]
 By default
 .B innoextract
-will try to detect if the terminal supported shell escape codes and enable or disable progress bar output accordingly. Pass
+will try to detect if the terminal supports shell escape codes and enable or disable progress bar output accordingly. Pass
 .B 1
 or
 .B true
