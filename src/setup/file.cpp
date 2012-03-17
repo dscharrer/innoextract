@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -114,7 +114,7 @@ void file_entry::load(std::istream & is, const version & version) {
 		permission = -1;
 	}
 	
-	stored_flag_reader<flags> flags(is);
+	stored_flag_reader<flags> flags(is, version.bits);
 	
 	flags.add(ConfirmOverwrite);
 	flags.add(NeverUninstall);
@@ -184,15 +184,7 @@ void file_entry::load(std::istream & is, const version & version) {
 		flags.add(GacInstall);
 	}
 	
-	options = flags;
-	
-	if(version >= INNO_VERSION(3, 0, 5) && version < INNO_VERSION(5, 0, 3)) {
-		// TODO find out where this byte comes from
-		int byte = is.get();
-		if(byte) {
-			log_warning << "[file] unknown byte: " << byte;
-		}
-	}
+	options |= flags;
 	
 	if(version.bits == 16 || version >= INNO_VERSION(5, 0, 0)) {
 		type = stored_enum<stored_file_type_0>(is).get();

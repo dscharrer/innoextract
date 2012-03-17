@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -74,7 +74,7 @@ void icon_entry::load(std::istream & is, const version & version) {
 		hotkey = 0;
 	}
 	
-	stored_flag_reader<flags> flags(is);
+	stored_flag_reader<flags> flags(is, version.bits);
 	
 	flags.add(NeverUninstall);
 	if(version >= INNO_VERSION(1, 3, 21)) {

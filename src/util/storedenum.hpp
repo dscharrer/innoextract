@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -84,7 +84,11 @@ public:
 	
 };
 
-template <size_t Bits>
+/*!
+ * Load a packed bitfield: 1 byte for every 8 bits
+ * The only exception is that 3-byte bitfields are padded to 4 bytes for non-16-bit builds.
+ */
+template <size_t Bits, size_t PadBits = 32>
 class stored_bitfield {
 	
 	typedef uint8_t base_type;
@@ -101,6 +105,10 @@ public:
 	inline stored_bitfield(std::istream & is) {
 		for(size_t i = 0; i < count; i++) {
 			bits[i] = load_number<base_type>(is);
+		}
+		if(count == 3 && PadBits == 32) {
+			// 3-byte sets are padded to 4 bytes
+			(void)load_number<base_type>(is);
 		}
 	}
 	
@@ -140,8 +148,13 @@ public:
 	
 };
 
-template <class Mapping>
-class stored_flags : private stored_bitfield<Mapping::count> {
+/*!
+ * Load a flag set where the possible flags are known at compile-time.
+ * Inno Setup stores flag sets as packed bitfields: 1 byte for every 8 flags
+ * The only exception is that 3-byte bitfields are padded to 4 bytes for non-16-bit builds.
+ */
+template <class Mapping, size_t PadBits = 32>
+class stored_flags : private stored_bitfield<Mapping::count, PadBits> {
 	
 public:
 	
@@ -149,7 +162,7 @@ public:
 	typedef typename Mapping::enum_type enum_type;
 	typedef flags<enum_type> flag_type;
 	
-	inline stored_flags(std::istream & is) : stored_bitfield<Mapping::count>(is) { }
+	inline stored_flags(std::istream & is) : stored_bitfield<Mapping::count, PadBits>(is) { }
 	
 	flag_type get() {
 		
@@ -173,6 +186,11 @@ public:
 	
 };
 
+/*!
+ * Load a flag set where the possible flags are not known at compile-time.
+ * Inno Setup stores flag sets as packed bitfields: 1 byte for every 8 flags
+ * The only exception is that 3-byte bitfields are padded to 4 bytes for non-16-bit builds.
+ */
 template <class Enum>
 class stored_flag_reader {
 	
@@ -180,6 +198,10 @@ public:
 	
 	typedef Enum enum_type;
 	typedef flags<enum_type> flag_type;
+	
+private:
+	
+	const size_t pad_bits;
 	
 	std::istream & is;
 	
@@ -191,13 +213,18 @@ public:
 	
 	flag_type result;
 	
-	size_t bits;
+	size_t bytes;
 	
-	explicit stored_flag_reader(std::istream & _is) : is(_is), pos(0), result(0), bits(0) { }
+public:
 	
+	explicit stored_flag_reader(std::istream & _is, size_t pad_bits = 32)
+		: pad_bits(pad_bits), is(_is), pos(0), result(0), bytes(0) { }
+	
+	//! Declare the next possible flag.
 	void add(enum_type flag) {
 		
 		if(pos == 0) {
+			bytes++;
 			buffer = load_number<stored_type>(is);
 		}
 		
@@ -206,11 +233,13 @@ public:
 		}
 		
 		pos = (pos + 1) % stored_bits;
-		
-		bits++;
 	}
 	
 	operator flag_type() const {
+		if(bytes == 3 && pad_bits == 32) {
+			// 3-byte sets are padded to 4 bytes
+			(void)load_number<stored_type>(is);
+		}
 		return result;
 	}
 	
@@ -221,7 +250,8 @@ class stored_flag_reader<flags<Enum> > : public stored_flag_reader<Enum> {
 	
 public:
 	
-	explicit stored_flag_reader(std::istream & is) : stored_flag_reader<Enum>(is) { }
+	explicit stored_flag_reader(std::istream & is, size_t pad_bits = 32)
+		: stored_flag_reader<Enum>(is, pad_bits) { }
 	
 };
 
