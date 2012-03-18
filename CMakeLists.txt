@@ -108,6 +108,7 @@ set(INNOEXTRACT_SOURCES
 	src/setup/data.cpp
 	src/setup/delete.cpp
 	src/setup/directory.cpp
+	src/setup/expression.cpp
 	src/setup/file.cpp
 	src/setup/filename.cpp
 	src/setup/header.cpp

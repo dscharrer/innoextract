@@ -44,6 +44,7 @@
 #include "loader/offsets.hpp"
 
 #include "setup/data.hpp"
+#include "setup/expression.hpp"
 #include "setup/file.hpp"
 #include "setup/filename.hpp"
 #include "setup/info.hpp"
@@ -124,6 +125,8 @@ struct options {
 	bool dump;
 	bool list;
 	bool test;
+	
+	std::string language;
 	
 	setup::filename_map filenames;
 	
@@ -218,27 +221,19 @@ static void process_file(const fs::path & file, const options & o) {
 		BOOST_FOREACH(const Files::value_type & location, chunk.second) {
 			const stream::file & file = location.first;
 			
-			// Seek to the correct position within the chunk
-			if(!o.list) {
-				
-				if(file.offset < offset) {
-					log_error << "bad offset";
-					throw std::runtime_error("unexpected error");
-				}
-				
-				if(file.offset > offset) {
-					log_warning << "discarding " << print_bytes(file.offset - offset);
-					discard(*chunk_source, file.offset - offset);
-				}
-				offset = file.offset + file.size;
-				
-			}
-			
 			// Convert output filenames
 			typedef std::pair<fs::path, size_t> file_t;
 			std::vector<file_t> output_names;
 			for(size_t i = 0; i < files_for_location[location.second].size(); i++) {
+				
 				size_t file_i = files_for_location[location.second][i];
+				
+				if(!o.language.empty() && !info.files[file_i].languages.empty()) {
+					if(!setup::expression_match(o.language, info.files[file_i].languages)) {
+						continue;
+					}
+				}
+				
 				if(!info.files[file_i].destination.empty()) {
 					fs::path path;
 					if(o.dump) {
@@ -254,6 +249,11 @@ static void process_file(const fs::path & file, const options & o) {
 						output_names.push_back(std::make_pair(path, file_i));
 					}
 				}
+			}
+			
+			if(output_names.empty()) {
+				extract_progress.update(location.first.size);
+				continue;
 			}
 			
 			// Print filename and size
@@ -294,6 +294,17 @@ static void process_file(const fs::path & file, const options & o) {
 			if(o.list) {
 				continue;
 			}
+			
+			// Seek to the correct position within the chunk
+			if(file.offset < offset) {
+				log_error << "bad offset";
+				throw std::runtime_error("unexpected error");
+			}
+			if(file.offset > offset) {
+				debug("discarding " << print_bytes(file.offset - offset));
+				discard(*chunk_source, file.offset - offset);
+			}
+			offset = file.offset + file.size;
 			
 			crypto::checksum checksum;
 			
@@ -361,11 +372,16 @@ int main(int argc, char * argv[]) {
 	
 	po::options_description action("Actions");
 	action.add_options()
-		("dump", "Dump contents without converting filenames.")
 		("test,t", "Only verify checksums, don't write anything.")
 		("extract,e", "Extract files (default action).")
 		("list,l", "Only list files, don't write anything.")
+	;
+	
+	po::options_description filter("Filters");
+	filter.add_options()
+		("dump", "Dump contents without converting filenames.")
 		("lowercase,L", "Convert extracted filenames to lower-case.")
+		("language", po::value<std::string>(), "Extract files for the given language.")
 	;
 	
 	po::options_description io("I/O options");
@@ -385,10 +401,10 @@ int main(int argc, char * argv[]) {
 		/**/;
 	
 	po::options_description options_desc;
-	options_desc.add(generic).add(action).add(io).add(hidden);
+	options_desc.add(generic).add(action).add(filter).add(io).add(hidden);
 	
 	po::options_description visible;
-	visible.add(generic).add(action).add(io);
+	visible.add(generic).add(action).add(filter).add(io);
 	
 	po::positional_options_description p;
 	p.add("setup-files", -1);
@@ -467,6 +483,11 @@ int main(int argc, char * argv[]) {
 		if(!explicit_action) {
 			return 0;
 		}
+	}
+	
+	po::variables_map::const_iterator i = options.find("language");
+	if(i != options.end()) {
+		o.language = i->second.as<std::string>();
 	}
 	
 	if(!options.count("setup-files")) {
