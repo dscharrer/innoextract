@@ -235,18 +235,23 @@ static void process_file(const fs::path & file, const options & o) {
 			}
 			
 			// Convert output filenames
-			std::vector<fs::path> output_names;
+			typedef std::pair<fs::path, size_t> file_t;
+			std::vector<file_t> output_names;
 			for(size_t i = 0; i < files_for_location[location.second].size(); i++) {
 				size_t file_i = files_for_location[location.second][i];
 				if(!info.files[file_i].destination.empty()) {
+					fs::path path;
 					if(o.dump) {
 						std::string file = info.files[file_i].destination;
 						if(o.filenames.lowercase) {
 							std::transform(file.begin(), file.end(), file.begin(), ::tolower);
 						}
-						output_names.push_back(file);
+						path = file;
 					} else {
-						output_names.push_back(o.filenames.convert(info.files[file_i].destination));
+						path = o.filenames.convert(info.files[file_i].destination);
+					}
+					if(!path.empty()) {
+						output_names.push_back(std::make_pair(path, file_i));
 					}
 				}
 			}
@@ -258,14 +263,16 @@ static void process_file(const fs::path & file, const options & o) {
 				
 				std::cout << " - ";
 				bool named = false;
-				BOOST_FOREACH(const fs::path & path, output_names) {
-					if(!path.empty()) {
-						if(named) {
-							std::cout << ", ";
-						}
-						std::cout << '"' << color::white << path.string() << color::reset << '"';
-						named = true;
+				BOOST_FOREACH(const file_t & path, output_names) {
+					if(named) {
+						std::cout << ", ";
 					}
+					std::cout << '"' << color::white << path.first.string() << color::reset << '"';
+					if(!info.files[path.second].languages.empty()) {
+						std::cout << " [" << color::green << info.files[path.second].languages
+						          << color::reset << "]";
+					}
+					named = true;
 				}
 				if(!named) {
 					std::cout << color::white << "unnamed file" << color::reset;
@@ -298,17 +305,17 @@ static void process_file(const fs::path & file, const options & o) {
 			boost::ptr_vector<fs::ofstream> output;
 			if(!o.test) {
 				output.reserve(output_names.size());
-				BOOST_FOREACH(const fs::path & path, output_names) {
+				BOOST_FOREACH(const file_t & path, output_names) {
 					try {
-						fs::create_directories(path.parent_path());
+						fs::create_directories(path.first.parent_path());
 					} catch(...) {
 						throw std::runtime_error("error creating directories for \""
-						                         + path.string() + '"');
+						                         + path.first.string() + '"');
 					}
-					output.push_back(new fs::ofstream(path));
+					output.push_back(new fs::ofstream(path.first));
 					if(!output.back().is_open()) {
 						throw std::runtime_error("error opening output file \""
-						                        + path.string() + '"');
+						                        + path.first.string() + '"');
 					}
 				}
 			}
