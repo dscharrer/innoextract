@@ -1,4 +1,8 @@
 
+Inno Extract 1.1 (2012-03-19)
+ - Support extracting files for a specific language.
+ - Fix a bug in the setup header parsing code.
+
 Inno Extract 1.0 (2012-03-01)
  - Initial release.
  - Can list and extract files but not much more.
