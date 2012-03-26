@@ -58,7 +58,7 @@ namespace detail {
 	};
 	
 	template <>
-	struct uint_t<64> : public boost::uint_t<64> {
+	struct uint_t<64> {
 		typedef uint64_t exact;
 	};
 	
@@ -81,7 +81,7 @@ namespace detail {
 	};
 	
 	template <>
-	struct int_t<64> : public boost::int_t<64> {
+	struct int_t<64> {
 		typedef int64_t exact;
 	};
 	
