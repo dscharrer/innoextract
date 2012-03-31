@@ -85,6 +85,9 @@ else()
 	add_cxxflag("-Wno-unused-function")
 endif()
 
+# Because i'm lazy
+add_cxxflag("-Wl,--as-needed")
+
 check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
 check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
 
