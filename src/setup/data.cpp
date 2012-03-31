@@ -80,7 +80,7 @@ void data_entry::load(std::istream & is, const version & version) {
 		
 		int64_t filetime = load_number<int64_t>(is);
 		
-		static const int64_t FILETIME_OFFSET = 0x19DB1DED53E8000l;
+		static const int64_t FILETIME_OFFSET = 0x19DB1DED53E8000ll;
 		if(filetime < FILETIME_OFFSET) {
 			log_warning << "[file location] unexpected filetime: " << filetime;
 		}
