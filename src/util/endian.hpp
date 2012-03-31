@@ -46,7 +46,8 @@ inline int16_t byteswap(int16_t value) {
 }
 
 inline uint32_t byteswap(uint32_t value) {
-#if defined(__GNUC__) && !defined(__PATHCC__)
+#if defined(__GNUC__) && !defined(__PATHCC__) \
+    && __GNUC__ >= 4 && (__GNUC__ > 4 || __GNUC_MINOR__ >= 3)
 	return __builtin_bswap32(value);
 #elif defined(_MSC_VER) && (_MSC_VER >= 1400 || (_MSC_VER >= 1300 && !defined(_DLL)))
 	return _byteswap_ulong(value);
@@ -60,7 +61,8 @@ inline int32_t byteswap(int32_t value) {
 }
 
 inline uint64_t byteswap(uint64_t value) {
-#if defined(__GNUC__) && !defined(__PATHCC__)
+#if defined(__GNUC__) && !defined(__PATHCC__) \
+    && __GNUC__ >= 4 && (__GNUC__ > 4 || __GNUC_MINOR__ >= 3)
 	return __builtin_bswap64(value);
 #elif defined(_MSC_VER) && _MSC_VER >= 1300
 	return _byteswap_uint64(value);
