@@ -1,4 +1,8 @@
 
+Inno Extract 1.2 (2012-04-01)
+ - Fix compile errors with older versions of Boost or GCC.
+ - Don't link against libraries that aren't actually needed.
+
 Inno Extract 1.1 (2012-03-19)
  - Support extracting files for a specific language.
  - Fix a bug in the setup header parsing code.
