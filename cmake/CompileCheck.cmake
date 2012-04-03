@@ -58,6 +58,16 @@ function(add_cxxflag FLAG)
 	
 endfunction(add_cxxflag)
 
+function(add_ldflag FLAG)
+	
+	check_compiler_flag(RESULT "${FLAG}")
+	
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${RESULT}" PARENT_SCOPE)
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${RESULT}" PARENT_SCOPE)
+	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${RESULT}" PARENT_SCOPE)
+	
+endfunction(add_ldflag)
+
 function(try_link_library LIBRARY_NAME LIBRARY_FILE ERROR_VAR)
 	# See if we can link a simple program with the library using the configured c++ compiler.
 	set(link_test_file "${CMAKE_CURRENT_BINARY_DIR}/link_test.cpp")
@@ -88,7 +98,9 @@ function(check_link_library LIBRARY_NAME LIBRARY_VARIABLE)
 	
 	set("${found_var}" "${lib_current}" CACHE INTERNAL "...")
 	
-	message(STATUS "Checking ${LIBRARY_NAME}: ${lib_current}")
+	if(NOT lib_current STREQUAL "")
+		message(STATUS "Checking ${LIBRARY_NAME}: ${lib_current}")
+	endif()
 	
 	# Check if we can link to the full path found by find_package.
 	try_link_library(${LIBRARY_NAME} "${lib_current}" ERRORLOG1)
@@ -100,20 +112,25 @@ function(check_link_library LIBRARY_NAME LIBRARY_VARIABLE)
 	
 	# Check if the linker is smarter than cmake and try to link with only the library name.
 	string(REGEX REPLACE "(^|;)[^;]*/lib([^;/]*)\\.so" "\\1-l\\2" LIBRARY_FILE "${lib_current}")
-	try_link_library(${LIBRARY_NAME} "${LIBRARY_FILE}" ERRORLOG2)
 	
-	if(CHECK_${LIBRARY_NAME}_LINK)
-		message(STATUS " -> using ${LIBRARY_FILE} instead")
-		set("${LIBRARY_VARIABLE}" "${LIBRARY_FILE}" PARENT_SCOPE)
-		set("${working_var}" "${LIBRARY_FILE}" CACHE INTERNAL "...")
-		return()
+	if(NOT LIBRARY_FILE STREQUAL lib_current)
+		
+		try_link_library(${LIBRARY_NAME} "${LIBRARY_FILE}" ERRORLOG2)
+		
+		if(CHECK_${LIBRARY_NAME}_LINK)
+			message(STATUS " -> using ${LIBRARY_FILE} instead")
+			set("${LIBRARY_VARIABLE}" "${LIBRARY_FILE}" PARENT_SCOPE)
+			set("${working_var}" "${LIBRARY_FILE}" CACHE INTERNAL "...")
+			return()
+		endif()
+		
 	endif()
 	
 	# Force cmake to search again, as the cached library doesn't work.
 	unset(FIND_PACKAGE_MESSAGE_DETAILS_${ARGV2} CACHE)
 	unset(FIND_PACKAGE_MESSAGE_DETAILS_${LIBRARY_NAME} CACHE)
 	
-	message(FATAL_ERROR "\n${ERRORLOG1}\n\n${ERRORLOG2}\n\n!! No suitable (32- vs. 64-bit) version of ${LIBRARY_NAME} found; tried ${lib_current} and ${LIBRARY_FILE}\nusing compiler ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS}\n")
+	message(FATAL_ERROR "\n${ERRORLOG1}\n\n${ERRORLOG2}\n\n!! No suitable version of ${LIBRARY_NAME} found.\n   Maybe you don't have the right (32 vs.64 bit) architecture installed?\n\n   Tried ${lib_current} and ${LIBRARY_FILE}\n   Using compiler ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS}\n\n\n")
 	
 endfunction(check_link_library)
 
