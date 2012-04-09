@@ -1,5 +1,5 @@
 
-# Inno Extract - A tool to extract installers created by Inno Setup
+# Inno Extract - A tool to unpack installers created by Inno Setup
 
 [Inno Setup](http://www.jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. Inno Extracts allows to extract such installers under non-windows systems without running the actual installer using wine. Inno Extract currently supports installers created by Inno Setup 1.2.10 to 5.4.3.
 
@@ -9,7 +9,7 @@ Inno Extract is available under the ZLIB license - see the LICENSE file.
 
 [Website](http://innoextract.constexpr.org/)
 
-Author: [Daniel Scharrer](mailto:Daniel Scharrer <daniel@constexpr.org&gt;)
+Author: [Daniel Scharrer](mailto:Daniel Scharrer <daniel@constexpr.org>)
 
 ## Dependencies
 
@@ -47,7 +47,7 @@ Set options by passing `-D<option>=<value>` to cmake.
 
 ## Run
 
-To extract a setup file run:
+To extract a setup file to the current directory run:
 
     $ innoextract <file>
 
@@ -74,3 +74,11 @@ Documentation is also available as a man page:
 * Encrypted installers are not supported.
 
 A perhaps more complete, but windows-only, tool to extract Inno Setup files is [innounp](http://innounp.sourceforge.net/).
+
+Extracting windows installer executables created by programs other than Inno Setup is out of the scope of this project. Some of these can be unpacked by the following programs:
+* [cabextract](http://www.cabextract.org.uk/)
+* [unshield](http://www.synce.org/oldwiki/index.php/Unshield)
+
+## Disclaimer
+
+This project is in no way associated with Inno Setup or [www.jrsoftware.org](http://www.jrsoftware.org/). All source code provided here is the original work of the author.
