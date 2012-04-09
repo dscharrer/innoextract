@@ -9,7 +9,7 @@ Inno Extract is available under the ZLIB license - see the LICENSE file.
 
 [Website](http://innoextract.constexpr.org/)
 
-Author: [Daniel Scharrer](mailto:Daniel Scharrer <daniel@constexpr.org>)
+Author: [Daniel Scharrer](http://constexpr.org/)
 
 ## Dependencies
 
@@ -76,9 +76,11 @@ Documentation is also available as a man page:
 A perhaps more complete, but windows-only, tool to extract Inno Setup files is [innounp](http://innounp.sourceforge.net/).
 
 Extracting windows installer executables created by programs other than Inno Setup is out of the scope of this project. Some of these can be unpacked by the following programs:
+
 * [cabextract](http://www.cabextract.org.uk/)
+
 * [unshield](http://www.synce.org/oldwiki/index.php/Unshield)
 
 ## Disclaimer
 
-This project is in no way associated with Inno Setup or [www.jrsoftware.org](http://www.jrsoftware.org/). All source code provided here is the original work of the author.
+This project is in no way associated with Inno Setup or [www.jrsoftware.org](http://www.jrsoftware.org/).
