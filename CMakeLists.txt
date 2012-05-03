@@ -91,7 +91,7 @@ add_ldflag("-Wl,--as-needed")
 check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
 check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
 
-test_big_endian(HAVE_BIG_ENDIAN)
+test_big_endian(IS_BIG_ENDIAN)
 
 set(INNOEXTRACT_SOURCES
 	

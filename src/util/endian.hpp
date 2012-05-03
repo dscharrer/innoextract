@@ -122,7 +122,7 @@ struct endianness<true> {
 #define BIG_ENDIAN    4321
 #endif
 
-#ifdef HAVE_BIG_ENDIAN
+#ifdef IS_BIG_ENDIAN
 #define ENDIANNESS    BIG_ENDIAN
 #else
 #define ENDIANNESS    LITTLE_ENDIAN
