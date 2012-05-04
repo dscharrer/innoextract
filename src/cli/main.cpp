@@ -91,7 +91,7 @@ static void print_help(const char * name, const po::options_description & visibl
 	std::cout << '\n';
 	std::cout << color::white << innoextract_version << color::reset
 	          << ' ' << innoextract_copyright << '\n';
-	std::cout << "This is free software with ABSOLUTELY NO WARRANTY.\n";
+	std::cout << "This is free software with absolutely no warranty.\n";
 }
 
 static void print_license() {
