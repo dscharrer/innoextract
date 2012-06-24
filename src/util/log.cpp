@@ -25,6 +25,7 @@
 #include "util/console.hpp"
 
 bool logger::debug = false;
+bool logger::quiet = false;
 
 size_t logger::total_errors = 0;
 size_t logger::total_warnings = 0;

@@ -120,7 +120,6 @@ static void print_license() {
 struct options {
 	
 	bool silent;
-	bool quiet;
 	
 	bool dump;
 	bool list;
@@ -155,7 +154,7 @@ static void process_file(const fs::path & file, const options & o) {
 	setup::info info;
 	info.load(ifs);
 	
-	if(!o.quiet) {
+	if(!logger::quiet) {
 		const std::string & name = info.header.app_versioned_name.empty()
 		                           ? info.header.app_name : info.header.app_versioned_name;
 		cout << "Extracting \"" << color::green << name << color::reset
@@ -277,7 +276,7 @@ static void process_file(const fs::path & file, const options & o) {
 				if(!named) {
 					std::cout << color::white << "unnamed file" << color::reset;
 				}
-				if(!o.quiet) {
+				if(!logger::quiet) {
 				#ifdef DEBUG
 					std::cout << " @ " << print_hex(file.offset);
 				#endif
@@ -424,7 +423,7 @@ int main(int argc, char * argv[]) {
 	
 	// Verbosity settings.
 	o.silent = options.count("silent");
-	o.quiet = o.silent || options.count("quiet");
+	logger::quiet = o.silent || options.count("quiet");
 #ifdef DEBUG
 	if(options.count("debug")) {
 		logger::debug = true;
@@ -511,7 +510,7 @@ int main(int argc, char * argv[]) {
 		log_error << "not a supported Inno Setup installer";
 	}
 	
-	if(!o.quiet || logger::total_errors || logger::total_warnings) {
+	if(!logger::quiet || logger::total_errors || logger::total_warnings) {
 		progress::clear();
 		std::cout << color::green << "Done" << color::reset << std::dec;
 		if(logger::total_errors || logger::total_warnings) {

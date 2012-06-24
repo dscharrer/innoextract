@@ -25,15 +25,19 @@
 #include <string>
 
 #ifdef DEBUG
-#define debug(...)    \
+#define debug(...) \
 	if(::logger::debug) \
 		::logger(__FILE__, __LINE__, ::logger::Debug) << __VA_ARGS__
-#define log_info    ::logger(__FILE__, __LINE__, ::logger::Info)
+#define log_info \
+	if(!::logger::quiet) \
+		::logger(__FILE__, __LINE__, ::logger::Info)
 #define log_warning ::logger(__FILE__, __LINE__, ::logger::Warning)
 #define log_error   ::logger(__FILE__, __LINE__, ::logger::Error)
 #else
 #define debug(...)
-#define log_info    ::logger(::logger::Info)
+#define log_info \
+	if(!::logger::quiet) \
+		::logger(::logger::Info)
 #define log_warning ::logger(::logger::Warning)
 #define log_error   ::logger(::logger::Error)
 #endif
@@ -69,6 +73,7 @@ public:
 	static size_t total_errors;
 	
 	static bool debug;
+	static bool quiet;
 	
 #ifdef DEBUG
 	inline logger(const char * _file, int _line, log_level _level)
