@@ -517,13 +517,17 @@ int main(int argc, char * argv[]) {
 		if(logger::total_errors || logger::total_warnings) {
 			std::cout << " with ";
 			if(logger::total_errors) {
-				std::cout << color::red << logger::total_errors << " errors" << color::reset;
+				std::cout << color::red << logger::total_errors
+				          << ((logger::total_errors == 1) ? " error" : " errors")
+				          << color::reset;
 			}
 			if(logger::total_errors && logger::total_warnings) {
 				std::cout << " and ";
 			}
 			if(logger::total_warnings) {
-				std::cout << color::yellow << logger::total_warnings << " warnings" << color::reset;
+				std::cout << color::yellow << logger::total_warnings
+				          << ((logger::total_errors == 1) ? " warning" : " warnings")
+				          << color::reset;
 			}
 		}
 		std::cout << '.' << std::endl;
