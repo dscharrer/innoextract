@@ -504,7 +504,7 @@ int main(int argc, char * argv[]) {
 			process_file(file, o);
 		}
 	} catch(std::ios_base::failure e) {
-		log_error << e.what();
+		log_error << "stream error: " << e.what();
 	} catch(std::runtime_error e) {
 		log_error << e.what();
 	} catch(setup::version_error e) {
