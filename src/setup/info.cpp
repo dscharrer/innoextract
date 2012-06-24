@@ -166,6 +166,11 @@ void info::load(std::istream & is, entry_types entries) {
 	
 	version.load(is);
 	
+	if(!version.known) {
+		log_warning << "unexpected setup data version: "
+		            << color::white << version << color::reset;
+	}
+	
 	bool ambiguous = version.is_ambiguous();
 	if(ambiguous) {
 		entries |= NoSkip;

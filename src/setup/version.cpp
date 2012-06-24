@@ -160,10 +160,6 @@ std::ostream & operator<<(std::ostream & os, const version & v) {
 		os << " (" << int(v.bits) << "-bit)";
 	}
 	
-	if(!v.known) {
-		os << " [unsupported]";
-	}
-	
 	return os;
 }
 
