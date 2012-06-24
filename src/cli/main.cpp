@@ -346,9 +346,9 @@ static void process_file(const fs::path & file, const options & o) {
 			}
 			
 			if(checksum != file.checksum) {
-				log_warning << "checksum mismatch:";
-				log_warning << "actual:   " << checksum;
-				log_warning << "expected: " << file.checksum;
+				log_warning << "checksum mismatch:\n"
+				            << "actual:   " << checksum << '\n'
+				            << "expected: " << file.checksum;
 				if(o.test) {
 					throw new std::runtime_error("integrity test failed");
 				}

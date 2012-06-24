@@ -77,7 +77,7 @@ public:
 			return Mapping::values[value];
 		}
 		
-		log_warning << "warning: unexpected " << enum_names<enum_type>::name << " value: " << value;
+		log_warning << "unexpected " << enum_names<enum_type>::name << " value: " << value;
 		
 		return Mapping::default_value;
 	}
