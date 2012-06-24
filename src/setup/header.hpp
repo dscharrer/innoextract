@@ -239,7 +239,7 @@ struct header {
 	auto_bool disable_dir_page;
 	auto_bool disable_program_group_page;
 	
-	size_t uninstall_display_size;
+	uint64_t uninstall_display_size;
 	
 	flags options;
 	
