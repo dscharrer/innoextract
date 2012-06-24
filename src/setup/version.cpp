@@ -141,6 +141,8 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (5.3.10) (u)",            INNO_VERSION_EXT(5, 3, 10, 0), true  },
 	{ "Inno Setup Setup Data (5.4.2)",                 INNO_VERSION_EXT(5, 4,  2, 0), false },
 	{ "Inno Setup Setup Data (5.4.2) (u)",             INNO_VERSION_EXT(5, 4,  2, 0), true  },
+	{ "Inno Setup Setup Data (5.5.0)",                 INNO_VERSION_EXT(5, 5,  0, 0), false },
+	{ "Inno Setup Setup Data (5.5.0) (u)",             INNO_VERSION_EXT(5, 5,  0, 0), true  },
 };
 
 } // anonymous namespace

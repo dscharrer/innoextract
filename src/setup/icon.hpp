@@ -41,6 +41,7 @@ struct icon_entry : public item {
 		UseAppPaths,
 		FolderShortcut,
 		ExcludeFromShowInNewInstall,
+		PreventPinning,
 		// obsolete options:
 		RunMinimized
 	);

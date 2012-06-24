@@ -89,6 +89,9 @@ struct header {
 		SignedUninstaller,
 		UsePreviousLanguage,
 		DisableWelcomePage,
+		CloseApplications,
+		RestartApplications,
+		AllowNetworkDrive,
 		
 		// Obsolete flags
 		Uninstallable,
@@ -140,6 +143,7 @@ struct header {
 	std::string app_modify_path;
 	std::string create_uninstall_registry_key;
 	std::string uninstallable;
+	std::string close_applications_filter;
 	std::string license_text;
 	std::string info_before;
 	std::string info_after;

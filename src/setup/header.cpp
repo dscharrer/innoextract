@@ -211,6 +211,11 @@ void header::load(std::istream & is, const version & version) {
 	} else {
 		uninstallable.clear();
 	}
+	if(version >= INNO_VERSION(5, 5, 0)) {
+		is >> encoded_string(close_applications_filter, version.codepage());
+	} else {
+		close_applications_filter.clear();
+	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> ansi_string(license_text);
 		is >> ansi_string(info_before);
@@ -389,7 +394,9 @@ void header::load(std::istream & is, const version & version) {
 		disable_program_group_page = stored_enum<stored_bool_auto_no_yes>(is).get();
 	}
 	
-	if(version >= INNO_VERSION(5, 3, 6)) {
+	if(version >= INNO_VERSION(5, 5, 0)) {
+		uninstall_display_size = load_number<uint64_t>(is);
+	} else if(version >= INNO_VERSION(5, 3, 6)) {
 		uninstall_display_size = load_number<uint32_t>(is);
 	} else {
 		uninstall_display_size = 0;
@@ -524,6 +531,13 @@ void header::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(5, 3, 9)) {
 		flags.add(DisableWelcomePage);
 	}
+	if(version >= INNO_VERSION(5, 5, 0)) {
+		flags.add(CloseApplications);
+		flags.add(RestartApplications);
+		flags.add(AllowNetworkDrive);
+	} else {
+		options |= AllowNetworkDrive;
+	}
 	
 	options |= flags;
 	
@@ -615,6 +629,9 @@ NAMES(setup::header::flags, "Setup Option",
 	"signed uninstaller",
 	"use previous language",
 	"disable welcome page",
+	"close applications",
+	"restart applications",
+	"allow network drive",
 	"uninstallable",
 	"disable dir page",
 	"disable program group page",

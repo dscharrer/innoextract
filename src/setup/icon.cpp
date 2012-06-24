@@ -90,6 +90,9 @@ void icon_entry::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(5, 4, 2)) {
 		flags.add(ExcludeFromShowInNewInstall);
 	}
+	if(version >= INNO_VERSION(5, 5, 0)) {
+		flags.add(PreventPinning);
+	}
 	
 	options = flags;
 }
@@ -102,6 +105,7 @@ NAMES(setup::icon_entry::flags, "Icon Option",
 	"use app paths",
 	"folder shortcut",
 	"exclude from show in new install",
+	"prevent pinning",
 	"run minimized",
 )
 
