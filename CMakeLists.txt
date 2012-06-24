@@ -54,11 +54,7 @@ list(APPEND LIBRARIES "${Boost_LIBRARIES}")
 link_directories("${Boost_LIBRARY_DIRS}")
 include_directories(SYSTEM "${Boost_INCLUDE_DIR}")
 
-check_compiler_flag(CPP11_FLAG "-std=c++11")
-if("${CPP11_FLAG}" STREQUAL "")
-	check_compiler_flag(CPP11_FLAG "-std=c++0x")
-endif()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CPP11_FLAG}")
+add_cxxflag("-std=c++11")
 
 add_cxxflag("-Wall")
 add_cxxflag("-Wextra")
