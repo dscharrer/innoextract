@@ -494,7 +494,6 @@ void header::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(4, 0, 0) && version < INNO_VERSION(4, 0, 10)) {
 		flags.add(ShowLanguageDialog);
 	}
-	
 	if(version >= INNO_VERSION(4, 0, 1) && version < INNO_VERSION(4, 0, 10)) {
 		flags.add(DetectLanguageUsingLocale);
 	}
