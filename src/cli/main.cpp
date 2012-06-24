@@ -525,7 +525,7 @@ int main(int argc, char * argv[]) {
 			}
 			if(logger::total_warnings) {
 				std::cout << color::yellow << logger::total_warnings
-				          << ((logger::total_errors == 1) ? " warning" : " warnings")
+				          << ((logger::total_warnings == 1) ? " warning" : " warnings")
 				          << color::reset;
 			}
 		}
