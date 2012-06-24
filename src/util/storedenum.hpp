@@ -27,6 +27,7 @@
 
 #include <boost/utility/enable_if.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/typeof/typeof.hpp>
 
 #include "util/enum.hpp"
 #include "util/load.hpp"
@@ -42,7 +43,7 @@ struct enum_value_map {
 };
 
 #define STORED_ENUM_MAP(MapName, Default, ...) \
-struct MapName : public enum_value_map<typeof(Default)> { \
+struct MapName : public enum_value_map<BOOST_TYPEOF(Default)> { \
 	static const flag_type default_value; \
 	static const flag_type values[]; \
 	static const size_t count; \
@@ -139,8 +140,8 @@ public:
 		std::bitset<size> result(0);
 		for(size_t i = 0; i < count; i++) {
 			for(size_t j = 0; j < ceildiv(base_size, ulong_size); j++) {
-				result |= std::bitset<size>(static_cast<ulong_type>(bits[i] >> (j * ulong_size)))
-				          << ((i * base_size) + (j * ulong_size));
+				ulong_type chunk = static_cast<ulong_type>(bits[i] >> (j * ulong_size));
+				result |= std::bitset<size>(chunk) << ((i * base_size) + (j * ulong_size));
 			}
 		}
 		return result;
