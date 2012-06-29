@@ -61,7 +61,7 @@ Documentation is also available as a man page:
 
 ## Limitations
 
-* Inno Extract currently only supports extracting all the data. There is no support for extracting individual files, components or languages.
+* Inno Extract currently only supports extracting all the data. There is no support for extracting individual files or components and limited support for extracting language-specific files.
 
 * Included scripts and checks are not executed.
 
