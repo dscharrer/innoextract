@@ -156,7 +156,8 @@ static void process_file(const fs::path & file, const options & o) {
 	if(!logger::quiet) {
 		const std::string & name = info.header.app_versioned_name.empty()
 		                           ? info.header.app_name : info.header.app_versioned_name;
-		cout << "Extracting \"" << color::green << name << color::reset
+		cout << (o.list ? "Listing" : o.test ? "Testing" : "Extracting")
+		     << " \"" << color::green << name << color::reset
 		     << "\" - setup data version " << color::white << info.version << color::reset
 		     << std::endl;
 	}
