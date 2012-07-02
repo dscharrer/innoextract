@@ -66,10 +66,10 @@ struct version {
 	
 	void load(std::istream & is);
 	
-	//! @return the Windows codepage used to encode strings
+	//! \return the Windows codepage used to encode strings
 	uint32_t codepage() const { return uint32_t(unicode ? 1200 : 1252); }
 	
-	//! @return true if the version stored might not be correct
+	//! \return true if the version stored might not be correct
 	bool is_ambiguous() const;
 	
 	operator version_constant() const {
