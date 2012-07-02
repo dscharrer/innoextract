@@ -364,39 +364,39 @@ int main(int argc, char * argv[]) {
 	
 	po::options_description generic("Generic options");
 	generic.add_options()
-		("help,h", "Show supported options.")
-		("version,v", "Print the version information.")
-		("license", "Show license information.")
+		("help,h", "Show supported options")
+		("version,v", "Print the version information")
+		("license", "Show license information")
 	;
 	
 	po::options_description action("Actions");
 	action.add_options()
-		("test,t", "Only verify checksums, don't write anything.")
-		("extract,e", "Extract files (default action).")
-		("list,l", "Only list files, don't write anything.")
+		("test,t", "Only verify checksums, don't write anything")
+		("extract,e", "Extract files (default action)")
+		("list,l", "Only list files, don't write anything")
 	;
 	
 	po::options_description filter("Filters");
 	filter.add_options()
-		("dump", "Dump contents without converting filenames.")
-		("lowercase,L", "Convert extracted filenames to lower-case.")
-		("language", po::value<std::string>(), "Extract files for the given language.")
+		("dump", "Dump contents without converting filenames")
+		("lowercase,L", "Convert extracted filenames to lower-case")
+		("language", po::value<std::string>(), "Extract files for the given language")
 	;
 	
 	po::options_description io("I/O options");
 	io.add_options()
-		("quiet,q", "Output less information.")
-		("silent,s", "Output only error/warning information.")
-		("color,c", po::value<bool>()->implicit_value(true), "Enable/disable color output.")
-		("progress,p", po::value<bool>()->implicit_value(true), "Enable/disable the progress bar.")
+		("quiet,q", "Output less information")
+		("silent,s", "Output only error/warning information")
+		("color,c", po::value<bool>()->implicit_value(true), "Enable/disable color output")
+		("progress,p", po::value<bool>()->implicit_value(true), "Enable/disable the progress bar")
 		#ifdef DEBUG
-			("debug,g", "Output debug information.")
+			("debug,g", "Output debug information")
 		#endif
 	;
 	
 	po::options_description hidden("Hidden options");
 	hidden.add_options()
-		("setup-files", po::value< std::vector<string> >(), "Setup files to be extracted.")
+		("setup-files", po::value< std::vector<string> >(), "Setup files to be extracted")
 		/**/;
 	
 	po::options_description options_desc;
