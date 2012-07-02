@@ -35,11 +35,12 @@ class exe_reader {
 	
 public:
 	
+	//! Position and size of a resource entry
 	struct resource {
 		
-		uint32_t offset; //! File offset of the resource data in bytes
+		uint32_t offset; //!< File offset of the resource data in bytes
 		
-		uint32_t size; //! Size of the resource data in bytes
+		uint32_t size; //!< Size of the resource data in bytes
 		
 	};
 	
@@ -49,12 +50,16 @@ public:
 	};
 	
 	/*!
-	 * Find where a resource with a given ID is stored in a MS PE/COFF executable.
-	 * Resources are addressed using a (\param name, \param type, \param language) tuple.
-	 * 
-	 * \param is a seekable stream to the executable file containing the resource
-	 * 
-	 * \return the location of the resource or (0, 0) if the requested resource does not exist.
+	 * \brief Find where a resource with a given ID is stored in a MS PE/COFF executable.
+	 *
+	 * Resources are addressed using a (\pname{name}, \pname{type}, \pname{language}) tuple.
+	 *
+	 * \param is       a seekable stream of the executable file containing the resource
+	 * \param name     the user-defined name of the resource
+	 * \param type     the type of the resource
+	 * \param language the localised variant of the resource
+	 *
+	 * \return the location of the resource or `(0, 0)` if the requested resource does not exist.
 	 */
 	static resource find_resource(std::istream & is, uint32_t name, uint32_t type = TypeData,
 	                              uint32_t language = LanguageDefault);

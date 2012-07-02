@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -29,13 +29,13 @@
 namespace loader {
 
 /*!
- * \brief Bootstrap data for Inno Setup installers
+ * Bootstrap data for Inno Setup installers
  *
  * This struct contains information used by the Inno Setup loader to bootstrap the installer.
  * Some of these values are not available for all Inno Setup versions
  *
- * Inno Setup versions before 5.1.5 simply stored a magic number and offset to this bootstrap
- * data at a fixed position (0x30) in the .exe file.
+ * Inno Setup versions before \c 5.1.5 simply stored a magic number and offset to this bootstrap
+ * data at a fixed position (\c 0x30) in the .exe file.
  *
  * Alternatively, there is no stored bootstrap information and data is stored in external files
  * while the main setup files contains only the version and headers (header_offset is \c 0).
@@ -45,24 +45,24 @@ namespace loader {
 struct offsets {
 	
 	/*!
-	 * Offset of compressed setup.e32 (the actual installer)
+	 * Offset of compressed `setup.e32` (the actual installer code)
 	 *
 	 * A value of \c 0 means there is no setup.e32 embedded in this file
 	 */
 	uint32_t exe_offset;
 	
 	/*!
-	 * Size of setup.e32 after compression, in bytes
+	 * Size of `setup.e32` after compression, in bytes
 	 *
 	 * A value of \c 0 means the executable size is not known
 	 */
 	uint32_t exe_compressed_size;
 	
-	//! Size of setup.e32 before compression, in bytes
+	//! Size of `setup.e32` before compression, in bytes
 	uint32_t exe_uncompressed_size;
 	
 	/*!
-	 * Checksum of setup.e32 before compression
+	 * Checksum of `setup.e32` before compression
 	 *
 	 * Currently this is either a \ref crypto::CRC32 or \ref crypto::Adler32 checksum.
 	 */
@@ -72,7 +72,7 @@ struct offsets {
 	uint32_t message_offset;
 	
 	/*!
-	 * Offset of embedded setup-0.bin data (the setup headers)
+	 * Offset of embedded `setup-0.bin` data (the setup headers)
 	 *
 	 * This points to a \ref setup::version followed by two compressed blocks of
 	 * headers (see \ref stream::block_reader).
@@ -85,18 +85,18 @@ struct offsets {
 	uint32_t header_offset;
 	
 	/*!
-	 * Offset of embedded setup-1.bin data
+	 * Offset of embedded `setup-1.bin` data
 	 *
 	 * A value of \c 0 means that the setup data is stored in seprarate files.
 	 *
-	 * \ref stream::slice_reader abstracts loading this data no matter if it is embedded
-	 * or split into multiple external files (slices).
+	 * \ref stream::slice_reader provides a uniform interface to this data, no matter if it
+	 * is embedded or split into multiple external files (called slices).
 	 *
-	 * The data is made up of multiple compressed or uncompressed chunks
-	 * (see \ref stream::chunk_reader) which in turn contain the raw data for one or more file.
+	 * The data is made up of one or more compressed or uncompressed chunks
+	 * (read by \ref stream::chunk_reader) which in turn each contain the raw data for one or more file.
 	 *
-	 * The layout of the chunks and files is described in the \ref setup::data_entry headers
-	 * while the \ref setup::file_entry headers provide the names and meta information.
+	 * The layout of the chunks and files is stored in the \ref setup::data_entry headers
+	 * while the \ref setup::file_entry headers provide the filenames and meta information.
 	 */
 	uint32_t data_offset;
 	
@@ -106,7 +106,8 @@ struct offsets {
 	 * Finding the headers always works - if there is no bootstrap information we assume that
 	 * this is a file containing only the version and headers.
 	 *
-	 * \param is a seekable stream to the main installer file
+	 * \param is a seekable stream of the main installer file. This should be the file
+	 *           containing the headers, which is almost always the .exe file.
 	 */
 	void load(std::istream & is);
 	

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -148,24 +148,18 @@ public:
 	
 };
 
-/*!
- * Declare a flag type using values from a given enum.
- * This should always be used instead of using flags&lt;Enum&gt; directly.
- *
- * \param Enum should be an enum with values that have exactly one bit set.
- * \param Flagname is the name for the flag type to be defined.
- */
-#define DECLARE_FLAGS_SIZE(Enum, Flagname, Size) \
+#define DECLARE_ENUM_SIZE(Enum, Size) \
 	template <> \
 	struct enum_size<Enum> { \
 		static const size_t value = (Size); \
 	};
 #define FLAGS_ENUM_END_HELPER(Enum) Enum ## __End
 #define FLAGS_ENUM_END(Enum) FLAGS_ENUM_END_HELPER(Enum)
-#define DECLARE_FLAGS(Enum, Flagname) DECLARE_FLAGS_SIZE(Enum, Flagname, FLAGS_ENUM_END(Enum))
 
 /*!
- * Declare overloaded operators for a given flag type.
+ * Declare overloaded operators for a flag type
+ *
+ * \param Flagname the flag to declare operators for
  */
 #define DECLARE_FLAGS_OPERATORS(Flagname) \
 	inline Flagname operator|(Flagname::enum_type a, Flagname::enum_type b) { \
@@ -178,16 +172,29 @@ public:
 		return ~Flagname(a); \
 	}
 
+//! Get the enum name for a set of flags
 #define FLAGS_ENUM(Flagname) Flagname ## __Enum
+
+/*!
+ * Declare a set of flags
+ *
+ * \param Flagname the name for the flags
+ * \param ... the flags to declare
+ */
 #define FLAGS(Flagname, ...) \
 	enum FLAGS_ENUM(Flagname) { \
 		__VA_ARGS__, \
 		FLAGS_ENUM_END(Flagname) \
 	}; \
 	typedef ::flags<FLAGS_ENUM(Flagname), FLAGS_ENUM_END(Flagname)> Flagname
-	
+
+/*!
+ * Declare overloaded operators and enum_size for a flag type
+ *
+ * \param Flagname the flag to declare operators for
+ */
 #define FLAGS_OVERLOADS(Flagname) \
-	DECLARE_FLAGS_SIZE(FLAGS_ENUM(Flagname), Flagname, FLAGS_ENUM_END(Flagname)) \
+	DECLARE_ENUM_SIZE(FLAGS_ENUM(Flagname), FLAGS_ENUM_END(Flagname)) \
 	DECLARE_FLAGS_OPERATORS(Flagname)
 
 #endif // INNOEXTRACT_UTIL_FLAGS_HPP

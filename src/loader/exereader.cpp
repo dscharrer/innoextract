@@ -97,8 +97,6 @@ inline bool get_resource_table(uint32_t & entry, uint32_t resource_offset) {
 	return is_table;
 }
 
-} // anonymous namespace
-
 uint32_t exe_reader_impl::find_resource_entry(std::istream & is, uint32_t needle) {
 	
 	// skip: characteristics + timestamp + major version + minor version
@@ -285,6 +283,8 @@ exe_reader_impl::resource exe_reader_impl::find_resource(std::istream & is, uint
 	
 	return result;
 }
+
+} // anonymous namespace
 
 exe_reader::resource exe_reader::find_resource(std::istream & is, uint32_t name,
                                                uint32_t type, uint32_t language) {
