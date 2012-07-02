@@ -73,7 +73,7 @@ public:
 	typedef boost::iostreams::chain<boost::iostreams::input> type;
 	typedef boost::shared_ptr<type> pointer;
 	
-	static pointer get(slice_reader & base, const chunk & chunk);
+	static pointer get(slice_reader & base, const ::stream::chunk & chunk);
 	
 };
 

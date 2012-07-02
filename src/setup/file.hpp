@@ -85,7 +85,7 @@ struct file_entry : public item {
 	std::string install_font_name;
 	std::string strong_assembly_name;
 	
-	uint32_t location; //!< index into the file location entry list
+	uint32_t location; //!< index into the data entry list
 	uint32_t attributes;
 	uint64_t external_size;
 	

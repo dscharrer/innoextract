@@ -27,7 +27,8 @@
 namespace loader {
 
 /*!
- * Minimal PE/COFF parser that can find resources by ID in .exe files.
+ * \brief Minimal PE/COFF parser that can find resources by ID in .exe files
+ *
  * This implementation is optimized to look for exactly one resource.
  */
 class exe_reader {
@@ -51,7 +52,7 @@ public:
 	 * Find where a resource with a given ID is stored in a MS PE/COFF executable.
 	 * Resources are addressed using a (\param name, \param type, \param language) tuple.
 	 * 
-	 * \param is A seekable stream to the executable file containing the resource
+	 * \param is a seekable stream to the executable file containing the resource
 	 * 
 	 * \return the location of the resource or (0, 0) if the requested resource does not exist.
 	 */

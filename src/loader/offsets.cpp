@@ -41,7 +41,7 @@ struct setup_loader_version {
 	
 	unsigned char magic[12];
 	
-	// Earliest known version with that ID.
+	// Earliest known version with that ID
 	setup::version_constant version;
 	
 };
@@ -60,7 +60,7 @@ const int ResourceNameInstaller = 11111;
 const uint32_t SetupLoaderHeaderOffset = 0x30;
 const uint32_t SetupLoaderHeaderMagic = 0x6f6e6e49;
 
-}; // anonymous namespace
+} // anonymous namespace
 
 bool offsets::load_from_exe_file(std::istream & is) {
 	

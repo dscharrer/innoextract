@@ -50,10 +50,6 @@ public:
 	
 	slice_reader(const path_type & setup_file, uint32_t data_offset);
 	
-	/*!
-	 *   if Ver>=4107 then baseFile := PathChangeExt(PathExtractName(SetupLdrOriginalFilename), '')
-	 *  else baseFile:=SetupHeader.BaseFilename;
-	 */
 	slice_reader(const path_type & dir, const path_type & base_file, size_t slices_per_disk);
 	
 	bool seek(size_t slice, uint32_t offset);
