@@ -5,6 +5,8 @@
 
 Inno Extract is available under the ZLIB license - see the LICENSE file.
 
+See the [wiki page](http://innoextract.constexpr.org/wiki/) for Linux packages.
+
 ## Contact
 
 [Website](http://innoextract.constexpr.org/)
@@ -20,9 +22,9 @@ For Boost you will need the headers as well as the `iostreams`, `filesystem`, `d
 
 While the liblzma dependency is optional, it is highly recommended and you won't be able to extract most installers created by newer Inno Setup versions without it.
 
-To build Inno Extract you will also need **CMake 2.8** and a working c++ compiler, as well as the development headers for liblzma and boost.
+To build Inno Extract you will also need **CMake 2.8** and a working C++ compiler, as well as the development headers for liblzma and boost.
 
-The [wiki page](http://innoextract.constexpr.org/wiki) might have more specific instructions for your linux distribution.
+The wiki might have more [specific instructions for your linux distribution](http://innoextract.constexpr.org/wiki/Install).
 
 ## Compile and install
 
