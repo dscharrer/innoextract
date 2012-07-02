@@ -1,4 +1,10 @@
 
+Inno Extract 1.3 (2012-07-02)
+ - Respect --quiet and --silent for multi-file installers
+ - Compile in C++11 mode if supported
+ - Warn about unsupported setup data versions
+ - Add support for Inno Setup 5.5.0 installers
+
 Inno Extract 1.2 (2012-04-01)
  - Fix compile errors with older versions of Boost or GCC.
  - Don't link against libraries that aren't actually needed.
