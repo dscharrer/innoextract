@@ -33,7 +33,33 @@ string(STRIP "${BASE_VERSION}" BASE_VERSION)
 string(REGEX MATCHALL "[^\r\n]+" version_lines "${BASE_VERSION}")
 set(BASE_VERSION_COUNT 0)
 foreach(version_line IN LISTS version_lines)
+	
 	set(BASE_VERSION_${BASE_VERSION_COUNT} "${version_line}")
+	
+	# Find the last space
+	string(STRIP "${version_line}" version_line)
+	string(LENGTH "${version_line}" version_line_length)
+	set(version_line_split ${version_line_length})
+	foreach(i RANGE ${version_line_length})
+		if(${i} LESS ${version_line_length})
+			string(SUBSTRING "${version_line}" ${i} 1 version_line_char)
+			if(version_line_char STREQUAL " ")
+				set(version_line_split ${i})
+			endif()
+		endif()
+	endforeach()
+	
+	# Get everything before the last space
+	string(SUBSTRING "${version_line}" 0 ${version_line_split} version_line_name)
+	string(STRIP "${version_line_name}" BASE_NAME_${BASE_VERSION_COUNT})
+	
+	# Get everything after the last space
+	if(${version_line_split} LESS ${version_line_length})
+		math(EXPR num_length "${version_line_length} - ${version_line_split}")
+		string(SUBSTRING "${version_line}" ${version_line_split} ${num_length} version_line_num)
+		string(STRIP "${version_line_num}" BASE_NUMBER_${BASE_VERSION_COUNT})
+	endif()
+	
 	math(EXPR BASE_VERSION_COUNT "${BASE_VERSION_COUNT} + 1")
 endforeach()
 
@@ -64,8 +90,9 @@ if(EXISTS "${GIT_DIR}")
 	if(GIT_COMMIT)
 		string(TOLOWER "${GIT_COMMIT}" GIT_COMMIT)
 		string(LENGTH "${GIT_COMMIT}" git_commit_length)
-		foreach(i RANGE "${git_commit_length}")
+		foreach(i RANGE ${git_commit_length})
 			string(SUBSTRING "${GIT_COMMIT}" 0 ${i} GIT_COMMIT_PREFIX_${i})
+			set(GIT_SUFFIX_${i} " + ${GIT_COMMIT_PREFIX_${i}}")
 		endforeach()
 	endif()
 	

@@ -35,20 +35,26 @@ set(STYLE_FILTER ${STYLE_FILTER},-readability/todo)
 # Annoyting to use with boost::program_options
 set(STYLE_FILTER ${STYLE_FILTER},-whitespace/semicolon)
 
+# Add a target that runs cpplint.py
+#
+# Parameters:
+# - TARGET_NAME the name of the target to add
+# - SOURCES_LIST a complete list of source files to check
+# - INCLUDES_LIST a complete list of include files to check
 function(add_style_check_target TARGET_NAME SOURCES_LIST INCLUDES_LIST)
 	
-	if(PYTHONINTERP_FOUND)
-		
-		add_custom_target(${TARGET_NAME}
-			COMMAND cmake -E chdir
-				"${CMAKE_SOURCE_DIR}"
-				"${PYTHON_EXECUTABLE}"
-				"${CMAKE_MODULE_PATH}/cpplint.py"
-				"--filter=${STYLE_FILTER}"
-				${SOURCES_LIST} ${INCLUDES_LIST}
-			DEPENDS ${SOURCES_LIST} ${INCLUDES_LIST} VERBATIM
-		)
-		
+	if(NOT PYTHONINTERP_FOUND)
+		return()
 	endif()
+	
+	add_custom_target(${TARGET_NAME}
+		COMMAND cmake -E chdir
+			"${CMAKE_SOURCE_DIR}"
+			"${PYTHON_EXECUTABLE}"
+			"${CMAKE_MODULE_PATH}/cpplint.py"
+			"--filter=${STYLE_FILTER}"
+			${SOURCES_LIST} ${INCLUDES_LIST}
+		DEPENDS ${SOURCES_LIST} ${INCLUDES_LIST} VERBATIM
+	)
 	
 endfunction(add_style_check_target)

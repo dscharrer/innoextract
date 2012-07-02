@@ -16,6 +16,7 @@ include(VersionString)
 include(CheckSymbolExists)
 include(BuildType)
 include(StyleCheck)
+include(Doxygen)
 include(TestBigEndian)
 
 # Force re-checking libraries if the compiler or compiler flags change.
@@ -173,3 +174,5 @@ install(FILES doc/innoextract.1 DESTINATION ${MAN_DIR}/man1 OPTIONAL)
 # Additional targets.
 
 add_style_check_target(style "${INNOEXTRACT_SOURCES}" "${ALL_INCLUDES}")
+
+add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/doc")
