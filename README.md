@@ -5,11 +5,11 @@
 
 Inno Extract is available under the ZLIB license - see the LICENSE file.
 
-See the [wiki page](http://innoextract.constexpr.org/wiki/) for Linux packages.
+See the website for [Linux packages](http://constexpr.org/innoextract/#packages).
 
 ## Contact
 
-[Website](http://innoextract.constexpr.org/)
+[Website](http://constexpr.org/innoextract/)
 
 Author: [Daniel Scharrer](http://constexpr.org/)
 
@@ -24,7 +24,7 @@ While the liblzma dependency is optional, it is highly recommended and you won't
 
 To build Inno Extract you will also need **CMake 2.8** and a working C++ compiler, as well as the development headers for liblzma and boost.
 
-The wiki might have more [specific instructions for your linux distribution](http://innoextract.constexpr.org/wiki/Install).
+The website might have more [specific instructions for your linux distribution](http://constexpr.org/innoextract/install).
 
 ## Compile and install
 
@@ -75,7 +75,7 @@ Documentation is also available as a man page:
 
 * Encrypted installers are not supported.
 
-A perhaps more complete, but windows-only, tool to extract Inno Setup files is [innounp](http://innounp.sourceforge.net/).
+A perhaps more complete, but Windows-only, tool to extract Inno Setup files is [innounp](http://innounp.sourceforge.net/).
 
 Extracting windows installer executables created by programs other than Inno Setup is out of the scope of this project. Some of these can be unpacked by the following programs:
 
