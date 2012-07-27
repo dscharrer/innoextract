@@ -492,7 +492,8 @@ int main(int argc, char * argv[]) {
 	
 	if(!options.count("setup-files")) {
 		if(!o.silent) {
-			std::cout << "no input files specified\n";
+			std::cout << argv[0] << ": no input files specified\n";
+			std::cout << "Try `" << argv[0] << " -h` for more information.\n";
 		}
 		return 0;
 	}
