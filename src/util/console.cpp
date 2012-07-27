@@ -275,3 +275,7 @@ void progress::update(uint64_t delta, bool force) {
 #endif
 	
 }
+
+void progress::set_enabled(bool enable) {
+	show_progress = enable;
+}

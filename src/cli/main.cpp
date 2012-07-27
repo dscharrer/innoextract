@@ -258,7 +258,7 @@ static void process_file(const fs::path & file, const options & o) {
 			// Print filename and size
 			if(!o.silent) {
 				
-				progress::clear();
+				extract_progress.clear();
 				
 				std::cout << " - ";
 				bool named = false;
@@ -285,9 +285,7 @@ static void process_file(const fs::path & file, const options & o) {
 				}
 				std::cout << '\n';
 				
-				if(!o.list) {
-					extract_progress.update(0, true);
-				}
+				extract_progress.update(0, true);
 			}
 			
 			if(o.list) {
@@ -470,6 +468,9 @@ int main(int argc, char * argv[]) {
 	if(o.list + extract + o.test > 1) {
 		log_error << "cannot specify multiple actions";
 		return 0;
+	}
+	if(o.list) {
+		progress::set_enabled(false);
 	}
 	
 	// Additional actions.
