@@ -153,7 +153,7 @@ public:
 	struct enum_size<Enum> { \
 		static const size_t value = (Size); \
 	};
-#define FLAGS_ENUM_END_HELPER(Enum) Enum ## __End
+#define FLAGS_ENUM_END_HELPER(Enum) Enum ## _End_
 #define FLAGS_ENUM_END(Enum) FLAGS_ENUM_END_HELPER(Enum)
 
 /*!
@@ -173,7 +173,7 @@ public:
 	}
 
 //! Get the enum name for a set of flags
-#define FLAGS_ENUM(Flagname) Flagname ## __Enum
+#define FLAGS_ENUM(Flagname) Flagname ## _Enum_
 
 /*!
  * Declare a set of flags
