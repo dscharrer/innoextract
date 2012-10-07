@@ -31,6 +31,8 @@ endif()
 
 unset(LIBRARIES)
 
+list(APPEND LIBRARIES "iconv")
+
 if(USE_LZMA)
 	find_package(LZMA REQUIRED)
 	check_link_library(LZMA LZMA_LIBRARIES)
