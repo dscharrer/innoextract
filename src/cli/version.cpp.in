@@ -27,7 +27,7 @@
  */
 
 #if ${BASE_VERSION_COUNT} != 3
-#error "Configure error - the VERSION file should specify exactly two lines!"
+#error "Configure error - the VERSION file should specify exactly three lines!"
 #endif
 
 const std::string innoextract_version = "${BASE_VERSION_0}${GIT_SUFFIX_5}";
