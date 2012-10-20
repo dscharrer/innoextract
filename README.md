@@ -17,7 +17,7 @@ Author: [Daniel Scharrer](http://constexpr.org/)
 
 * **[Boost](http://www.boost.org/) 1.37** or newer
 * **liblzma** from [xz-utils](http://tukaani.org/xz/) *(optional)*
-* **iconv** (either as part of the system libc, as is the case with [glibc](http://www.gnu.org/software/libc/), or as a separate [libiconv](http://www.gnu.org/software/libiconv/))
+* **iconv** (either as part of the system libc, as is the case with [glibc](http://www.gnu.org/software/libc/) and [uClibc](http://www.uclibc.org/), or as a separate [libiconv](http://www.gnu.org/software/libiconv/))
 
 For Boost you will need the headers as well as the `iostreams`, `filesystem`, `date_time`, `system` and `program_options` libraries. Older Boost version may work but are not actively supported. The boost `iostreams` library needs to be build with zlib and bzip2 support.
 
