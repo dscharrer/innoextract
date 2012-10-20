@@ -18,7 +18,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#include "version.hpp"
+#include "release.hpp"
 
 /*
  * This file is automatically processed by cmake if the version or commit id changes.

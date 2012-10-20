@@ -26,7 +26,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/ref.hpp>
 
-#include "version.hpp"
+#include "release.hpp"
 #include "stream/lzma.hpp"
 #include "stream/slice.hpp"
 #include "util/log.hpp"

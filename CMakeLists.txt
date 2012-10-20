@@ -190,8 +190,8 @@ include_directories(src ${CMAKE_CURRENT_BINARY_DIR})
 
 configure_file("src/configure.hpp.in" "configure.hpp")
 
-set(VERSION_FILE "${CMAKE_BINARY_DIR}/version.cpp")
-version_file("src/version.cpp.in" "${VERSION_FILE}" "VERSION" ".git")
+set(VERSION_FILE "${CMAKE_BINARY_DIR}/release.cpp")
+version_file("src/release.cpp.in" "${VERSION_FILE}" "VERSION" ".git")
 list(APPEND INNOEXTRACT_SOURCES "${VERSION_FILE}")
 
 

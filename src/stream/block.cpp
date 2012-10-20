@@ -35,7 +35,7 @@
 #include <boost/iostreams/read.hpp>
 #include <boost/make_shared.hpp>
 
-#include "version.hpp"
+#include "release.hpp"
 #include "crypto/crc32.hpp"
 #include "setup/version.hpp"
 #include "stream/lzma.hpp"

@@ -37,7 +37,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 
-#include "version.hpp"
+#include "release.hpp"
 
 #include "cli/debug.hpp"
 
