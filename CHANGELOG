@@ -1,18 +1,18 @@
 
-Inno Extract 1.3 (2012-07-03)
- - Respect --quiet and --silent for multi-file installers
- - Compile in C++11 mode if supported
- - Warn about unsupported setup data versions
- - Add support for Inno Setup 5.5.0 installers
+innoextract 1.3 (2012-07-03)
+ - Fixed --quiet and --silent flags being ignored for some multi-file installers output
+ - Now compiles in C++11 mode if supported
+ - Added a warning when extracting unsupported setup data versions
+ - Added support for Inno Setup 5.5.0 installers
 
-Inno Extract 1.2 (2012-04-01)
- - Fix compile errors with older versions of Boost or GCC.
- - Don't link against libraries that aren't actually needed.
+innoextract 1.2 (2012-04-01)
+ - Fixed compile errors with older versions of Boost or GCC.
+ - Prevented linking against libraries that aren't actually needed.
 
-Inno Extract 1.1 (2012-03-19)
- - Support extracting files for a specific language.
- - Fix a bug in the setup header parsing code.
+innoextract 1.1 (2012-03-19)
+ - Added support to extract files for a specific language.
+ - Fixed a bug in the setup header parsing code.
 
-Inno Extract 1.0 (2012-03-01)
+innoextract 1.0 (2012-03-01)
  - Initial release.
  - Can list and extract files but not much more.

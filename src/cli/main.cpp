@@ -37,8 +37,9 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include "version.hpp"
+
 #include "cli/debug.hpp"
-#include "cli/version.hpp"
 
 #include "loader/offsets.hpp"
 

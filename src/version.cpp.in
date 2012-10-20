@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2012 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -18,18 +18,22 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef INNOEXTRACT_VERSION_HPP
-#define INNOEXTRACT_VERSION_HPP
+#include "version.hpp"
 
-#include <string>
+/*
+ * This file is automatically processed by cmake if the version or commit id changes.
+ * For the exact syntax see the documentation of the configure_file() cmake command.
+ * For available variables see cmake/VersionString.cmake.
+ */
 
-//! Name + version of the program being built
-extern const std::string innoextract_version;
+#if ${BASE_VERSION_COUNT} != 3
+#error "Configure error - the VERSION file should specify exactly three lines!"
+#endif
 
-//! Range of supported Inno Setup versions
-extern const std::string innosetup_versions;
+const char innoextract_name[] = "${BASE_NAME_0}";
 
-//! Copyright line for the current program
-extern const std::string innoextract_copyright;
+const char innoextract_version[] = "${BASE_VERSION_0}${GIT_SUFFIX_5}";
 
-#endif // INNOEXTRACT_VERSION_HPP
+const char innosetup_versions[] = "${BASE_VERSION_1}";
+
+const char innoextract_copyright[] = "${BASE_VERSION_2}";

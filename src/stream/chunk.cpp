@@ -26,6 +26,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/ref.hpp>
 
+#include "version.hpp"
 #include "stream/lzma.hpp"
 #include "stream/slice.hpp"
 #include "util/log.hpp"
@@ -84,7 +85,8 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 		case LZMA2:  result->push(inno_lzma2_decompressor(), 8192); break;
 	#else
 		case LZMA1: case LZMA2:
-			throw chunk_error("LZMA decompression not supported by this Inno Extract build");
+			throw chunk_error("LZMA decompression not supported by this "
+			                  + std::string(innoextract_name) + " build");
 	#endif
 		default: throw chunk_error("unknown compression");
 	}

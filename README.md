@@ -1,9 +1,9 @@
 
-# Inno Extract - A tool to unpack installers created by Inno Setup
+# innoextract - A tool to unpack installers created by Inno Setup
 
-[Inno Setup](http://www.jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. Inno Extracts allows to extract such installers under non-windows systems without running the actual installer using wine. Inno Extract currently supports installers created by Inno Setup 1.2.10 to 5.5.2.
+[Inno Setup](http://www.jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. innoextract allows to extract such installers under non-windows systems without running the actual installer using wine. innoextract currently supports installers created by Inno Setup 1.2.10 to 5.5.2.
 
-Inno Extract is available under the ZLIB license - see the LICENSE file.
+innoextract is available under the ZLIB license - see the LICENSE file.
 
 See the website for [Linux packages](http://constexpr.org/innoextract/#packages).
 
@@ -22,13 +22,13 @@ For Boost you will need the headers as well as the `iostreams`, `filesystem`, `d
 
 While the liblzma dependency is optional, it is highly recommended and you won't be able to extract most installers created by newer Inno Setup versions without it.
 
-To build Inno Extract you will also need **CMake 2.8** and a working C++ compiler, as well as the development headers for liblzma and boost.
+To build innoextract you will also need **CMake 2.8** and a working C++ compiler, as well as the development headers for liblzma and boost.
 
-The website might have more [specific instructions for your linux distribution](http://constexpr.org/innoextract/install).
+The website might have more [specific instructions for your Linux distribution](http://constexpr.org/innoextract/install).
 
 ## Compile and install
 
-To compile Inno Extract, run:
+To compile innoextract, run:
 
     $ mkdir -p build && cd build && cmake ..
     $ make
@@ -41,7 +41,7 @@ Build options:
 
 * `USE_LZMA` (default: `ON`): Use *liblzma* if available.
 * `CMAKE_BUILD_TYPE` (default: `Release`): Set to `Debug` to enable debug output.
-* `CMAKE_INSTALL_PREFIX` (default: `/usr/local` on UNIX): Where to install Inno Extract.
+* `CMAKE_INSTALL_PREFIX` (default: `/usr/local` on UNIX): Where to install innoextract.
 * `DEBUG_EXTRA` (default: `OFF`): Expensive debug options
 * `MAN_DIR` (default: `share/man`): Install location for man pages (relative to prefix).
 
@@ -63,13 +63,13 @@ Documentation is also available as a man page:
 
 ## Limitations
 
-* Inno Extract currently only supports extracting all the data. There is no support for extracting individual files or components and limited support for extracting language-specific files.
+* innoextract currently only supports extracting all the data. There is no support for extracting individual files or components and limited support for extracting language-specific files.
 
 * Included scripts and checks are not executed.
 
 * Data is always extracted to the current directory and the mapping from Inno Setup variables like the application directory to subdirectories is hard-coded.
 
-* Inno Extract does not check if an installer includes multiple files with the same name and will continually overwrite the destination file when extracting.
+* innoextract does not check if an installer includes multiple files with the same name and will continually overwrite the destination file when extracting.
 
 * Names for data files in multi-file installers must follow the standard naming scheme.
 

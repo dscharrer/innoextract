@@ -66,7 +66,7 @@ shell_command current = reset;
 
 void init(is_enabled color, is_enabled progress) {
 	
-	bool is_tty = isatty(1) && isatty(2);
+	bool is_tty = isatty(1) && isatty(2); // TODO use HAVE_ISATTY
 	
 	show_progress = (progress == enable) || (progress == automatic && is_tty);
 	

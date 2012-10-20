@@ -35,6 +35,7 @@
 #include <boost/iostreams/read.hpp>
 #include <boost/make_shared.hpp>
 
+#include "version.hpp"
 #include "crypto/crc32.hpp"
 #include "setup/version.hpp"
 #include "stream/lzma.hpp"
@@ -198,7 +199,8 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 	#ifdef HAVE_LZMA
 		case LZMA1: fis->push(inno_lzma1_decompressor(), 8192); break;
 	#else
-		case LZMA1: throw block_error("LZMA decompression not supported by this Inno Extract build");
+		case LZMA1: throw block_error("LZMA decompression not supported by this "
+			                  + std::string(innoextract_name) + " build");
 	#endif
 	}
 	
