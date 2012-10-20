@@ -15,14 +15,15 @@ Author: [Daniel Scharrer](http://constexpr.org/)
 
 ## Dependencies
 
-* **Boost 1.37** or newer
+* **[Boost](http://www.boost.org/) 1.37** or newer
 * **liblzma** from [xz-utils](http://tukaani.org/xz/) *(optional)*
+* **iconv** (either as part of the system libc, as is the case with [glibc](http://www.gnu.org/software/libc/), or as a separate [libiconv](http://www.gnu.org/software/libiconv/))
 
 For Boost you will need the headers as well as the `iostreams`, `filesystem`, `date_time`, `system` and `program_options` libraries. Older Boost version may work but are not actively supported. The boost `iostreams` library needs to be build with zlib and bzip2 support.
 
 While the liblzma dependency is optional, it is highly recommended and you won't be able to extract most installers created by newer Inno Setup versions without it.
 
-To build innoextract you will also need **CMake 2.8** and a working C++ compiler, as well as the development headers for liblzma and boost.
+To build innoextract you will also need **[CMake](http://cmake.org/) 2.8** and a working C++ compiler, as well as the development headers for liblzma and boost.
 
 The website might have more [specific instructions for your Linux distribution](http://constexpr.org/innoextract/install).
 

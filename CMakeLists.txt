@@ -2,8 +2,8 @@ project(InnoExtract)
 
 cmake_minimum_required(VERSION 2.8)
 
-# For custom cmake modules.
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+# Define configuration options
 
 option(USE_LZMA "Build lzma decompression support." ON)
 option(DEBUG_EXTRA "Expensive debug options" OFF)
@@ -11,6 +11,11 @@ option(DEBUG_EXTRA "Expensive debug options" OFF)
 set(MAN_DIR "share/man" CACHE STRING "Install location for man pages (relative to prefix).")
 mark_as_advanced(MAN_DIR)
 
+
+# Helper scrips
+
+# For custom cmake modules.
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(CompileCheck)
 include(VersionString)
 include(CheckSymbolExists)
@@ -18,6 +23,9 @@ include(BuildType)
 include(StyleCheck)
 include(Doxygen)
 include(TestBigEndian)
+
+
+# Find required libraries
 
 # Force re-checking libraries if the compiler or compiler flags change.
 if((NOT LAST_CMAKE_CXX_FLAGS STREQUAL CMAKE_CXX_FLAGS)
@@ -54,6 +62,14 @@ check_link_library(Boost Boost_LIBRARIES)
 list(APPEND LIBRARIES "${Boost_LIBRARIES}")
 link_directories("${Boost_LIBRARY_DIRS}")
 include_directories(SYSTEM "${Boost_INCLUDE_DIR}")
+
+find_package(iconv REQUIRED)
+list(APPEND LIBRARIES "${iconv_LIBRARIES}")
+include_directories(SYSTEM "${iconv_INCLUDE_DIR}")
+check_link_library(iconv iconv_LIBRARIES)
+
+
+# Set compiler flags
 
 if(${Boost_VERSION} LESS 104800)
 	# Older Boost versions don't work with C++11
@@ -92,13 +108,20 @@ else()
 	add_cxxflag("-Wno-unused-function")
 endif()
 
-# Because i'm lazy
+# Link as few libraries as possible
+# This is much easier than trying to decide which libraries are needed for each system
 add_ldflag("-Wl,--as-needed")
+
+
+# Check for optional functionality and system configuration
 
 check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
 check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
 
 test_big_endian(IS_BIG_ENDIAN)
+
+
+# All sources:
 
 set(INNOEXTRACT_SOURCES
 	
@@ -160,6 +183,9 @@ file(GLOB_RECURSE ALL_INCLUDES "${CMAKE_SOURCE_DIR}/src/*.hpp")
 list(SORT INNOEXTRACT_SOURCES)
 list(SORT ALL_INCLUDES)
 
+
+# Prepare generated files
+
 include_directories(src ${CMAKE_CURRENT_BINARY_DIR})
 
 configure_file("src/configure.hpp.in" "configure.hpp")
@@ -168,12 +194,16 @@ set(VERSION_FILE "${CMAKE_BINARY_DIR}/version.cpp")
 version_file("src/version.cpp.in" "${VERSION_FILE}" "VERSION" ".git")
 list(APPEND INNOEXTRACT_SOURCES "${VERSION_FILE}")
 
+
+# Main targets
+
 add_executable(innoextract ${INNOEXTRACT_SOURCES} ${ALL_INCLUDES})
 target_link_libraries(innoextract ${LIBRARIES})
 
 install(TARGETS innoextract RUNTIME DESTINATION bin)
 
 install(FILES doc/innoextract.1 DESTINATION ${MAN_DIR}/man1 OPTIONAL)
+
 
 # Additional targets.
 
