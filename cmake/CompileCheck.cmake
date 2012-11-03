@@ -30,9 +30,11 @@ function(check_compiler_flag RESULT FLAG)
 	
 	set(compile_test_file "${CMAKE_CURRENT_BINARY_DIR}/compile_flag_test.cpp")
 	file(WRITE ${compile_test_file} "__attribute__((const)) int main(){ return 0; }\n")
-	try_compile(CHECK_COMPILER_FLAG ${CMAKE_BINARY_DIR} ${compile_test_file} COMPILE_DEFINITIONS "${FLAG}" OUTPUT_VARIABLE ERRORLOG)
+	try_compile(CHECK_COMPILER_FLAG ${CMAKE_BINARY_DIR} ${compile_test_file}
+	            COMPILE_DEFINITIONS "${FLAG}" OUTPUT_VARIABLE ERRORLOG)
 	
-	string(REGEX MATCH "warning:" HAS_WARNING "${ERRORLOG}")
+	string(REGEX MATCH "warning:|command line warning|unrecognized option"
+	       HAS_WARNING "${ERRORLOG}")
 	
 	if(NOT CHECK_COMPILER_FLAG)
 		message(STATUS "Checking compiler flag: ${FLAG} - unsupported")
@@ -69,18 +71,19 @@ function(add_ldflag FLAG)
 endfunction(add_ldflag)
 
 function(try_link_library LIBRARY_NAME LIBRARY_FILE ERROR_VAR)
-	# See if we can link a simple program with the library using the configured c++ compiler.
+	# See if we can link a simple program with the library using the configured c++ compiler
 	set(link_test_file "${CMAKE_CURRENT_BINARY_DIR}/link_test.cpp")
 	file(WRITE ${link_test_file} "int main(){}\n")
 	if(CMAKE_THREAD_LIBS_INIT)
 		list(APPEND LIBRARY_FILE "${CMAKE_THREAD_LIBS_INIT}")
 	endif()
-	try_compile(CHECK_${LIBRARY_NAME}_LINK "${CMAKE_BINARY_DIR}" "${link_test_file}" CMAKE_FLAGS "-DLINK_LIBRARIES=${LIBRARY_FILE}" OUTPUT_VARIABLE ERRORLOG)
+	try_compile(CHECK_${LIBRARY_NAME}_LINK "${CMAKE_BINARY_DIR}" "${link_test_file}"
+	            CMAKE_FLAGS "-DLINK_LIBRARIES=${LIBRARY_FILE}" OUTPUT_VARIABLE ERRORLOG)
 	set(${ERROR_VAR} "${ERRORLOG}" PARENT_SCOPE)
 endfunction(try_link_library)
 
 ##############################################################################
-# Check that a a library actually works for the current configuration.
+# Check that a a library actually works for the current configuration
 function(check_link_library LIBRARY_NAME LIBRARY_VARIABLE)
 	
 	set(lib_current "${${LIBRARY_VARIABLE}}")
@@ -102,7 +105,7 @@ function(check_link_library LIBRARY_NAME LIBRARY_VARIABLE)
 		message(STATUS "Checking ${LIBRARY_NAME}: ${lib_current}")
 	endif()
 	
-	# Check if we can link to the full path found by find_package.
+	# Check if we can link to the full path found by find_package
 	try_link_library(${LIBRARY_NAME} "${lib_current}" ERRORLOG1)
 	
 	if(CHECK_${LIBRARY_NAME}_LINK)
@@ -110,8 +113,9 @@ function(check_link_library LIBRARY_NAME LIBRARY_VARIABLE)
 		return()
 	endif()
 	
-	# Check if the linker is smarter than cmake and try to link with only the library name.
-	string(REGEX REPLACE "(^|;)[^;]*/lib([^;/]*)\\.so" "\\1-l\\2" LIBRARY_FILE "${lib_current}")
+	# Check if the linker is smarter than cmake and try to link with only the library name
+	string(REGEX REPLACE "(^|;)[^;]*/lib([^;/]*)\\.so" "\\1-l\\2"
+	       LIBRARY_FILE "${lib_current}")
 	
 	if(NOT LIBRARY_FILE STREQUAL lib_current)
 		
@@ -126,11 +130,15 @@ function(check_link_library LIBRARY_NAME LIBRARY_VARIABLE)
 		
 	endif()
 	
-	# Force cmake to search again, as the cached library doesn't work.
+	# Force cmake to search again, as the cached library doesn't work
 	unset(FIND_PACKAGE_MESSAGE_DETAILS_${ARGV2} CACHE)
 	unset(FIND_PACKAGE_MESSAGE_DETAILS_${LIBRARY_NAME} CACHE)
 	
-	message(FATAL_ERROR "\n${ERRORLOG1}\n\n${ERRORLOG2}\n\n!! No suitable version of ${LIBRARY_NAME} found.\n   Maybe you don't have the right (32 vs.64 bit) architecture installed?\n\n   Tried ${lib_current} and ${LIBRARY_FILE}\n   Using compiler ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS}\n\n\n")
+	message(FATAL_ERROR "\n${ERRORLOG1}\n\n${ERRORLOG2}\n\n"
+	        "!! No suitable version of ${LIBRARY_NAME} found.\n"
+	        "   Maybe you don't have the right (32 vs.64 bit) architecture installed?\n\n"
+	        "   Tried ${lib_current} and ${LIBRARY_FILE}\n"
+	        "   Using compiler ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS}\n\n\n")
 	
 endfunction(check_link_library)
 

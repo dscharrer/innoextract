@@ -53,6 +53,8 @@ namespace setup {
 
 void type_entry::load(std::istream & is, const version & version) {
 	
+	USE_FLAG_NAMES(setup::type_flags)
+	
 	is >> encoded_string(name, version.codepage());
 	is >> encoded_string(description, version.codepage());
 	if(version >= INNO_VERSION(4, 0, 1)) {

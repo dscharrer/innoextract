@@ -207,7 +207,7 @@ static void process_file(const fs::path & file, const options & o) {
 	
 	BOOST_FOREACH(const Chunks::value_type & chunk, chunks) {
 		
-		debug("[starting " << chunk.first.compression << " chunk @ " << chunk.first.first_slice
+		debug("[starting " << chunk.first.compression << " chunk @ slice " << chunk.first.first_slice
 		      << " + " << print_hex(offsets.data_offset) << " + " << print_hex(chunk.first.offset)
 		      << ']');
 		

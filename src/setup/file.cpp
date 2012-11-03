@@ -72,7 +72,7 @@ namespace setup {
 
 void file_entry::load(std::istream & is, const version & version) {
 	
-	(void)enum_names<file_copy_mode>::names;
+	USE_ENUM_NAMES(file_copy_mode)
 	
 	options = 0;
 	

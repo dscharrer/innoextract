@@ -7,15 +7,16 @@ cmake_minimum_required(VERSION 2.8)
 
 option(USE_LZMA "Build lzma decompression support." ON)
 option(DEBUG_EXTRA "Expensive debug options" OFF)
+option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
+option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
 
-set(MAN_DIR "share/man" CACHE STRING "Install location for man pages (relative to prefix).")
+set(MAN_DIR "share/man" CACHE STRING "Install path for man pages (relative to prefix).")
 mark_as_advanced(MAN_DIR)
 
 
 # Helper scrips
 
-# For custom cmake modules.
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake") # For custom cmake modules
 include(CompileCheck)
 include(VersionString)
 include(CheckSymbolExists)
@@ -27,14 +28,16 @@ include(TestBigEndian)
 
 # Find required libraries
 
-# Force re-checking libraries if the compiler or compiler flags change.
+# Force re-checking libraries if the compiler or compiler flags change
 if((NOT LAST_CMAKE_CXX_FLAGS STREQUAL CMAKE_CXX_FLAGS)
    OR (NOT LAST_CMAKE_CXX_COMPILER STREQUAL CMAKE_CXX_COMPILER))
 	force_recheck_library(LZMA)
 	force_recheck_library(Boost)
 	unset(Boost_INCLUDE_DIR CACHE)
-	set(LAST_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE INTERNAL "The last C++ compiler flags.")
-	set(LAST_CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE INTERNAL "The last C++ compiler.")
+	set(LAST_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE INTERNAL
+	    "The last C++ compiler flags")
+	set(LAST_CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE INTERNAL
+	    "The last C++ compiler")
 endif()
 
 unset(LIBRARIES)
@@ -73,44 +76,53 @@ check_link_library(iconv iconv_LIBRARIES)
 
 if(${Boost_VERSION} LESS 104800)
 	# Older Boost versions don't work with C++11
+	add_cxxflag("-std=c++03")
 else()
 	add_cxxflag("-std=c++11")
 endif()
 
-add_cxxflag("-Wall")
-add_cxxflag("-Wextra")
-add_cxxflag("-Wformat=2")
-add_cxxflag("-Wundef")
-add_cxxflag("-Wpointer-arith")
-add_cxxflag("-Wcast-qual")
-add_cxxflag("-Woverloaded-virtual")
-add_cxxflag("-Wlogical-op")
-add_cxxflag("-Wliteral-conversion")
-add_cxxflag("-Wshift-overflow")
-add_cxxflag("-Woverflow")
-add_cxxflag("-Wbool-conversions")
-add_cxxflag("-Wconversion")
-add_cxxflag("-Wsign-conversion")
-add_cxxflag("-Wmissing-declarations")
-add_cxxflag("-Wredundant-decls")
+if(SET_WARNING_FLAGS)
+	
+	# GCC (and compatible)
+	add_cxxflag("-Wall")
+	add_cxxflag("-Wextra")
+	add_cxxflag("-Wformat=2")
+	add_cxxflag("-Wundef")
+	add_cxxflag("-Wpointer-arith")
+	add_cxxflag("-Wcast-qual")
+	add_cxxflag("-Woverloaded-virtual")
+	add_cxxflag("-Wlogical-op")
+	add_cxxflag("-Woverflow")
+	add_cxxflag("-Wconversion")
+	add_cxxflag("-Wsign-conversion")
+	add_cxxflag("-Wmissing-declarations")
+	add_cxxflag("-Wredundant-decls")
+	
+	# clang
+	add_cxxflag("-Wliteral-conversion")
+	add_cxxflag("-Wshift-overflow")
+	add_cxxflag("-Wbool-conversions")
+	
+	# icc
+	if(NOT DEBUG_EXTRA)
+		add_cxxflag("-wd1418") # 'external function definition with no prior declaration'
+	endif()
+	
+endif()
 
 if(DEBUG_EXTRA)
 	add_cxxflag("-ftrapv") # to add checks for (undefined) signed integer overflow
 	add_cxxflag("-fbounds-checking")
 	add_cxxflag("-fcatch-undefined-behavior")
 	add_cxxflag("-Wstrict-aliasing=1")
-else()
-	# -Wuninitialized causes too many false positives - thanks very much, gcc
-	add_cxxflag("-Wno-uninitialized")
-	# (clang only) Conflicts with using const variables for configuration.
-	add_cxxflag("-Wno-constant-logical-operand")
-	add_cxxflag("-Wno-unneeded-internal-declaration")
-	add_cxxflag("-Wno-unused-function")
 endif()
 
-# Link as few libraries as possible
-# This is much easier than trying to decide which libraries are needed for each system
-add_ldflag("-Wl,--as-needed")
+if(SET_OPTIMIZATION_FLAGS)
+	# Link as few libraries as possible
+	# This is much easier than trying to decide which libraries are needed for each system
+	# Specifically, then need for libboost_system depends on the Boost version
+	add_ldflag("-Wl,--as-needed")
+endif()
 
 
 # Check for optional functionality and system configuration

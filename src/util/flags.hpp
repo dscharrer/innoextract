@@ -148,6 +148,11 @@ public:
 	
 };
 
+template <typename Enum, size_t Bits>
+inline flags<Enum, Bits> operator|(Enum a, flags<Enum, Bits> b) {
+	return b | a;
+}
+
 #define DECLARE_ENUM_SIZE(Enum, Size) \
 	template <> \
 	struct enum_size<Enum> { \
@@ -164,9 +169,6 @@ public:
 #define DECLARE_FLAGS_OPERATORS(Flagname) \
 	inline Flagname operator|(Flagname::enum_type a, Flagname::enum_type b) { \
 		return Flagname(a) | b; \
-	} \
-	inline Flagname operator|(Flagname::enum_type a, Flagname b) { \
-		return b | a; \
 	} \
 	inline Flagname operator~(Flagname::enum_type a) { \
 		return ~Flagname(a); \
@@ -196,5 +198,9 @@ public:
 #define FLAGS_OVERLOADS(Flagname) \
 	DECLARE_ENUM_SIZE(FLAGS_ENUM(Flagname), FLAGS_ENUM_END(Flagname)) \
 	DECLARE_FLAGS_OPERATORS(Flagname)
+
+#define USE_FLAGS_OVERLOADS(Flagname) \
+	(void)(~Flagname::enum_type(0)); \
+	(void)(Flagname::enum_type(0) | Flagname::enum_type(0));
 
 #endif // INNOEXTRACT_UTIL_FLAGS_HPP

@@ -68,6 +68,15 @@ struct enum_names {
 	const size_t enum_names<get_enum<Enum>::type>::count \
 	 = ARRAY_SIZE(enum_names<get_enum<Enum>::type>::names);
 
+#define USE_ENUM_NAMES(Enum) \
+	(void)enum_names<get_enum<Enum>::type>::count; \
+	(void)enum_names<get_enum<Enum>::type>::name; \
+	(void)enum_names<get_enum<Enum>::type>::names;
+
+#define USE_FLAG_NAMES(Flags) \
+	USE_FLAGS_OVERLOADS(Flags) \
+	USE_ENUM_NAMES(Flags)
+
 template <class Enum>
 typename boost::enable_if_c<enum_names<Enum>::named, std::ostream &>::type
 operator<<(std::ostream & os, Enum value) {

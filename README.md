@@ -43,7 +43,9 @@ Build options:
 * `USE_LZMA` (default: `ON`): Use *liblzma* if available.
 * `CMAKE_BUILD_TYPE` (default: `Release`): Set to `Debug` to enable debug output.
 * `CMAKE_INSTALL_PREFIX` (default: `/usr/local` on UNIX): Where to install innoextract.
-* `DEBUG_EXTRA` (default: `OFF`): Expensive debug options
+* `SET_WARNING_FLAGS` (default: `ON`): Adjust compiler warning flags. This should not affect the produced binaries but is useful to catch potential problems.
+* `SET_OPTIMIZATION_FLAGS` (default: `ON`): Adjust compiler optimization flags. For non-debug builds the only thing this does is instruct the linker to only link against libraries that are actually needed.
+* `DEBUG_EXTRA` (default: `OFF`): Expensive debug options.
 * `MAN_DIR` (default: `share/man`): Install location for man pages (relative to prefix).
 
 Set options by passing `-D<option>=<value>` to cmake.
