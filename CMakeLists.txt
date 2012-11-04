@@ -9,6 +9,7 @@ option(USE_LZMA "Build lzma decompression support." ON)
 option(DEBUG_EXTRA "Expensive debug options" OFF)
 option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
 option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
+option(USE_CXX11 "Try to use C++11 if available" ON)
 
 set(MAN_DIR "share/man" CACHE STRING "Install path for man pages (relative to prefix).")
 mark_as_advanced(MAN_DIR)
@@ -77,8 +78,7 @@ check_link_library(iconv iconv_LIBRARIES)
 
 if(${Boost_VERSION} LESS 104800)
 	# Older Boost versions don't work with C++11
-	add_cxxflag("-std=c++03")
-else()
+elseif(USE_CXX11)
 	add_cxxflag("-std=c++11")
 endif()
 
