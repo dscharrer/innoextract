@@ -16,14 +16,15 @@ mark_as_advanced(MAN_DIR)
 
 # Helper scrips
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake") # For custom cmake modules
-include(CompileCheck)
-include(VersionString)
 include(CheckSymbolExists)
-include(BuildType)
-include(StyleCheck)
-include(Doxygen)
 include(TestBigEndian)
+
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake") # For custom cmake modules
+include(BuildType)
+include(CompileCheck)
+include(Doxygen)
+include(StyleCheck)
+include(VersionString)
 
 
 # Find required libraries
@@ -79,49 +80,6 @@ if(${Boost_VERSION} LESS 104800)
 	add_cxxflag("-std=c++03")
 else()
 	add_cxxflag("-std=c++11")
-endif()
-
-if(SET_WARNING_FLAGS)
-	
-	# GCC (and compatible)
-	add_cxxflag("-Wall")
-	add_cxxflag("-Wextra")
-	add_cxxflag("-Wformat=2")
-	add_cxxflag("-Wundef")
-	add_cxxflag("-Wpointer-arith")
-	add_cxxflag("-Wcast-qual")
-	add_cxxflag("-Woverloaded-virtual")
-	add_cxxflag("-Wlogical-op")
-	add_cxxflag("-Woverflow")
-	add_cxxflag("-Wconversion")
-	add_cxxflag("-Wsign-conversion")
-	add_cxxflag("-Wmissing-declarations")
-	add_cxxflag("-Wredundant-decls")
-	
-	# clang
-	add_cxxflag("-Wliteral-conversion")
-	add_cxxflag("-Wshift-overflow")
-	add_cxxflag("-Wbool-conversions")
-	
-	# icc
-	if(NOT DEBUG_EXTRA)
-		add_cxxflag("-wd1418") # 'external function definition with no prior declaration'
-	endif()
-	
-endif()
-
-if(DEBUG_EXTRA)
-	add_cxxflag("-ftrapv") # to add checks for (undefined) signed integer overflow
-	add_cxxflag("-fbounds-checking")
-	add_cxxflag("-fcatch-undefined-behavior")
-	add_cxxflag("-Wstrict-aliasing=1")
-endif()
-
-if(SET_OPTIMIZATION_FLAGS)
-	# Link as few libraries as possible
-	# This is much easier than trying to decide which libraries are needed for each system
-	# Specifically, then need for libboost_system depends on the Boost version
-	add_ldflag("-Wl,--as-needed")
 endif()
 
 
@@ -222,3 +180,16 @@ install(FILES doc/innoextract.1 DESTINATION ${MAN_DIR}/man1 OPTIONAL)
 add_style_check_target(style "${INNOEXTRACT_SOURCES}" "${ALL_INCLUDES}")
 
 add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/doc")
+
+
+# Print a configuration summary
+
+message("")
+message("Configuration:")
+message(" - Build type: ${CMAKE_BUILD_TYPE}")
+if(HAVE_LZMA)
+	message(" - LZMA decompression: enabled")
+else()
+	message(" - LZMA decompression: disabled")
+endif()
+message("")
