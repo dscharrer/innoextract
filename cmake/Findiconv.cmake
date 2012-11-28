@@ -40,6 +40,7 @@ endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(iconv DEFAULT_MSG iconv_INCLUDE_DIR)
 
-if(iconv_FOUND)
+# For some reason, find_package_... uppercases it's first argument. Nice!
+if(ICONV_FOUND)
 	set(iconv_LIBRARIES ${iconv_LIBRARY})
-endif(iconv_FOUND)
+endif(ICONV_FOUND)
