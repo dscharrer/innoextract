@@ -28,6 +28,12 @@ function(check_compiler_flag RESULT FLAG)
 		return()
 	endif()
 	
+	# CMake already has a check_cxx_compiler_flag macro in CheckCXXCompilerFlag, but
+	# it prints the result variable in the output (which is ugly!) and also uses it
+	# as a key to cache checks - so it would need to be unique for each flag.
+	# Unfortunately it also naively pastes the variable name inside a regexp so
+	# if we tried to use the flag itself in the variable name it will fail for -std=c++11.
+	
 	set(compile_test_file "${CMAKE_CURRENT_BINARY_DIR}/compile_flag_test.cpp")
 	file(WRITE ${compile_test_file} "__attribute__((const)) int main(){ return 0; }\n")
 	try_compile(CHECK_COMPILER_FLAG ${CMAKE_BINARY_DIR} ${compile_test_file}
