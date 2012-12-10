@@ -6,5 +6,8 @@
 #cmakedefine HAVE_IOCTL
 #cmakedefine HAVE_LZMA
 #cmakedefine IS_BIG_ENDIAN
+#cmakedefine INNOEXTRACT_HAVE_BSWAP_16
+#cmakedefine INNOEXTRACT_HAVE_BSWAP_32
+#cmakedefine INNOEXTRACT_HAVE_BSWAP_64
 
 #endif // INNOEXTRACT_CONFIGURE_HPP

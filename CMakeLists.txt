@@ -88,6 +88,10 @@ endif()
 check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
 check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
 
+check_symbol_exists(bswap_16 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_16)
+check_symbol_exists(bswap_32 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_32)
+check_symbol_exists(bswap_64 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_64)
+
 test_big_endian(IS_BIG_ENDIAN)
 
 

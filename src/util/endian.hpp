@@ -25,6 +25,11 @@
 
 #include "configure.hpp"
 
+#if defined(INNOEXTRACT_HAVE_BSWAP_16) || defined(INNOEXTRACT_HAVE_BSWAP_32) \
+    || defined(INNOEXTRACT_HAVE_BSWAP_64)
+#include <byteswap.h>
+#endif
+
 inline uint8_t byteswap(uint8_t value) {
 	return value;
 }
@@ -36,6 +41,8 @@ inline int8_t byteswap(int8_t value) {
 inline uint16_t byteswap(uint16_t value) {
 #if defined(_MSC_VER) && _MSC_VER >= 1300
 	return _byteswap_ushort(value);
+#elif defined(INNOEXTRACT_HAVE_BSWAP_16)
+	return bswap_16(value);
 #else
 	return uint16_t((uint16_t(uint8_t(value)) << 8) | uint8_t(value >> 8));
 #endif
@@ -51,6 +58,8 @@ inline uint32_t byteswap(uint32_t value) {
 	return __builtin_bswap32(value);
 #elif defined(_MSC_VER) && (_MSC_VER >= 1400 || (_MSC_VER >= 1300 && !defined(_DLL)))
 	return _byteswap_ulong(value);
+#elif defined(INNOEXTRACT_HAVE_BSWAP_32)
+	return bswap_32(value);
 #else
 	return (uint32_t(byteswap(uint16_t(value))) << 16) | byteswap(uint16_t(value >> 16));
 #endif
@@ -66,6 +75,8 @@ inline uint64_t byteswap(uint64_t value) {
 	return __builtin_bswap64(value);
 #elif defined(_MSC_VER) && _MSC_VER >= 1300
 	return _byteswap_uint64(value);
+#elif defined(INNOEXTRACT_HAVE_BSWAP_64)
+	return bswap_64(value);
 #else
 	return (uint64_t(byteswap(uint32_t(value))) << 32) | byteswap(uint32_t(value >> 32));
 #endif
