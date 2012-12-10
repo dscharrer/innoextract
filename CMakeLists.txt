@@ -82,6 +82,10 @@ elseif(USE_CXX11)
 	add_cxxflag("-std=c++11")
 endif()
 
+# Don't expose internal symbols to the outside world by default
+add_cxxflag("-fvisibility=hidden")
+add_cxxflag("-fvisibility-inlines-hidden")
+
 
 # Check for optional functionality and system configuration
 
