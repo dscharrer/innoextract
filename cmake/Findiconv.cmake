@@ -31,10 +31,6 @@ find_library(iconv_LIBRARY iconv DOC "The iconv library")
 mark_as_advanced(iconv_INCLUDE_DIR)
 mark_as_advanced(iconv_LIBRARY)
 
-if(NOT iconv_LIBRARY)
-	set(iconv_LIBRARY)
-endif()
-
 # handle the QUIETLY and REQUIRED arguments and set iconv_FOUND to TRUE if 
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
@@ -42,5 +38,8 @@ find_package_handle_standard_args(iconv DEFAULT_MSG iconv_INCLUDE_DIR)
 
 # For some reason, find_package_... uppercases it's first argument. Nice!
 if(ICONV_FOUND)
-	set(iconv_LIBRARIES ${iconv_LIBRARY})
+	set(iconv_LIBRARIES)
+	if(iconv_LIBRARY)
+		list(APPEND iconv_LIBRARIES ${iconv_LIBRARY})
+	endif()
 endif(ICONV_FOUND)

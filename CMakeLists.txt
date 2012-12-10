@@ -69,9 +69,9 @@ link_directories("${Boost_LIBRARY_DIRS}")
 include_directories(SYSTEM "${Boost_INCLUDE_DIR}")
 
 find_package(iconv REQUIRED)
+check_link_library(iconv iconv_LIBRARIES)
 list(APPEND LIBRARIES "${iconv_LIBRARIES}")
 include_directories(SYSTEM "${iconv_INCLUDE_DIR}")
-check_link_library(iconv iconv_LIBRARIES)
 
 
 # Set compiler flags
