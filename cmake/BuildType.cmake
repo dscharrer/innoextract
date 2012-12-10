@@ -53,7 +53,7 @@ if(SET_OPTIMIZATION_FLAGS)
 	
 	# Link as few libraries as possible
 	# This is much easier than trying to decide which libraries are needed for each system
-	# Specifically, then need for libboost_system depends on the Boost version
+	# Specifically, the need for libboost_system depends on the Boost version
 	add_ldflag("-Wl,--as-needed")
 	
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")

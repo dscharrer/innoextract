@@ -33,30 +33,75 @@ function(check_compiler_flag RESULT FLAG)
 	# as a key to cache checks - so it would need to be unique for each flag.
 	# Unfortunately it also naively pastes the variable name inside a regexp so
 	# if we tried to use the flag itself in the variable name it will fail for -std=c++11.
+	# But we can at least use the expressions for warnings from that macro (and more):
+	set(fail_regexps
+		"warning:"                                     # general
+		"unrecognized .*option"                        # GNU
+		"unknown .*option"                             # Clang
+		"ignoring unknown option"                      # MSVC
+		"warning D9002"                                # MSVC, any lang
+		"option.*not supported"                        # Intel
+		"invalid argument .*option"                    # Intel
+		"ignoring option .*argument required"          # Intel
+		"command line warning"                         # Intel
+		"[Uu]nknown option"                            # HP
+		"[Ww]arning: [Oo]ption"                        # SunPro
+		"command option .* is not recognized"          # XL
+		"not supported in this configuration; ignored" # AIX
+		"File with unknown suffix passed to linker"    # PGI
+		"WARNING: unknown flag:"                       # Open64
+	)
 	
 	set(compile_test_file "${CMAKE_CURRENT_BINARY_DIR}/compile_flag_test.cpp")
 	file(WRITE ${compile_test_file} "__attribute__((const)) int main(){ return 0; }\n")
-	try_compile(CHECK_COMPILER_FLAG ${CMAKE_BINARY_DIR} ${compile_test_file}
-	            COMPILE_DEFINITIONS "${FLAG}" OUTPUT_VARIABLE ERRORLOG)
 	
-	string(REGEX MATCH "warning:|command line warning|unrecognized option"
-	       HAS_WARNING "${ERRORLOG}")
+	if("${ARGV2}" STREQUAL LINKER)
+		# check linker flags
+		try_compile(CHECK_COMPILER_FLAG ${CMAKE_BINARY_DIR} ${compile_test_file}
+		            CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS=\"${FLAG}\""
+		                        "-DCMAKE_SHARED_LINKER_FLAGS=\"${FLAG}\""
+		                        "-DCMAKE_MODULE_LINKER_FLAGS=\"${FLAG}\""
+		            OUTPUT_VARIABLE ERRORLOG)
+		set(type "linker")
+	else()
+		# check compiler flags
+		try_compile(CHECK_COMPILER_FLAG ${CMAKE_BINARY_DIR} ${compile_test_file}
+		            COMPILE_DEFINITIONS "${FLAG}" OUTPUT_VARIABLE ERRORLOG)
+		set(type "compiler")
+	endif()
+	
 	
 	if(NOT CHECK_COMPILER_FLAG)
-		message(STATUS "Checking compiler flag: ${FLAG} - unsupported")
-		set(${RESULT} "" PARENT_SCOPE)
-		set("CHECK_COMPILER_FLAG_${FLAG}" 0 CACHE INTERNAL "...")
-	elseif(NOT HAS_WARNING STREQUAL "")
-		message(STATUS "Checking compiler flag: ${FLAG} - unsupported (warning)")
+		message(STATUS "Checking ${type} flag: ${FLAG} - unsupported")
 		set(${RESULT} "" PARENT_SCOPE)
 		set("CHECK_COMPILER_FLAG_${FLAG}" 0 CACHE INTERNAL "...")
 	else()
-		message(STATUS "Checking compiler flag: ${FLAG}")
-		set(${RESULT} "${FLAG}" PARENT_SCOPE)
-		set("CHECK_COMPILER_FLAG_${FLAG}" 1 CACHE INTERNAL "...")
+		
+		set(has_warning 0)
+		foreach(expr IN LISTS fail_regexps)
+			if("${ERRORLOG}" MATCHES "${expr}")
+				set(has_warning 1)
+			endif()
+		endforeach()
+		
+		if(has_warning)
+			message(STATUS "Checking ${type} flag: ${FLAG} - unsupported (warning)")
+			set(${RESULT} "" PARENT_SCOPE)
+			set("CHECK_COMPILER_FLAG_${FLAG}" 0 CACHE INTERNAL "...")
+		else()
+			message(STATUS "Checking ${type} flag: ${FLAG}")
+			set(${RESULT} "${FLAG}" PARENT_SCOPE)
+			set("CHECK_COMPILER_FLAG_${FLAG}" 1 CACHE INTERNAL "...")
+		endif()
+		
 	endif()
 	
 endfunction(check_compiler_flag)
+
+function(check_linker_flag RESULT FLAG)
+	check_compiler_flag(result "${FLAG}" LINKER)
+	set(${RESULT} "${result}" PARENT_SCOPE)
+endfunction(check_linker_flag)
 
 function(add_cxxflag FLAG)
 	
@@ -68,7 +113,7 @@ endfunction(add_cxxflag)
 
 function(add_ldflag FLAG)
 	
-	check_compiler_flag(RESULT "${FLAG}")
+	check_linker_flag(RESULT "${FLAG}")
 	
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${RESULT}" PARENT_SCOPE)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${RESULT}" PARENT_SCOPE)
