@@ -44,7 +44,10 @@ iconv_t get_converter(uint32_t codepage) {
 	
 	std::ostringstream oss;
 	if(codepage == 1200) {
-		oss << "UTF-16";
+		// iconv's behavior for "UTF-16" is platform-dependant if there is no BOM.
+		// There never is any BOM in Inno Setup files and it's always little-endian,
+		// so we specify the exact encoding.
+		oss << "UTF-16LE";
 	} else {
 		oss << "CP" << codepage;
 	}
