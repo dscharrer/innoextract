@@ -196,7 +196,7 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 	switch(compression) {
 		case Stored: break;
 		case Zlib: fis->push(io::zlib_decompressor(), 8192); break;
-	#ifdef HAVE_LZMA
+	#if INNOEXTRACT_HAVE_LZMA
 		case LZMA1: fis->push(inno_lzma1_decompressor(), 8192); break;
 	#else
 		case LZMA1: throw block_error("LZMA decompression not supported by this "

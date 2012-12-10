@@ -26,11 +26,11 @@
 
 #include "configure.hpp"
 
-#ifdef HAVE_ISATTY
+#if INNOEXTRACT_HAVE_ISATTY
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_IOCTL
+#if INNOEXTRACT_HAVE_IOCTL
 #include <sys/ioctl.h>
 #endif
 
@@ -66,7 +66,11 @@ shell_command current = reset;
 
 void init(is_enabled color, is_enabled progress) {
 	
-	bool is_tty = isatty(1) && isatty(2); // TODO use HAVE_ISATTY
+#if INNOEXTRACT_HAVE_ISATTY
+	bool is_tty = isatty(1) && isatty(2);
+#else
+	bool is_tty = false;
+#endif
 	
 	show_progress = (progress == enable) || (progress == automatic && is_tty);
 	
@@ -105,7 +109,7 @@ void progress::show(float value, const std::string & label) {
 		return;
 	}
 	
-#if defined(HAVE_IOCTL) && defined(TIOCGWINSZ)
+#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
 	
 	struct winsize w;
 	ioctl(0, TIOCGWINSZ, &w);
@@ -148,7 +152,7 @@ void progress::show_unbounded(float value, const std::string & label) {
 		return;
 	}
 	
-#if defined(HAVE_IOCTL) && defined(TIOCGWINSZ)
+#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
 	
 	struct winsize w;
 	ioctl(0, TIOCGWINSZ, &w);
@@ -197,7 +201,7 @@ void progress::clear() {
 		return;
 	}
 	
-#if defined(HAVE_IOCTL) && defined(TIOCGWINSZ)
+#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
 	
 	std::cout << "\33[2K\r";
 	
@@ -217,7 +221,7 @@ void progress::update(uint64_t delta, bool force) {
 		return;
 	}
 	
-#if defined(HAVE_IOCTL) && defined(TIOCGWINSZ)
+#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
 	
 	force = force || progress_cleared;
 	progress_cleared = false;

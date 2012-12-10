@@ -27,10 +27,10 @@
 
 namespace crypto {
 
-#if ENDIANNESS == LITTLE_ENDIAN
+#if INNOEXTRACT_ENDIANNESS == LITTLE_ENDIAN
 #define CRC32_INDEX(c) (c & 0xff)
 #define CRC32_SHIFTED(c) (c >> 8)
-#elif ENDIANNESS == BIG_ENDIAN
+#elif INNOEXTRACT_ENDIANNESS == BIG_ENDIAN
 #define CRC32_INDEX(c) (c >> 24)
 #define CRC32_SHIFTED(c) (c << 8)
 #else
@@ -39,7 +39,7 @@ namespace crypto {
 
 /* Table of CRC-32's of all single byte values (made by makecrc.c) */
 const uint32_t crc32::table[] = {
-#if ENDIANNESS == LITTLE_ENDIAN
+#if INNOEXTRACT_ENDIANNESS == LITTLE_ENDIAN
 	0x00000000L, 0x77073096L, 0xee0e612cL, 0x990951baL, 0x076dc419L,
 	0x706af48fL, 0xe963a535L, 0x9e6495a3L, 0x0edb8832L, 0x79dcb8a4L,
 	0xe0d5e91eL, 0x97d2d988L, 0x09b64c2bL, 0x7eb17cbdL, 0xe7b82d07L,

@@ -49,11 +49,11 @@ if(USE_LZMA)
 	check_link_library(LZMA LZMA_LIBRARIES)
 	list(APPEND LIBRARIES "${LZMA_LIBRARIES}")
 	include_directories(SYSTEM "${LZMA_INCLUDE_DIR}")
-	set(HAVE_LZMA 1)
+	set(INNOEXTRACT_HAVE_LZMA 1)
 else()
 	message(WARNING "\nDisabling LZMA decompression support.\n"
 	                "You won't be able to extract most newer Inno Setup installers.")
-	set(HAVE_LZMA 0)
+	set(INNOEXTRACT_HAVE_LZMA 0)
 endif()
 
 find_package(Boost REQUIRED COMPONENTS
@@ -85,14 +85,14 @@ endif()
 
 # Check for optional functionality and system configuration
 
-check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
-check_symbol_exists(ioctl "sys/ioctl.h" HAVE_IOCTL)
+check_symbol_exists(isatty "unistd.h" INNOEXTRACT_HAVE_ISATTY)
+check_symbol_exists(ioctl "sys/ioctl.h" INNOEXTRACT_HAVE_IOCTL)
 
 check_symbol_exists(bswap_16 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_16)
 check_symbol_exists(bswap_32 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_32)
 check_symbol_exists(bswap_64 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_64)
 
-test_big_endian(IS_BIG_ENDIAN)
+test_big_endian(INNOEXTRACT_IS_BIG_ENDIAN)
 
 
 # All sources:
@@ -191,7 +191,7 @@ add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/d
 message("")
 message("Configuration:")
 message(" - Build type: ${CMAKE_BUILD_TYPE}")
-if(HAVE_LZMA)
+if(INNOEXTRACT_HAVE_LZMA)
 	message(" - LZMA decompression: enabled")
 else()
 	message(" - LZMA decompression: disabled")

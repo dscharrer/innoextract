@@ -25,8 +25,7 @@
 
 #include "configure.hpp"
 
-#if defined(INNOEXTRACT_HAVE_BSWAP_16) || defined(INNOEXTRACT_HAVE_BSWAP_32) \
-    || defined(INNOEXTRACT_HAVE_BSWAP_64)
+#if INNOEXTRACT_HAVE_BSWAP_16 || INNOEXTRACT_HAVE_BSWAP_32 || INNOEXTRACT_HAVE_BSWAP_64
 #include <byteswap.h>
 #endif
 
@@ -41,7 +40,7 @@ inline int8_t byteswap(int8_t value) {
 inline uint16_t byteswap(uint16_t value) {
 #if defined(_MSC_VER) && _MSC_VER >= 1300
 	return _byteswap_ushort(value);
-#elif defined(INNOEXTRACT_HAVE_BSWAP_16)
+#elif INNOEXTRACT_HAVE_BSWAP_16
 	return bswap_16(value);
 #else
 	return uint16_t((uint16_t(uint8_t(value)) << 8) | uint8_t(value >> 8));
@@ -58,7 +57,7 @@ inline uint32_t byteswap(uint32_t value) {
 	return __builtin_bswap32(value);
 #elif defined(_MSC_VER) && (_MSC_VER >= 1400 || (_MSC_VER >= 1300 && !defined(_DLL)))
 	return _byteswap_ulong(value);
-#elif defined(INNOEXTRACT_HAVE_BSWAP_32)
+#elif INNOEXTRACT_HAVE_BSWAP_32
 	return bswap_32(value);
 #else
 	return (uint32_t(byteswap(uint16_t(value))) << 16) | byteswap(uint16_t(value >> 16));
@@ -75,7 +74,7 @@ inline uint64_t byteswap(uint64_t value) {
 	return __builtin_bswap64(value);
 #elif defined(_MSC_VER) && _MSC_VER >= 1300
 	return _byteswap_uint64(value);
-#elif defined(INNOEXTRACT_HAVE_BSWAP_64)
+#elif INNOEXTRACT_HAVE_BSWAP_64
 	return bswap_64(value);
 #else
 	return (uint64_t(byteswap(uint32_t(value))) << 32) | byteswap(uint32_t(value >> 32));
@@ -133,24 +132,24 @@ struct endianness<true> {
 #define BIG_ENDIAN    4321
 #endif
 
-#ifdef IS_BIG_ENDIAN
-#define ENDIANNESS    BIG_ENDIAN
+#if INNOEXTRACT_IS_BIG_ENDIAN
+#define INNOEXTRACT_ENDIANNESS    BIG_ENDIAN
 #else
-#define ENDIANNESS    LITTLE_ENDIAN
+#define INNOEXTRACT_ENDIANNESS    LITTLE_ENDIAN
 #endif
 
 
-struct little_endian : public endianness<ENDIANNESS == LITTLE_ENDIAN> {
+struct little_endian : public endianness<INNOEXTRACT_ENDIANNESS == LITTLE_ENDIAN> {
 	static const size_t offset = 0;
 };
 
-struct big_endian : public endianness<ENDIANNESS == BIG_ENDIAN> {
+struct big_endian : public endianness<INNOEXTRACT_ENDIANNESS == BIG_ENDIAN> {
 	static const size_t offset = 1;
 };
 
-#if ENDIANNESS == LITTLE_ENDIAN
+#if INNOEXTRACT_ENDIANNESS == LITTLE_ENDIAN
 typedef little_endian native_endian;
-#elif ENDIANNESS == BIG_ENDIAN
+#elif INNOEXTRACT_ENDIANNESS == BIG_ENDIAN
 typedef big_endian native_endian;
 #else
 #error "Unsupported host endianness."
