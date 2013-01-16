@@ -40,10 +40,11 @@ public:
 	typedef base_type::char_type char_type;
 	typedef base_type::category category;
 	
-	inline checksum_filter(crypto::checksum * output, crypto::checksum_type type) : output(output) {
+	checksum_filter(crypto::checksum * output, crypto::checksum_type type)
+		: output(output) {
 		hasher.init(type);
 	}
-	inline checksum_filter(const checksum_filter & o) : hasher(o.hasher), output(o.output) { }
+	checksum_filter(const checksum_filter & o) : hasher(o.hasher), output(o.output) { }
 	
 	template<typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n) {

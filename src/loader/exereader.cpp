@@ -88,7 +88,7 @@ struct exe_reader_impl : public exe_reader {
 
 static const char PE_MAGIC[] = { 'P', 'E', 0, 0 };
 
-inline bool get_resource_table(uint32_t & entry, uint32_t resource_offset) {
+bool get_resource_table(uint32_t & entry, uint32_t resource_offset) {
 	
 	bool is_table = (entry & (uint32_t(1) << 31));
 	

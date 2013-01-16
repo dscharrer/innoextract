@@ -111,7 +111,7 @@ struct compatible_integer<Base, Bits, true> {
 };
 
 template <class T>
-inline unsigned int alignment_of() {
+unsigned int alignment_of() {
 #if defined(_MSC_VER) && _MSC_VER >= 1300
 	return __alignof(T);
 #elif defined(__GNUC__)
@@ -128,7 +128,7 @@ inline bool is_aligned_on(const void * p, size_t alignment) {
 }
 
 template <class T>
-inline bool is_aligned(const void * p) {
+bool is_aligned(const void * p) {
 	return is_aligned_on(p, alignment_of<T>());
 }
 
@@ -139,9 +139,9 @@ protected:
 	
 	typedef Impl impl_type;
 	
-	inline impl_type & impl() { return *static_cast<impl_type *>(this); }
+	impl_type & impl() { return *static_cast<impl_type *>(this); }
 	
-	inline const impl_type & impl() const { return *static_cast<const impl_type *>(this); }
+	const impl_type & impl() const { return *static_cast<const impl_type *>(this); }
 	
 };
 

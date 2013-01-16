@@ -30,11 +30,11 @@ namespace crypto {
 //! CRC32 checksum calculation
 struct crc32 : public checksum_base<crc32> {
 	
-	inline void init() { crc = CRC32_NEGL; }
+	void init() { crc = CRC32_NEGL; }
 	
 	void update(const char * data, size_t length);
 	
-	inline uint32_t finalize() const { return crc ^ CRC32_NEGL; }
+	uint32_t finalize() const { return crc ^ CRC32_NEGL; }
 	
 private:
 	

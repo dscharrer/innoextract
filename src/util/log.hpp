@@ -76,14 +76,14 @@ public:
 	static bool quiet;
 	
 #ifdef DEBUG
-	inline logger(const char * _file, int _line, log_level _level)
+	logger(const char * _file, int _line, log_level _level)
 		: file(_file), line(_line), level(_level) { }
 #else
-	inline logger(log_level _level) : level(_level) { }
+	logger(log_level _level) : level(_level) { }
 #endif
 	
 	template<class T>
-	inline logger & operator<<(const T & i) {
+	logger & operator<<(const T & i) {
 		buffer << i;
 		return *this;
 	}

@@ -36,7 +36,7 @@ class slice_reader;
 
 struct chunk_error : public std::ios_base::failure {
 	
-	inline chunk_error(std::string msg) : std::ios_base::failure(msg) { }
+	chunk_error(std::string msg) : std::ios_base::failure(msg) { }
 	
 };
 

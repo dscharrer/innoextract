@@ -35,11 +35,11 @@ struct windows_version {
 		unsigned minor;
 		unsigned build;
 		
-		inline bool operator==(const data & o) const {
+		bool operator==(const data & o) const {
 			return (build == o.build && major == o.major && minor == o.minor);
 		}
 		
-		inline bool operator!=(const data & o) const {
+		bool operator!=(const data & o) const {
 			return !(*this == o);
 		}
 		
@@ -55,11 +55,11 @@ struct windows_version {
 		unsigned major;
 		unsigned minor;
 	
-		inline bool operator==(const service_pack & o) const {
+		bool operator==(const service_pack & o) const {
 			return (major == o.major && minor == o.minor);
 		}
 		
-		inline bool operator!=(const service_pack & o) const {
+		bool operator!=(const service_pack & o) const {
 			return !(*this == o);
 		}
 		
@@ -69,13 +69,13 @@ struct windows_version {
 	
 	void load(std::istream & is, const version & version);
 	
-	inline bool operator==(const windows_version & o) const {
+	bool operator==(const windows_version & o) const {
 		return (win_version == o.win_version
 		        && nt_version == o.nt_version
 		        && nt_service_pack == o.nt_service_pack);
 	}
 	
-	inline bool operator!=(const windows_version & o) const {
+	bool operator!=(const windows_version & o) const {
 		return !(*this == o);
 	}
 	

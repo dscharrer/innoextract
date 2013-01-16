@@ -90,7 +90,7 @@ struct if_not {
 };
 
 template <class T>
-inline std::ostream & operator<<(std::ostream & os, const if_not<T> & s) {
+std::ostream & operator<<(std::ostream & os, const if_not<T> & s) {
 	if(s.value != s.excluded) {
 		color::shell_command prev = color::current;
 		return os << s.name << ": " << color::cyan << s.value << prev << '\n';
@@ -168,7 +168,7 @@ struct print_bytes {
 };
 
 template <class T>
-inline std::ostream & operator<<(std::ostream & os, const print_bytes<T> & s) {
+std::ostream & operator<<(std::ostream & os, const print_bytes<T> & s) {
 	
 	std::streamsize precision = os.precision();
 	

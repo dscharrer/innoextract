@@ -52,104 +52,104 @@ private:
 	
 	Type _flags;
 	
-	inline flags(Type flag) : _flags(flag) { }
+	flags(Type flag) : _flags(flag) { }
 	
 public:
 	
-	inline flags(enum_type flag) : _flags(Type().set(size_t(flag))) { }
+	flags(enum_type flag) : _flags(Type().set(size_t(flag))) { }
 	
-	inline flags(Zero = 0) : _flags() { }
+	flags(Zero = 0) : _flags() { }
 	
-	inline flags(const flags & o) : _flags(o._flags) { }
+	flags(const flags & o) : _flags(o._flags) { }
 	
-	static inline flags load(Type _flags) {
+	static flags load(Type _flags) {
 		return flags(_flags, true);
 	}
 	
-	inline bool has(enum_type flag) const {
+	bool has(enum_type flag) const {
 		return _flags.test(size_t(flag));
 	}
 	
-	inline bool hasAll(flags o) const {
+	bool hasAll(flags o) const {
 		return (_flags & o._flags) == o._flags;
 	}
 	
-	inline operator TypesafeBoolean() const {
+	operator TypesafeBoolean() const {
 		return reinterpret_cast<TypesafeBoolean>(_flags.any());
 	}
 	
-	inline flags operator~() const {
+	flags operator~() const {
 		return flags(~_flags);
 	}
 	
-	inline bool operator!() const {
+	bool operator!() const {
 		return _flags.none();
 	}
 	
-	inline flags operator&(flags o) const {
+	flags operator&(flags o) const {
 		return flags(_flags & o._flags);
 	}
 	
-	inline flags operator|(flags o) const {
+	flags operator|(flags o) const {
 		return flags(_flags | o._flags);
 	}
 	
-	inline flags operator^(flags o) const {
+	flags operator^(flags o) const {
 		return flags(_flags ^ o._flags);
 	}
 	
-	inline flags & operator&=(const flags & o) {
+	flags & operator&=(const flags & o) {
 		_flags &= o._flags;
 		return *this;
 	}
 	
-	inline flags & operator|=(flags o) {
+	flags & operator|=(flags o) {
 		_flags |= o._flags;
 		return *this;
 	}
 	
-	inline flags & operator^=(flags o) {
+	flags & operator^=(flags o) {
 		_flags ^= o._flags;
 		return *this;
 	}
 	
-	inline flags operator&(enum_type flag) const {
+	flags operator&(enum_type flag) const {
 		return operator&(flags(flag));
 	}
 	
-	inline flags operator|(enum_type flag) const {
+	flags operator|(enum_type flag) const {
 		return operator|(flags(flag));
 	}
 	
-	inline flags operator^(enum_type flag) const {
+	flags operator^(enum_type flag) const {
 		return operator^(flags(flag));
 	}
 	
-	inline flags & operator&=(enum_type flag) {
+	flags & operator&=(enum_type flag) {
 		return operator&=(flags(flag));
 	}
 	
-	inline flags & operator|=(enum_type flag) {
+	flags & operator|=(enum_type flag) {
 		return operator|=(flags(flag));
 	}
 	
-	inline flags & operator^=(enum_type flag) {
+	flags & operator^=(enum_type flag) {
 		return operator^=(flag);
 	}
 	
-	inline flags & operator=(flags o) {
+	flags & operator=(flags o) {
 		_flags = o._flags;
 		return *this;
 	}
 	
-	static inline flags all() {
+	static flags all() {
 		return flags(Type().flip());
 	}
 	
 };
 
 template <typename Enum, size_t Bits>
-inline flags<Enum, Bits> operator|(Enum a, flags<Enum, Bits> b) {
+flags<Enum, Bits> operator|(Enum a, flags<Enum, Bits> b) {
 	return b | a;
 }
 

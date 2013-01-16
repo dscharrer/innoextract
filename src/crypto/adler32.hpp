@@ -35,7 +35,7 @@ struct adler32 : public checksum_base<adler32> {
 	
 	void update(const char * data, size_t length);
 	
-	inline uint32_t finalize() const { return (uint32_t(s2) << 16) | s1; }
+	uint32_t finalize() const { return (uint32_t(s2) << 16) | s1; }
 	
 private:
 	

@@ -51,7 +51,7 @@ struct checksum {
 	checksum_type type;
 	
 	bool operator==(const checksum & other) const;
-	inline bool operator!=(const checksum & other) const { return !(*this == other); }
+	bool operator!=(const checksum & other) const { return !(*this == other); }
 	
 };
 
@@ -65,7 +65,7 @@ public:
 	 * Data is processed as-is and then converted according to Endianness.
 	 */
 	template <class T, class Endianness>
-	inline T load_number(std::istream & is) {
+	T load_number(std::istream & is) {
 		T result;
 		char buf[sizeof(result)];
 		is.read(buf, sizeof(buf));
@@ -79,7 +79,7 @@ public:
 	 * Data is processed as-is and then converted if the host endianness is not little_endian.
 	 */
 	template <class T>
-	inline T load_number(std::istream & is) {
+	T load_number(std::istream & is) {
 		return load_number<T, little_endian>(is);
 	}
 	

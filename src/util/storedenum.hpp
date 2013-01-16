@@ -67,7 +67,7 @@ public:
 	
 	static const size_t size = Mapping::count;
 	
-	inline stored_enum(std::istream & is) {
+	stored_enum(std::istream & is) {
 		BOOST_STATIC_ASSERT(size <= (1 << 8));
 		value = load_number<uint8_t>(is);
 	}
@@ -103,7 +103,7 @@ public:
 	
 	static const size_t size = Bits;
 	
-	inline stored_bitfield(std::istream & is) {
+	stored_bitfield(std::istream & is) {
 		for(size_t i = 0; i < count; i++) {
 			bits[i] = load_number<base_type>(is);
 		}
@@ -113,7 +113,7 @@ public:
 		}
 	}
 	
-	inline uint64_t lower_bits() const {
+	uint64_t lower_bits() const {
 		
 		BOOST_STATIC_ASSERT(sizeof(uint64_t) % sizeof(base_type) == 0);
 		
@@ -126,7 +126,7 @@ public:
 		return result;
 	}
 	
-	inline operator std::bitset<size>() const {
+	operator std::bitset<size>() const {
 		
 		// Make `make style` shut up since we really need unsigned long here.
 		#define stored_enum_concat_(a, b, c, d) a##b c##d
@@ -163,7 +163,7 @@ public:
 	typedef typename Mapping::enum_type enum_type;
 	typedef flags<enum_type> flag_type;
 	
-	inline stored_flags(std::istream & is) : stored_bitfield<Mapping::count, PadBits>(is) { }
+	stored_flags(std::istream & is) : stored_bitfield<Mapping::count, PadBits>(is) { }
 	
 	flag_type get() {
 		

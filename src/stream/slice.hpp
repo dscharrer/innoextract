@@ -56,12 +56,12 @@ public:
 	
 	std::streamsize read(char * buffer, std::streamsize bytes);
 	
-	inline size_t slice() { return current_slice; }
-	inline path_type & file() { return slice_file; }
+	size_t slice() { return current_slice; }
+	path_type & file() { return slice_file; }
 	
 	bool open(size_t slice, const path_type & slice_file);
 	
-	inline bool is_open() { return ifs.is_open(); }
+	bool is_open() { return ifs.is_open(); }
 	
 };
 

@@ -36,8 +36,8 @@ class hasher : checksum_base<hasher> {
 	
 public:
 	
-	inline hasher() { }
-	inline hasher(checksum_type type) { init(type); }
+	hasher() { }
+	hasher(checksum_type type) { init(type); }
 	hasher(const hasher & o);
 	
 	void init(checksum_type type);

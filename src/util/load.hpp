@@ -34,7 +34,7 @@ struct binary_string {
 	
 	std::string & data;
 	
-	inline binary_string(std::string & target) : data(target) { }
+	binary_string(std::string & target) : data(target) { }
 	
 	static void load(std::istream & is, std::string & target);
 	
@@ -52,7 +52,7 @@ struct encoded_string {
 	std::string & data;
 	uint32_t codepage;
 	
-	inline encoded_string(std::string & target, uint32_t _codepage)
+	encoded_string(std::string & target, uint32_t _codepage)
 		: data(target), codepage(_codepage) { }
 	
 	static void load(std::istream & is, std::string & target, uint32_t codepage);
@@ -66,12 +66,12 @@ inline std::istream & operator>>(std::istream & is, const encoded_string & str) 
 
 struct ansi_string : encoded_string {
 	
-	inline ansi_string(std::string & target) : encoded_string(target, 1252) { }
+	ansi_string(std::string & target) : encoded_string(target, 1252) { }
 	
 };
 
 template <class T>
-inline T load(std::istream & is) {
+T load(std::istream & is) {
 	T value;
 	char buffer[sizeof(value)];
 	is.read(buffer, sizeof(buffer));
@@ -80,12 +80,12 @@ inline T load(std::istream & is) {
 }
 
 template <class T, class Endianness>
-inline T load_number(std::istream & is) {
+T load_number(std::istream & is) {
 	return Endianness::byteswap_if_alien(load<T>(is));
 }
 
 template <class T>
-inline T load_number(std::istream & is) {
+T load_number(std::istream & is) {
 	return load_number<T, little_endian>(is);
 }
 
@@ -103,7 +103,7 @@ T load_number(std::istream & is, size_t bits) {
 }
 
 template <class T>
-inline T load_number(std::istream & is, size_t bits) {
+T load_number(std::istream & is, size_t bits) {
 	return load_number<T, little_endian>(is, bits);
 }
 

@@ -35,10 +35,10 @@ namespace stream {
 
 struct lzma_error : public std::ios_base::failure {
 	
-	inline lzma_error(std::string msg, int code)
+	lzma_error(std::string msg, int code)
 		: std::ios_base::failure(msg), error_code(code) { }
 	
-	inline int error() const { return error_code; }
+	int error() const { return error_code; }
 	
 private:
 	
@@ -51,7 +51,7 @@ public:
 	
 	typedef char char_type;
 	
-	inline ~lzma_decompressor_impl_base() { close(); }
+	~lzma_decompressor_impl_base() { close(); }
 	
 	bool filter(const char * & begin_in, const char * end_in,
 	            char * & begin_out, char * end_out, bool flush);
@@ -61,7 +61,7 @@ public:
 protected:
 	
 	//! Abstract base class, subclasses need to intialize stream.
-	inline lzma_decompressor_impl_base() : stream(NULL) { }
+	lzma_decompressor_impl_base() : stream(NULL) { }
 	
 	void * stream;
 	
@@ -71,12 +71,12 @@ class inno_lzma1_decompressor_impl : public lzma_decompressor_impl_base {
 	
 public:
 	
-	inline inno_lzma1_decompressor_impl() : nread(0) { }
+	inno_lzma1_decompressor_impl() : nread(0) { }
 	
 	bool filter(const char * & begin_in, const char * end_in,
 	            char * & begin_out, char * end_out, bool flush);
 	
-	inline void close() { lzma_decompressor_impl_base::close(), nread = 0; }
+	void close() { lzma_decompressor_impl_base::close(), nread = 0; }
 	
 private:
 	

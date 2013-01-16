@@ -43,7 +43,7 @@ public:
 	static const size_t block_size = transform::block_size;
 	static const size_t hash_size = transform::hash_size;
 	
-	inline void init() { count_lo = count_hi = 0; transform::init(state); }
+	void init() { count_lo = count_hi = 0; transform::init(state); }
 	
 	void update(const char * data, size_t length);
 	
@@ -54,10 +54,10 @@ private:
 	size_t hash(const hash_word * input, size_t length);
 	void pad(unsigned int last_block_size, uint8_t pad_first = 0x80);
 	
-	inline hash_word bit_count_hi() const {
+	hash_word bit_count_hi() const {
 		return (count_lo >> (8 * sizeof(hash_word) - 3)) + (count_hi << 3);
 	}
-	inline hash_word bit_count_lo() const { return count_lo << 3; }
+	hash_word bit_count_lo() const { return count_lo << 3; }
 	
 	hash_word data[block_size / sizeof(hash_word)];
 	hash_word state[hash_size / sizeof(hash_word)];
