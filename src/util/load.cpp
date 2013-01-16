@@ -87,7 +87,18 @@ void to_utf8(const std::string & from, std::string & to, uint32_t codepage) {
 	
 	iconv_t converter = get_converter(codepage);
 	
-	const char * inbuf = from.data();
+	/*
+	 * Some iconv implementations declare the second parameter of iconv() as
+	 * const char **, others as char **.
+	 * Use this little hack to compile with both variants.
+	 */
+	struct inbuf_ {
+		const char * buf;
+		inbuf_(const char * data) : buf(data) { };
+		operator const char **() { return &buf; };
+		operator char **() { return const_cast<char **>(&buf); };
+	} inbuf(from.data());
+	
 	size_t insize = from.size();
 	
 	size_t outbase = 0;
@@ -106,7 +117,7 @@ void to_utf8(const std::string & from, std::string & to, uint32_t codepage) {
 		char * outbuf = &to[0] + outbase;
 		size_t outsize = to.size() - outbase;
 		
-		size_t ret = iconv(converter, const_cast<char**>(&inbuf), &insize, &outbuf, &outsize);
+		size_t ret = iconv(converter, inbuf, &insize, &outbuf, &outsize);
 		if(ret == size_t(-1) && errno != E2BIG) {
 			log_error << "iconv error while converting from CP" << codepage << ": " << errno;
 			to.clear();
