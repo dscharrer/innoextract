@@ -24,28 +24,53 @@
 # SRC is processed using the configure_file() cmake command
 # at build to produce DST with the following variable available:
 #
-# - BASE_VERSION: The contents of the file specified by VERSION_FILE
-# - BASE_VERSION_COUNT: Number of lines in the VERSION file
-# - BASE_VERSION_i: The i-th line of the VERSION file
-# - BASE_NAME_i: Everything except the last component of the i-th line of the VERSION file
-# - BASE_NUMBER_i: The last component of the i-th line of the VERSION file
+# VERSION_SOURCES:
+#  List of (${var} ${file}) pairs.
+#
+# for each variable ${var}
+# - ${var}: The contents of the associated file
+# - ${var}_COUNT: Number of lines in the associated file
+# - ${var}_${i}: The ${i}-th line of the associated file
+# - ${var}_${i}_SHORTNAME: The first component of the ${i}-th line of the associated file
+# - ${var}_${i}_STRING: Everything except the first component of the ${i}-th line of the associated file
+# - ${var}_${i}_NAME: Everything except the last component of the ${i}-th line of the associated file
+# - ${var}_${i}_NUMBER: The last component of the ${i}-th line of the associated file
+# - ${var}_HEAD: The first paragraph of the associated file
+# - ${var}_TAIL: The remaining paragraphs of the associated file
+#
 # - GIT_COMMIT: The current git commit. (not defined if there is no GIT_DIR directory)
-# - GIT_COMMIT_PREFIX_i: The first i characters of GIT_COMMIT (i=0..39)
+# - GIT_COMMIT_PREFIX_${i}: The first ${i} characters of GIT_COMMIT (i=0..39)
 # For the exact syntax of SRC see the documentation of the configure_file() cmake command.
 # The version file is regenerated whenever VERSION_FILE or the current commit changes.
-function(version_file SRC DST VERSION_FILE GIT_DIR)
+function(version_file SRC DST VERSION_SOURCES GIT_DIR)
+	
+	set(mode "variable")
+	
+	set(args)
+	set(dependencies "${CMAKE_MODULE_PATH}/VersionScript.cmake")
+	
+	foreach(arg IN LISTS VERSION_SOURCES)
+		
+		if(mode STREQUAL "variable")
+			set(mode "file")
+		else()
+			get_filename_component(arg "${arg}" ABSOLUTE)
+			list(APPEND dependencies ${abs_file})
+			set(mode "variable")
+		endif()
+		
+		list(APPEND args ${arg})
+		
+	endforeach()
 	
 	get_filename_component(abs_src "${SRC}" ABSOLUTE)
 	get_filename_component(abs_dst "${DST}" ABSOLUTE)
-	get_filename_component(abs_version_file "${VERSION_FILE}" ABSOLUTE)
 	get_filename_component(abs_git_dir "${GIT_DIR}" ABSOLUTE)
 	
 	set(defines)
 	if(${ARGC} GREATER 4)
 		set(defines ${ARGV4})
 	endif()
-	
-	set(dependencies "${abs_version_file}" "${CMAKE_MODULE_PATH}/VersionScript.cmake")
 	
 	if(EXISTS "${abs_git_dir}/HEAD")
 		list(APPEND dependencies "${abs_git_dir}/HEAD")
@@ -62,7 +87,7 @@ function(version_file SRC DST VERSION_FILE GIT_DIR)
 			${CMAKE_COMMAND}
 			"-DINPUT=${abs_src}"
 			"-DOUTPUT=${abs_dst}"
-			"-DVERSION_FILE=${abs_version_file}"
+			"-DVERSION_SOURCES=${args}"
 			"-DGIT_DIR=${abs_git_dir}"
 			${defines}
 			-P "${CMAKE_MODULE_PATH}/VersionScript.cmake"

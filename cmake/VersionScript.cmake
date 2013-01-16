@@ -22,45 +22,83 @@ cmake_minimum_required(VERSION 2.8)
 # CMake script that reads a VERSION file and the current git history and the calls configure_file().
 # This is used by version_file() in VersionString.cmake
 
-if((NOT DEFINED INPUT) OR (NOT DEFINED OUTPUT) OR (NOT DEFINED VERSION_FILE) OR (NOT DEFINED GIT_DIR))
+if((NOT DEFINED INPUT) OR (NOT DEFINED OUTPUT) OR (NOT DEFINED VERSION_SOURCES) OR (NOT DEFINED GIT_DIR))
 	message(SEND_ERROR "Invalid arguments.")
 endif()
 
-file(READ "${VERSION_FILE}" BASE_VERSION)
-string(STRIP "${BASE_VERSION}" BASE_VERSION)
-
-# Split the version file into lines.
-string(REGEX MATCHALL "[^\r\n]+" version_lines "${BASE_VERSION}")
-set(BASE_VERSION_COUNT 0)
-foreach(version_line IN LISTS version_lines)
+set(var "")
+foreach(arg IN LISTS VERSION_SOURCES)
 	
-	set(BASE_VERSION_${BASE_VERSION_COUNT} "${version_line}")
-	
-	# Find the last space
-	string(STRIP "${version_line}" version_line)
-	string(LENGTH "${version_line}" version_line_length)
-	set(version_line_split ${version_line_length})
-	foreach(i RANGE ${version_line_length})
-		if(${i} LESS ${version_line_length})
-			string(SUBSTRING "${version_line}" ${i} 1 version_line_char)
-			if(version_line_char STREQUAL " ")
-				set(version_line_split ${i})
+	if(var STREQUAL "")
+		set(var ${arg})
+	else()
+		
+		file(READ "${arg}" ${var})
+		string(STRIP "${${var}}" ${var})
+		string(REGEX REPLACE "\r\n" "\n" ${var} "${${var}}")
+		string(REGEX REPLACE "\r" "\n" ${var} "${${var}}")
+		
+		# Split the version file into lines.
+		string(REGEX MATCHALL "[^\r\n]+" lines "${${var}}")
+		set(${var}_COUNT 0)
+		foreach(line IN LISTS lines)
+			
+			set(${var}_${${var}_COUNT} "${line}")
+			
+			# Find the first and last spaces
+			string(STRIP "${line}" line)
+			string(LENGTH "${line}" line_length)
+			set(first_space -1)
+			set(last_space ${line_length})
+			foreach(i RANGE ${line_length})
+				if(${i} LESS ${line_length})
+					string(SUBSTRING "${line}" ${i} 1 line_char)
+					if(line_char STREQUAL " ")
+						set(last_space ${i})
+						if(first_space EQUAL -1)
+							set(first_space ${i})
+						endif()
+					endif()
+				endif()
+			endforeach()
+			
+			# Get everything before the first space
+			if(${first_space} GREATER -1)
+				string(SUBSTRING "${line}" 0 ${first_space} line_name)
+				string(STRIP "${line_name}" ${var}_${${var}_COUNT}_SHORTNAME)
 			endif()
-		endif()
-	endforeach()
-	
-	# Get everything before the last space
-	string(SUBSTRING "${version_line}" 0 ${version_line_split} version_line_name)
-	string(STRIP "${version_line_name}" BASE_NAME_${BASE_VERSION_COUNT})
-	
-	# Get everything after the last space
-	if(${version_line_split} LESS ${version_line_length})
-		math(EXPR num_length "${version_line_length} - ${version_line_split}")
-		string(SUBSTRING "${version_line}" ${version_line_split} ${num_length} version_line_num)
-		string(STRIP "${version_line_num}" BASE_NUMBER_${BASE_VERSION_COUNT})
+			
+			# Get everything after the first space
+			math(EXPR num_length "${line_length} - ${first_space}")
+			string(SUBSTRING "${line}" ${first_space} ${num_length} line_num)
+			string(STRIP "${line_num}" ${var}_${${var}_COUNT}_STRING)
+			
+			# Get everything before the last space
+			string(SUBSTRING "${line}" 0 ${last_space} line_name)
+			string(STRIP "${line_name}" ${var}_${${var}_COUNT}_NAME)
+			
+			# Get everything after the last space
+			if(${last_space} LESS ${line_length})
+				math(EXPR num_length "${line_length} - ${last_space}")
+				string(SUBSTRING "${line}" ${last_space} ${num_length} line_num)
+				string(STRIP "${line_num}" ${var}_${${var}_COUNT}_NUMBER)
+			endif()
+			
+			math(EXPR ${var}_COUNT "${${var}_COUNT} + 1")
+		endforeach()
+		
+		string(REGEX REPLACE "\n\n.*$" "" ${var}_HEAD "${${var}}")
+		string(STRIP "${${var}_HEAD}" ${var}_HEAD)
+		string(REGEX MATCH "\n\n.*" ${var}_TAIL "${${var}}")
+		string(STRIP "${${var}_TAIL}" ${var}_TAIL)
+		
+		string(REGEX REPLACE "\n" "\\\\n" ${var} "${${var}}")
+		string(REGEX REPLACE "\n" "\\\\n" ${var}_HEAD "${${var}_HEAD}")
+		string(REGEX REPLACE "\n" "\\\\n" ${var}_TAIL "${${var}_TAIL}")
+		
+		set(var "")
 	endif()
 	
-	math(EXPR BASE_VERSION_COUNT "${BASE_VERSION_COUNT} + 1")
 endforeach()
 
 # Check for a git directory and fill in the git commit hash if one exists.

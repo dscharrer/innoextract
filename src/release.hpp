@@ -33,4 +33,7 @@ extern const char innosetup_versions[];
 //! Copyright line for the current program
 extern const char innoextract_copyright[];
 
+//! License text for the current program
+extern const char innoextract_license[];
+
 #endif // INNOEXTRACT_VERSION_HPP

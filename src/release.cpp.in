@@ -26,14 +26,20 @@
  * For available variables see cmake/VersionString.cmake.
  */
 
-#if ${BASE_VERSION_COUNT} != 3
-#error "Configure error - the VERSION file should specify exactly three lines!"
+#if ${VERSION_COUNT} != 2
+#error "Configure error - the VERSION file should specify exactly two lines!"
 #endif
 
-const char innoextract_name[] = "${BASE_NAME_0}";
+#if ${LICENSE_COUNT} < 3
+#error "Configure error - the LICENSE file should specify at least three lines!"
+#endif
 
-const char innoextract_version[] = "${BASE_VERSION_0}${GIT_SUFFIX_5}";
+const char innoextract_name[] = "${VERSION_0_NAME}";
 
-const char innosetup_versions[] = "${BASE_VERSION_1}";
+const char innoextract_version[] = "${VERSION_0_NUMBER}${GIT_SUFFIX_5}";
 
-const char innoextract_copyright[] = "${BASE_VERSION_2}";
+const char innosetup_versions[] = "${VERSION_1}";
+
+const char innoextract_copyright[] = "${LICENSE_0_STRING}";
+
+const char innoextract_license[] = "${LICENSE_TAIL}";
