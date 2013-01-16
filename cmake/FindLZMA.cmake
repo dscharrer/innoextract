@@ -24,11 +24,18 @@
 # LZMA_INCLUDE_DIR - where to find lzma.h
 # LZMA_LIBRARIES - liblzma.so
 
+option(LZMA_USE_STATIC_LIBS "Statically link liblzma" OFF)
+
+include(UseStaticLibs)
+use_static_libs(LZMA)
+
 find_path(LZMA_INCLUDE_DIR lzma.h DOC "The directory where lzma.h resides")
 find_library(LZMA_LIBRARY lzma DOC "The LZMA library")
 
 mark_as_advanced(LZMA_INCLUDE_DIR)
 mark_as_advanced(LZMA_LIBRARY)
+
+use_static_libs_restore()
 
 # handle the QUIETLY and REQUIRED arguments and set LZMA_FOUND to TRUE if 
 # all listed variables are TRUE

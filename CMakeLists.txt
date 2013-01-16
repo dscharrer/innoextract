@@ -10,6 +10,9 @@ option(DEBUG_EXTRA "Expensive debug options" OFF)
 option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
 option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
 option(USE_CXX11 "Try to use C++11 if available" ON)
+option(USE_STATIC_LIBS "Statically link libraries" OFF)
+option(ZLIB_USE_STATIC_LIBS "Statically link libz" OFF)
+option(BZip2_USE_STATIC_LIBS "Statically link libbz2" OFF)
 
 set(MAN_DIR "share/man" CACHE STRING "Install path for man pages (relative to prefix).")
 mark_as_advanced(MAN_DIR)
@@ -25,10 +28,21 @@ include(BuildType)
 include(CompileCheck)
 include(Doxygen)
 include(StyleCheck)
+include(UseStaticLibs)
 include(VersionString)
 
 
 # Find required libraries
+
+if(USE_STATIC_LIBS)
+	add_cxxflag("-static-libgcc")
+	add_cxxflag("-static-libstdc++")
+	set(LZMA_USE_STATIC_LIBS ON)
+	set(Boost_USE_STATIC_LIBS ON)
+	set(ZLIB_USE_STATIC_LIBS ON)
+	set(BZip2_USE_STATIC_LIBS ON)
+	set(iconv_USE_STATIC_LIBS ON)
+endif()
 
 # Force re-checking libraries if the compiler or compiler flags change
 if((NOT LAST_CMAKE_CXX_FLAGS STREQUAL CMAKE_CXX_FLAGS)
@@ -67,6 +81,22 @@ check_link_library(Boost Boost_LIBRARIES)
 list(APPEND LIBRARIES "${Boost_LIBRARIES}")
 link_directories("${Boost_LIBRARY_DIRS}")
 include_directories(SYSTEM "${Boost_INCLUDE_DIR}")
+
+if(Boost_USE_STATIC_LIBS)
+	
+	use_static_libs(ZLIB)
+	find_package(ZLIB REQUIRED)
+	use_static_libs_restore()
+	check_link_library(zlib ZLIB_LIBRARIES)
+	list(APPEND LIBRARIES "${ZLIB_LIBRARIES}")
+	
+	use_static_libs(BZip2)
+	find_package(BZip2 REQUIRED)
+	use_static_libs_restore()
+	check_link_library(bzip2 BZIP2_LIBRARIES)
+	list(APPEND LIBRARIES "${BZIP2_LIBRARIES}")
+	
+endif()
 
 find_package(iconv REQUIRED)
 check_link_library(iconv iconv_LIBRARIES)
