@@ -27,20 +27,16 @@
 #ifdef DEBUG
 #define debug(...) \
 	if(::logger::debug) \
-		::logger(__FILE__, __LINE__, ::logger::Debug) << __VA_ARGS__
-#define log_info \
-	if(!::logger::quiet) \
-		::logger(__FILE__, __LINE__, ::logger::Info)
-#define log_warning ::logger(__FILE__, __LINE__, ::logger::Warning)
-#define log_error   ::logger(__FILE__, __LINE__, ::logger::Error)
+		::logger(::logger::Debug) << __VA_ARGS__
 #else
 #define debug(...)
+#endif
+
 #define log_info \
 	if(!::logger::quiet) \
 		::logger(::logger::Info)
 #define log_warning ::logger(::logger::Warning)
 #define log_error   ::logger(::logger::Error)
-#endif
 
 /*!
  * logger class that allows longging via the stream operator.
@@ -58,11 +54,6 @@ public:
 	
 private:
 	
-#ifdef DEBUG
-	const char * const file;
-	const int line;
-#endif
-	
 	const log_level level;
 	
 	std::ostringstream buffer; //! Buffer for the log message excluding level, file and line.
@@ -75,12 +66,7 @@ public:
 	static bool debug;
 	static bool quiet;
 	
-#ifdef DEBUG
-	logger(const char * _file, int _line, log_level _level)
-		: file(_file), line(_line), level(_level) { }
-#else
 	logger(log_level _level) : level(_level) { }
-#endif
 	
 	template<class T>
 	logger & operator<<(const T & i) {
