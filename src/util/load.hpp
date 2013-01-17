@@ -74,7 +74,7 @@ template <class T>
 T load(std::istream & is) {
 	T value;
 	char buffer[sizeof(value)];
-	is.read(buffer, sizeof(buffer));
+	is.read(buffer, std::streamsize(sizeof(buffer)));
 	std::memcpy(&value, buffer, sizeof(value));
 	return value;
 }

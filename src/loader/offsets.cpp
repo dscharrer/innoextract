@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2013 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -101,14 +101,15 @@ bool offsets::load_offsets_at(std::istream & is, uint32_t pos) {
 	}
 	
 	char magic[12];
-	if(is.read(magic, ARRAY_SIZE(magic)).fail()) {
+	if(is.read(magic, std::streamsize(ARRAY_SIZE(magic))).fail()) {
 		is.clear();
 		return false;
 	}
 	
 	setup::version_constant version = 0;
 	for(size_t i = 0; i < ARRAY_SIZE(known_setup_loader_versions); i++) {
-		BOOST_STATIC_ASSERT(ARRAY_SIZE(known_setup_loader_versions[i].magic) == ARRAY_SIZE(magic));
+		BOOST_STATIC_ASSERT(ARRAY_SIZE(known_setup_loader_versions[i].magic)
+		                    == ARRAY_SIZE(magic));
 		if(!memcmp(magic, known_setup_loader_versions[i].magic, ARRAY_SIZE(magic))) {
 			version = known_setup_loader_versions[i].version;
 			break;

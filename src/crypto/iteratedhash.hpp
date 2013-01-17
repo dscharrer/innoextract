@@ -52,7 +52,7 @@ public:
 private:
 
 	size_t hash(const hash_word * input, size_t length);
-	void pad(unsigned int last_block_size, uint8_t pad_first = 0x80);
+	void pad(size_t last_block_size, uint8_t pad_first = 0x80);
 	
 	hash_word bit_count_hi() const {
 		return (count_lo >> (8 * sizeof(hash_word) - 3)) + (count_hi << 3);
@@ -137,7 +137,7 @@ size_t iterated_hash<T>::hash(const hash_word * input, size_t length) {
 }
 
 template <class T>
-void iterated_hash<T>::pad(unsigned int last_block_size, uint8_t pad_first) {
+void iterated_hash<T>::pad(size_t last_block_size, uint8_t pad_first) {
 	
 	size_t num = mod_power_of_2(count_lo, size_t(block_size));
 	

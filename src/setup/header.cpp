@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Daniel Scharrer
+ * Copyright (C) 2011-2013 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -300,14 +300,17 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	if(version < INNO_VERSION(4, 2, 0)) {
-		password.crc32 = load_number<uint32_t>(is), password.type = crypto::CRC32;
+		password.crc32 = load_number<uint32_t>(is);
+		password.type = crypto::CRC32;
 	} else if(version < INNO_VERSION(5, 3, 9)) {
-		is.read(password.md5, sizeof(password.md5)), password.type = crypto::MD5;
+		is.read(password.md5, std::streamsize(sizeof(password.md5)));
+		password.type = crypto::MD5;
 	} else {
-		is.read(password.sha1, sizeof(password.sha1)), password.type = crypto::SHA1;
+		is.read(password.sha1, std::streamsize(sizeof(password.sha1)));
+		password.type = crypto::SHA1;
 	}
 	if(version >= INNO_VERSION(4, 2, 2)) {
-		is.read(password_salt, sizeof(password_salt));
+		is.read(password_salt, std::streamsize(sizeof(password_salt)));
 	} else {
 		memset(password_salt, 0, sizeof(password_salt));
 	}

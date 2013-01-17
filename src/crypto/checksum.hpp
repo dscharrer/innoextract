@@ -68,7 +68,7 @@ public:
 	T load_number(std::istream & is) {
 		T result;
 		char buf[sizeof(result)];
-		is.read(buf, sizeof(buf));
+		is.read(buf, std::streamsize(sizeof(buf)));
 		this->impl().update(buf, sizeof(buf));
 		std::memcpy(&result, buf, sizeof(result));
 		return little_endian::byteswap_if_alien(result);

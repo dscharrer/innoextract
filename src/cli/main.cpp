@@ -320,7 +320,8 @@ static void process_file(const fs::path & file, const options & o) {
 			// Copy data
 			while(!file_source->eof()) {
 				char buffer[8192 * 10];
-				std::streamsize n = file_source->read(buffer, ARRAY_SIZE(buffer)).gcount();
+				std::streamsize buffer_size = std::streamsize(ARRAY_SIZE(buffer));
+				std::streamsize n = file_source->read(buffer, buffer_size).gcount();
 				if(n > 0) {
 					
 					BOOST_FOREACH(fs::ofstream & ofs, output) {

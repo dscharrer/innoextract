@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2013 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -84,7 +84,8 @@ public:
 		
 		uint32_t block_crc32;
 		char temp[sizeof(block_crc32)];
-		std::streamsize nread = boost::iostreams::read(src, temp, sizeof(temp));
+		std::streamsize temp_size = std::streamsize(sizeof(temp));
+		std::streamsize nread = boost::iostreams::read(src, temp, temp_size);
 		if(nread == EOF) {
 			return false;
 		} else if(nread != sizeof(temp)) {
@@ -93,7 +94,7 @@ public:
 		std::memcpy(&block_crc32, temp, sizeof(block_crc32));
 		block_crc32 = little_endian::byteswap_if_alien(block_crc32);
 		
-		length = size_t(boost::iostreams::read(src, buffer, sizeof(buffer)));
+		length = size_t(boost::iostreams::read(src, buffer, std::streamsize(sizeof(buffer))));
 		if(length == size_t(EOF)) {
 			throw block_error("unexpected block end");
 		}

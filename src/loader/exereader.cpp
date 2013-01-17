@@ -142,7 +142,7 @@ bool exe_reader_impl::load_header(std::istream & is, header & coff) {
 	}
 	
 	char magic[sizeof(PE_MAGIC)];
-	if(is.seekg(peOffset).read(magic, sizeof(magic)).fail()) {
+	if(is.seekg(peOffset).read(magic, std::streamsize(sizeof(magic))).fail()) {
 		return false;
 	}
 	if(std::memcmp(magic, PE_MAGIC, sizeof(PE_MAGIC))) {

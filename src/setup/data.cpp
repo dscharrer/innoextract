@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Daniel Scharrer
+ * Copyright (C) 2011-2013 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -33,8 +33,8 @@ void data_entry::load(std::istream & is, const version & version) {
 	chunk.last_slice = load_number<uint32_t>(is, version.bits);
 	if(version < INNO_VERSION(4, 0, 0)) {
 		if(chunk.first_slice < 1 || chunk.last_slice < 1) {
-			log_warning << "[file location] unexpected disk number: " << chunk.first_slice << " / "
-			            << chunk.last_slice;
+			log_warning << "[file location] unexpected disk number: " << chunk.first_slice
+			            << " / " << chunk.last_slice;
 		} else {
 			chunk.first_slice--, chunk.last_slice--;
 		}
@@ -57,13 +57,17 @@ void data_entry::load(std::istream & is, const version & version) {
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 9)) {
-		is.read(file.checksum.sha1, sizeof(file.checksum.sha1)), file.checksum.type = crypto::SHA1;
+		is.read(file.checksum.sha1, std::streamsize(sizeof(file.checksum.sha1)));
+		file.checksum.type = crypto::SHA1;
 	} else if(version >= INNO_VERSION(4, 2, 0)) {
-		is.read(file.checksum.md5, sizeof(file.checksum.md5)), file.checksum.type = crypto::MD5;
+		is.read(file.checksum.md5, std::streamsize(sizeof(file.checksum.md5)));
+		file.checksum.type = crypto::MD5;
 	} else if(version >= INNO_VERSION(4, 0, 1)) {
-		file.checksum.crc32 = load_number<uint32_t>(is), file.checksum.type = crypto::CRC32;
+		file.checksum.crc32 = load_number<uint32_t>(is);
+		file.checksum.type = crypto::CRC32;
 	} else {
-		file.checksum.adler32 = load_number<uint32_t>(is), file.checksum.type = crypto::Adler32;
+		file.checksum.adler32 = load_number<uint32_t>(is);
+		file.checksum.type = crypto::Adler32;
 	}
 	
 	if(version.bits == 16) {
@@ -128,7 +132,11 @@ void data_entry::load(std::istream & is, const version & version) {
 	
 	options |= flags;
 	
-	chunk.compression = (options & ChunkCompressed) ? stream::UnknownCompression : stream::Stored;
+	if(options & ChunkCompressed) {
+		chunk.compression = stream::UnknownCompression;
+	} else {
+		chunk.compression = stream::Stored;
+	}
 	if(options & BZipped) {
 		options |= ChunkCompressed;
 		chunk.compression = stream::BZip2;

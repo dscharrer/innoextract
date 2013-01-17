@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Daniel Scharrer
+ * Copyright (C) 2011-2013 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -70,79 +70,80 @@ struct known_version {
 };
 
 const known_version versions[] = {
-	{ "Inno Setup Setup Data (1.3.21)",                INNO_VERSION_EXT(1, 3, 21, 0), false },
-	{ "Inno Setup Setup Data (1.3.25)",                INNO_VERSION_EXT(1, 3, 25, 0), false },
-	{ "Inno Setup Setup Data (2.0.0)",                 INNO_VERSION_EXT(2, 0,  0, 0), false },
-	{ "Inno Setup Setup Data (2.0.1)",                 INNO_VERSION_EXT(2, 0,  1, 0), false },
-	{ "Inno Setup Setup Data (2.0.2)",                 INNO_VERSION_EXT(2, 0,  2, 0), false }, // !
-	{ "Inno Setup Setup Data (2.0.5)",                 INNO_VERSION_EXT(2, 0,  5, 0), false },
-	{ "Inno Setup Setup Data (2.0.6a)",                INNO_VERSION_EXT(2, 0,  6, 0), false },
-	{ "Inno Setup Setup Data (2.0.7)",                 INNO_VERSION_EXT(2, 0,  7, 0), false },
-	{ "Inno Setup Setup Data (2.0.8)",                 INNO_VERSION_EXT(2, 0,  8, 0), false },
-	{ "Inno Setup Setup Data (2.0.11)",                INNO_VERSION_EXT(2, 0, 11, 0), false },
-	{ "Inno Setup Setup Data (2.0.17)",                INNO_VERSION_EXT(2, 0, 17, 0), false },
-	{ "Inno Setup Setup Data (2.0.18)",                INNO_VERSION_EXT(2, 0, 18, 0), false },
-	{ "Inno Setup Setup Data (3.0.0a)",                INNO_VERSION_EXT(3, 0,  0, 0), false },
-	{ "Inno Setup Setup Data (3.0.1)",                 INNO_VERSION_EXT(3, 0,  1, 0), false },
-	{ "Inno Setup Setup Data (3.0.3)",                 INNO_VERSION_EXT(3, 0,  3, 0), false },
-	{ "Inno Setup Setup Data (3.0.4)",                 INNO_VERSION_EXT(3, 0,  4, 0), false }, // !
-	{ "Inno Setup Setup Data (3.0.5)",                 INNO_VERSION_EXT(3, 0,  5, 0), false },
-	{ "My Inno Setup Extensions Setup Data (3.0.6.1)", INNO_VERSION_EXT(3, 0,  6, 1), false },
-	{ "Inno Setup Setup Data (4.0.0a)",                INNO_VERSION_EXT(4, 0,  0, 0), false },
-	{ "Inno Setup Setup Data (4.0.1)",                 INNO_VERSION_EXT(4, 0,  1, 0), false },
-	{ "Inno Setup Setup Data (4.0.3)",                 INNO_VERSION_EXT(4, 0,  3, 0), false },
-	{ "Inno Setup Setup Data (4.0.5)",                 INNO_VERSION_EXT(4, 0,  5, 0), false },
-	{ "Inno Setup Setup Data (4.0.9)",                 INNO_VERSION_EXT(4, 0,  9, 0), false },
-	{ "Inno Setup Setup Data (4.0.10)",                INNO_VERSION_EXT(4, 0, 10, 0), false },
-	{ "Inno Setup Setup Data (4.0.11)",                INNO_VERSION_EXT(4, 0, 11, 0), false },
-	{ "Inno Setup Setup Data (4.1.0)",                 INNO_VERSION_EXT(4, 1,  0, 0), false },
-	{ "Inno Setup Setup Data (4.1.2)",                 INNO_VERSION_EXT(4, 1,  2, 0), false },
-	{ "Inno Setup Setup Data (4.1.3)",                 INNO_VERSION_EXT(4, 1,  3, 0), false },
-	{ "Inno Setup Setup Data (4.1.4)",                 INNO_VERSION_EXT(4, 1,  4, 0), false },
-	{ "Inno Setup Setup Data (4.1.5)",                 INNO_VERSION_EXT(4, 1,  5, 0), false },
-	{ "Inno Setup Setup Data (4.1.6)",                 INNO_VERSION_EXT(4, 1,  6, 0), false },
-	{ "Inno Setup Setup Data (4.1.8)",                 INNO_VERSION_EXT(4, 1,  8, 0), false },
-	{ "Inno Setup Setup Data (4.2.0)",                 INNO_VERSION_EXT(4, 2,  0, 0), false },
-	{ "Inno Setup Setup Data (4.2.1)",                 INNO_VERSION_EXT(4, 2,  1, 0), false },
-	{ "Inno Setup Setup Data (4.2.2)",                 INNO_VERSION_EXT(4, 2,  2, 0), false },
-	{ "Inno Setup Setup Data (4.2.3)",                 INNO_VERSION_EXT(4, 2,  3, 0), false },
-	{ "Inno Setup Setup Data (4.2.4)",                 INNO_VERSION_EXT(4, 2,  4, 0), false }, // !
-	{ "Inno Setup Setup Data (4.2.5)",                 INNO_VERSION_EXT(4, 2,  5, 0), false },
-	{ "Inno Setup Setup Data (4.2.6)",                 INNO_VERSION_EXT(4, 2,  6, 0), false },
-	{ "Inno Setup Setup Data (5.0.0)",                 INNO_VERSION_EXT(5, 0,  0, 0), false },
-	{ "Inno Setup Setup Data (5.0.1)",                 INNO_VERSION_EXT(5, 0,  1, 0), false },
-	{ "Inno Setup Setup Data (5.0.3)",                 INNO_VERSION_EXT(5, 0,  3, 0), false },
-	{ "Inno Setup Setup Data (5.0.4)",                 INNO_VERSION_EXT(5, 0,  4, 0), false },
-	{ "Inno Setup Setup Data (5.1.0)",                 INNO_VERSION_EXT(5, 1,  0, 0), false },
-	{ "Inno Setup Setup Data (5.1.2)",                 INNO_VERSION_EXT(5, 1,  2, 0), false },
-	{ "Inno Setup Setup Data (5.1.7)",                 INNO_VERSION_EXT(5, 1,  7, 0), false },
-	{ "Inno Setup Setup Data (5.1.10)",                INNO_VERSION_EXT(5, 1, 10, 0), false },
-	{ "Inno Setup Setup Data (5.1.13)",                INNO_VERSION_EXT(5, 1, 13, 0), false },
-	{ "Inno Setup Setup Data (5.2.0)",                 INNO_VERSION_EXT(5, 2,  0, 0), false },
-	{ "Inno Setup Setup Data (5.2.1)",                 INNO_VERSION_EXT(5, 2,  1, 0), false },
-	{ "Inno Setup Setup Data (5.2.3)",                 INNO_VERSION_EXT(5, 2,  3, 0), false },
-	{ "Inno Setup Setup Data (5.2.5)",                 INNO_VERSION_EXT(5, 2,  5, 0), false },
-	{ "Inno Setup Setup Data (5.2.5) (u)",             INNO_VERSION_EXT(5, 2,  5, 0), true  },
-	{ "Inno Setup Setup Data (5.3.0)",                 INNO_VERSION_EXT(5, 3,  0, 0), false },
-	{ "Inno Setup Setup Data (5.3.0) (u)",             INNO_VERSION_EXT(5, 3,  0, 0), true  },
-	{ "Inno Setup Setup Data (5.3.3)",                 INNO_VERSION_EXT(5, 3,  3, 0), false },
-	{ "Inno Setup Setup Data (5.3.3) (u)",             INNO_VERSION_EXT(5, 3,  3, 0), true  },
-	{ "Inno Setup Setup Data (5.3.5)",                 INNO_VERSION_EXT(5, 3,  5, 0), false },
-	{ "Inno Setup Setup Data (5.3.5) (u)",             INNO_VERSION_EXT(5, 3,  5, 0), true  },
-	{ "Inno Setup Setup Data (5.3.6)",                 INNO_VERSION_EXT(5, 3,  6, 0), false },
-	{ "Inno Setup Setup Data (5.3.6) (u)",             INNO_VERSION_EXT(5, 3,  6, 0), true  },
-	{ "Inno Setup Setup Data (5.3.7)",                 INNO_VERSION_EXT(5, 3,  7, 0), false },
-	{ "Inno Setup Setup Data (5.3.7) (u)",             INNO_VERSION_EXT(5, 3,  7, 0), true  },
-	{ "Inno Setup Setup Data (5.3.8)",                 INNO_VERSION_EXT(5, 3,  8, 0), false },
-	{ "Inno Setup Setup Data (5.3.8) (u)",             INNO_VERSION_EXT(5, 3,  8, 0), true  },
-	{ "Inno Setup Setup Data (5.3.9)",                 INNO_VERSION_EXT(5, 3,  9, 0), false },
-	{ "Inno Setup Setup Data (5.3.9) (u)",             INNO_VERSION_EXT(5, 3,  9, 0), true  },
-	{ "Inno Setup Setup Data (5.3.10)",                INNO_VERSION_EXT(5, 3, 10, 0), false },
-	{ "Inno Setup Setup Data (5.3.10) (u)",            INNO_VERSION_EXT(5, 3, 10, 0), true  },
-	{ "Inno Setup Setup Data (5.4.2)",                 INNO_VERSION_EXT(5, 4,  2, 0), false },
-	{ "Inno Setup Setup Data (5.4.2) (u)",             INNO_VERSION_EXT(5, 4,  2, 0), true  },
-	{ "Inno Setup Setup Data (5.5.0)",                 INNO_VERSION_EXT(5, 5,  0, 0), false },
-	{ "Inno Setup Setup Data (5.5.0) (u)",             INNO_VERSION_EXT(5, 5,  0, 0), true  },
+	{ "Inno Setup Setup Data (1.3.21)",     INNO_VERSION_EXT(1, 3, 21, 0), false },
+	{ "Inno Setup Setup Data (1.3.25)",     INNO_VERSION_EXT(1, 3, 25, 0), false },
+	{ "Inno Setup Setup Data (2.0.0)",      INNO_VERSION_EXT(2, 0,  0, 0), false },
+	{ "Inno Setup Setup Data (2.0.1)",      INNO_VERSION_EXT(2, 0,  1, 0), false },
+	{ "Inno Setup Setup Data (2.0.2)",      INNO_VERSION_EXT(2, 0,  2, 0), false }, // !
+	{ "Inno Setup Setup Data (2.0.5)",      INNO_VERSION_EXT(2, 0,  5, 0), false },
+	{ "Inno Setup Setup Data (2.0.6a)",     INNO_VERSION_EXT(2, 0,  6, 0), false },
+	{ "Inno Setup Setup Data (2.0.7)",      INNO_VERSION_EXT(2, 0,  7, 0), false },
+	{ "Inno Setup Setup Data (2.0.8)",      INNO_VERSION_EXT(2, 0,  8, 0), false },
+	{ "Inno Setup Setup Data (2.0.11)",     INNO_VERSION_EXT(2, 0, 11, 0), false },
+	{ "Inno Setup Setup Data (2.0.17)",     INNO_VERSION_EXT(2, 0, 17, 0), false },
+	{ "Inno Setup Setup Data (2.0.18)",     INNO_VERSION_EXT(2, 0, 18, 0), false },
+	{ "Inno Setup Setup Data (3.0.0a)",     INNO_VERSION_EXT(3, 0,  0, 0), false },
+	{ "Inno Setup Setup Data (3.0.1)",      INNO_VERSION_EXT(3, 0,  1, 0), false },
+	{ "Inno Setup Setup Data (3.0.3)",      INNO_VERSION_EXT(3, 0,  3, 0), false },
+	{ "Inno Setup Setup Data (3.0.4)",      INNO_VERSION_EXT(3, 0,  4, 0), false }, // !
+	{ "Inno Setup Setup Data (3.0.5)",      INNO_VERSION_EXT(3, 0,  5, 0), false },
+	{ "My Inno Setup Extensions Setup Data (3.0.6.1)",
+	                                        INNO_VERSION_EXT(3, 0,  6, 1), false },
+	{ "Inno Setup Setup Data (4.0.0a)",     INNO_VERSION_EXT(4, 0,  0, 0), false },
+	{ "Inno Setup Setup Data (4.0.1)",      INNO_VERSION_EXT(4, 0,  1, 0), false },
+	{ "Inno Setup Setup Data (4.0.3)",      INNO_VERSION_EXT(4, 0,  3, 0), false },
+	{ "Inno Setup Setup Data (4.0.5)",      INNO_VERSION_EXT(4, 0,  5, 0), false },
+	{ "Inno Setup Setup Data (4.0.9)",      INNO_VERSION_EXT(4, 0,  9, 0), false },
+	{ "Inno Setup Setup Data (4.0.10)",     INNO_VERSION_EXT(4, 0, 10, 0), false },
+	{ "Inno Setup Setup Data (4.0.11)",     INNO_VERSION_EXT(4, 0, 11, 0), false },
+	{ "Inno Setup Setup Data (4.1.0)",      INNO_VERSION_EXT(4, 1,  0, 0), false },
+	{ "Inno Setup Setup Data (4.1.2)",      INNO_VERSION_EXT(4, 1,  2, 0), false },
+	{ "Inno Setup Setup Data (4.1.3)",      INNO_VERSION_EXT(4, 1,  3, 0), false },
+	{ "Inno Setup Setup Data (4.1.4)",      INNO_VERSION_EXT(4, 1,  4, 0), false },
+	{ "Inno Setup Setup Data (4.1.5)",      INNO_VERSION_EXT(4, 1,  5, 0), false },
+	{ "Inno Setup Setup Data (4.1.6)",      INNO_VERSION_EXT(4, 1,  6, 0), false },
+	{ "Inno Setup Setup Data (4.1.8)",      INNO_VERSION_EXT(4, 1,  8, 0), false },
+	{ "Inno Setup Setup Data (4.2.0)",      INNO_VERSION_EXT(4, 2,  0, 0), false },
+	{ "Inno Setup Setup Data (4.2.1)",      INNO_VERSION_EXT(4, 2,  1, 0), false },
+	{ "Inno Setup Setup Data (4.2.2)",      INNO_VERSION_EXT(4, 2,  2, 0), false },
+	{ "Inno Setup Setup Data (4.2.3)",      INNO_VERSION_EXT(4, 2,  3, 0), false },
+	{ "Inno Setup Setup Data (4.2.4)",      INNO_VERSION_EXT(4, 2,  4, 0), false }, // !
+	{ "Inno Setup Setup Data (4.2.5)",      INNO_VERSION_EXT(4, 2,  5, 0), false },
+	{ "Inno Setup Setup Data (4.2.6)",      INNO_VERSION_EXT(4, 2,  6, 0), false },
+	{ "Inno Setup Setup Data (5.0.0)",      INNO_VERSION_EXT(5, 0,  0, 0), false },
+	{ "Inno Setup Setup Data (5.0.1)",      INNO_VERSION_EXT(5, 0,  1, 0), false },
+	{ "Inno Setup Setup Data (5.0.3)",      INNO_VERSION_EXT(5, 0,  3, 0), false },
+	{ "Inno Setup Setup Data (5.0.4)",      INNO_VERSION_EXT(5, 0,  4, 0), false },
+	{ "Inno Setup Setup Data (5.1.0)",      INNO_VERSION_EXT(5, 1,  0, 0), false },
+	{ "Inno Setup Setup Data (5.1.2)",      INNO_VERSION_EXT(5, 1,  2, 0), false },
+	{ "Inno Setup Setup Data (5.1.7)",      INNO_VERSION_EXT(5, 1,  7, 0), false },
+	{ "Inno Setup Setup Data (5.1.10)",     INNO_VERSION_EXT(5, 1, 10, 0), false },
+	{ "Inno Setup Setup Data (5.1.13)",     INNO_VERSION_EXT(5, 1, 13, 0), false },
+	{ "Inno Setup Setup Data (5.2.0)",      INNO_VERSION_EXT(5, 2,  0, 0), false },
+	{ "Inno Setup Setup Data (5.2.1)",      INNO_VERSION_EXT(5, 2,  1, 0), false },
+	{ "Inno Setup Setup Data (5.2.3)",      INNO_VERSION_EXT(5, 2,  3, 0), false },
+	{ "Inno Setup Setup Data (5.2.5)",      INNO_VERSION_EXT(5, 2,  5, 0), false },
+	{ "Inno Setup Setup Data (5.2.5) (u)",  INNO_VERSION_EXT(5, 2,  5, 0), true  },
+	{ "Inno Setup Setup Data (5.3.0)",      INNO_VERSION_EXT(5, 3,  0, 0), false },
+	{ "Inno Setup Setup Data (5.3.0) (u)",  INNO_VERSION_EXT(5, 3,  0, 0), true  },
+	{ "Inno Setup Setup Data (5.3.3)",      INNO_VERSION_EXT(5, 3,  3, 0), false },
+	{ "Inno Setup Setup Data (5.3.3) (u)",  INNO_VERSION_EXT(5, 3,  3, 0), true  },
+	{ "Inno Setup Setup Data (5.3.5)",      INNO_VERSION_EXT(5, 3,  5, 0), false },
+	{ "Inno Setup Setup Data (5.3.5) (u)",  INNO_VERSION_EXT(5, 3,  5, 0), true  },
+	{ "Inno Setup Setup Data (5.3.6)",      INNO_VERSION_EXT(5, 3,  6, 0), false },
+	{ "Inno Setup Setup Data (5.3.6) (u)",  INNO_VERSION_EXT(5, 3,  6, 0), true  },
+	{ "Inno Setup Setup Data (5.3.7)",      INNO_VERSION_EXT(5, 3,  7, 0), false },
+	{ "Inno Setup Setup Data (5.3.7) (u)",  INNO_VERSION_EXT(5, 3,  7, 0), true  },
+	{ "Inno Setup Setup Data (5.3.8)",      INNO_VERSION_EXT(5, 3,  8, 0), false },
+	{ "Inno Setup Setup Data (5.3.8) (u)",  INNO_VERSION_EXT(5, 3,  8, 0), true  },
+	{ "Inno Setup Setup Data (5.3.9)",      INNO_VERSION_EXT(5, 3,  9, 0), false },
+	{ "Inno Setup Setup Data (5.3.9) (u)",  INNO_VERSION_EXT(5, 3,  9, 0), true  },
+	{ "Inno Setup Setup Data (5.3.10)",     INNO_VERSION_EXT(5, 3, 10, 0), false },
+	{ "Inno Setup Setup Data (5.3.10) (u)", INNO_VERSION_EXT(5, 3, 10, 0), true  },
+	{ "Inno Setup Setup Data (5.4.2)",      INNO_VERSION_EXT(5, 4,  2, 0), false },
+	{ "Inno Setup Setup Data (5.4.2) (u)",  INNO_VERSION_EXT(5, 4,  2, 0), true  },
+	{ "Inno Setup Setup Data (5.5.0)",      INNO_VERSION_EXT(5, 5,  0, 0), false },
+	{ "Inno Setup Setup Data (5.5.0) (u)",  INNO_VERSION_EXT(5, 5,  0, 0), true  },
 };
 
 } // anonymous namespace
@@ -172,7 +173,7 @@ void version::load(std::istream & is) {
 	BOOST_STATIC_ASSERT(sizeof(stored_legacy_version) <= sizeof(stored_version));
 	
 	stored_legacy_version legacy_version;
-	is.read(legacy_version, sizeof(legacy_version));
+	is.read(legacy_version, std::streamsize(sizeof(legacy_version)));
 	
 	if(legacy_version[0] == 'i' && legacy_version[sizeof(legacy_version) - 1] == '\x1a') {
 		
@@ -222,7 +223,8 @@ void version::load(std::istream & is) {
 	
 	stored_version version;
 	memcpy(version, legacy_version, sizeof(legacy_version));
-	is.read(version + sizeof(legacy_version), sizeof(version) - sizeof(legacy_version));
+	is.read(version + sizeof(legacy_version),
+	        std::streamsize(sizeof(version) - sizeof(legacy_version)));
 	
 	
 	for(size_t i = 0; i < ARRAY_SIZE(versions); i++) {
