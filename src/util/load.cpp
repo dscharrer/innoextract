@@ -94,9 +94,9 @@ void to_utf8(const std::string & from, std::string & to, uint32_t codepage) {
 	 */
 	struct inbuf_ {
 		const char * buf;
-		inbuf_(const char * data) : buf(data) { };
-		operator const char **() { return &buf; };
-		operator char **() { return const_cast<char **>(&buf); };
+		explicit inbuf_(const char * data) : buf(data) { }
+		operator const char **() { return &buf; }
+		operator char **() { return const_cast<char **>(&buf); }
 	} inbuf(from.data());
 	
 	size_t insize = from.size();
