@@ -191,6 +191,8 @@ file(GLOB_RECURSE ALL_INCLUDES "${CMAKE_SOURCE_DIR}/src/*.hpp")
 list(SORT INNOEXTRACT_SOURCES)
 list(SORT ALL_INCLUDES)
 
+list(APPEND CHECKED_SOURCES ${INNOEXTRACT_SOURCES})
+
 
 # Prepare generated files
 
@@ -216,7 +218,7 @@ install(FILES doc/innoextract.1 DESTINATION ${MAN_DIR}/man1 OPTIONAL)
 
 # Additional targets.
 
-add_style_check_target(style "${INNOEXTRACT_SOURCES}" "${ALL_INCLUDES}")
+add_style_check_target(style "${CHECKED_SOURCES}" "${ALL_INCLUDES}")
 
 add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/doc")
 
