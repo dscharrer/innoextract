@@ -86,7 +86,6 @@ void iterated_hash<T>::update(const char * input, size_t len) {
 			hash(data, block_size);
 			input += (block_size - num);
 			len -= (block_size - num);
-			num = 0;
 			// drop through and do the rest
 		} else {
 			std::memcpy(d + num, input, len);
