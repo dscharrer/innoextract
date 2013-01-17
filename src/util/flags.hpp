@@ -52,13 +52,13 @@ private:
 	
 	Type _flags;
 	
-	flags(Type flag) : _flags(flag) { }
+	explicit flags(Type flag) : _flags(flag) { }
 	
 public:
 	
-	flags(enum_type flag) : _flags(Type().set(size_t(flag))) { }
+	/* implicit */ inline flags(enum_type flag) : _flags(Type().set(size_t(flag))) { }
 	
-	flags(Zero = 0) : _flags() { }
+	/* implicit */ inline flags(Zero = 0) : _flags() { }
 	
 	flags(const flags & o) : _flags(o._flags) { }
 	

@@ -32,7 +32,7 @@ namespace stream {
 
 struct block_error : public std::ios_base::failure {
 	
-	block_error(std::string msg) : std::ios_base::failure(msg) { }
+	explicit block_error(std::string msg) : std::ios_base::failure(msg) { }
 	
 };
 

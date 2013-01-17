@@ -66,7 +66,7 @@ public:
 	static bool debug;
 	static bool quiet;
 	
-	logger(log_level _level) : level(_level) { }
+	explicit logger(log_level _level) : level(_level) { }
 	
 	template<class T>
 	logger & operator<<(const T & i) {

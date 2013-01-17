@@ -34,7 +34,7 @@ struct binary_string {
 	
 	std::string & data;
 	
-	binary_string(std::string & target) : data(target) { }
+	explicit binary_string(std::string & target) : data(target) { }
 	
 	static void load(std::istream & is, std::string & target);
 	
@@ -66,7 +66,7 @@ inline std::istream & operator>>(std::istream & is, const encoded_string & str) 
 
 struct ansi_string : encoded_string {
 	
-	ansi_string(std::string & target) : encoded_string(target, 1252) { }
+	explicit ansi_string(std::string & target) : encoded_string(target, 1252) { }
 	
 };
 
