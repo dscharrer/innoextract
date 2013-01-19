@@ -20,9 +20,10 @@
 
 #include "util/console.hpp"
 
-#include <iostream>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <signal.h>
+#include <iostream>
 
 #include "configure.hpp"
 
@@ -39,6 +40,21 @@
 #include "util/output.hpp"
 
 static bool show_progress = true;
+
+#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ) && defined(SIGWINCH)
+
+// The last known screen width.
+static int screen_width;
+
+// A flag that signals that the console may have been resized
+static volatile sig_atomic_t screen_resized;
+
+static void sigwinch_handler(int) {
+	screen_resized = 1;
+	signal(SIGWINCH, sigwinch_handler);
+}
+
+#endif
 
 namespace color {
 
@@ -65,6 +81,10 @@ shell_command dim_white = { "\x1b[0;37m" };
 shell_command current = reset;
 
 void init(is_enabled color, is_enabled progress) {
+	
+#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ) && defined(SIGWINCH)
+	sigwinch_handler(0);
+#endif
 	
 #if INNOEXTRACT_HAVE_ISATTY
 	bool is_tty = isatty(1) && isatty(2);
@@ -103,6 +123,37 @@ void init(is_enabled color, is_enabled progress) {
 
 } // namespace color
 
+#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
+
+static int query_screen_width() {
+	
+	struct winsize w;
+	if(ioctl(0, TIOCGWINSZ, &w) >= 0) {
+		return w.ws_col;
+	}
+	
+	// Addume a default screen width of 80 columns
+	return 80;
+}
+
+static int get_screen_width() {
+	
+#ifdef SIGWINCH
+	
+	if(screen_resized) {
+		screen_width = query_screen_width();
+	}
+	
+	return screen_width;
+	
+#else
+	return query_screen_width();
+#endif
+	
+}
+
+#endif
+
 void progress::show(float value, const std::string & label) {
 	
 	if(!show_progress) {
@@ -111,14 +162,13 @@ void progress::show(float value, const std::string & label) {
 	
 #if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
 	
-	struct winsize w;
-	ioctl(0, TIOCGWINSZ, &w);
+	int width = get_screen_width();
 	
 	clear();
 	
 	std::ios_base::fmtflags flags = std::cout.flags();
 	
-	int progress_length = w.ws_col - int(label.length()) - 6 - 2 - 2 - 1;
+	int progress_length = width - int(label.length()) - 6 - 2 - 2 - 1;
 	
 	if(progress_length > 10) {
 		
@@ -154,14 +204,13 @@ void progress::show_unbounded(float value, const std::string & label) {
 	
 #if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
 	
-	struct winsize w;
-	ioctl(0, TIOCGWINSZ, &w);
+	int width = get_screen_width();
 	
 	clear();
 	
 	std::ios_base::fmtflags flags = std::cout.flags();
 	
-	int progress_length = w.ws_col - int(label.length()) - 2 - 2 - 6;
+	int progress_length = width - int(label.length()) - 2 - 2 - 6;
 	
 	if(progress_length > 10) {
 		
