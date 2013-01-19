@@ -141,6 +141,7 @@ static int get_screen_width() {
 #ifdef SIGWINCH
 	
 	if(screen_resized) {
+		screen_resized = 0;
 		screen_width = query_screen_width();
 	}
 	
