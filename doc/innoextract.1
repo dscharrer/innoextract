@@ -6,18 +6,15 @@ innoextract \- tool to extract installers created by Inno Setup
 .SH SYNOPSIS
 .B innoextract
 .RB [ -behlLqstv ]
-.RB [ -c color ]
-.RB [ -p progress ]
+.RB [ -c color \fP]
+.RB [ -p progress \fP]
 .I installers ...
 .SH DESCRIPTION
-.B innoextract
-is a tool that can extract installer executables created by Inno Setup.
+\fBinnoextract\fP is a tool that can extract installer executables created by Inno Setup.
 .PP
-.B innoextract
-will extract files from installers specified on the command line.
+\fBinnoextract\fP will extract files from installers specified on the command line.
 .PP
-To extract a multi-part installer with external data files, only the executable (.exe) file needs to be given as an argument to
-.B innoextract.
+To extract a multi-part installer with external data files, only the executable (.exe) file needs to be given as an argument to \fBinnoextract\fP.
 .SH OPTIONS SUMMARY
 .PP
 Here is a short summary of the options available in innoextract. Please refer to the detailed  documentation below for a complete description.
@@ -47,28 +44,13 @@ Here is a short summary of the options available in innoextract. Please refer to
 .B \-c --color[=ENABLE]
 By default
 .B innoextract
-will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Pass
-.B 1
-or
-.B true
-to
-.B --color
-to force color output. Pass
-.B 0
-or
-.B false
-to never output color codes.
+will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB--color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
 .TP
 .B --dump
 Don't convert Windows paths to UNIX paths and don't substitute variables in paths.
 .TP
 .B \-e --extract
-Extract all files to the current directory. This is the default action. You may only specify one of
-.B --extract
-,
-.B --list
-and
-.B --test
+Extract all files to the current directory. This is the default action. You may only specify one of \fB--extract\fP, \fB--list\fP and \fB--test\fP.
 .TP
 .B \-h --help
 Show a list of the supported options.
@@ -80,30 +62,13 @@ Extract only language-independent files and files for the given language. By def
 Show license information.
 .TP
 .B \-l --list
-List files contained in the installer but don't extract anything. You may only specify one of
-.B --extract
-,
-.B --list
-and
-.B --test
+List files contained in the installer but don't extract anything. You may only specify one of \fB--extract\fP, \fB--list\fP and \fB--test\fP.
 .TP
 .B \-L --lowercase
 Convert filenames stored in the installer to lower-case before extracting.
 .TP
 .B \-p --progress[=ENABLE]
-By default
-.B innoextract
-will try to detect if the terminal supports shell escape codes and enable or disable progress bar output accordingly. Pass
-.B 1
-or
-.B true
-to
-.B --progress
-to force progress bar output. Pass
-.B 0
-or
-.B false
-to never show a progress bar.
+By default \fBinnoextract\fP will try to detect if the terminal supports shell escape codes and enable or disable progress bar output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB--progress\fP to force progress bar output. Pass \fB0\fP or \fBfalse\fP to never show a progress bar.
 .TP
 .B \-q --quiet
 Less verbose output.
@@ -112,34 +77,35 @@ Less verbose output.
 Don't output anything except errors and warnings.
 .TP
 .B \-t --test
-Test archive integrity but don't write any output files. You may only specify one of
-.B --extract
-,
-.B --list
-and
-.B --test
+Test archive integrity but don't write any output files. You may only specify one of \fB--extract\fP, \fB--list\fP and \fB--test\fP.
 .TP
 .B \-v --version
-Show the
-.B innoextract
-version number and supported Inno Setup versions.
+Show the \fBinnoextract\fP version number and supported Inno Setup versions.
 .SH LIMITATIONS
-.B innoextract
-currently only supports extracting all the data. There is no support for extracting individual files or components and limited support for extracting language-specific files.
+\fBinnoextract\fP currently only supports extracting all the data. There is no support for extracting individual files or components and limited support for extracting language-specific files.
 
 Included scripts and checks are not executed.
 
 Data is always extracted to the current directory and the mapping from Inno Setup variables like the application directory to subdirectories is hard-coded.
 
-.B innoextract
-does not check if an installer includes multiple files with the same name and will continually overwrite the destination file when extracting.
+\fBinnoextract\fP does not check if an installer includes multiple files with the same name and will continually overwrite the destination file when extracting.
 
 Names for data files in multi-file installers must follow the standard naming scheme.
 
 Encrypted installers are not supported.
 .SH SEE ALSO
-cabextract(1), unshield(1)
+\fBcabextract\fP(1), \fBunshield\fP(1)
 .SH BUGS
+.PP
 No known bugs.
+.PP
+Please report bugs to http://innoextract.constexpr.org/issues.
+.SH CREDITS
+.PP
+\fBinnoextract\fP is distributed under the zlib/libpng license.  See the file LICENSE for details.
+.PP
+A WEB site is available at http://constexpr.org/innoextract/.
+.PP
+This program uses the excellent lzma/xz decompression library written by Lasse Collin.
 .SH AUTHOR
 Daniel Scharrer (daniel@constexpr.org)
