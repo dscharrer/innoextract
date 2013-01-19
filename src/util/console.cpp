@@ -132,7 +132,7 @@ static int query_screen_width() {
 		return w.ws_col;
 	}
 	
-	// Addume a default screen width of 80 columns
+	// Assume a default screen width of 80 columns
 	return 80;
 }
 
