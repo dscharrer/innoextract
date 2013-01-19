@@ -157,6 +157,8 @@ static int get_screen_width() {
 
 void progress::show(float value, const std::string & label) {
 	
+	(void)value, (void)label;
+	
 	if(!show_progress) {
 		return;
 	}
@@ -243,7 +245,9 @@ void progress::show_unbounded(float value, const std::string & label) {
 	
 }
 
+#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
 static bool progress_cleared = true;
+#endif
 
 void progress::clear() {
 	
