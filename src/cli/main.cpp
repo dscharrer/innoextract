@@ -70,6 +70,12 @@ namespace io = boost::iostreams;
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
+enum ExitValues {
+	ExitSuccess = 0,
+	ExitUserError = 1,
+	ExitDataError = 2
+};
+
 static void print_version() {
 	std::cout << color::white << innoextract_name
 	          << ' ' << innoextract_version << color::reset
@@ -406,7 +412,7 @@ int main(int argc, char * argv[]) {
 	} catch(po::error & e) {
 		std::cerr << "Error parsing command-line: " << e.what() << "\n\n";
 		print_help(argv[0], visible);
-		return 1;
+		return ExitUserError;
 	}
 	
 	// Verbosity settings.
@@ -438,13 +444,13 @@ int main(int argc, char * argv[]) {
 	// Help output.
 	if(options.count("help")) {
 		print_help(argv[0], visible);
-		return 0;
+		return ExitSuccess;
 	}
 	
 	// License output
 	if(options.count("license")) {
 		print_license();
-		return 0;
+		return ExitSuccess;
 	}
 	
 	// Main action.
@@ -457,7 +463,7 @@ int main(int argc, char * argv[]) {
 	}
 	if(o.list + extract + o.test > 1) {
 		log_error << "cannot specify multiple actions";
-		return 1;
+		return ExitUserError;
 	}
 	if(o.list) {
 		progress::set_enabled(false);
@@ -471,7 +477,7 @@ int main(int argc, char * argv[]) {
 	if(options.count("version")) {
 		print_version();
 		if(!explicit_action) {
-			return 0;
+			return ExitSuccess;
 		}
 	}
 	
@@ -485,7 +491,7 @@ int main(int argc, char * argv[]) {
 			std::cout << argv[0] << ": no input files specified\n";
 			std::cout << "Try `" << argv[0] << " -h` for more information.\n";
 		}
-		return 1;
+		return ExitSuccess;
 	}
 	
 	const std::vector<string> & files = options["setup-files"].as< std::vector<string> >();
@@ -524,5 +530,5 @@ int main(int argc, char * argv[]) {
 		std::cout << '.' << std::endl;
 	}
 	
-	return logger::total_errors == 0 ? 0 : 2;
+	return logger::total_errors == 0 ? ExitSuccess : ExitDataError;
 }
