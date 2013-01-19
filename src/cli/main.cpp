@@ -457,7 +457,7 @@ int main(int argc, char * argv[]) {
 	}
 	if(o.list + extract + o.test > 1) {
 		log_error << "cannot specify multiple actions";
-		return 0;
+		return 1;
 	}
 	if(o.list) {
 		progress::set_enabled(false);
@@ -485,7 +485,7 @@ int main(int argc, char * argv[]) {
 			std::cout << argv[0] << ": no input files specified\n";
 			std::cout << "Try `" << argv[0] << " -h` for more information.\n";
 		}
-		return 0;
+		return 1;
 	}
 	
 	const std::vector<string> & files = options["setup-files"].as< std::vector<string> >();
@@ -524,5 +524,5 @@ int main(int argc, char * argv[]) {
 		std::cout << '.' << std::endl;
 	}
 	
-	return logger::total_errors == 0 ? 0 : 1;
+	return logger::total_errors == 0 ? 0 : 2;
 }

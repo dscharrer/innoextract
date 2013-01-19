@@ -81,6 +81,14 @@ Test archive integrity but don't write any output files. You may only specify on
 .TP
 .B \-v --version
 Show the \fBinnoextract\fP version number and supported Inno Setup versions.
+.SH EXIT VALUES
+.PP
+.IP \fB0\fP
+Success
+.IP \fB1\fP
+Syntax or usage error
+.IP \fB2\fP
+Broken or unsupported setup file
 .SH LIMITATIONS
 \fBinnoextract\fP currently only supports extracting all the data. There is no support for extracting individual files or components and limited support for extracting language-specific files.
 
