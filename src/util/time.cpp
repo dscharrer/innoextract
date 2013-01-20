@@ -132,7 +132,7 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 	times[0].tv_usec = int32_t(nsec / 1000);
 	times[1] = times[0];
 	
-	return (utimes(path.c_str(), times) == 0);
+	return (utimes(path.string().c_str(), times) == 0);
 	
 #elif defined(_WIN32)
 	
