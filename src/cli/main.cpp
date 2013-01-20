@@ -18,15 +18,15 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#include <fstream>
-#include <iostream>
-#include <iomanip>
-#include <string>
 #include <algorithm>
-#include <cstring>
-#include <vector>
-#include <map>
 #include <cctype>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <string>
+#include <vector>
 
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
@@ -59,6 +59,7 @@
 #include "util/load.hpp"
 #include "util/log.hpp"
 #include "util/output.hpp"
+#include "util/time.hpp"
 
 using std::cout;
 using std::string;
@@ -122,6 +123,26 @@ struct options {
 	std::string language;
 	
 	setup::filename_map filenames;
+	
+};
+
+struct file_output {
+	
+	fs::path name;
+	fs::ofstream stream;
+	
+	file_output(const fs::path & file) : name(file) {
+		try {
+			fs::create_directories(name.parent_path());
+		} catch(...) {
+			throw std::runtime_error("error creating directories for \""
+			                         + name.string() + '"');
+		}
+		stream.open(name);
+		if(!stream.is_open()) {
+			throw std::runtime_error("error opening output file \"" + name.string() + '"');
+		}
+	}
 	
 };
 
@@ -305,21 +326,11 @@ static void process_file(const fs::path & file, const options & o) {
 			file_source = stream::file_reader::get(*chunk_source, file, &checksum);
 			
 			// Open output files
-			boost::ptr_vector<fs::ofstream> output;
+			boost::ptr_vector<file_output> output;
 			if(!o.test) {
 				output.reserve(output_names.size());
 				BOOST_FOREACH(const file_t & path, output_names) {
-					try {
-						fs::create_directories(path.first.parent_path());
-					} catch(...) {
-						throw std::runtime_error("error creating directories for \""
-						                         + path.first.string() + '"');
-					}
-					output.push_back(new fs::ofstream(path.first));
-					if(!output.back().is_open()) {
-						throw std::runtime_error("error opening output file \""
-						                        + path.first.string() + '"');
-					}
+					output.push_back(new file_output(path.first));
 				}
 			}
 			
@@ -329,15 +340,31 @@ static void process_file(const fs::path & file, const options & o) {
 				std::streamsize buffer_size = std::streamsize(ARRAY_SIZE(buffer));
 				std::streamsize n = file_source->read(buffer, buffer_size).gcount();
 				if(n > 0) {
-					
-					BOOST_FOREACH(fs::ofstream & ofs, output) {
-						ofs.write(buffer, n);
+					BOOST_FOREACH(file_output & out, output) {
+						out.stream.write(buffer, n);
+						if(out.stream.fail()) {
+							throw new std::runtime_error("error writing file \""
+							                             + out.name.string() + '"');
+						}
 					}
-					
 					extract_progress.update(uint64_t(n));
 				}
 			}
 			
+			// Adjust file timestamps
+			const setup::data_entry & data = info.data_entries[location.second];
+			std::time_t filetime = data.timestamp;
+			//if(data.options & data.TimeStampInUTC) {
+			//	filetime = util::to_local_time(filetime);
+			//}
+			BOOST_FOREACH(file_output & out, output) {
+				out.stream.close();
+				if(!util::set_file_time(out.name, filetime, data.timestamp_nsec)) {
+					log_warning << "error setting timestamp on file " << out.name;
+				}
+			}
+			
+			// Verify checksums
 			if(checksum != file.checksum) {
 				log_warning << "checksum mismatch:\n"
 				            << "actual:   " << checksum << '\n'

@@ -21,7 +21,10 @@
 #ifndef INNOEXTRACT_UTIL_TIME_HPP
 #define INNOEXTRACT_UTIL_TIME_HPP
 
+#include <stdint.h>
 #include <ctime>
+
+#include <boost/filesystem/path.hpp>
 
 namespace util {
 
@@ -42,6 +45,9 @@ std::tm format_time(std::time_t t);
  * Note: may not be threadsafe on all systems!
  */
 std::time_t to_local_time(std::time_t t);
+
+//! Set a file's creation/modification time
+bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t nsec);
 
 } // namespace util
 
