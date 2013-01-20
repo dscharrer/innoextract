@@ -102,28 +102,28 @@ void registry_entry::load(std::istream & is, const version & version) {
 		type = stored_enum<stored_registry_entry_type_0>(is).get();
 	}
 	
-	stored_flag_reader<flags> flags(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits);
 	
 	if(version.bits != 16) {
-		flags.add(CreateValueIfDoesntExist);
-		flags.add(UninsDeleteValue);
+		flagreader.add(CreateValueIfDoesntExist);
+		flagreader.add(UninsDeleteValue);
 	}
-	flags.add(UninsClearValue);
-	flags.add(UninsDeleteEntireKey);
-	flags.add(UninsDeleteEntireKeyIfEmpty);
-	flags.add(PreserveStringType);
+	flagreader.add(UninsClearValue);
+	flagreader.add(UninsDeleteEntireKey);
+	flagreader.add(UninsDeleteEntireKeyIfEmpty);
+	flagreader.add(PreserveStringType);
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		flags.add(DeleteKey);
-		flags.add(DeleteValue);
-		flags.add(NoError);
-		flags.add(DontCreateKey);
+		flagreader.add(DeleteKey);
+		flagreader.add(DeleteValue);
+		flagreader.add(NoError);
+		flagreader.add(DontCreateKey);
 	}
 	if(version >= INNO_VERSION(5, 1, 0)) {
-		flags.add(Bits32);
-		flags.add(Bits64);
+		flagreader.add(Bits32);
+		flagreader.add(Bits64);
 	}
 	
-	options = flags;
+	options = flagreader;
 }
 
 } // namespace setup

@@ -74,27 +74,27 @@ void icon_entry::load(std::istream & is, const version & version) {
 		hotkey = 0;
 	}
 	
-	stored_flag_reader<flags> flags(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits);
 	
-	flags.add(NeverUninstall);
+	flagreader.add(NeverUninstall);
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		flags.add(RunMinimized);
+		flagreader.add(RunMinimized);
 	}
-	flags.add(CreateOnlyIfFileExists);
+	flagreader.add(CreateOnlyIfFileExists);
 	if(version.bits != 16) {
-		flags.add(UseAppPaths);
+		flagreader.add(UseAppPaths);
 	}
 	if(version >= INNO_VERSION(5, 0, 3)) {
-		flags.add(FolderShortcut);
+		flagreader.add(FolderShortcut);
 	}
 	if(version >= INNO_VERSION(5, 4, 2)) {
-		flags.add(ExcludeFromShowInNewInstall);
+		flagreader.add(ExcludeFromShowInNewInstall);
 	}
 	if(version >= INNO_VERSION(5, 5, 0)) {
-		flags.add(PreventPinning);
+		flagreader.add(PreventPinning);
 	}
 	
-	options = flags;
+	options = flagreader;
 }
 
 } // namespace setup

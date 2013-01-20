@@ -114,77 +114,77 @@ void file_entry::load(std::istream & is, const version & version) {
 		permission = -1;
 	}
 	
-	stored_flag_reader<flags> flags(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits);
 	
-	flags.add(ConfirmOverwrite);
-	flags.add(NeverUninstall);
-	flags.add(RestartReplace);
-	flags.add(DeleteAfterInstall);
+	flagreader.add(ConfirmOverwrite);
+	flagreader.add(NeverUninstall);
+	flagreader.add(RestartReplace);
+	flagreader.add(DeleteAfterInstall);
 	if(version.bits != 16) {
-		flags.add(RegisterServer);
-		flags.add(RegisterTypeLib);
-		flags.add(SharedFile);
+		flagreader.add(RegisterServer);
+		flagreader.add(RegisterTypeLib);
+		flagreader.add(SharedFile);
 	}
 	if(version < INNO_VERSION(2, 0, 0)) {
-		flags.add(IsReadmeFile);
+		flagreader.add(IsReadmeFile);
 	}
-	flags.add(CompareTimeStamp);
-	flags.add(FontIsNotTrueType);
-	flags.add(SkipIfSourceDoesntExist);
-	flags.add(OverwriteReadOnly);
+	flagreader.add(CompareTimeStamp);
+	flagreader.add(FontIsNotTrueType);
+	flagreader.add(SkipIfSourceDoesntExist);
+	flagreader.add(OverwriteReadOnly);
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		flags.add(OverwriteSameVersion);
-		flags.add(CustomDestName);
+		flagreader.add(OverwriteSameVersion);
+		flagreader.add(CustomDestName);
 	}
 	if(version >= INNO_VERSION(1, 3, 25)) {
-		flags.add(OnlyIfDestFileExists);
+		flagreader.add(OnlyIfDestFileExists);
 	}
 	if(version >= INNO_VERSION(2, 0, 5)) {
-		flags.add(NoRegError);
+		flagreader.add(NoRegError);
 	}
 	if(version >= INNO_VERSION(3, 0, 1)) {
-		flags.add(UninsRestartDelete);
+		flagreader.add(UninsRestartDelete);
 	}
 	if(version >= INNO_VERSION(3, 0, 5)) {
-		flags.add(OnlyIfDoesntExist);
-		flags.add(IgnoreVersion);
-		flags.add(PromptIfOlder);
+		flagreader.add(OnlyIfDoesntExist);
+		flagreader.add(IgnoreVersion);
+		flagreader.add(PromptIfOlder);
 	}
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
-		flags.add(DontCopy);
+		flagreader.add(DontCopy);
 	}
 	if(version >= INNO_VERSION(4, 0, 5)) {
-		flags.add(UninsRemoveReadOnly);
+		flagreader.add(UninsRemoveReadOnly);
 	}
 	if(version >= INNO_VERSION(4, 1, 8)) {
-		flags.add(RecurseSubDirsExternal);
+		flagreader.add(RecurseSubDirsExternal);
 	}
 	if(version >= INNO_VERSION(4, 2, 1)) {
-		flags.add(ReplaceSameVersionIfContentsDiffer);
+		flagreader.add(ReplaceSameVersionIfContentsDiffer);
 	}
 	if(version >= INNO_VERSION(4, 2, 5)) {
-		flags.add(DontVerifyChecksum);
+		flagreader.add(DontVerifyChecksum);
 	}
 	if(version >= INNO_VERSION(5, 0, 3)) {
-		flags.add(UninsNoSharedFilePrompt);
+		flagreader.add(UninsNoSharedFilePrompt);
 	}
 	if(version >= INNO_VERSION(5, 1, 0)) {
-		flags.add(CreateAllSubDirs);
+		flagreader.add(CreateAllSubDirs);
 	}
 	if(version >= INNO_VERSION(5, 1, 2)) {
-		flags.add(Bits32);
-		flags.add(Bits64);
+		flagreader.add(Bits32);
+		flagreader.add(Bits64);
 	}
 	if(version >= INNO_VERSION(5, 2, 0)) {
-		flags.add(ExternalSizePreset);
-		flags.add(SetNtfsCompression);
-		flags.add(UnsetNtfsCompression);
+		flagreader.add(ExternalSizePreset);
+		flagreader.add(SetNtfsCompression);
+		flagreader.add(UnsetNtfsCompression);
 	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
-		flags.add(GacInstall);
+		flagreader.add(GacInstall);
 	}
 	
-	options |= flags;
+	options |= flagreader;
 	
 	if(version.bits == 16 || version >= INNO_VERSION(5, 0, 0)) {
 		type = stored_enum<stored_file_type_0>(is).get();

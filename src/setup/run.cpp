@@ -78,30 +78,30 @@ void run_entry::load(std::istream & is, const version & version) {
 	
 	wait = stored_enum<stored_run_wait_condition>(is).get();
 	
-	stored_flag_reader<flags> flags(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits);
 	
-	flags.add(ShellExec);
+	flagreader.add(ShellExec);
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		flags.add(SkipIfDoesntExist);
+		flagreader.add(SkipIfDoesntExist);
 	}
 	if(version >= INNO_VERSION(2, 0, 0)) {
-		flags.add(PostInstall);
-		flags.add(Unchecked);
-		flags.add(SkipIfSilent);
-		flags.add(Skipif_not_equalSilent);
+		flagreader.add(PostInstall);
+		flagreader.add(Unchecked);
+		flagreader.add(SkipIfSilent);
+		flagreader.add(Skipif_not_equalSilent);
 	}
 	if(version >= INNO_VERSION(2, 0, 8)) {
-		flags.add(HideWizard);
+		flagreader.add(HideWizard);
 	}
 	if(version >= INNO_VERSION(5, 1, 10)) {
-		flags.add(Bits32);
-		flags.add(Bits64);
+		flagreader.add(Bits32);
+		flagreader.add(Bits64);
 	}
 	if(version >= INNO_VERSION(5, 2, 0)) {
-		flags.add(RunAsOriginalUser);
+		flagreader.add(RunAsOriginalUser);
 	}
 	
-	options = flags;
+	options = flagreader;
 }
 
 } // namespace setup

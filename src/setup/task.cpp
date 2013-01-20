@@ -49,21 +49,21 @@ void task_entry::load(std::istream & is, const version & version) {
 	
 	winver.load(is, version);
 	
-	stored_flag_reader<flags> flags(is);
+	stored_flag_reader<flags> flagreader(is);
 	
-	flags.add(Exclusive);
-	flags.add(Unchecked);
+	flagreader.add(Exclusive);
+	flagreader.add(Unchecked);
 	if(version >= INNO_VERSION(2, 0, 5)) {
-		flags.add(Restart);
+		flagreader.add(Restart);
 	}
 	if(version >= INNO_VERSION(2, 0, 6)) {
-		flags.add(CheckedOnce);
+		flagreader.add(CheckedOnce);
 	}
 	if(version >= INNO_VERSION(4, 2, 3)) {
-		flags.add(DontInheritCheck);
+		flagreader.add(DontInheritCheck);
 	}
 	
-	options = flags;
+	options = flagreader;
 }
 
 } // namespace setup

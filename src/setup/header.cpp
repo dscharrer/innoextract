@@ -406,142 +406,142 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	
-	stored_flag_reader<flags> flags(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits);
 	
-	flags.add(DisableStartupPrompt);
+	flagreader.add(DisableStartupPrompt);
 	if(version < INNO_VERSION(5, 3, 10)) {
-		flags.add(Uninstallable);
+		flagreader.add(Uninstallable);
 	}
-	flags.add(CreateAppDir);
+	flagreader.add(CreateAppDir);
 	if(version < INNO_VERSION(5, 3, 3)) {
-		flags.add(DisableDirPage);
+		flagreader.add(DisableDirPage);
 	}
 	if(version < INNO_VERSION(1, 3, 21)) {
-		flags.add(DisableDirExistsWarning);
+		flagreader.add(DisableDirExistsWarning);
 	}
 	if(version < INNO_VERSION(5, 3, 3)) {
-		flags.add(DisableProgramGroupPage);
+		flagreader.add(DisableProgramGroupPage);
 	}
-	flags.add(AllowNoIcons);
+	flagreader.add(AllowNoIcons);
 	if(version < INNO_VERSION(3, 0, 0) || version >= INNO_VERSION(3, 0, 3)) {
-		flags.add(AlwaysRestart);
+		flagreader.add(AlwaysRestart);
 	}
 	if(version < INNO_VERSION(1, 3, 21)) {
-		flags.add(BackSolid);
+		flagreader.add(BackSolid);
 	}
-	flags.add(AlwaysUsePersonalGroup);
-	flags.add(WindowVisible);
-	flags.add(WindowShowCaption);
-	flags.add(WindowResizable);
-	flags.add(WindowStartMaximized);
-	flags.add(EnableDirDoesntExistWarning);
+	flagreader.add(AlwaysUsePersonalGroup);
+	flagreader.add(WindowVisible);
+	flagreader.add(WindowShowCaption);
+	flagreader.add(WindowResizable);
+	flagreader.add(WindowStartMaximized);
+	flagreader.add(EnableDirDoesntExistWarning);
 	if(version < INNO_VERSION(4, 1, 2)) {
-		flags.add(DisableAppendDir);
+		flagreader.add(DisableAppendDir);
 	}
-	flags.add(Password);
-	flags.add(AllowRootDirectory);
-	flags.add(DisableFinishedPage);
+	flagreader.add(Password);
+	flagreader.add(AllowRootDirectory);
+	flagreader.add(DisableFinishedPage);
 	if(version.bits != 16) {
 		if(version < INNO_VERSION(3, 0, 4)) {
-			flags.add(AdminPrivilegesRequired);
+			flagreader.add(AdminPrivilegesRequired);
 		}
 		if(version < INNO_VERSION(3, 0, 0)) {
-			flags.add(AlwaysCreateUninstallIcon);
+			flagreader.add(AlwaysCreateUninstallIcon);
 		}
 		if(version < INNO_VERSION(1, 3, 21)) {
-			flags.add(OverwriteUninstRegEntries);
+			flagreader.add(OverwriteUninstRegEntries);
 		}
-		flags.add(ChangesAssociations);
+		flagreader.add(ChangesAssociations);
 	}
 	if(version >= INNO_VERSION(1, 3, 21)) {
 		if(version < INNO_VERSION(5, 3, 8)) {
-			flags.add(CreateUninstallRegKey);
+			flagreader.add(CreateUninstallRegKey);
 		}
-		flags.add(UsePreviousAppDir);
-		flags.add(BackColorHorizontal);
-		flags.add(UsePreviousGroup);
-		flags.add(UpdateUninstallLogAppName);
+		flagreader.add(UsePreviousAppDir);
+		flagreader.add(BackColorHorizontal);
+		flagreader.add(UsePreviousGroup);
+		flagreader.add(UpdateUninstallLogAppName);
 	}
 	if(version >= INNO_VERSION(2, 0, 0)) {
-		flags.add(UsePreviousSetupType);
-		flags.add(DisableReadyMemo);
-		flags.add(AlwaysShowComponentsList);
-		flags.add(FlatComponentsList);
-		flags.add(ShowComponentSizes);
-		flags.add(UsePreviousTasks);
-		flags.add(DisableReadyPage);
+		flagreader.add(UsePreviousSetupType);
+		flagreader.add(DisableReadyMemo);
+		flagreader.add(AlwaysShowComponentsList);
+		flagreader.add(FlatComponentsList);
+		flagreader.add(ShowComponentSizes);
+		flagreader.add(UsePreviousTasks);
+		flagreader.add(DisableReadyPage);
 	}
 	if(version >= INNO_VERSION(2, 0, 7)) {
-		flags.add(AlwaysShowDirOnReadyPage);
-		flags.add(AlwaysShowGroupOnReadyPage);
+		flagreader.add(AlwaysShowDirOnReadyPage);
+		flagreader.add(AlwaysShowGroupOnReadyPage);
 	}
 	if(version >= INNO_VERSION(2, 0, 17) && version < INNO_VERSION(4, 1, 5)) {
-		flags.add(BzipUsed);
+		flagreader.add(BzipUsed);
 	}
 	if(version >= INNO_VERSION(2, 0, 18)) {
-		flags.add(AllowUNCPath);
+		flagreader.add(AllowUNCPath);
 	}
 	if(version >= INNO_VERSION(3, 0, 0)) {
-		flags.add(UserInfoPage);
-		flags.add(UsePreviousUserInfo);
+		flagreader.add(UserInfoPage);
+		flagreader.add(UsePreviousUserInfo);
 	}
 	if(version >= INNO_VERSION(3, 0, 1)) {
-		flags.add(UninstallRestartComputer);
+		flagreader.add(UninstallRestartComputer);
 	}
 	if(version >= INNO_VERSION(3, 0, 3)) {
-		flags.add(RestartIfNeededByRun);
+		flagreader.add(RestartIfNeededByRun);
 	}
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
-		flags.add(ShowTasksTreeLines);
+		flagreader.add(ShowTasksTreeLines);
 	}
 	if(version >= INNO_VERSION(4, 0, 0) && version < INNO_VERSION(4, 0, 10)) {
-		flags.add(ShowLanguageDialog);
+		flagreader.add(ShowLanguageDialog);
 	}
 	if(version >= INNO_VERSION(4, 0, 1) && version < INNO_VERSION(4, 0, 10)) {
-		flags.add(DetectLanguageUsingLocale);
+		flagreader.add(DetectLanguageUsingLocale);
 	}
 	if(version >= INNO_VERSION(4, 0, 9)) {
-		flags.add(AllowCancelDuringInstall);
+		flagreader.add(AllowCancelDuringInstall);
 	} else {
 		options |= AllowCancelDuringInstall;
 	}
 	if(version >= INNO_VERSION(4, 1, 3)) {
-		flags.add(WizardImageStretch);
+		flagreader.add(WizardImageStretch);
 	}
 	if(version >= INNO_VERSION(4, 1, 8)) {
-		flags.add(AppendDefaultDirName);
-		flags.add(AppendDefaultGroupName);
+		flagreader.add(AppendDefaultDirName);
+		flagreader.add(AppendDefaultGroupName);
 	}
 	if(version >= INNO_VERSION(4, 2, 2)) {
-		flags.add(EncryptionUsed);
+		flagreader.add(EncryptionUsed);
 	}
 	if(version >= INNO_VERSION(5, 0, 4)) {
-		flags.add(ChangesEnvironment);
+		flagreader.add(ChangesEnvironment);
 	}
 	if(version >= INNO_VERSION(5, 1, 7) && !version.unicode) {
-		flags.add(ShowUndisplayableLanguages);
+		flagreader.add(ShowUndisplayableLanguages);
 	}
 	if(version >= INNO_VERSION(5, 1, 13)) {
-		flags.add(SetupLogging);
+		flagreader.add(SetupLogging);
 	}
 	if(version >= INNO_VERSION(5, 2, 1)) {
-		flags.add(SignedUninstaller);
+		flagreader.add(SignedUninstaller);
 	}
 	if(version >= INNO_VERSION(5, 3, 8)) {
-		flags.add(UsePreviousLanguage);
+		flagreader.add(UsePreviousLanguage);
 	}
 	if(version >= INNO_VERSION(5, 3, 9)) {
-		flags.add(DisableWelcomePage);
+		flagreader.add(DisableWelcomePage);
 	}
 	if(version >= INNO_VERSION(5, 5, 0)) {
-		flags.add(CloseApplications);
-		flags.add(RestartApplications);
-		flags.add(AllowNetworkDrive);
+		flagreader.add(CloseApplications);
+		flagreader.add(RestartApplications);
+		flagreader.add(AllowNetworkDrive);
 	} else {
 		options |= AllowNetworkDrive;
 	}
 	
-	options |= flags;
+	options |= flagreader;
 	
 	if(version < INNO_VERSION(3, 0, 4)) {
 		privileges_required = (options & AdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;
