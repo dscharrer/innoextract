@@ -33,6 +33,7 @@ Here is a short summary of the options available in innoextract. Please refer to
      \-\-dump              Dump contents without converting filenames
  \-L \-\-lowercase          Convert extracted filenames to lower-case
      \-\-language=LANG     Extract files for the given language
+ \-T \-\-timestamps=TZ      Timezone for file times or "local" or "none"
 .PP
 .B I/O options:
  \-q \-\-quiet              Output less information
@@ -79,6 +80,21 @@ Don't output anything except errors and warnings.
 .B \-t --test
 Test archive integrity but don't write any output files. You may only specify one of \fB--extract\fP, \fB--list\fP and \fB--test\fP.
 .TP
+.B \-T --timestamps TZ
+Inno Setup installers can contain timestamps in both UTC and 'local' timezones.
+
+The \fB--timestamps\fP option specifies what timezone should be used to adjust these 'local' file times.
+
+Valid values are those accepted by \fBtzset\fP in the \fBTZ\fP environment variable, except with the direction of the time offset reversed: both \fB-T CET\fP and \fB-T GMT+1\fP will (when DST is in effect) give the same result.
+
+Besides timezones, two special values are accepted:
+
+  "\fBnone\fP"    Don't preserve file times for extracted files, both for UTC and 'local' timestamps. The file times wil be left the way the OS set them when creating the output files.
+
+  "\fBlocal\fP"  Use the system timezone for 'local' timestamps. This is the normal Inno Setup behavior, and can be used together with the \fBTZ\fP environment variable.
+
+The default value for this option is \fBUTC\fP, causing innoextract to not adjust 'local' file times. File times marked as UTC in the Inno Setup file will never be adjusted no matter what \fB--timestamps\fP is set to.
+.TP
 .B \-v --version
 Show the \fBinnoextract\fP version number and supported Inno Setup versions.
 .SH EXIT VALUES
@@ -102,7 +118,7 @@ Names for data files in multi-file installers must follow the standard naming sc
 
 Encrypted installers are not supported.
 .SH SEE ALSO
-\fBcabextract\fP(1), \fBunshield\fP(1)
+\fBcabextract\fP(1), \fBunshield\fP(1), \fBtzset\fP(3)
 .SH BUGS
 .PP
 No known bugs.
