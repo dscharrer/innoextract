@@ -20,6 +20,14 @@
 
 #include "setup/data.hpp"
 
+#include "configure.hpp"
+
+#if INNOEXTRACT_HAVE_TIMEGM
+#include <time.h>
+#else
+#include <stdlib.h>
+#endif
+
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
@@ -27,6 +35,28 @@
 #include "util/storedenum.hpp"
 
 namespace setup {
+
+#if !INNOEXTRACT_HAVE_TIMEGM
+
+static std::time_t mkgmtime(struct tm * tm) {
+	
+	char * tz = getenv("TZ");
+	setenv("TZ", "UTC", 1);
+	tzset();
+	
+	std::time_t ret = std::mktime(tm);
+	
+	if(tz) {
+		setenv("TZ", tz, 1);
+	} else {
+		unsetenv("TZ");
+	}
+	tzset();
+	
+	return ret;
+}
+
+#endif
 
 void data_entry::load(std::istream & is, const version & version) {
 	
@@ -87,7 +117,11 @@ void data_entry::load(std::istream & is, const version & version) {
 		t.tm_year = get_bits(date,  9, 15) + 1980 - 1900; // [80, 199]
 		t.tm_isdst = -1;
 		
-		timestamp = std::mktime(&t);
+#if INNOEXTRACT_HAVE_TIMEGM
+		timestamp = timegm(&t);
+#else
+		timestamp = mkgmtime(&t);
+#endif
 		timestamp_nsec = 0;
 		
 	} else {

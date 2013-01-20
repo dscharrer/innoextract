@@ -121,6 +121,7 @@ add_cxxflag("-fvisibility-inlines-hidden")
 
 check_symbol_exists(isatty "unistd.h" INNOEXTRACT_HAVE_ISATTY)
 check_symbol_exists(ioctl "sys/ioctl.h" INNOEXTRACT_HAVE_IOCTL)
+check_symbol_exists(timegm "time.h" INNOEXTRACT_HAVE_TIMEGM)
 
 check_symbol_exists(bswap_16 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_16)
 check_symbol_exists(bswap_32 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_32)
