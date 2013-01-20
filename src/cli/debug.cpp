@@ -347,9 +347,9 @@ static void print_entry(const setup::info & info, size_t i, const setup::data_en
 	
 	std::tm t;
 	if(entry.options & setup::data_entry::TimeStampInUTC) {
-		gmtime_r(&entry.timestamp.tv_sec, &t);
+		gmtime_r(&entry.timestamp, &t);
 	} else {
-		localtime_r(&entry.timestamp.tv_sec, &t);
+		localtime_r(&entry.timestamp, &t);
 	}
 	
 	cout << "  Timestamp: " << color::cyan << (t.tm_year + 1900)
@@ -358,7 +358,7 @@ static void print_entry(const setup::info & info, size_t i, const setup::data_en
 	     << ' ' << std::setfill(' ') << std::setw(2) << t.tm_hour
 	     << ':' << std::setfill('0') << std::setw(2) << t.tm_min
 	     << ':' << std::setfill('0') << std::setw(2) << t.tm_sec
-	     << color::reset << " +" << entry.timestamp.tv_nsec << '\n';
+	     << color::reset << " +" << entry.timestamp_nsec << '\n';
 	
 	cout << if_not_zero("  Options", entry.options);
 	

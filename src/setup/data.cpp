@@ -23,6 +23,7 @@
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
+#include "util/output.hpp"
 #include "util/storedenum.hpp"
 
 namespace setup {
@@ -72,26 +73,38 @@ void data_entry::load(std::istream & is, const version & version) {
 	
 	if(version.bits == 16) {
 		
-		int32_t date = load_number<int32_t>(is); // milliseconds?
+		// 16-bit installers use the FAT filetime format
 		
-		// TODO this seems to be off by a few years:
-		// expected ~ 2000-04-18, got 1991-07-28
+		uint16_t time = load_number<uint16_t>(is);
+		uint16_t date = load_number<uint16_t>(is);
 		
-		timestamp.tv_sec = date;
-		timestamp.tv_nsec = 0;
+		struct tm t;
+		t.tm_sec  = get_bits(time,  0,  4) * 2;           // [0, 58]
+		t.tm_min  = get_bits(time,  5, 10);               // [0, 59]
+		t.tm_hour = get_bits(time, 11, 15);               // [0, 23]
+		t.tm_mday = get_bits(date,  0,  4);               // [1, 31]
+		t.tm_mon  = get_bits(date,  5,  8) - 1;           // [0, 11]
+		t.tm_year = get_bits(date,  9, 15) + 1980 - 1900; // [80, 199]
+		t.tm_isdst = -1;
+		
+		timestamp = std::mktime(&t);
+		timestamp_nsec = 0;
 		
 	} else {
 		
+		// 32-bit installers use the Win32 FILETIME format
+		
 		int64_t filetime = load_number<int64_t>(is);
 		
-		static const int64_t FILETIME_OFFSET = 0x19DB1DED53E8000ll;
-		if(filetime < FILETIME_OFFSET) {
+		static const int64_t FiletimeOffset = 0x19DB1DED53E8000ll;
+		if(filetime < FiletimeOffset) {
 			log_warning << "[file location] unexpected filetime: " << filetime;
 		}
-		filetime -= FILETIME_OFFSET;
+		filetime -= FiletimeOffset;
 		
-		timestamp.tv_sec = std::time_t(filetime / 10000000);
-		timestamp.tv_nsec = int32_t(filetime % 10000000) * 100;
+		timestamp = std::time_t(filetime / 10000000);
+		timestamp_nsec = uint32_t(filetime % 10000000) * 100;
+		
 	}
 	
 	file_version_ms = load_number<uint32_t>(is);
@@ -99,38 +112,38 @@ void data_entry::load(std::istream & is, const version & version) {
 	
 	options = 0;
 	
-	stored_flag_reader<flags> flags(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits);
 	
-	flags.add(VersionInfoValid);
-	flags.add(VersionInfoNotValid);
+	flagreader.add(VersionInfoValid);
+	flagreader.add(VersionInfoNotValid);
 	if(version >= INNO_VERSION(2, 0, 17) && version < INNO_VERSION(4, 0, 1)) {
-		flags.add(BZipped);
+		flagreader.add(BZipped);
 	}
 	if(version >= INNO_VERSION(4, 0, 10)) {
-		flags.add(TimeStampInUTC);
+		flagreader.add(TimeStampInUTC);
 	}
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		flags.add(IsUninstallerExe);
+		flagreader.add(IsUninstallerExe);
 	}
 	if(version >= INNO_VERSION(4, 1, 8)) {
-		flags.add(CallInstructionOptimized);
+		flagreader.add(CallInstructionOptimized);
 	}
 	if(version >= INNO_VERSION(4, 2, 0)) {
-		flags.add(Touch);
+		flagreader.add(Touch);
 	}
 	if(version >= INNO_VERSION(4, 2, 2)) {
-		flags.add(ChunkEncrypted);
+		flagreader.add(ChunkEncrypted);
 	}
 	if(version >= INNO_VERSION(4, 2, 5)) {
-		flags.add(ChunkCompressed);
+		flagreader.add(ChunkCompressed);
 	} else {
 		options |= ChunkCompressed;
 	}
 	if(version >= INNO_VERSION(5, 1, 13)) {
-		flags.add(SolidBreak);
+		flagreader.add(SolidBreak);
 	}
 	
-	options |= flags;
+	options |= flagreader;
 	
 	if(options & ChunkCompressed) {
 		chunk.compression = stream::UnknownCompression;

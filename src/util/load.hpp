@@ -117,4 +117,13 @@ void discard(T & is, uint64_t bytes) {
 	}
 }
 
+template <typename T>
+T get_bits(T number, int first, int last) {
+	typedef typename detail::uint_t<sizeof(T) * 8>::exact UT;
+	UT data = UT(number);
+	data = UT(data >> first), last -= first;
+	UT mask = UT(((last + 1 == sizeof(T) * 8) ? UT(0) : UT(UT(1) << (last + 1))) - 1);
+	return T(data & mask);
+}
+
 #endif // INNOEXTRACT_UTIL_LOAD_HPP

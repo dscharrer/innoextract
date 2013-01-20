@@ -58,7 +58,8 @@ struct data_entry {
 	
 	stream::file file;
 	
-	timespec timestamp;
+	std::time_t timestamp;
+	uint32_t timestamp_nsec;
 	
 	uint32_t file_version_ms;
 	uint32_t file_version_ls;
