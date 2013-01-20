@@ -43,6 +43,8 @@ namespace util {
 
 std::time_t parse_time(std::tm tm) {
 	
+	tm.tm_isdst = 0;
+	
 #if INNOEXTRACT_HAVE_TIMEGM
 	
 	return timegm(&tm);
@@ -87,7 +89,14 @@ std::tm format_time(time_t t) {
 #else
 	
 	// Hope that this is threadsafe...
-	ret = *gmtime(&t);
+	std::tm * tmp = gmtime(&t);
+	if(tmp) {
+		ret = *tmp;
+	} else {
+		ret.tm_year = ret.tm_mon = ret.tm_mday = -1;
+		ret.tm_hour = ret.tm_min = ret.tm_sec = -1;
+		t.tm_isdst = -1;
+	}
 	
 #endif
 	
@@ -99,7 +108,8 @@ time_t to_local_time(time_t t) {
 	// Format time as UTC ...
 	std::tm time = format_time(t);
 	
-	//... and interpret it as local time
+	// ... and interpret it as local time
+	time.tm_isdst = 0;
 	return std::mktime(&time);
 }
 
@@ -119,7 +129,7 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 	struct timeval times[2];
 	
 	times[0].tv_sec = t;
-	times[0].tv_usec = long(nsec / 1000);
+	times[0].tv_usec = int32_t(nsec / 1000);
 	times[1] = times[0];
 	
 	return (utimes(path.c_str(), times) == 0);
@@ -160,6 +170,18 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 	
 #endif
 	
+}
+
+void set_local_timezone(std::string timezone) {
+	for(size_t i = 0; i < timezone.length(); i++) {
+		if(timezone[i] == '+') {
+			timezone[i] = '-';
+		} else if(timezone[i] == '-') {
+			timezone[i] = '+';
+		}
+	}
+	setenv("TZ", timezone.c_str(), 1);
+	tzset();
 }
 
 } // namespace util

@@ -1196,7 +1196,6 @@ threading_list = (
     ('getlogin(', 'getlogin_r('),
     ('getpwnam(', 'getpwnam_r('),
     ('getpwuid(', 'getpwuid_r('),
-    ('gmtime(', 'gmtime_r('),
     ('localtime(', 'localtime_r('),
     ('rand(', 'rand_r('),
     ('readdir(', 'readdir_r('),

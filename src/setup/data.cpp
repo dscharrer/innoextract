@@ -86,7 +86,6 @@ void data_entry::load(std::istream & is, const version & version) {
 		t.tm_mday = get_bits(date,  0,  4);               // [1, 31]
 		t.tm_mon  = get_bits(date,  5,  8) - 1;           // [0, 11]
 		t.tm_year = get_bits(date,  9, 15) + 1980 - 1900; // [80, 199]
-		t.tm_isdst = -1;
 		
 		timestamp = util::parse_time(t);
 		timestamp_nsec = 0;

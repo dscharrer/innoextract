@@ -23,6 +23,7 @@
 
 #include <stdint.h>
 #include <ctime>
+#include <string>
 
 #include <boost/filesystem/path.hpp>
 
@@ -48,6 +49,9 @@ std::time_t to_local_time(std::time_t t);
 
 //! Set a file's creation/modification time
 bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t nsec);
+
+//! Set the local timezone used by to_local_time
+void set_local_timezone(std::string timezone);
 
 } // namespace util
 

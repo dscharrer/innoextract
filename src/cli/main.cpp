@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
@@ -120,6 +121,9 @@ struct options {
 	bool list;
 	bool test;
 	
+	bool preserve_file_times;
+	bool local_timestamps;
+	
 	std::string language;
 	
 	setup::filename_map filenames;
@@ -131,7 +135,7 @@ struct file_output {
 	fs::path name;
 	fs::ofstream stream;
 	
-	file_output(const fs::path & file) : name(file) {
+	explicit file_output(const fs::path & file) : name(file) {
 		try {
 			fs::create_directories(name.parent_path());
 		} catch(...) {
@@ -352,15 +356,17 @@ static void process_file(const fs::path & file, const options & o) {
 			}
 			
 			// Adjust file timestamps
-			const setup::data_entry & data = info.data_entries[location.second];
-			std::time_t filetime = data.timestamp;
-			//if(data.options & data.TimeStampInUTC) {
-			//	filetime = util::to_local_time(filetime);
-			//}
-			BOOST_FOREACH(file_output & out, output) {
-				out.stream.close();
-				if(!util::set_file_time(out.name, filetime, data.timestamp_nsec)) {
-					log_warning << "error setting timestamp on file " << out.name;
+			if(o.preserve_file_times) {
+				const setup::data_entry & data = info.data_entries[location.second];
+				std::time_t filetime = data.timestamp;
+				if(o.local_timestamps && !(data.options & data.TimeStampInUTC)) {
+					filetime = util::to_local_time(filetime);
+				}
+				BOOST_FOREACH(file_output & out, output) {
+					out.stream.close();
+					if(!util::set_file_time(out.name, filetime, data.timestamp_nsec)) {
+						log_warning << "error setting timestamp on file " << out.name;
+					}
 				}
 			}
 			
@@ -402,6 +408,7 @@ int main(int argc, char * argv[]) {
 		("dump", "Dump contents without converting filenames")
 		("lowercase,L", "Convert extracted filenames to lower-case")
 		("language", po::value<std::string>(), "Extract files for the given language")
+		("timestamps,T", po::value<std::string>(), "Timezone for file times or \"local\" or \"none\"")
 	;
 	
 	po::options_description io("I/O options");
@@ -500,6 +507,23 @@ int main(int argc, char * argv[]) {
 	o.dump = options.count("dump");
 	o.filenames.set_lowercase(options.count("lowercase"));
 	
+	// File timestamps
+	{
+		o.preserve_file_times = true, o.local_timestamps = false;
+		po::variables_map::const_iterator i = options.find("timestamps");
+		if(i != options.end()) {
+			std::string timezone = i->second.as<std::string>();
+			if(boost::iequals(timezone, "none")) {
+				o.preserve_file_times = false;
+			} else if(!boost::iequals(timezone, "UTC")) {
+				o.local_timestamps = true;
+				if(!boost::iequals(timezone, "local")) {
+					util::set_local_timezone(timezone);
+				}
+			}
+		}
+	}
+	
 	// List version.
 	if(options.count("version")) {
 		print_version();
@@ -508,9 +532,11 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	
-	po::variables_map::const_iterator i = options.find("language");
-	if(i != options.end()) {
-		o.language = i->second.as<std::string>();
+	{
+		po::variables_map::const_iterator i = options.find("language");
+		if(i != options.end()) {
+			o.language = i->second.as<std::string>();
+		}
 	}
 	
 	if(!options.count("setup-files")) {
