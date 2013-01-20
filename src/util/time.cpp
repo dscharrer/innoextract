@@ -33,7 +33,10 @@
 #include <windows.h>
 #endif
 
-#if INNOEXTRACT_HAVE_UTIMES
+#if INNOEXTRACT_HAVE_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
+#include <sys/stat.h>
+#include <fcntl.h>
+#elif INNOEXTRACT_HAVE_UTIMES
 #include <sys/time.h>
 #elif !defined(_WIN32)
 #include <boost/filesystem/operations.hpp>
@@ -46,15 +49,19 @@ static void set_timezone(const char * value) {
 	const char * variable = "TZ";
 	
 #if defined(WIN32)
+	
 	SetEnvironmentVariable(variable, value);
 	_tzset();
+	
 #else
+	
 	if(value) {
 		setenv(variable, value, 1);
 	} else {
 		unsetenv(variable);
 	}
 	tzset();
+	
 #endif
 	
 }
@@ -65,13 +72,19 @@ std::time_t parse_time(std::tm tm) {
 	
 #if INNOEXTRACT_HAVE_TIMEGM
 	
+	// GNU / BSD extension
+	
 	return timegm(&tm);
 	
 #elif INNOEXTRACT_HAVE_MKGMTIME
 	
+	// Windows
+	
 	return _mkgmtime(&tm);
 	
 #else
+	
+	// Standard, but not thread-safe - should be OK for our use though
 	
 	char * tz = getenv("TZ");
 	
@@ -93,16 +106,21 @@ std::tm format_time(time_t t) {
 	
 #if INNOEXTRACT_HAVE_GMTIME_R
 	
+	// POSIX.1
+	
 	gmtime_r(&t, &ret);
 	
 #elif INNOEXTRACT_HAVE_GMTIME_S
+	
+	// Windows (MSVC)
 	
 	_gmtime_s(&ret, &t);
 	
 #else
 	
-	// Hope that this is threadsafe...
-	std::tm * tmp = gmtime(&t);
+	// Standard C++, but may not be thread-safe
+	
+	std::tm * tmp = std::gmtime(&t);
 	if(tmp) {
 		ret = *tmp;
 	} else {
@@ -116,7 +134,7 @@ std::tm format_time(time_t t) {
 	return ret;
 }
 
-time_t to_local_time(time_t t) {
+std::time_t to_local_time(std::time_t t) {
 	
 	// Format time as UTC ...
 	std::tm time = format_time(t);
@@ -126,18 +144,52 @@ time_t to_local_time(time_t t) {
 	return std::mktime(&time);
 }
 
+void set_local_timezone(std::string timezone) {
+	
+	/*
+	 * The TZ variable interprets the offset as the change from local time 
+	 * to UTC while everyone else does the opposite.
+	 * We flip the direction so that timezone strings such as GMT+1 work as expected.
+	 */
+	for(size_t i = 0; i < timezone.length(); i++) {
+		if(timezone[i] == '+') {
+			timezone[i] = '-';
+		} else if(timezone[i] == '-') {
+			timezone[i] = '+';
+		}
+	}
+	
+	set_timezone(timezone.c_str());
+}
+
 #if defined(_WIN32)
+
 static HANDLE open_file(LPCSTR name) {
 	return CreateFileA(name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 }
+
 static HANDLE open_file(LPCWSTR name) {
 	return CreateFileW(name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 }
+
 #endif
 
 bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t nsec) {
 	
-#if INNOEXTRACT_HAVE_UTIMES
+#if INNOEXTRACT_HAVE_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
+	
+	// nanosecond precision, for Linux and POSIX.1-2008+ systems
+	
+	struct timespec times[2];
+	times[0].tv_sec = t;
+	times[0].tv_nsec = int32_t(nsec);
+	times[1] = times[0];
+	
+	return (utimensat(AT_FDCWD, path.string().c_str(), times, 0) == 0);
+	
+#elif INNOEXTRACT_HAVE_UTIMES
+	
+	// microsecond precision, for older POSIX systems (4.3BSD, POSIX.1-2001)
 	
 	struct timeval times[2];
 	
@@ -148,6 +200,8 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 	return (utimes(path.string().c_str(), times) == 0);
 	
 #elif defined(_WIN32)
+	
+	// 100-nanosecond precision, for Windows
 	
 	// Prevent unused function warnings
 	(void)(HANDLE(*)(LPCSTR))open_file;
@@ -173,6 +227,8 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 	
 #else
 	
+	// fallback with second precision or worse
+	
 	try {
 		(void)nsec; // sub-second precision not supported by boost
 		boost::filesystem::last_write_time(path, t);
@@ -183,19 +239,6 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 	
 #endif
 	
-}
-
-void set_local_timezone(std::string timezone) {
-	
-	for(size_t i = 0; i < timezone.length(); i++) {
-		if(timezone[i] == '+') {
-			timezone[i] = '-';
-		} else if(timezone[i] == '-') {
-			timezone[i] = '+';
-		}
-	}
-	
-	set_timezone(timezone.c_str());
 }
 
 } // namespace util
