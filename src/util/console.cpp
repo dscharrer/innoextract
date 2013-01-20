@@ -49,7 +49,8 @@ static int screen_width;
 // A flag that signals that the console may have been resized
 static volatile sig_atomic_t screen_resized;
 
-static void sigwinch_handler(int) {
+static void sigwinch_handler(int sig) {
+	(void)sig;
 	screen_resized = 1;
 	signal(SIGWINCH, sigwinch_handler);
 }
