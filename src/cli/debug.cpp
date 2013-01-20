@@ -47,6 +47,7 @@
 #include "util/load.hpp"
 #include "util/log.hpp"
 #include "util/output.hpp"
+#include "util/time.hpp"
 #include "util/util.hpp"
 
 using std::cout;
@@ -345,12 +346,7 @@ static void print_entry(const setup::info & info, size_t i, const setup::data_en
 	
 	cout << "  Checksum: " << entry.file.checksum << '\n';
 	
-	std::tm t;
-	if(entry.options & setup::data_entry::TimeStampInUTC) {
-		gmtime_r(&entry.timestamp, &t);
-	} else {
-		localtime_r(&entry.timestamp, &t);
-	}
+	std::tm t = util::format_time(entry.timestamp);
 	
 	cout << "  Timestamp: " << color::cyan << (t.tm_year + 1900)
 	     << '-' << std::setfill('0') << std::setw(2) << (t.tm_mon + 1)
@@ -358,7 +354,9 @@ static void print_entry(const setup::info & info, size_t i, const setup::data_en
 	     << ' ' << std::setfill(' ') << std::setw(2) << t.tm_hour
 	     << ':' << std::setfill('0') << std::setw(2) << t.tm_min
 	     << ':' << std::setfill('0') << std::setw(2) << t.tm_sec
-	     << color::reset << " +" << entry.timestamp_nsec << '\n';
+	     << color::reset << " +" << entry.timestamp_nsec
+	     << ((entry.options & setup::data_entry::TimeStampInUTC) ? " (UTC)" : " (local)")
+	     << '\n';
 	
 	cout << if_not_zero("  Options", entry.options);
 	
