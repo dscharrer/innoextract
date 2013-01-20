@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2013 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -36,7 +36,7 @@
 #if INNOEXTRACT_HAVE_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
 #include <sys/stat.h>
 #include <fcntl.h>
-#elif INNOEXTRACT_HAVE_UTIMES
+#elif !defined(_WIN32) && INNOEXTRACT_HAVE_UTIMES
 #include <sys/time.h>
 #elif !defined(_WIN32)
 #include <boost/filesystem/operations.hpp>
@@ -187,18 +187,6 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 	
 	return (utimensat(AT_FDCWD, path.string().c_str(), times, 0) == 0);
 	
-#elif INNOEXTRACT_HAVE_UTIMES
-	
-	// microsecond precision, for older POSIX systems (4.3BSD, POSIX.1-2001)
-	
-	struct timeval times[2];
-	
-	times[0].tv_sec = t;
-	times[0].tv_usec = int32_t(nsec / 1000);
-	times[1] = times[0];
-	
-	return (utimes(path.string().c_str(), times) == 0);
-	
 #elif defined(_WIN32)
 	
 	// 100-nanosecond precision, for Windows
@@ -224,6 +212,17 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 	CloseHandle(handle);
 	
 	return ret;
+	
+#elif INNOEXTRACT_HAVE_UTIMES
+	
+	// microsecond precision, for older POSIX systems (4.3BSD, POSIX.1-2001)
+	
+	struct timeval times[2];
+	times[0].tv_sec = t;
+	times[0].tv_usec = int32_t(nsec / 1000);
+	times[1] = times[0];
+	
+	return (utimes(path.string().c_str(), times) == 0);
 	
 #else
 	

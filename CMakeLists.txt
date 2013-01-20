@@ -27,6 +27,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake") # For custom cmake modules
 include(BuildType)
 include(CompileCheck)
 include(Doxygen)
+include(PrintConfiguration)
 include(StyleCheck)
 include(UseStaticLibs)
 include(VersionString)
@@ -244,9 +245,14 @@ add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/d
 message("")
 message("Configuration:")
 message(" - Build type: ${CMAKE_BUILD_TYPE}")
-if(INNOEXTRACT_HAVE_LZMA)
-	message(" - LZMA decompression: enabled")
-else()
-	message(" - LZMA decompression: disabled")
-endif()
+print_configuration("LZMA decompression" FIRST
+	INNOEXTRACT_HAVE_LZMA "enabled"
+	1                     "disabled"
+)
+print_configuration("File time precision" FIRST
+	INNOEXTRACT_HAVE_UTIMENSAT "nanoseconds"
+	WIN32                      "100-nanoseconds"
+	INNOEXTRACT_HAVE_UTIMES    "microseconds"
+	1                          "seconds"
+)
 message("")
