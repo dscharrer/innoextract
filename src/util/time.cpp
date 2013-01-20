@@ -27,19 +27,37 @@
 #include <time.h>
 #endif
 
-#if !INNOEXTRACT_HAVE_TIMEGM
 #include <stdlib.h>
+
+#if defined(_WIN32)
+#include <windows.h>
 #endif
 
 #if INNOEXTRACT_HAVE_UTIMES
 #include <sys/time.h>
-#elif defined(_WIN32)
-#include <windows.h>
-#else
+#elif !defined(_WIN32)
 #include <boost/filesystem/operations.hpp>
 #endif
 
 namespace util {
+
+static void set_timezone(const char * value) {
+	
+	const char * variable = "TZ";
+	
+#if defined(WIN32)
+	SetEnvironmentVariable(variable, value);
+	_tzset();
+#else
+	if(value) {
+		setenv(variable, value, 1);
+	} else {
+		unsetenv(variable);
+	}
+	tzset();
+#endif
+	
+}
 
 std::time_t parse_time(std::tm tm) {
 	
@@ -56,17 +74,12 @@ std::time_t parse_time(std::tm tm) {
 #else
 	
 	char * tz = getenv("TZ");
-	setenv("TZ", "UTC", 1);
-	tzset();
+	
+	set_timezone("UTC");
 	
 	std::time_t ret = std::mktime(&tm);
 	
-	if(tz) {
-		setenv("TZ", tz, 1);
-	} else {
-		unsetenv("TZ");
-	}
-	tzset();
+	set_timezone(tz);
 	
 	return ret;
 	
@@ -95,7 +108,7 @@ std::tm format_time(time_t t) {
 	} else {
 		ret.tm_year = ret.tm_mon = ret.tm_mday = -1;
 		ret.tm_hour = ret.tm_min = ret.tm_sec = -1;
-		t.tm_isdst = -1;
+		ret.tm_isdst = -1;
 	}
 	
 #endif
@@ -173,6 +186,7 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 }
 
 void set_local_timezone(std::string timezone) {
+	
 	for(size_t i = 0; i < timezone.length(); i++) {
 		if(timezone[i] == '+') {
 			timezone[i] = '-';
@@ -180,8 +194,8 @@ void set_local_timezone(std::string timezone) {
 			timezone[i] = '+';
 		}
 	}
-	setenv("TZ", timezone.c_str(), 1);
-	tzset();
+	
+	set_timezone(timezone.c_str());
 }
 
 } // namespace util
