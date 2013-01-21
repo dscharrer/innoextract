@@ -30,9 +30,12 @@ include(UseStaticLibs)
 use_static_libs(LZMA)
 
 find_path(LZMA_INCLUDE_DIR lzma.h DOC "The directory where lzma.h resides")
-find_library(LZMA_LIBRARY lzma DOC "The LZMA library")
-
 mark_as_advanced(LZMA_INCLUDE_DIR)
+
+# Prefer libraries in the same prefix as the include files
+string(REGEX REPLACE "(.*)/include/?" "\\1" LZMA_BASE_DIR ${LZMA_INCLUDE_DIR})
+
+find_library(LZMA_LIBRARY lzma HINTS "${LZMA_BASE_DIR}/lib" DOC "The LZMA library")
 mark_as_advanced(LZMA_LIBRARY)
 
 use_static_libs_restore()
