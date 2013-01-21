@@ -25,10 +25,10 @@
 # iconv_LIBRARIES - libiconv.so or empty if none was found
 # An empty iconv_LIBRARIES is not an error as iconv is often included in the system libc.
 
-option(iconv_USE_STATIC_LIBS "Statically link libiconv" OFF)
+# option(iconv_USE_STATIC_LIBS "Statically link libiconv" OFF)
 
 include(UseStaticLibs)
-use_static_libs(LZMA)
+use_static_libs(iconv)
 
 find_path(iconv_INCLUDE_DIR iconv.h DOC "The directory where iconv.h resides")
 find_library(iconv_LIBRARY iconv DOC "The iconv library")

@@ -24,7 +24,7 @@
 # LZMA_INCLUDE_DIR - where to find lzma.h
 # LZMA_LIBRARIES - liblzma.so
 
-option(LZMA_USE_STATIC_LIBS "Statically link liblzma" OFF)
+# option(LZMA_USE_STATIC_LIBS "Statically link liblzma" OFF)
 
 include(UseStaticLibs)
 use_static_libs(LZMA)
