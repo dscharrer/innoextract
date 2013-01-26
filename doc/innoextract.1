@@ -18,28 +18,36 @@ To extract a multi-part installer with external data files, only the executable 
 .SH OPTIONS SUMMARY
 .PP
 Here is a short summary of the options available in innoextract. Please refer to the detailed  documentation below for a complete description.
-.PP
+.TP
 .B Generic options:
+.nf
  \-h \-\-help               Show supported options
  \-v \-\-version            Print the version information
      \-\-license           Show license information
-.PP
+.fi
+.TP
 .B Actions:
+.nf
  \-t \-\-test               Only verify checksums, don't write anything
  \-e \-\-extract            Extract files (default action)
  \-l \-\-list               Only list files, don't write anything
-.PP
+.fi
+.TP
 .B Filters:
+.nf
      \-\-dump              Dump contents without converting filenames
  \-L \-\-lowercase          Convert extracted filenames to lower-case
      \-\-language=LANG     Extract files for the given language
  \-T \-\-timestamps=TZ      Timezone for file times or "local" or "none"
-.PP
+.fi
+.TP
 .B I/O options:
+.nf
  \-q \-\-quiet              Output less information
  \-s \-\-silent             Output only error/warning information
  \-c \-\-color[=ENABLE]     Enable/disable color output
  \-p \-\-progress[=ENABLE]  Enable/disable the progress bar
+.fi
 .SH OPTIONS
 .TP
 .B \-c --color[=ENABLE]
