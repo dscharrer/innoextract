@@ -36,7 +36,7 @@ mark_as_advanced(iconv_INCLUDE_DIR)
 # Prefer libraries in the same prefix as the include files
 string(REGEX REPLACE "(.*)/include/?" "\\1" iconv_BASE_DIR ${iconv_INCLUDE_DIR})
 
-find_library(iconv_LIBRARY iconv HINTS "${iconv_BASE_DIR}/lib" DOC "The iconv library")
+find_library(iconv_LIBRARY iconv libiconv HINTS "${iconv_BASE_DIR}/lib" DOC "The iconv library")
 mark_as_advanced(iconv_LIBRARY)
 
 use_static_libs_restore()
