@@ -100,7 +100,7 @@ public:
 	
 	static void show_unbounded(float value, const std::string & label = std::string());
 	
-	static void clear();
+	static int clear();
 	
 	static void set_enabled(bool enable);
 	

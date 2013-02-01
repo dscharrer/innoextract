@@ -24,8 +24,13 @@
 #include <cmath>
 #include <signal.h>
 #include <iostream>
+#include <cstdlib>
 
 #include "configure.hpp"
+
+#if defined(_WIN32)
+#include <windows.h>
+#endif
 
 #if INNOEXTRACT_HAVE_ISATTY
 #include <unistd.h>
@@ -36,12 +41,13 @@
 #endif
 
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "util/output.hpp"
 
 static bool show_progress = true;
 
-#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ) && defined(SIGWINCH)
+#if defined(SIGWINCH)
 
 // The last known screen width.
 static int screen_width;
@@ -83,17 +89,26 @@ shell_command current = reset;
 
 void init(is_enabled color, is_enabled progress) {
 	
-#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ) && defined(SIGWINCH)
+	bool is_tty = false;
+#if INNOEXTRACT_HAVE_ISATTY
+	is_tty = isatty(1) && isatty(2);
+#endif
+	
+	// Initialize the progress bar
+	
+#if defined(SIGWINCH)
 	sigwinch_handler(0);
 #endif
 	
-#if INNOEXTRACT_HAVE_ISATTY
-	bool is_tty = isatty(1) && isatty(2);
-#else
-	bool is_tty = false;
+	show_progress = (progress == enable);
+#if defined(_WIN32) || (INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ))
+	// Only automatically enable the progress bar if we have a way to determine the width
+	if(progress == automatic && is_tty) {
+		show_progress = true;
+	}
 #endif
 	
-	show_progress = (progress == enable) || (progress == automatic && is_tty);
+	// Initialize color output
 	
 	if(color == disable || (color == automatic && !is_tty)) {
 		
@@ -124,22 +139,41 @@ void init(is_enabled color, is_enabled progress) {
 
 } // namespace color
 
-#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
-
 static int query_screen_width() {
+	
+#if defined(_WIN32)
+	
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	if(GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info)) {
+		return info.srWindow.Right - info.srWindow.Left + 1;
+	}
+	
+#endif
+
+#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
 	
 	struct winsize w;
 	if(ioctl(0, TIOCGWINSZ, &w) >= 0) {
 		return w.ws_col;
 	}
 	
+#endif
+	
+	try {
+		char * columns = std::getenv("COLUMNS");
+		if(columns) {
+			return boost::lexical_cast<int>(columns);
+		}
+	} catch(...) { /* ignore bad values */ }
+	
 	// Assume a default screen width of 80 columns
 	return 80;
+	
 }
 
 static int get_screen_width() {
 	
-#ifdef SIGWINCH
+#if defined(SIGWINCH)
 	
 	if(screen_resized) {
 		screen_resized = 0;
@@ -154,21 +188,50 @@ static int get_screen_width() {
 	
 }
 
+static bool progress_cleared = true;
+
+int progress::clear() {
+	
+	int width = get_screen_width();
+	
+	if(!show_progress) {
+		return width;
+	}
+	
+#if defined(_WIN32)
+	
+	// Overwrite the current line with whitespace
+	
+	static std::string buffer;
+	static int last_width = 0;
+	if(width != last_width) {
+		size_t cwidth = size_t(std::max(width, 1) - 1);
+		buffer.resize(cwidth, ' ');
+		last_width = width;
+	}
+	
+	std::cout << '\r' << buffer << '\r';
+	
+#else
+	
+	// Use the ANSI/VT100 control sequence to clear the current line
+	
+	std::cout << "\33[2K\r";
+	
 #endif
+	
+	progress_cleared = true;
+	
+	return width;
+}
 
 void progress::show(float value, const std::string & label) {
-	
-	(void)value, (void)label;
 	
 	if(!show_progress) {
 		return;
 	}
 	
-#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
-	
-	int width = get_screen_width();
-	
-	clear();
+	int width = clear();
 	
 	std::ios_base::fmtflags flags = std::cout.flags();
 	
@@ -196,8 +259,7 @@ void progress::show(float value, const std::string & label) {
 	
 	std::cout.flags(flags);
 	
-#endif
-	
+	progress_cleared = false;
 }
 
 void progress::show_unbounded(float value, const std::string & label) {
@@ -206,11 +268,7 @@ void progress::show_unbounded(float value, const std::string & label) {
 		return;
 	}
 	
-#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
-	
-	int width = get_screen_width();
-	
-	clear();
+	int width = clear();
 	
 	std::ios_base::fmtflags flags = std::cout.flags();
 	
@@ -238,31 +296,7 @@ void progress::show_unbounded(float value, const std::string & label) {
 	
 	std::cout.flags(flags);
 	
-#else
-	
-	(void)value, (void)label;
-	
-#endif
-	
-}
-
-#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
-static bool progress_cleared = true;
-#endif
-
-void progress::clear() {
-	
-	if(!show_progress) {
-		return;
-	}
-	
-#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
-	
-	std::cout << "\33[2K\r";
-	
-	progress_cleared = true;
-	
-#endif
+	progress_cleared = false;
 }
 
 progress::progress(uint64_t max, bool show_rate)
@@ -276,10 +310,7 @@ void progress::update(uint64_t delta, bool force) {
 		return;
 	}
 	
-#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
-	
 	force = force || progress_cleared;
-	progress_cleared = false;
 	
 	value += delta;
 	
@@ -295,7 +326,8 @@ void progress::update(uint64_t delta, bool force) {
 	boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
 	uint64_t time = uint64_t((now - start_time).total_microseconds());
 	
-	if(!force && time - last_time < 100000) {
+	const uint64_t update_interval = 100000;
+	if(!force && time - last_time < update_interval) {
 		return;
 	}
 	
@@ -326,12 +358,6 @@ void progress::update(uint64_t delta, bool force) {
 	} else {
 		show_unbounded(status, label.str());
 	}
-	
-#else
-	
-	(void)delta, (void)force;
-	
-#endif
 	
 }
 
