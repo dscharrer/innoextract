@@ -63,27 +63,87 @@ static void sigwinch_handler(int sig) {
 
 #endif
 
+#if defined(_WIN32)
+static HANDLE console_handle;
+#endif
+
 namespace color {
 
-shell_command reset = { "\x1b[0m" };
+#if defined(_WIN32)
 
-shell_command black = { "\x1b[1;30m" };
-shell_command red = { "\x1b[1;31m" };
-shell_command green = { "\x1b[1;32m" };
-shell_command yellow = { "\x1b[1;33m" };
-shell_command blue = { "\x1b[1;34m" };
-shell_command magenta = { "\x1b[1;35m" };
-shell_command cyan = { "\x1b[1;36m" };
-shell_command white = { "\x1b[1;37m" };
+std::ostream & operator<<(std::ostream & os, const shell_command command) {
+	
+	color::current = command;
+	
+	if(command.command == boost::uint16_t(-1) || !console_handle) {
+		// Color output is disabled
+		return os;
+	}
+	
+	if(&os != &std::cout && &os != &std::cerr) {
+		// Colors are only supported for standard output
+		return os;
+	}
+	
+	std::cout.flush();
+	std::cerr.flush();
+	
+	SetConsoleTextAttribute(console_handle, command.command);
+	
+	return os;
+}
 
-shell_command dim_black = { "\x1b[0;30m" };
-shell_command dim_red = { "\x1b[0;31m" };
-shell_command dim_green = { "\x1b[0;32m" };
-shell_command dim_yellow = { "\x1b[0;33m" };
-shell_command dim_blue = { "\x1b[0;34m" };
+shell_command black =       { FOREGROUND_INTENSITY };
+shell_command red =         { FOREGROUND_INTENSITY | FOREGROUND_RED };
+shell_command green =       { FOREGROUND_INTENSITY | FOREGROUND_GREEN };
+shell_command yellow =      { FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN };
+shell_command blue =        { FOREGROUND_INTENSITY | FOREGROUND_BLUE };
+shell_command magenta =     { FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_BLUE };
+shell_command cyan =        { FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_GREEN };
+shell_command white =       { FOREGROUND_INTENSITY
+                              | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE };
+
+shell_command dim_black =   { 0 };
+shell_command dim_red =     { FOREGROUND_RED };
+shell_command dim_green =   { FOREGROUND_GREEN };
+shell_command dim_yellow =  { FOREGROUND_RED | FOREGROUND_GREEN };
+shell_command dim_blue =    { FOREGROUND_BLUE };
+shell_command dim_magenta = { FOREGROUND_RED | FOREGROUND_BLUE };
+shell_command dim_cyan =    { FOREGROUND_BLUE | FOREGROUND_GREEN };
+shell_command dim_white =   { FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE };
+
+shell_command reset =       dim_white;
+
+struct resetter {
+	shell_command original_color;
+	~resetter() {
+		std::cout << original_color;
+	}
+} resetter_instance = { white };
+
+#else
+
+shell_command black =       { "\x1b[1;30m" };
+shell_command red =         { "\x1b[1;31m" };
+shell_command green =       { "\x1b[1;32m" };
+shell_command yellow =      { "\x1b[1;33m" };
+shell_command blue =        { "\x1b[1;34m" };
+shell_command magenta =     { "\x1b[1;35m" };
+shell_command cyan =        { "\x1b[1;36m" };
+shell_command white =       { "\x1b[1;37m" };
+
+shell_command dim_black =   { "\x1b[0;30m" };
+shell_command dim_red =     { "\x1b[0;31m" };
+shell_command dim_green =   { "\x1b[0;32m" };
+shell_command dim_yellow =  { "\x1b[0;33m" };
+shell_command dim_blue =    { "\x1b[0;34m" };
 shell_command dim_magenta = { "\x1b[0;35m" };
-shell_command dim_cyan = { "\x1b[0;36m" };
-shell_command dim_white = { "\x1b[0;37m" };
+shell_command dim_cyan =    { "\x1b[0;36m" };
+shell_command dim_white =   { "\x1b[0;37m" };
+
+shell_command reset =       { "\x1b[0m" };
+
+#endif
 
 shell_command current = reset;
 
@@ -92,6 +152,18 @@ void init(is_enabled color, is_enabled progress) {
 	bool is_tty = false;
 #if INNOEXTRACT_HAVE_ISATTY
 	is_tty = isatty(1) && isatty(2);
+#endif
+	
+#if defined(_WIN32)
+	console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	if(console_handle && GetConsoleScreenBufferInfo(console_handle, &info)) {
+		resetter_instance.original_color.command = info.wAttributes;
+	} else {
+		is_tty = false;
+		color = disable;
+		progress = disable;
+	}
 #endif
 	
 	// Initialize the progress bar
@@ -112,29 +184,23 @@ void init(is_enabled color, is_enabled progress) {
 	
 	if(color == disable || (color == automatic && !is_tty)) {
 		
+#if defined(_WIN32)
+		reset.command = boost::uint16_t(-1);
+#else
 		reset.command = "";
+#endif
 		
-		black.command = "";
-		red.command = "";
-		green.command = "";
-		yellow.command = "";
-		blue.command = "";
-		magenta.command = "";
-		cyan.command = "";
-		white.command = "";
-		
-		dim_black.command = "";
-		dim_red.command = "";
-		dim_green.command = "";
-		dim_yellow.command = "";
-		dim_blue.command = "";
-		dim_magenta.command = "";
-		dim_cyan.command = "";
-		dim_white.command = "";
-		
+		black = red = green = yellow = blue = magenta = cyan = white = reset;
+		dim_black = dim_red = dim_green = dim_yellow = reset;
+		dim_blue = dim_magenta = dim_cyan = dim_white = reset;
 		current = reset;
 		
 	}
+	
+#if defined(_WIN32)
+	std::cout << reset;
+#endif
+	
 }
 
 } // namespace color
@@ -144,7 +210,7 @@ static int query_screen_width() {
 #if defined(_WIN32)
 	
 	CONSOLE_SCREEN_BUFFER_INFO info;
-	if(GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info)) {
+	if(GetConsoleScreenBufferInfo(console_handle, &info)) {
 		return info.srWindow.Right - info.srWindow.Left + 1;
 	}
 	

@@ -28,12 +28,20 @@
 #include <sstream>
 
 #include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/cstdint.hpp>
 
 namespace color {
 
+
 struct shell_command {
+#if defined(_WIN32)
+	boost::uint16_t command;
+#else
 	const char * command;
+#endif
 };
+
+std::ostream & operator<<(std::ostream & os, const shell_command command);
 
 extern shell_command reset;
 
@@ -57,6 +65,13 @@ extern shell_command dim_white;
 
 extern shell_command current;
 
+#if !defined(_WIN32)
+inline std::ostream & operator<<(std::ostream & os, const shell_command command) {
+	color::current = command;
+	return os << command.command;
+}
+#endif
+
 enum is_enabled {
 	enable,
 	disable,
@@ -64,11 +79,6 @@ enum is_enabled {
 };
 
 void init(is_enabled color = automatic, is_enabled progress = automatic);
-
-inline std::ostream & operator<<(std::ostream & os, const shell_command command) {
-	color::current = command;
-	return os << command.command;
-}
 
 } // namespace color
 
