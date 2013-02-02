@@ -29,29 +29,31 @@
 
 namespace util {
 
+typedef boost::int64_t time;
+
 /*!
  * Convert UTC clock time to a timestamp
  * Note: may not be threadsafe on all systems!
  */
-std::time_t parse_time(std::tm tm);
+time parse_time(std::tm tm);
 
 /*!
  * Convert a timestamp to UTC clock time
  * Note: may not be threadsafe on all systems!
  */
-std::tm format_time(std::time_t t);
+std::tm format_time(time t);
 
 /*!
  * Convert a timestamp to local time
  * Note: may not be threadsafe on all systems!
  */
-std::time_t to_local_time(std::time_t t);
+time to_local_time(time t);
 
 //! Set the local timezone used by to_local_time
 void set_local_timezone(std::string timezone);
 
 //! Set a file's creation/modification time
-bool set_file_time(const boost::filesystem::path & path, std::time_t t, boost::uint32_t nsec);
+bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t nsec);
 
 } // namespace util
 

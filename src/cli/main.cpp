@@ -358,7 +358,7 @@ static void process_file(const fs::path & file, const options & o) {
 			// Adjust file timestamps
 			if(o.preserve_file_times) {
 				const setup::data_entry & data = info.data_entries[location.second];
-				std::time_t filetime = data.timestamp;
+				util::time filetime = data.timestamp;
 				if(o.local_timestamps && !(data.options & data.TimeStampInUTC)) {
 					filetime = util::to_local_time(filetime);
 				}

@@ -22,7 +22,6 @@
 #define INNOEXTRACT_SETUP_DATA_HPP
 
 #include <stddef.h>
-#include <ctime>
 #include <iosfwd>
 
 #include <boost/cstdint.hpp>
@@ -59,7 +58,7 @@ struct data_entry {
 	
 	stream::file file;
 	
-	std::time_t timestamp;
+	boost::int64_t timestamp;
 	boost::uint32_t timestamp_nsec;
 	
 	boost::uint32_t file_version_ms;

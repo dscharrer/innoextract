@@ -102,7 +102,7 @@ void data_entry::load(std::istream & is, const version & version) {
 		}
 		filetime -= FiletimeOffset;
 		
-		timestamp = std::time_t(filetime / 10000000);
+		timestamp = filetime / 10000000;
 		timestamp_nsec = boost::uint32_t(filetime % 10000000) * 100;
 		
 	}

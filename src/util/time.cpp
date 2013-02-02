@@ -42,6 +42,8 @@
 #include <boost/filesystem/operations.hpp>
 #endif
 
+#include "util/log.hpp"
+
 namespace util {
 
 static void set_timezone(const char * value) {
@@ -66,7 +68,7 @@ static void set_timezone(const char * value) {
 	
 }
 
-std::time_t parse_time(std::tm tm) {
+time parse_time(std::tm tm) {
 	
 	tm.tm_isdst = 0;
 	
@@ -90,7 +92,7 @@ std::time_t parse_time(std::tm tm) {
 	
 	set_timezone("UTC");
 	
-	std::time_t ret = std::mktime(&tm);
+	time ret = std::mktime(&tm);
 	
 	set_timezone(tz);
 	
@@ -100,7 +102,18 @@ std::time_t parse_time(std::tm tm) {
 	
 }
 
-std::tm format_time(std::time_t t) {
+static std::time_t to_time_t(time t, const char * file = "conversion") {
+	
+	std::time_t ret = std::time_t(t);
+	
+	if(time(ret) != t) {
+		log_warning << "truncating timestamp " << t << " to " << ret << " for " << file;
+	}
+	
+	return ret;
+}
+
+std::tm format_time(time t) {
 	
 	std::tm ret;
 	
@@ -108,19 +121,22 @@ std::tm format_time(std::time_t t) {
 	
 	// POSIX.1
 	
-	gmtime_r(&t, &ret);
+	time_t tt = to_time_t(t);
+	gmtime_r(&tt, &ret);
 	
 #elif INNOEXTRACT_HAVE_GMTIME_S
 	
 	// Windows (MSVC)
 	
-	gmtime_s(&ret, &t);
+	time_t tt = to_time_t(t);
+	gmtime_s(&ret, &tt);
 	
 #else
 	
 	// Standard C++, but may not be thread-safe
 	
-	std::tm * tmp = std::gmtime(&t);
+	std::time_t tt = to_time_t(t);
+	std::tm * tmp = std::gmtime(&tt);
 	if(tmp) {
 		ret = *tmp;
 	} else {
@@ -134,7 +150,7 @@ std::tm format_time(std::time_t t) {
 	return ret;
 }
 
-std::time_t to_local_time(std::time_t t) {
+time to_local_time(time t) {
 	
 	// Format time as UTC ...
 	std::tm time = format_time(t);
@@ -174,14 +190,14 @@ static HANDLE open_file(LPCWSTR name) {
 
 #endif
 
-bool set_file_time(const boost::filesystem::path & path, std::time_t t, boost::uint32_t nsec) {
+bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t nsec) {
 	
 #if INNOEXTRACT_HAVE_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
 	
 	// nanosecond precision, for Linux and POSIX.1-2008+ systems
 	
 	struct timespec times[2];
-	times[0].tv_sec = t;
+	times[0].tv_sec = to_time_t(t, path.string().c_str());
 	times[0].tv_nsec = boost::int32_t(nsec);
 	times[1] = times[0];
 	
@@ -218,7 +234,7 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, boost::u
 	// microsecond precision, for older POSIX systems (4.3BSD, POSIX.1-2001)
 	
 	struct timeval times[2];
-	times[0].tv_sec = t;
+	times[0].tv_sec = to_time_t(t, path.string().c_str());
 	times[0].tv_usec = boost::int32_t(nsec / 1000);
 	times[1] = times[0];
 	
