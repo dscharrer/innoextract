@@ -82,7 +82,8 @@ struct exe_reader_impl : public exe_reader {
 	 */
 	static boost::uint32_t to_file_offset(const section_list & sections, boost::uint32_t address);
 	
-	static resource find_resource(std::istream & is, boost::uint32_t name, boost::uint32_t type = TypeData,
+	static resource find_resource(std::istream & is, boost::uint32_t name,
+	                              boost::uint32_t type = TypeData,
 	                              boost::uint32_t language = LanguageDefault);
 	
 };
@@ -212,7 +213,8 @@ bool exe_reader_impl::load_section_list(std::istream & is, const header & coff,
 	return !is.fail();
 }
 
-boost::uint32_t exe_reader_impl::to_file_offset(const section_list & sections, boost::uint32_t memory) {
+boost::uint32_t exe_reader_impl::to_file_offset(const section_list & sections,
+                                                boost::uint32_t memory) {
 	
 	for(section_list::const_iterator i = sections.begin(); i != sections.end(); ++i) {
 		const section & s = *i;
@@ -224,8 +226,10 @@ boost::uint32_t exe_reader_impl::to_file_offset(const section_list & sections, b
 	return 0;
 }
 
-exe_reader_impl::resource exe_reader_impl::find_resource(std::istream & is, boost::uint32_t name,
-                                                         boost::uint32_t type, boost::uint32_t language) {
+exe_reader_impl::resource exe_reader_impl::find_resource(std::istream & is,
+                                                         boost::uint32_t name,
+                                                         boost::uint32_t type,
+                                                         boost::uint32_t language) {
 	
 	is.seekg(0);
 	

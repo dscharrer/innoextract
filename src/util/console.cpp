@@ -143,11 +143,11 @@ shell_command current = reset;
 void init(is_enabled color, is_enabled progress) {
 	
 	bool is_tty = false;
-#if INNOEXTRACT_HAVE_ISATTY
+	#if INNOEXTRACT_HAVE_ISATTY
 	is_tty = isatty(1) && isatty(2);
-#endif
+	#endif
 	
-#if defined(_WIN32)
+	#if defined(_WIN32)
 	console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	if(console_handle && GetConsoleScreenBufferInfo(console_handle, &info)) {
@@ -157,31 +157,31 @@ void init(is_enabled color, is_enabled progress) {
 		color = disable;
 		progress = disable;
 	}
-#endif
+	#endif
 	
 	// Initialize the progress bar
 	
-#if defined(SIGWINCH)
+	#if defined(SIGWINCH)
 	sigwinch_handler(0);
-#endif
+	#endif
 	
 	show_progress = (progress == enable);
-#if defined(_WIN32) || (INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ))
+	#if defined(_WIN32) || (INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ))
 	// Only automatically enable the progress bar if we have a way to determine the width
 	if(progress == automatic && is_tty) {
 		show_progress = true;
 	}
-#endif
+	#endif
 	
 	// Initialize color output
 	
 	if(color == disable || (color == automatic && !is_tty)) {
 		
-#if defined(_WIN32)
+		#if defined(_WIN32)
 		reset.command = boost::uint16_t(-1);
-#else
+		#else
 		reset.command = "";
-#endif
+		#endif
 		
 		black = red = green = yellow = blue = magenta = cyan = white = reset;
 		dim_black = dim_red = dim_green = dim_yellow = reset;
@@ -196,32 +196,32 @@ void init(is_enabled color, is_enabled progress) {
 
 static int query_screen_width() {
 	
-#if defined(_WIN32)
+	#if defined(_WIN32)
 	
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	if(GetConsoleScreenBufferInfo(console_handle, &info)) {
 		return info.srWindow.Right - info.srWindow.Left + 1;
 	}
 	
-#endif
-
-#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
+	#endif
+	
+	#if INNOEXTRACT_HAVE_IOCTL && defined(TIOCGWINSZ)
 	
 	struct winsize w;
 	if(ioctl(0, TIOCGWINSZ, &w) >= 0) {
 		return w.ws_col;
 	}
 	
-#endif
+	#endif
 	
-#if !defined(_WIN32)
+	#if !defined(_WIN32)
 	try {
 		char * columns = std::getenv("COLUMNS");
 		if(columns) {
 			return boost::lexical_cast<int>(columns);
 		}
 	} catch(...) { /* ignore bad values */ }
-#endif
+	#endif
 	
 	// Assume a default screen width of 80 columns
 	return 80;
@@ -230,7 +230,7 @@ static int query_screen_width() {
 
 static int get_screen_width() {
 	
-#if defined(SIGWINCH)
+	#if defined(SIGWINCH)
 	
 	if(screen_resized) {
 		screen_resized = 0;
@@ -239,9 +239,9 @@ static int get_screen_width() {
 	
 	return screen_width;
 	
-#else
+	#else
 	return query_screen_width();
-#endif
+	#endif
 	
 }
 
@@ -255,7 +255,7 @@ int progress::clear() {
 		return width;
 	}
 	
-#if defined(_WIN32)
+	#if defined(_WIN32)
 	
 	// Overwrite the current line with whitespace
 	
@@ -269,13 +269,13 @@ int progress::clear() {
 	
 	std::cout << '\r' << buffer << '\r';
 	
-#else
+	#else
 	
 	// Use the ANSI/VT100 control sequence to clear the current line
 	
 	std::cout << "\33[2K\r";
 	
-#endif
+	#endif
 	
 	progress_cleared = true;
 	
@@ -383,11 +383,11 @@ void progress::update(boost::uint64_t delta, bool force) {
 	boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
 	boost::uint64_t time = boost::uint64_t((now - start_time).total_microseconds());
 	
-#if defined(_WIN32)
+	#if defined(_WIN32)
 	const boost::uint64_t update_interval = 100000;
-#else
+	#else
 	const boost::uint64_t update_interval = 50000;
-#endif
+	#endif
 	if(!force && time - last_time < update_interval) {
 		return;
 	}

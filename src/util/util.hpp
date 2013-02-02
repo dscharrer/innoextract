@@ -92,24 +92,28 @@ template <class T> T rotl_fixed(T x, unsigned int y) {
 
 #if defined(_MSC_VER) && _MSC_VER >= 1400 && !defined(__INTEL_COMPILER)
 
-template<> inline unsigned char rotl_fixed<unsigned char>(unsigned char x, unsigned int y) {
+template<>
+inline boost::uint8_t rotl_fixed<boost::uint8_t>(boost::uint8_t x, unsigned int y) {
 	return y ? _rotl8(x, y) : x;
 }
 
-template<> inline unsigned short rotl_fixed<unsigned short>(unsigned short x, unsigned int y) {
+template<>
+inline boost::uint16_t rotl_fixed<boost::uint16_t>(boost::uint16_t x, unsigned int y) {
 	return y ? _rotl16(x, y) : x;
 }
 
 #endif
 
 #ifdef _MSC_VER
-template<> inline unsigned long rotl_fixed<unsigned long>(unsigned long x, unsigned int y) {
+template<>
+inline boost::uint32_t rotl_fixed<boost::uint32_t>(boost::uint32_t x, unsigned int y) {
 	return y ? _lrotl(x, y) : x;
 }
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1300 && !defined(__INTEL_COMPILER)
-template<> inline __int64 rotl_fixed<__int64>(__int64 x, unsigned int y) {
+template<>
+inline boost::uint64_t rotl_fixed<boost::uint64_t>(boost::uint64_t x, unsigned int y) {
 	return y ? _rotl64(x, y) : x;
 }
 #endif

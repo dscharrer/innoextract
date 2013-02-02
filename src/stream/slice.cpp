@@ -48,7 +48,8 @@ slice_reader::slice_reader(const path_type & setup_file, boost::uint32_t data_of
 	
 	ifs.open(setup_file, std::ios_base::binary | std::ios_base::in | std::ios_base::ate);
 	
-	slice_size = boost::uint32_t(std::min<std::streampos>(ifs.tellg(), std::numeric_limits<boost::int32_t>::max()));
+	std::streampos max_size = std::streampos(std::numeric_limits<boost::int32_t>::max());
+	slice_size = boost::uint32_t(std::min<std::streampos>(ifs.tellg(), max_size));
 	if(ifs.seekg(data_offset).fail()) {
 		ifs.close();
 	}

@@ -62,7 +62,8 @@ public:
 	 *
 	 * \return the location of the resource or `(0, 0)` if the requested resource does not exist.
 	 */
-	static resource find_resource(std::istream & is, boost::uint32_t name, boost::uint32_t type = TypeData,
+	static resource find_resource(std::istream & is, boost::uint32_t name,
+	                              boost::uint32_t type = TypeData,
 	                              boost::uint32_t language = LanguageDefault);
 	
 };

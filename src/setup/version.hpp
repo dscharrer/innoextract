@@ -56,8 +56,8 @@ struct version {
 		: value(value), bits(bits), unicode(unicode), known(known) { }
 	
 	
-	version(boost::uint8_t a, boost::uint8_t b, boost::uint8_t c, boost::uint8_t d = 0, bool unicode = false,
-	        bool known = false, boost::uint8_t bits = 32)
+	version(boost::uint8_t a, boost::uint8_t b, boost::uint8_t c, boost::uint8_t d = 0,
+	        bool unicode = false, bool known = false, boost::uint8_t bits = 32)
 		: value(INNO_VERSION_EXT(a, b, c, d)), bits(bits), unicode(unicode), known(known) { }
 	
 	unsigned int a() const { return  value >> 24;         }

@@ -92,7 +92,11 @@ void component_entry::load(std::istream & is, const version & version) {
 		options = stored_flags<stored_component_flags_0>(is).get();
 	}
 	
-	size = (version >= INNO_VERSION(4, 0, 0)) ? load_number<boost::uint64_t>(is) : load_number<boost::uint32_t>(is);
+	if(version >= INNO_VERSION(4, 0, 0)) {
+		size = load_number<boost::uint64_t>(is);
+	} else {
+		size = load_number<boost::uint32_t>(is);
+	}
 }
 
 } // namespace setup

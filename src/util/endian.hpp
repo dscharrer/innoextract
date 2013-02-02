@@ -62,7 +62,8 @@ inline boost::uint32_t byteswap(boost::uint32_t value) {
 #elif INNOEXTRACT_HAVE_BSWAP_32
 	return bswap_32(value);
 #else
-	return (boost::uint32_t(byteswap(boost::uint16_t(value))) << 16) | byteswap(boost::uint16_t(value >> 16));
+	return (boost::uint32_t(byteswap(boost::uint16_t(value))) << 16)
+	       | byteswap(boost::uint16_t(value >> 16));
 #endif
 }
 
@@ -79,7 +80,8 @@ inline boost::uint64_t byteswap(boost::uint64_t value) {
 #elif INNOEXTRACT_HAVE_BSWAP_64
 	return bswap_64(value);
 #else
-	return (boost::uint64_t(byteswap(boost::uint32_t(value))) << 32) | byteswap(boost::uint32_t(value >> 32));
+	return (boost::uint64_t(byteswap(boost::uint32_t(value))) << 32)
+	       | byteswap(boost::uint32_t(value >> 32));
 #endif
 }
 

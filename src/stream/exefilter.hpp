@@ -211,9 +211,12 @@ std::streamsize inno_exe_decoder_5200::read(Source & src, char * dest, std::stre
 			
 			boost::uint32_t addr = offset & 0xffffff; // may wrap, but OK
 			
-			boost::uint32_t rel = buffer[0] | (boost::uint32_t(buffer[1]) << 8) | (boost::uint32_t(buffer[2]) << 16);
+			boost::uint32_t rel = buffer[0] | (boost::uint32_t(buffer[1]) << 8)
+			                                | (boost::uint32_t(buffer[2]) << 16);
 			rel -= addr;
-			buffer[0] = boost::uint8_t(rel), buffer[1] = boost::uint8_t(rel >> 8), buffer[2] = boost::uint8_t(rel >> 16);
+			buffer[0] = boost::uint8_t(rel);
+			buffer[1] = boost::uint8_t(rel >> 8);
+			buffer[2] = boost::uint8_t(rel >> 16);
 			
 			if(flip_high_byte) {
 				// For a slightly higher compression ratio, we want the resulting high
