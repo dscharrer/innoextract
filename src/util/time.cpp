@@ -239,7 +239,7 @@ bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t
 	filetime.dwLowDateTime = DWORD(time);
 	filetime.dwHighDateTime = DWORD(time >> 32);
 	
-	bool ret = SetFileTime(handle, &filetime, &filetime, &filetime);
+	bool ret = (SetFileTime(handle, &filetime, &filetime, &filetime) != 0);
 	CloseHandle(handle);
 	
 	return ret;

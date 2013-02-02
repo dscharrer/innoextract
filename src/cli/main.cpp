@@ -454,7 +454,7 @@ int main(int argc, char * argv[]) {
 	}
 	
 	// Verbosity settings.
-	o.silent = options.count("silent");
+	o.silent = (options.count("silent") != 0);
 	logger::quiet = o.silent || options.count("quiet");
 #ifdef DEBUG
 	if(options.count("debug")) {
@@ -480,21 +480,21 @@ int main(int argc, char * argv[]) {
 	color::init(color_e, progress_e);
 	
 	// Help output.
-	if(options.count("help")) {
+	if(options.count("help") != 0) {
 		print_help(argv[0], visible);
 		return ExitSuccess;
 	}
 	
 	// License output
-	if(options.count("license")) {
+	if(options.count("license") != 0) {
 		print_license();
 		return ExitSuccess;
 	}
 	
 	// Main action.
-	o.list = options.count("list");
-	bool extract = options.count("extract");
-	o.test = options.count("test");
+	o.list = (options.count("list") != 0);
+	bool extract = (options.count("extract") != 0);
+	o.test = (options.count("test") != 0);
 	bool explicit_action = o.list || extract || o.test;
 	if(!explicit_action) {
 		extract = true;
@@ -508,8 +508,8 @@ int main(int argc, char * argv[]) {
 	}
 	
 	// Additional actions.
-	o.dump = options.count("dump");
-	o.filenames.set_lowercase(options.count("lowercase"));
+	o.dump = (options.count("dump") != 0);
+	o.filenames.set_lowercase(options.count("lowercase") != 0);
 	
 	// File timestamps
 	{
@@ -529,7 +529,7 @@ int main(int argc, char * argv[]) {
 	}
 	
 	// List version.
-	if(options.count("version")) {
+	if(options.count("version") != 0) {
 		print_version();
 		if(!explicit_action) {
 			return ExitSuccess;
@@ -543,7 +543,7 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	
-	if(!options.count("setup-files")) {
+	if(!options.count("setup-files") != 0) {
 		if(!o.silent) {
 			std::cout << argv[0] << ": no input files specified\n";
 			std::cout << "Try `" << argv[0] << " -h` for more information.\n";

@@ -80,6 +80,10 @@ T load(std::istream & is) {
 	return value;
 }
 
+inline bool load_bool(std::istream & is) {
+	return (load<boost::uint8_t>(is) != 0);
+}
+
 template <class T, class Endianness>
 T load_number(std::istream & is) {
 	return Endianness::byteswap_if_alien(load<T>(is));

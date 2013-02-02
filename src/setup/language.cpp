@@ -76,7 +76,7 @@ void language_entry::load(std::istream & is, const version & version) {
 	copyright_font_size = load_number<boost::uint32_t>(is);
 	
 	if(version >= INNO_VERSION(5, 2, 3)) {
-		right_to_left = ::load<boost::uint8_t>(is);
+		right_to_left = load_bool(is);
 	} else {
 		right_to_left = false;
 	}

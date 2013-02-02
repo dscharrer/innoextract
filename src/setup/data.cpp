@@ -155,7 +155,7 @@ void data_entry::load(std::istream & is, const version & version) {
 		chunk.compression = stream::BZip2;
 	}
 	
-	chunk.encrypted = (options & ChunkEncrypted);
+	chunk.encrypted = ((options & ChunkEncrypted) != 0);
 	
 	if(options & CallInstructionOptimized) {
 		if(version < INNO_VERSION(5, 2, 0)) {

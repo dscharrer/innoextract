@@ -91,7 +91,7 @@ static const char PE_MAGIC[] = { 'P', 'E', 0, 0 };
 
 bool get_resource_table(boost::uint32_t & entry, boost::uint32_t resource_offset) {
 	
-	bool is_table = (entry & (boost::uint32_t(1) << 31));
+	bool is_table = ((entry & (boost::uint32_t(1) << 31)) != 0);
 	
 	entry &= ~(1 << 31), entry += resource_offset;
 	

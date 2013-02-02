@@ -383,7 +383,11 @@ void progress::update(boost::uint64_t delta, bool force) {
 	boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
 	boost::uint64_t time = boost::uint64_t((now - start_time).total_microseconds());
 	
+#if defined(_WIN32)
 	const boost::uint64_t update_interval = 100000;
+#else
+	const boost::uint64_t update_interval = 50000;
+#endif
 	if(!force && time - last_time < update_interval) {
 		return;
 	}

@@ -126,7 +126,7 @@ std::streamsize inno_exe_decoder_4108::read(Source & src, char * dest, std::stre
 			
 			// Check if this is a CALL or JMP instruction.
 			if(byte == 0xe8 || byte == 0xe9) {
-				addr = -addr_offset;
+				addr = ~addr_offset + 1;
 				addr_bytes_left = 4;
 			}
 			

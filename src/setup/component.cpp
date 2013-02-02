@@ -77,7 +77,7 @@ void component_entry::load(std::istream & is, const version & version) {
 	
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
 		level = load_number<boost::int32_t>(is);
-		used = load_number<boost::uint8_t>(is);
+		used = load_bool(is);
 	} else {
 		level = 0, used = true;
 	}

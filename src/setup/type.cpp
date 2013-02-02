@@ -71,7 +71,7 @@ void type_entry::load(std::istream & is, const version & version) {
 	winver.load(is, version);
 	
 	type_flags options = stored_flags<stored_type_flags>(is).get();
-	custom_type = (options & CustomSetupType);
+	custom_type = ((options & CustomSetupType) != 0);
 	
 	if(version >= INNO_VERSION(4, 0, 3)) {
 		type = stored_enum<stored_setup_type>(is).get();
