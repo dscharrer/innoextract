@@ -152,6 +152,10 @@ struct file_output {
 
 static void process_file(const fs::path & file, const options & o) {
 	
+	if(fs::is_directory(file)) {
+		throw std::runtime_error("input file \"" + file.string() + "\" is a directory");
+	}
+	
 	fs::ifstream ifs(file, std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
 	if(!ifs.is_open()) {
 		throw std::runtime_error("error opening file \"" + file.string() + '"');
