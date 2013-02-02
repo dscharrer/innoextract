@@ -72,7 +72,14 @@ time parse_time(std::tm tm) {
 	
 	tm.tm_isdst = 0;
 	
-#if INNOEXTRACT_HAVE_TIMEGM
+#if INNOEXTRACT_HAVE_MKGMTIME64
+	
+	// Windows
+	
+	return _mkgmtime64(&tm);
+	
+	
+#elif INNOEXTRACT_HAVE_TIMEGM
 	
 	// GNU / BSD extension
 	
@@ -80,7 +87,7 @@ time parse_time(std::tm tm) {
 	
 #elif INNOEXTRACT_HAVE_MKGMTIME
 	
-	// Windows
+	// Windows (32-bit for MinGW32)
 	
 	return _mkgmtime(&tm);
 	
@@ -102,9 +109,10 @@ time parse_time(std::tm tm) {
 	
 }
 
-static std::time_t to_time_t(time t, const char * file = "conversion") {
+template <typename Time>
+static Time to_time_t(time t, const char * file = "conversion") {
 	
-	std::time_t ret = std::time_t(t);
+	Time ret = Time(t);
 	
 	if(time(ret) != t) {
 		log_warning << "truncating timestamp " << t << " to " << ret << " for " << file;
@@ -117,25 +125,32 @@ std::tm format_time(time t) {
 	
 	std::tm ret;
 	
-#if INNOEXTRACT_HAVE_GMTIME_R
+#if INNOEXTRACT_HAVE_GMTIME64_S
+	
+	// Windows
+	
+	__time64_t tt = to_time_t<__time64_t>(t);
+	_gmtime64_s(&ret, &tt);
+	
+#elif INNOEXTRACT_HAVE_GMTIME_R
 	
 	// POSIX.1
 	
-	time_t tt = to_time_t(t);
+	time_t tt = to_time_t<time_t>(t);
 	gmtime_r(&tt, &ret);
 	
 #elif INNOEXTRACT_HAVE_GMTIME_S
 	
 	// Windows (MSVC)
 	
-	time_t tt = to_time_t(t);
+	time_t tt = to_time_t<time_t>(t);
 	gmtime_s(&ret, &tt);
 	
 #else
 	
 	// Standard C++, but may not be thread-safe
 	
-	std::time_t tt = to_time_t(t);
+	std::time_t tt = to_time_t<std::time_t>(t);
 	std::tm * tmp = std::gmtime(&tt);
 	if(tmp) {
 		ret = *tmp;
@@ -197,7 +212,7 @@ bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t
 	// nanosecond precision, for Linux and POSIX.1-2008+ systems
 	
 	struct timespec times[2];
-	times[0].tv_sec = to_time_t(t, path.string().c_str());
+	times[0].tv_sec = to_time_t<time_t>(t, path.string().c_str());
 	times[0].tv_nsec = boost::int32_t(nsec);
 	times[1] = times[0];
 	
@@ -234,7 +249,7 @@ bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t
 	// microsecond precision, for older POSIX systems (4.3BSD, POSIX.1-2001)
 	
 	struct timeval times[2];
-	times[0].tv_sec = to_time_t(t, path.string().c_str());
+	times[0].tv_sec = to_time_t<time_t>(t, path.string().c_str());
 	times[0].tv_usec = boost::int32_t(nsec / 1000);
 	times[1] = times[0];
 	
@@ -246,7 +261,8 @@ bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t
 	
 	try {
 		(void)nsec; // sub-second precision not supported by boost
-		boost::filesystem::last_write_time(path, t);
+		std::time_t tt = to_time_t<std::time_t>(t, path.string().c_str());
+		boost::filesystem::last_write_time(path, tt);
 		return true;
 	} catch(...) {
 		return false;
