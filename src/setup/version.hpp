@@ -21,15 +21,16 @@
 #ifndef INNOEXTRACT_SETUP_VERSION_HPP
 #define INNOEXTRACT_SETUP_VERSION_HPP
 
-#include <stdint.h>
 #include <iosfwd>
 #include <exception>
+
+#include <boost/cstdint.hpp>
 
 namespace setup {
 
 struct version_error : public std::exception { };
 
-typedef uint32_t version_constant;
+typedef boost::uint32_t version_constant;
 #define INNO_VERSION_EXT(a, b, c, d) ( \
 	  (::setup::version_constant(a) << 24) \
 	| (::setup::version_constant(b) << 16) \
@@ -42,7 +43,7 @@ struct version {
 	
 	version_constant value;
 	
-	uint8_t bits; // 16 or 32
+	boost::uint8_t bits; // 16 or 32
 	
 	bool unicode;
 	
@@ -51,12 +52,12 @@ struct version {
 	version() : known(false) { }
 	
 	version(version_constant value, bool unicode = false,
-	        bool known = false, uint8_t bits = 32)
+	        bool known = false, boost::uint8_t bits = 32)
 		: value(value), bits(bits), unicode(unicode), known(known) { }
 	
 	
-	version(uint8_t a, uint8_t b, uint8_t c, uint8_t d = 0, bool unicode = false,
-	        bool known = false, uint8_t bits = 32)
+	version(boost::uint8_t a, boost::uint8_t b, boost::uint8_t c, boost::uint8_t d = 0, bool unicode = false,
+	        bool known = false, boost::uint8_t bits = 32)
 		: value(INNO_VERSION_EXT(a, b, c, d)), bits(bits), unicode(unicode), known(known) { }
 	
 	unsigned int a() const { return  value >> 24;         }
@@ -67,7 +68,7 @@ struct version {
 	void load(std::istream & is);
 	
 	//! \return the Windows codepage used to encode strings
-	uint32_t codepage() const { return uint32_t(unicode ? 1200 : 1252); }
+	boost::uint32_t codepage() const { return boost::uint32_t(unicode ? 1200 : 1252); }
 	
 	//! \return true if the version stored might not be correct
 	bool is_ambiguous() const;

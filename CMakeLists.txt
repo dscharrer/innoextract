@@ -35,6 +35,14 @@ include(VersionString)
 
 # Find required libraries
 
+# Win32 API
+if(WIN32)
+	# Ensure we aren't using functionalities not found under Window XP SP1
+	add_definitions(-D_WIN32_WINNT=0x0502)
+	add_definitions(-DNOMINMAX)
+	add_definitions(-DWIN32_LEAN_AND_MEAN)
+endif()
+
 if(USE_STATIC_LIBS)
 	add_cxxflag("-static-libgcc")
 	add_cxxflag("-static-libstdc++")
@@ -131,7 +139,7 @@ if(NOT INNOEXTRACT_HAVE_TIMEGM)
 endif()
 check_symbol_exists(gmtime_r "time.h" INNOEXTRACT_HAVE_GMTIME_R)
 if(NOT INNOEXTRACT_HAVE_GMTIME_R)
-	check_symbol_exists(_gmtime_s "time.h" INNOEXTRACT_HAVE_GMTIME_S)
+	check_symbol_exists(gmtime_s "time.h" INNOEXTRACT_HAVE_GMTIME_S)
 endif()
 if(NOT WIN32)
 	check_symbol_exists(utimensat "sys/stat.h" INNOEXTRACT_HAVE_UTIMENSAT)

@@ -34,12 +34,12 @@ class slice_reader : public boost::iostreams::source {
 	path_type dir;
 	path_type last_dir;
 	path_type base_file;
-	const uint32_t data_offset;
+	const boost::uint32_t data_offset;
 	const size_t slices_per_disk;
 	
 	size_t current_slice;
 	path_type slice_file;
-	uint32_t slice_size;
+	boost::uint32_t slice_size;
 	
 	boost::filesystem::ifstream ifs;
 	
@@ -48,11 +48,11 @@ class slice_reader : public boost::iostreams::source {
 	
 public:
 	
-	slice_reader(const path_type & setup_file, uint32_t data_offset);
+	slice_reader(const path_type & setup_file, boost::uint32_t data_offset);
 	
 	slice_reader(const path_type & dir, const path_type & base_file, size_t slices_per_disk);
 	
-	bool seek(size_t slice, uint32_t offset);
+	bool seek(size_t slice, boost::uint32_t offset);
 	
 	std::streamsize read(char * buffer, std::streamsize bytes);
 	

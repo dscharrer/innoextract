@@ -22,9 +22,10 @@
 #define INNOEXTRACT_SETUP_DATA_HPP
 
 #include <stddef.h>
-#include <stdint.h>
 #include <ctime>
 #include <iosfwd>
+
+#include <boost/cstdint.hpp>
 
 #include "crypto/checksum.hpp"
 #include "stream/chunk.hpp"
@@ -59,10 +60,10 @@ struct data_entry {
 	stream::file file;
 	
 	std::time_t timestamp;
-	uint32_t timestamp_nsec;
+	boost::uint32_t timestamp_nsec;
 	
-	uint32_t file_version_ms;
-	uint32_t file_version_ls;
+	boost::uint32_t file_version_ms;
+	boost::uint32_t file_version_ls;
 	
 	flags options;
 	

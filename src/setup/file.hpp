@@ -21,9 +21,10 @@
 #ifndef INNOEXTRACT_SETUP_FILE_HPP
 #define INNOEXTRACT_SETUP_FILE_HPP
 
-#include <stdint.h>
 #include <string>
 #include <iosfwd>
+
+#include <boost/cstdint.hpp>
 
 #include "setup/item.hpp"
 #include "util/enum.hpp"
@@ -85,9 +86,9 @@ struct file_entry : public item {
 	std::string install_font_name;
 	std::string strong_assembly_name;
 	
-	uint32_t location; //!< index into the data entry list
-	uint32_t attributes;
-	uint64_t external_size;
+	boost::uint32_t location; //!< index into the data entry list
+	boost::uint32_t attributes;
+	boost::uint64_t external_size;
 	
 	int permission; //!< index into the permission entry list
 	

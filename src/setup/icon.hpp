@@ -21,9 +21,10 @@
 #ifndef INNOEXTRACT_SETUP_ICON_HPP
 #define INNOEXTRACT_SETUP_ICON_HPP
 
-#include <stdint.h>
 #include <string>
 #include <iosfwd>
+
+#include <boost/cstdint.hpp>
 
 #include "setup/item.hpp"
 #include "util/enum.hpp"
@@ -66,7 +67,7 @@ struct icon_entry : public item {
 	
 	close_setting close_on_exit;
 	
-	uint16_t hotkey;
+	boost::uint16_t hotkey;
 	
 	flags options;
 	

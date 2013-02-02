@@ -32,11 +32,11 @@
 
 namespace {
 
-std::map<uint32_t, iconv_t> converters;
+std::map<boost::uint32_t, iconv_t> converters;
 
-iconv_t get_converter(uint32_t codepage) {
+iconv_t get_converter(boost::uint32_t codepage) {
 	
-	std::map<uint32_t, iconv_t>::iterator i = converters.find(codepage);
+	std::map<boost::uint32_t, iconv_t>::iterator i = converters.find(codepage);
 	
 	if(i != converters.end()) {
 		return i->second;
@@ -59,7 +59,7 @@ iconv_t get_converter(uint32_t codepage) {
 
 void binary_string::load(std::istream & is, std::string & target) {
 	
-	int32_t length = load_number<int32_t>(is);
+	boost::int32_t length = load_number<boost::int32_t>(is);
 	if(is.fail()) {
 		return;
 	}
@@ -68,14 +68,14 @@ void binary_string::load(std::istream & is, std::string & target) {
 	
 	while(length) {
 		char buffer[10 * 1024];
-		int32_t buf_size = std::min(length, int32_t(sizeof(buffer)));
+		boost::int32_t buf_size = std::min(length, boost::int32_t(sizeof(buffer)));
 		is.read(buffer, buf_size);
 		target.append(buffer, size_t(buf_size));
 		length -= buf_size;
 	}
 }
 
-void encoded_string::load(std::istream & is, std::string & target, uint32_t codepage) {
+void encoded_string::load(std::istream & is, std::string & target, boost::uint32_t codepage) {
 	
 	std::string temp;
 	binary_string::load(is, temp);
@@ -83,7 +83,7 @@ void encoded_string::load(std::istream & is, std::string & target, uint32_t code
 	to_utf8(temp, target, codepage);
 }
 
-void to_utf8(const std::string & from, std::string & to, uint32_t codepage) {
+void to_utf8(const std::string & from, std::string & to, boost::uint32_t codepage) {
 	
 	iconv_t converter = get_converter(codepage);
 	

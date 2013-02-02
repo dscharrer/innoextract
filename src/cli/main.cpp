@@ -190,7 +190,7 @@ static void process_file(const fs::path & file, const options & o) {
 	}
 #endif
 	
-	uint64_t total_size = 0;
+	boost::uint64_t total_size = 0;
 	
 	std::vector< std::vector<size_t> > files_for_location;
 	files_for_location.resize(info.data_entries.size());
@@ -235,7 +235,7 @@ static void process_file(const fs::path & file, const options & o) {
 			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);
 		}
 		
-		uint64_t offset = 0;
+		boost::uint64_t offset = 0;
 		
 		BOOST_FOREACH(const Files::value_type & location, chunk.second) {
 			const stream::file & file = location.first;
@@ -351,7 +351,7 @@ static void process_file(const fs::path & file, const options & o) {
 							                             + out.name.string() + '"');
 						}
 					}
-					extract_progress.update(uint64_t(n));
+					extract_progress.update(boost::uint64_t(n));
 				}
 			}
 			

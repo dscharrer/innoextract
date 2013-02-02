@@ -21,6 +21,10 @@
 #ifndef INNOEXTRACT_UTIL_UTIL_HPP
 #define INNOEXTRACT_UTIL_UTIL_HPP
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 #define ARRAY_SIZE(array) (sizeof(array)/sizeof(*(array)))
 
 template <typename T>
@@ -88,27 +92,24 @@ template <class T> T rotl_fixed(T x, unsigned int y) {
 
 #if defined(_MSC_VER) && _MSC_VER >= 1400 && !defined(__INTEL_COMPILER)
 
-template<> uint8_t rotl_fixed<uint8_t>(uint8_t x, unsigned int y) {
+template<> inline unsigned char rotl_fixed<unsigned char>(unsigned char x, unsigned int y) {
 	return y ? _rotl8(x, y) : x;
 }
 
-// Intel C++ Compiler 10.0 gives undefined externals with these
-template<> uint16_t rotl_fixed<uint16_t>(uint16_t x, unsigned int y) {
+template<> inline unsigned short rotl_fixed<unsigned short>(unsigned short x, unsigned int y) {
 	return y ? _rotl16(x, y) : x;
 }
 
 #endif
 
 #ifdef _MSC_VER
-template<> uint32_t rotl_fixed<uint32_t>(uint32_t x, unsigned int y) {
+template<> inline unsigned long rotl_fixed<unsigned long>(unsigned long x, unsigned int y) {
 	return y ? _lrotl(x, y) : x;
 }
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1300 && !defined(__INTEL_COMPILER)
-// Intel C++ Compiler 10.0 calls a function instead of using the rotate instruction when
-// using these instructions
-template<> uint64_t rotl_fixed<uint64_t>(uint64_t x, unsigned int y) {
+template<> inline __int64 rotl_fixed<__int64>(__int64 x, unsigned int y) {
 	return y ? _rotl64(x, y) : x;
 }
 #endif

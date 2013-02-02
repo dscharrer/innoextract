@@ -219,7 +219,7 @@ static void print_entry(const setup::info & info, size_t i, const setup::file_en
 	} else {
 		cout << " - " << quoted(entry.destination);
 	}
-	if(entry.location != uint32_t(-1)) {
+	if(entry.location != boost::uint32_t(-1)) {
 		cout << " (location: " << color::cyan << entry.location << color::reset << ')';
 	}
 	cout  << '\n';

@@ -225,12 +225,14 @@ static int query_screen_width() {
 	
 #endif
 	
+#if !defined(_WIN32)
 	try {
 		char * columns = std::getenv("COLUMNS");
 		if(columns) {
 			return boost::lexical_cast<int>(columns);
 		}
 	} catch(...) { /* ignore bad values */ }
+#endif
 	
 	// Assume a default screen width of 80 columns
 	return 80;
@@ -365,12 +367,12 @@ void progress::show_unbounded(float value, const std::string & label) {
 	progress_cleared = false;
 }
 
-progress::progress(uint64_t max, bool show_rate)
+progress::progress(boost::uint64_t max, bool show_rate)
 	: max(max), value(0), show_rate(show_rate),
 	  start_time(boost::posix_time::microsec_clock::universal_time()),
 	  last_status(-1.f), last_time(0), last_rate(0.f) { }
 
-void progress::update(uint64_t delta, bool force) {
+void progress::update(boost::uint64_t delta, bool force) {
 	
 	if(!show_progress) {
 		return;
@@ -390,9 +392,9 @@ void progress::update(uint64_t delta, bool force) {
 	}
 	
 	boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
-	uint64_t time = uint64_t((now - start_time).total_microseconds());
+	boost::uint64_t time = boost::uint64_t((now - start_time).total_microseconds());
 	
-	const uint64_t update_interval = 100000;
+	const boost::uint64_t update_interval = 100000;
 	if(!force && time - last_time < update_interval) {
 		return;
 	}

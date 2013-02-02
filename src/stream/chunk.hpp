@@ -22,11 +22,11 @@
 #define INNOEXTRACT_STREAM_CHUNK_HPP
 
 #include <stddef.h>
-#include <stdint.h>
 #include <ios>
 
-#include <boost/shared_ptr.hpp>
+#include <boost/cstdint.hpp>
 #include <boost/iostreams/chain.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "util/enum.hpp"
 
@@ -54,8 +54,8 @@ struct chunk {
 	size_t first_slice; //!< Slice where the chunk starts.
 	size_t last_slice;
 	
-	uint32_t offset;    //!< Offset of the compressed chunk in firstSlice.
-	uint64_t size;      //! Total compressed size of the chunk.
+	boost::uint32_t offset;    //!< Offset of the compressed chunk in firstSlice.
+	boost::uint64_t size;      //! Total compressed size of the chunk.
 	
 	compression_method compression;
 	bool encrypted;

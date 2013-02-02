@@ -23,8 +23,10 @@
 
 // Taken from Crypto++ and modified to fit the project.
 
-#include <stdint.h>
 #include <cstring>
+
+#include <boost/cstdint.hpp>
+
 #include "crypto/checksum.hpp"
 #include "util/endian.hpp"
 #include "util/types.hpp"
@@ -52,7 +54,7 @@ public:
 private:
 
 	size_t hash(const hash_word * input, size_t length);
-	void pad(size_t last_block_size, uint8_t pad_first = 0x80);
+	void pad(size_t last_block_size, boost::uint8_t pad_first = 0x80);
 	
 	hash_word bit_count_hi() const {
 		return (count_lo >> (8 * sizeof(hash_word) - 3)) + (count_hi << 3);
@@ -78,7 +80,7 @@ void iterated_hash<T>::update(const char * input, size_t len) {
 	count_hi += hash_word(safe_right_shift<8 * sizeof(hash_word)>(len));
 	
 	size_t num = mod_power_of_2(old_count_lo, size_t(block_size));
-	uint8_t * d = reinterpret_cast<uint8_t *>(data);
+	boost::uint8_t * d = reinterpret_cast<boost::uint8_t *>(data);
 	
 	if(num != 0) { // process left over data
 		if(num + len >= block_size) {
@@ -137,11 +139,11 @@ size_t iterated_hash<T>::hash(const hash_word * input, size_t length) {
 }
 
 template <class T>
-void iterated_hash<T>::pad(size_t last_block_size, uint8_t pad_first) {
+void iterated_hash<T>::pad(size_t last_block_size, boost::uint8_t pad_first) {
 	
 	size_t num = mod_power_of_2(count_lo, size_t(block_size));
 	
-	uint8_t * d = reinterpret_cast<uint8_t *>(data);
+	boost::uint8_t * d = reinterpret_cast<boost::uint8_t *>(data);
 	
 	d[num++] = pad_first;
 	

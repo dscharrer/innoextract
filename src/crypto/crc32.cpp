@@ -38,7 +38,7 @@ namespace crypto {
 #endif
 
 /* Table of CRC-32's of all single byte values (made by makecrc.c) */
-const uint32_t crc32::table[] = {
+const boost::uint32_t crc32::table[] = {
 #if INNOEXTRACT_ENDIANNESS == LITTLE_ENDIAN
 	0x00000000L, 0x77073096L, 0xee0e612cL, 0x990951baL, 0x076dc419L,
 	0x706af48fL, 0xe963a535L, 0x9e6495a3L, 0x0edb8832L, 0x79dcb8a4L,
@@ -151,11 +151,11 @@ const uint32_t crc32::table[] = {
 void crc32::update(const char * s, size_t n) {
 	
 	for(; (size_t(s) % 4 != 0) && n > 0; n--) {
-		crc = table[CRC32_INDEX(crc) ^ uint8_t(*s++)] ^ CRC32_SHIFTED(crc);
+		crc = table[CRC32_INDEX(crc) ^ boost::uint8_t(*s++)] ^ CRC32_SHIFTED(crc);
 	}
 	
 	while(n >= 4) {
-		crc ^= *reinterpret_cast<const uint32_t *>(s);
+		crc ^= *reinterpret_cast<const boost::uint32_t *>(s);
 		crc = table[CRC32_INDEX(crc)] ^ CRC32_SHIFTED(crc);
 		crc = table[CRC32_INDEX(crc)] ^ CRC32_SHIFTED(crc);
 		crc = table[CRC32_INDEX(crc)] ^ CRC32_SHIFTED(crc);
@@ -165,7 +165,7 @@ void crc32::update(const char * s, size_t n) {
 	}
 	
 	while(n--) {
-		crc = table[CRC32_INDEX(crc) ^ uint8_t(*s++)] ^ CRC32_SHIFTED(crc);
+		crc = table[CRC32_INDEX(crc) ^ boost::uint8_t(*s++)] ^ CRC32_SHIFTED(crc);
 	}
 }
 

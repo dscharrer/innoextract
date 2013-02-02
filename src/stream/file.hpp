@@ -39,8 +39,8 @@ enum compression_filter {
 
 struct file {
 	
-	uint64_t offset; //!< Offset of this file within the decompressed chunk.
-	uint64_t size; //!< Decompressed size of this file.
+	boost::uint64_t offset; //!< Offset of this file within the decompressed chunk.
+	boost::uint64_t size; //!< Decompressed size of this file.
 	
 	crypto::checksum checksum;
 	

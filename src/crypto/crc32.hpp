@@ -21,7 +21,7 @@
 #ifndef INNOEXTRACT_CRYPTO_CRC32_HPP
 #define INNOEXTRACT_CRYPTO_CRC32_HPP
 
-#include <stdint.h>
+#include <boost/cstdint.hpp>
 
 #include "crypto/checksum.hpp"
 
@@ -34,14 +34,14 @@ struct crc32 : public checksum_base<crc32> {
 	
 	void update(const char * data, size_t length);
 	
-	uint32_t finalize() const { return crc ^ CRC32_NEGL; }
+	boost::uint32_t finalize() const { return crc ^ CRC32_NEGL; }
 	
 private:
 	
-	static const uint32_t CRC32_NEGL = 0xffffffffl;
+	static const boost::uint32_t CRC32_NEGL = 0xffffffffl;
 	
-	static const uint32_t table[256];
-	uint32_t crc;
+	static const boost::uint32_t table[256];
+	boost::uint32_t crc;
 };
 
 } // namespace crypto

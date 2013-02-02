@@ -68,13 +68,13 @@ std::ostream & operator<<(std::ostream & os, const crypto::checksum & checksum) 
 		}
 		case crypto::MD5: {
 			for(size_t i = 0; i < ARRAY_SIZE(checksum.md5); i++) {
-				os << std::setfill('0') << std::hex << std::setw(2) << int(uint8_t(checksum.md5[i]));
+				os << std::setfill('0') << std::hex << std::setw(2) << int(boost::uint8_t(checksum.md5[i]));
 			}
 			break;
 		}
 		case crypto::SHA1: {
 			for(size_t i = 0; i < ARRAY_SIZE(checksum.sha1); i++) {
-				os << std::setfill('0') << std::hex << std::setw(2) << int(uint8_t(checksum.sha1[i]));
+				os << std::setfill('0') << std::hex << std::setw(2) << int(boost::uint8_t(checksum.sha1[i]));
 			}
 			break;
 		}

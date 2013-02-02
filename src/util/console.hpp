@@ -22,7 +22,6 @@
 #define INNOEXTRACT_UTIL_CONSOLE_HPP
 
 #include <stddef.h>
-#include <stdint.h>
 #include <ostream>
 #include <iomanip>
 #include <sstream>
@@ -84,27 +83,27 @@ void init(is_enabled color = automatic, is_enabled progress = automatic);
 
 class progress {
 	
-	uint64_t max;
-	uint64_t value;
+	boost::uint64_t max;
+	boost::uint64_t value;
 	bool show_rate;
 	
 	boost::posix_time::ptime start_time;
 	
 	float last_status;
-	uint64_t last_time;
+	boost::uint64_t last_time;
 	
 	float last_rate;
 	std::ostringstream label;
 	
 public:
 	
-	progress(uint64_t max = 0, bool show_rate = true);
+	progress(boost::uint64_t max = 0, bool show_rate = true);
 	progress(const progress & o)
 		: max(o.max), value(o.value), show_rate(o.show_rate), start_time(o.start_time),
 		  last_status(o.last_status), last_time(o.last_time),
 		  last_rate(o.last_rate), label(o.label.str()) { }
 	
-	void update(uint64_t delta = 0, bool force = false);
+	void update(boost::uint64_t delta = 0, bool force = false);
 	
 	static void show(float value, const std::string & label = std::string());
 	

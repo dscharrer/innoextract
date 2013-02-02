@@ -21,10 +21,11 @@
 #ifndef INNOEXTRACT_UTIL_LOAD_HPP
 #define INNOEXTRACT_UTIL_LOAD_HPP
 
-#include <stdint.h>
 #include <cstring>
 #include <iostream>
 #include <string>
+
+#include <boost/cstdint.hpp>
 
 #include "util/endian.hpp"
 #include "util/types.hpp"
@@ -45,17 +46,17 @@ inline std::istream & operator>>(std::istream & is, const binary_string & str) {
 	return is;
 }
 
-void to_utf8(const std::string & from, std::string & to, uint32_t codepage = 1252);
+void to_utf8(const std::string & from, std::string & to, boost::uint32_t codepage = 1252);
 
 struct encoded_string {
 	
 	std::string & data;
-	uint32_t codepage;
+	boost::uint32_t codepage;
 	
-	encoded_string(std::string & target, uint32_t _codepage)
+	encoded_string(std::string & target, boost::uint32_t _codepage)
 		: data(target), codepage(_codepage) { }
 	
-	static void load(std::istream & is, std::string & target, uint32_t codepage);
+	static void load(std::istream & is, std::string & target, boost::uint32_t codepage);
 	
 };
 
@@ -108,12 +109,12 @@ T load_number(std::istream & is, size_t bits) {
 }
 
 template <class T>
-void discard(T & is, uint64_t bytes) {
+void discard(T & is, boost::uint64_t bytes) {
 	char buf[1024];
 	while(bytes) {
-		std::streamsize n = std::streamsize(std::min<uint64_t>(bytes, ARRAY_SIZE(buf)));
+		std::streamsize n = std::streamsize(std::min<boost::uint64_t>(bytes, ARRAY_SIZE(buf)));
 		is.read(buf, n);
-		bytes -= uint64_t(n);
+		bytes -= boost::uint64_t(n);
 	}
 }
 

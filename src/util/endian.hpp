@@ -29,29 +29,31 @@
 #include <byteswap.h>
 #endif
 
-inline uint8_t byteswap(uint8_t value) {
+#include <boost/cstdint.hpp>
+
+inline boost::uint8_t byteswap(boost::uint8_t value) {
 	return value;
 }
 
-inline int8_t byteswap(int8_t value) {
-	return int8_t(byteswap(uint8_t(value)));
+inline boost::int8_t byteswap(boost::int8_t value) {
+	return boost::int8_t(byteswap(boost::uint8_t(value)));
 }
 
-inline uint16_t byteswap(uint16_t value) {
+inline boost::uint16_t byteswap(boost::uint16_t value) {
 #if defined(_MSC_VER) && _MSC_VER >= 1300
 	return _byteswap_ushort(value);
 #elif INNOEXTRACT_HAVE_BSWAP_16
 	return bswap_16(value);
 #else
-	return uint16_t((uint16_t(uint8_t(value)) << 8) | uint8_t(value >> 8));
+	return boost::uint16_t((boost::uint16_t(boost::uint8_t(value)) << 8) | boost::uint8_t(value >> 8));
 #endif
 }
 
-inline int16_t byteswap(int16_t value) {
-	return int16_t(byteswap(uint16_t(value)));
+inline boost::int16_t byteswap(boost::int16_t value) {
+	return boost::int16_t(byteswap(boost::uint16_t(value)));
 }
 
-inline uint32_t byteswap(uint32_t value) {
+inline boost::uint32_t byteswap(boost::uint32_t value) {
 #if defined(__GNUC__) && !defined(__PATHCC__) \
     && __GNUC__ >= 4 && (__GNUC__ > 4 || __GNUC_MINOR__ >= 3)
 	return __builtin_bswap32(value);
@@ -60,15 +62,15 @@ inline uint32_t byteswap(uint32_t value) {
 #elif INNOEXTRACT_HAVE_BSWAP_32
 	return bswap_32(value);
 #else
-	return (uint32_t(byteswap(uint16_t(value))) << 16) | byteswap(uint16_t(value >> 16));
+	return (boost::uint32_t(byteswap(boost::uint16_t(value))) << 16) | byteswap(boost::uint16_t(value >> 16));
 #endif
 }
 
-inline int32_t byteswap(int32_t value) {
-	return int32_t(byteswap(uint32_t(value)));
+inline boost::int32_t byteswap(boost::int32_t value) {
+	return boost::int32_t(byteswap(boost::uint32_t(value)));
 }
 
-inline uint64_t byteswap(uint64_t value) {
+inline boost::uint64_t byteswap(boost::uint64_t value) {
 #if defined(__GNUC__) && !defined(__PATHCC__) \
     && __GNUC__ >= 4 && (__GNUC__ > 4 || __GNUC_MINOR__ >= 3)
 	return __builtin_bswap64(value);
@@ -77,12 +79,12 @@ inline uint64_t byteswap(uint64_t value) {
 #elif INNOEXTRACT_HAVE_BSWAP_64
 	return bswap_64(value);
 #else
-	return (uint64_t(byteswap(uint32_t(value))) << 32) | byteswap(uint32_t(value >> 32));
+	return (boost::uint64_t(byteswap(boost::uint32_t(value))) << 32) | byteswap(boost::uint32_t(value >> 32));
 #endif
 }
 
-inline int64_t byteswap(int64_t value) {
-	return int64_t(byteswap(uint64_t(value)));
+inline boost::int64_t byteswap(boost::int64_t value) {
+	return boost::int64_t(byteswap(boost::uint64_t(value)));
 }
 
 template <class T>

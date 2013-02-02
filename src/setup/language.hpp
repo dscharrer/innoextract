@@ -21,9 +21,10 @@
 #ifndef INNOEXTRACT_SETUP_LANGUAGE_HPP
 #define INNOEXTRACT_SETUP_LANGUAGE_HPP
 
-#include <stdint.h>
 #include <string>
 #include <iosfwd>
+
+#include <boost/cstdint.hpp>
 
 namespace setup {
 
@@ -44,8 +45,8 @@ struct language_entry {
 	std::string info_before;
 	std::string info_after;
 	
-	uint32_t language_id;
-	uint32_t codepage;
+	boost::uint32_t language_id;
+	boost::uint32_t codepage;
 	size_t dialog_font_size;
 	size_t dialog_font_standard_height;
 	size_t title_font_size;

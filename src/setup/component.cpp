@@ -70,14 +70,14 @@ void component_entry::load(std::istream & is, const version & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		extra_disk_pace_required = load_number<uint64_t>(is);
+		extra_disk_pace_required = load_number<boost::uint64_t>(is);
 	} else {
-		extra_disk_pace_required = load_number<uint32_t>(is);
+		extra_disk_pace_required = load_number<boost::uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
-		level = load_number<int32_t>(is);
-		used = load_number<uint8_t>(is);
+		level = load_number<boost::int32_t>(is);
+		used = load_number<boost::uint8_t>(is);
 	} else {
 		level = 0, used = true;
 	}
@@ -92,7 +92,7 @@ void component_entry::load(std::istream & is, const version & version) {
 		options = stored_flags<stored_component_flags_0>(is).get();
 	}
 	
-	size = (version >= INNO_VERSION(4, 0, 0)) ? load_number<uint64_t>(is) : load_number<uint32_t>(is);
+	size = (version >= INNO_VERSION(4, 0, 0)) ? load_number<boost::uint64_t>(is) : load_number<boost::uint32_t>(is);
 }
 
 } // namespace setup

@@ -128,7 +128,7 @@ void header::load(std::istream & is, const version & version) {
 	options = 0;
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<uint32_t>(is); // uncompressed size of the setup header structure
+		::load<boost::uint32_t>(is); // uncompressed size of the setup header structure
 	}
 	
 	is >> encoded_string(app_name, version.codepage());
@@ -237,7 +237,7 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		language_count = load_number<uint32_t>(is);
+		language_count = load_number<boost::uint32_t>(is);
 	} else if(version >= INNO_VERSION(2, 0, 1)) {
 		language_count = 1;
 	} else {
@@ -245,62 +245,62 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 2, 1)) {
-		message_count = load_number<uint32_t>(is);
+		message_count = load_number<boost::uint32_t>(is);
 	} else {
 		message_count = 0;
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		permission_count = load_number<uint32_t>(is);
+		permission_count = load_number<boost::uint32_t>(is);
 	} else {
 		permission_count = 0;
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 0)) {
-		type_count = load_number<uint32_t>(is);
-		component_count = load_number<uint32_t>(is);
-		task_count = load_number<uint32_t>(is);
+		type_count = load_number<boost::uint32_t>(is);
+		component_count = load_number<boost::uint32_t>(is);
+		task_count = load_number<boost::uint32_t>(is);
 	} else {
 		type_count = 0, component_count = 0, task_count = 0;
 	}
 	
-	directory_count = load_number<uint32_t>(is, version.bits);
-	file_count = load_number<uint32_t>(is, version.bits);
-	data_entry_count = load_number<uint32_t>(is, version.bits);
-	icon_count = load_number<uint32_t>(is, version.bits);
-	ini_entry_count = load_number<uint32_t>(is, version.bits);
-	registry_entry_count = load_number<uint32_t>(is, version.bits);
-	delete_entry_count = load_number<uint32_t>(is, version.bits);
-	uninstall_delete_entry_count = load_number<uint32_t>(is, version.bits);
-	run_entry_count = load_number<uint32_t>(is, version.bits);
-	uninstall_run_entry_count = load_number<uint32_t>(is, version.bits);
+	directory_count = load_number<boost::uint32_t>(is, version.bits);
+	file_count = load_number<boost::uint32_t>(is, version.bits);
+	data_entry_count = load_number<boost::uint32_t>(is, version.bits);
+	icon_count = load_number<boost::uint32_t>(is, version.bits);
+	ini_entry_count = load_number<boost::uint32_t>(is, version.bits);
+	registry_entry_count = load_number<boost::uint32_t>(is, version.bits);
+	delete_entry_count = load_number<boost::uint32_t>(is, version.bits);
+	uninstall_delete_entry_count = load_number<boost::uint32_t>(is, version.bits);
+	run_entry_count = load_number<boost::uint32_t>(is, version.bits);
+	uninstall_run_entry_count = load_number<boost::uint32_t>(is, version.bits);
 	
-	int32_t license_size = 0;
-	int32_t info_before_size = 0;
-	int32_t info_after_size = 0;
+	boost::int32_t license_size = 0;
+	boost::int32_t info_before_size = 0;
+	boost::int32_t info_after_size = 0;
 	if(version < INNO_VERSION(1, 3, 21)) {
-		license_size = load_number<int32_t>(is, version.bits);
-		info_before_size = load_number<int32_t>(is, version.bits);
-		info_after_size = load_number<int32_t>(is, version.bits);
+		license_size = load_number<boost::int32_t>(is, version.bits);
+		info_before_size = load_number<boost::int32_t>(is, version.bits);
+		info_after_size = load_number<boost::int32_t>(is, version.bits);
 	}
 	
 	winver.load(is, version);
 	
-	back_color = load_number<uint32_t>(is);
+	back_color = load_number<boost::uint32_t>(is);
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		back_color2 = load_number<uint32_t>(is);
+		back_color2 = load_number<boost::uint32_t>(is);
 	} else {
 		back_color2 = 0;
 	}
-	image_back_color = load_number<uint32_t>(is);
+	image_back_color = load_number<boost::uint32_t>(is);
 	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 4)) {
-		small_image_back_color = load_number<uint32_t>(is);
+		small_image_back_color = load_number<boost::uint32_t>(is);
 	} else {
 		small_image_back_color = 0;
 	}
 	
 	if(version < INNO_VERSION(4, 2, 0)) {
-		password.crc32 = load_number<uint32_t>(is);
+		password.crc32 = load_number<boost::uint32_t>(is);
 		password.type = crypto::CRC32;
 	} else if(version < INNO_VERSION(5, 3, 9)) {
 		is.read(password.md5, std::streamsize(sizeof(password.md5)));
@@ -316,10 +316,10 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		extra_disk_space_required = load_number<int64_t>(is);
-		slices_per_disk = load_number<uint32_t>(is);
+		extra_disk_space_required = load_number<boost::int64_t>(is);
+		slices_per_disk = load_number<boost::uint32_t>(is);
 	} else {
-		extra_disk_space_required = load_number<int32_t>(is);
+		extra_disk_space_required = load_number<boost::int32_t>(is);
 		slices_per_disk = 1;
 	}
 	
@@ -386,8 +386,8 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	if(version >= INNO_VERSION(5, 2, 1) && version < INNO_VERSION(5, 3, 10)) {
-		signed_uninstaller_original_size = load_number<uint32_t>(is);
-		signed_uninstaller_header_checksum = load_number<uint32_t>(is);
+		signed_uninstaller_original_size = load_number<boost::uint32_t>(is);
+		signed_uninstaller_header_checksum = load_number<boost::uint32_t>(is);
 	} else {
 		signed_uninstaller_original_size = signed_uninstaller_header_checksum = 0;
 	}
@@ -398,9 +398,9 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	if(version >= INNO_VERSION(5, 5, 0)) {
-		uninstall_display_size = load_number<uint64_t>(is);
+		uninstall_display_size = load_number<boost::uint64_t>(is);
 	} else if(version >= INNO_VERSION(5, 3, 6)) {
-		uninstall_display_size = load_number<uint32_t>(is);
+		uninstall_display_size = load_number<boost::uint32_t>(is);
 	} else {
 		uninstall_display_size = 0;
 	}

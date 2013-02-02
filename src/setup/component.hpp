@@ -21,9 +21,10 @@
 #ifndef INNOEXTRACT_SETUP_COMPONENT_HPP
 #define INNOEXTRACT_SETUP_COMPONENT_HPP
 
-#include <stdint.h>
 #include <string>
 #include <iosfwd>
+
+#include <boost/cstdint.hpp>
 
 #include "setup/windows.hpp"
 #include "util/enum.hpp"
@@ -51,7 +52,7 @@ struct component_entry {
 	std::string languages;
 	std::string check;
 	
-	uint64_t extra_disk_pace_required;
+	boost::uint64_t extra_disk_pace_required;
 	
 	int level;
 	bool used;
@@ -60,7 +61,7 @@ struct component_entry {
 	
 	flags options;
 	
-	uint64_t size;
+	boost::uint64_t size;
 	
 	void load(std::istream & is, const version & version);
 	

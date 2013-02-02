@@ -22,7 +22,8 @@
 #define INNOEXTRACT_CRYPTO_ADLER32_HPP
 
 #include <stddef.h>
-#include <stdint.h>
+
+#include <boost/cstdint.hpp>
 
 #include "crypto/checksum.hpp"
 
@@ -35,11 +36,11 @@ struct adler32 : public checksum_base<adler32> {
 	
 	void update(const char * data, size_t length);
 	
-	uint32_t finalize() const { return (uint32_t(s2) << 16) | s1; }
+	boost::uint32_t finalize() const { return (boost::uint32_t(s2) << 16) | s1; }
 	
 private:
 	
-	uint16_t s1, s2;
+	boost::uint16_t s1, s2;
 };
 
 } // namespace crypto

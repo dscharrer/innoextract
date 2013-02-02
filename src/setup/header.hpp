@@ -21,11 +21,12 @@
 #ifndef INNOEXTRACT_SETUP_HEADER_HPP
 #define INNOEXTRACT_SETUP_HEADER_HPP
 
-#include <stdint.h>
 #include <stddef.h>
 #include <bitset>
 #include <string>
 #include <iosfwd>
+
+#include <boost/cstdint.hpp>
 
 #include "crypto/checksum.hpp"
 #include "setup/windows.hpp"
@@ -171,7 +172,7 @@ struct header {
 	
 	windows_version_range winver;
 	
-	typedef uint32_t Color;
+	typedef boost::uint32_t Color;
 	Color back_color;
 	Color back_color2;
 	Color image_back_color;
@@ -180,7 +181,7 @@ struct header {
 	crypto::checksum password;
 	salt password_salt;
 	
-	int64_t extra_disk_space_required;
+	boost::int64_t extra_disk_space_required;
 	size_t slices_per_disk;
 	
 	enum install_verbosity {
@@ -233,13 +234,13 @@ struct header {
 	architecture_types architectures_allowed;
 	architecture_types architectures_installed_in_64bit_mode;
 	
-	uint32_t signed_uninstaller_original_size;
-	uint32_t signed_uninstaller_header_checksum;
+	boost::uint32_t signed_uninstaller_original_size;
+	boost::uint32_t signed_uninstaller_header_checksum;
 	
 	auto_bool disable_dir_page;
 	auto_bool disable_program_group_page;
 	
-	uint64_t uninstall_display_size;
+	boost::uint64_t uninstall_display_size;
 	
 	flags options;
 	

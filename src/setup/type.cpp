@@ -79,7 +79,7 @@ void type_entry::load(std::istream & is, const version & version) {
 		type = User;
 	}
 	
-	size = (version >= INNO_VERSION(4, 0, 0)) ? load_number<uint64_t>(is) : load_number<uint32_t>(is);
+	size = (version >= INNO_VERSION(4, 0, 0)) ? load_number<boost::uint64_t>(is) : load_number<boost::uint32_t>(is);
 }
 
 } // namespace setup

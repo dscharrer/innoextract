@@ -149,7 +149,7 @@ void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
 			continue;
 		}
 		
-		uint32_t codepage;
+		boost::uint32_t codepage;
 		if(entry.language < 0) {
 			codepage = v.codepage();
 		} else {

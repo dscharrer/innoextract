@@ -21,10 +21,11 @@
 #ifndef INNOEXTRACT_CRYPTO_CHECKSUM_HPP
 #define INNOEXTRACT_CRYPTO_CHECKSUM_HPP
 
-#include <stdint.h>
 #include <cstring>
 #include <iosfwd>
 #include <istream>
+
+#include <boost/cstdint.hpp>
 
 #include "util/endian.hpp"
 #include "util/enum.hpp"
@@ -42,8 +43,8 @@ enum checksum_type {
 struct checksum {
 	
 	union {
-		uint32_t adler32;
-		uint32_t crc32;
+		boost::uint32_t adler32;
+		boost::uint32_t crc32;
 		char md5[16];
 		char sha1[20];
 	};

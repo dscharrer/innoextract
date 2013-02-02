@@ -20,7 +20,7 @@
 
 #include "setup/run.hpp"
 
-#include <stdint.h>
+#include <boost/cstdint.hpp>
 
 #include "setup/version.hpp"
 #include "util/load.hpp"
@@ -41,7 +41,7 @@ STORED_ENUM_MAP(stored_run_wait_condition, run_entry::WaitUntilTerminated,
 void run_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<uint32_t>(is); // uncompressed size of the directory entry structure
+		::load<boost::uint32_t>(is); // uncompressed size of the directory entry structure
 	}
 	
 	is >> encoded_string(name, version.codepage());
@@ -71,7 +71,7 @@ void run_entry::load(std::istream & is, const version & version) {
 	load_version_data(is, version);
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		show_command = load_number<int32_t>(is);
+		show_command = load_number<boost::int32_t>(is);
 	} else {
 		show_command = 0;
 	}

@@ -21,9 +21,10 @@
 #ifndef INNOEXTRACT_UTIL_OUTPUT_HPP
 #define INNOEXTRACT_UTIL_OUTPUT_HPP
 
-#include <stdint.h>
 #include <iostream>
 #include <string>
+
+#include <boost/cstdint.hpp>
 
 #include "util/console.hpp"
 #include "util/util.hpp"
@@ -172,8 +173,8 @@ std::ostream & operator<<(std::ostream & os, const print_bytes<T> & s) {
 	
 	std::streamsize precision = os.precision();
 	
-	size_t frac = size_t(1024 * (s.value - T(uint64_t(s.value))));
-	uint64_t whole = uint64_t(s.value);
+	size_t frac = size_t(1024 * (s.value - T(boost::uint64_t(s.value))));
+	boost::uint64_t whole = boost::uint64_t(s.value);
 	
 	size_t i = 0;
 	

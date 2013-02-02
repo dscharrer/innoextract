@@ -21,10 +21,10 @@
 #ifndef INNOEXTRACT_STREAM_EXEFILTER_HPP
 #define INNOEXTRACT_STREAM_EXEFILTER_HPP
 
-#include <stdint.h>
 #include <stddef.h>
 #include <iosfwd>
 
+#include <boost/cstdint.hpp>
 #include <boost/iostreams/char_traits.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/get.hpp>
@@ -51,9 +51,9 @@ public:
 		addr_bytes_left = 0, addr_offset = 5;
 	}
 	
-	uint32_t addr;
+	boost::uint32_t addr;
 	size_t addr_bytes_left;
-	uint32_t addr_offset;
+	boost::uint32_t addr_offset;
 	
 };
 
@@ -104,10 +104,10 @@ private:
 	static const size_t block_size = 0x10000;
 	const bool flip_high_byte;
 	
-	uint32_t offset; //! Total number of bytes read from the source.
+	boost::uint32_t offset; //! Total number of bytes read from the source.
 	
-	int8_t flush_bytes;
-	uint8_t buffer[4];
+	boost::int8_t flush_bytes;
+	boost::uint8_t buffer[4];
 	
 };
 
@@ -131,13 +131,13 @@ std::streamsize inno_exe_decoder_4108::read(Source & src, char * dest, std::stre
 			}
 			
 		} else {
-			addr += uint8_t(byte);
-			byte = uint8_t(addr);
+			addr += boost::uint8_t(byte);
+			byte = boost::uint8_t(addr);
 			addr >>= 8;
 			addr_bytes_left--;
 		}
 		
-		*dest++ = char(uint8_t(byte));
+		*dest++ = char(boost::uint8_t(byte));
 	}
 	
 	return n;
@@ -200,20 +200,20 @@ std::streamsize inno_exe_decoder_5200::read(Source & src, char * dest, std::stre
 		char * dst = reinterpret_cast<char *>(buffer + 4 + flush_bytes);
 		std::streamsize nread = boost::iostreams::read(src, dst, -flush_bytes);
 		if(nread == EOF) {
-			flush(int8_t(4 + flush_bytes));
+			flush(boost::int8_t(4 + flush_bytes));
 			return total_read ? total_read : EOF;
 		}
-		flush_bytes = int8_t(flush_bytes + nread), offset += uint32_t(nread);
+		flush_bytes = boost::int8_t(flush_bytes + nread), offset += boost::uint32_t(nread);
 		if(flush_bytes) { return total_read; }
 		
 		// Verify that the high byte of the address is 0x00 or 00xff.
 		if(buffer[3] == 0x00 || buffer[3] == 0xff) {
 			
-			uint32_t addr = offset & 0xffffff; // may wrap, but OK
+			boost::uint32_t addr = offset & 0xffffff; // may wrap, but OK
 			
-			uint32_t rel = buffer[0] | (uint32_t(buffer[1]) << 8) | (uint32_t(buffer[2]) << 16);
+			boost::uint32_t rel = buffer[0] | (boost::uint32_t(buffer[1]) << 8) | (boost::uint32_t(buffer[2]) << 16);
 			rel -= addr;
-			buffer[0] = uint8_t(rel), buffer[1] = uint8_t(rel >> 8), buffer[2] = uint8_t(rel >> 16);
+			buffer[0] = boost::uint8_t(rel), buffer[1] = boost::uint8_t(rel >> 8), buffer[2] = boost::uint8_t(rel >> 16);
 			
 			if(flip_high_byte) {
 				// For a slightly higher compression ratio, we want the resulting high
@@ -221,7 +221,7 @@ std::streamsize inno_exe_decoder_5200::read(Source & src, char * dest, std::stre
 				// of the original relative address is likely to be the sign extension
 				// of bit 23, so if bit 23 is set, toggle all bits in the high byte.
 				if(rel & 0x800000) {
-					buffer[3] = uint8_t(~buffer[3]);
+					buffer[3] = boost::uint8_t(~buffer[3]);
 				}
 			}
 			

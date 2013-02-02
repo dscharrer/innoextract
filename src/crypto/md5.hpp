@@ -21,7 +21,7 @@
 #ifndef INNOEXTRACT_CRYPTO_MD5_HPP
 #define INNOEXTRACT_CRYPTO_MD5_HPP
 
-#include <stdint.h>
+#include <boost/cstdint.hpp>
 
 #include "crypto/iteratedhash.hpp"
 #include "util/endian.hpp"
@@ -32,7 +32,7 @@ class md5_transform {
 	
 public:
 	
-	typedef uint32_t hash_word;
+	typedef boost::uint32_t hash_word;
 	typedef little_endian byte_order;
 	static const size_t block_size = 64;
 	static const size_t hash_size = 16;

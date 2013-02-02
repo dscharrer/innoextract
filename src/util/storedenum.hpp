@@ -21,13 +21,13 @@
 #ifndef INNOEXTRACT_UTIL_STOREDENUM_HPP
 #define INNOEXTRACT_UTIL_STOREDENUM_HPP
 
-#include <stdint.h>
 #include <stddef.h>
 #include <vector>
 
-#include <boost/utility/enable_if.hpp>
+#include <boost/cstdint.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/typeof/typeof.hpp>
+#include <boost/utility/enable_if.hpp>
 
 #include "util/enum.hpp"
 #include "util/load.hpp"
@@ -69,7 +69,7 @@ public:
 	
 	explicit stored_enum(std::istream & is) {
 		BOOST_STATIC_ASSERT(size <= (1 << 8));
-		value = load_number<uint8_t>(is);
+		value = load_number<boost::uint8_t>(is);
 	}
 	
 	enum_type get() {
@@ -92,7 +92,7 @@ public:
 template <size_t Bits, size_t PadBits = 32>
 class stored_bitfield {
 	
-	typedef uint8_t base_type;
+	typedef boost::uint8_t base_type;
 	
 	static const size_t base_size = sizeof(base_type) * 8;
 	static const size_t count = (Bits + (base_size - 1)) / base_size; // ceildiv
@@ -113,14 +113,14 @@ public:
 		}
 	}
 	
-	uint64_t lower_bits() const {
+	boost::uint64_t lower_bits() const {
 		
-		BOOST_STATIC_ASSERT(sizeof(uint64_t) % sizeof(base_type) == 0);
+		BOOST_STATIC_ASSERT(sizeof(boost::uint64_t) % sizeof(base_type) == 0);
 		
-		uint64_t result = 0;
+		boost::uint64_t result = 0;
 		
-		for(size_t i = 0; i < std::min(sizeof(uint64_t) / sizeof(base_type), size_t(count)); i++) {
-			result |= (uint64_t(bits[i]) << (i * base_size));
+		for(size_t i = 0; i < std::min(sizeof(boost::uint64_t) / sizeof(base_type), size_t(count)); i++) {
+			result |= (boost::uint64_t(bits[i]) << (i * base_size));
 		}
 		
 		return result;
@@ -168,13 +168,13 @@ public:
 	
 	flag_type get() {
 		
-		uint64_t bits = this->lower_bits();
+		boost::uint64_t bits = this->lower_bits();
 		flag_type result = 0;
 		
 		for(size_t i = 0; i < this->size; i++) {
-			if(bits & (uint64_t(1) << i)) {
+			if(bits & (boost::uint64_t(1) << i)) {
 				result |= Mapping::values[i];
-				bits &= ~(uint64_t(1) << i);
+				bits &= ~(boost::uint64_t(1) << i);
 			}
 		}
 		
@@ -207,7 +207,7 @@ private:
 	
 	std::istream & is;
 	
-	typedef uint8_t stored_type;
+	typedef boost::uint8_t stored_type;
 	static const size_t stored_bits = sizeof(stored_type) * 8;
 	
 	size_t pos;

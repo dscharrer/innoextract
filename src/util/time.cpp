@@ -48,7 +48,7 @@ static void set_timezone(const char * value) {
 	
 	const char * variable = "TZ";
 	
-#if defined(WIN32)
+#if defined(_WIN32)
 	
 	SetEnvironmentVariable(variable, value);
 	_tzset();
@@ -100,7 +100,7 @@ std::time_t parse_time(std::tm tm) {
 	
 }
 
-std::tm format_time(time_t t) {
+std::tm format_time(std::time_t t) {
 	
 	std::tm ret;
 	
@@ -114,7 +114,7 @@ std::tm format_time(time_t t) {
 	
 	// Windows (MSVC)
 	
-	_gmtime_s(&ret, &t);
+	gmtime_s(&ret, &t);
 	
 #else
 	
@@ -174,7 +174,7 @@ static HANDLE open_file(LPCWSTR name) {
 
 #endif
 
-bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t nsec) {
+bool set_file_time(const boost::filesystem::path & path, std::time_t t, boost::uint32_t nsec) {
 	
 #if INNOEXTRACT_HAVE_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
 	
@@ -182,7 +182,7 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 	
 	struct timespec times[2];
 	times[0].tv_sec = t;
-	times[0].tv_nsec = int32_t(nsec);
+	times[0].tv_nsec = boost::int32_t(nsec);
 	times[1] = times[0];
 	
 	return (utimensat(AT_FDCWD, path.string().c_str(), times, 0) == 0);
@@ -201,8 +201,8 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 	}
 	
 	// Convert the std::time_t and nanoseconds to a FILETIME struct
-	static const int64_t FiletimeOffset = 0x19DB1DED53E8000ll;
-	int64_t time = int64_t(t) * 10000000 + int64_t(nsec) / 100;
+	static const boost::int64_t FiletimeOffset = 0x19DB1DED53E8000ll;
+	boost::int64_t time = boost::int64_t(t) * 10000000 + boost::int64_t(nsec) / 100;
 	time += FiletimeOffset;
 	FILETIME filetime;
 	filetime.dwLowDateTime = DWORD(time);
@@ -219,7 +219,7 @@ bool set_file_time(const boost::filesystem::path & path, std::time_t t, uint32_t
 	
 	struct timeval times[2];
 	times[0].tv_sec = t;
-	times[0].tv_usec = int32_t(nsec / 1000);
+	times[0].tv_usec = boost::int32_t(nsec / 1000);
 	times[1] = times[0];
 	
 	return (utimes(path.string().c_str(), times) == 0);

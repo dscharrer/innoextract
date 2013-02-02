@@ -21,9 +21,10 @@
 #ifndef INNOEXTRACT_SETUP_TYPE_HPP
 #define INNOEXTRACT_SETUP_TYPE_HPP
 
-#include <stdint.h>
 #include <string>
 #include <iosfwd>
+
+#include <boost/cstdint.hpp>
 
 #include "setup/windows.hpp"
 #include "util/enum.hpp"
@@ -55,7 +56,7 @@ struct type_entry {
 	
 	setup_type type;
 	
-	uint64_t size;
+	boost::uint64_t size;
 	
 	void load(std::istream & is, const version & version);
 	

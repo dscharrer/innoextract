@@ -20,7 +20,7 @@
 
 #include "stream/lzma.hpp"
 
-#include <stdint.h>
+#include <boost/cstdint.hpp>
 
 #include <lzma.h>
 
@@ -30,7 +30,7 @@ static lzma_stream * init_raw_lzma_stream(lzma_vli filter, lzma_options_lzma & o
 	
 	options.preset_dict = NULL;
 	
-	if(options.dict_size > (uint32_t(1) << 28)) {
+	if(options.dict_size > (boost::uint32_t(1) << 28)) {
 		throw lzma_error("inno lzma dict size too large", LZMA_FORMAT_ERROR);
 	}
 	
@@ -55,10 +55,10 @@ bool lzma_decompressor_impl_base::filter(const char * & begin_in, const char * e
 	
 	lzma_stream * strm = static_cast<lzma_stream *>(stream);
 	
-	strm->next_in = reinterpret_cast<const uint8_t *>(begin_in);
+	strm->next_in = reinterpret_cast<const boost::uint8_t *>(begin_in);
 	strm->avail_in = size_t(end_in - begin_in);
 	
-	strm->next_out = reinterpret_cast<uint8_t *>(begin_out);
+	strm->next_out = reinterpret_cast<boost::uint8_t *>(begin_out);
 	strm->avail_out = size_t(end_out - begin_out);
 	
 	lzma_ret ret = lzma_code(strm, LZMA_RUN);
@@ -98,7 +98,7 @@ bool inno_lzma1_decompressor_impl::filter(const char * & begin_in, const char * 
 		
 		lzma_options_lzma options;
 		
-		uint8_t properties = uint8_t(header[0]);
+		boost::uint8_t properties = boost::uint8_t(header[0]);
 		if(properties > (9 * 5 * 5)) {
 			throw lzma_error("inno lzma1 property error", LZMA_FORMAT_ERROR);
 		}
@@ -108,7 +108,7 @@ bool inno_lzma1_decompressor_impl::filter(const char * & begin_in, const char * 
 		
 		options.dict_size = 0;
 		for(size_t i = 0; i < 4; i++) {
-			options.dict_size += uint32_t(uint8_t(header[i + 1])) << (i * 8);
+			options.dict_size += boost::uint32_t(boost::uint8_t(header[i + 1])) << (i * 8);
 		}
 		
 		stream = init_raw_lzma_stream(LZMA_FILTER_LZMA1, options);
@@ -129,7 +129,7 @@ bool inno_lzma2_decompressor_impl::filter(const char * & begin_in, const char * 
 		
 		lzma_options_lzma options;
 		
-		uint8_t prop = uint8_t(*begin_in++);
+		boost::uint8_t prop = boost::uint8_t(*begin_in++);
 		if(prop > 40) {
 			throw lzma_error("inno lzma2 property error", LZMA_FORMAT_ERROR);
 		}
@@ -137,7 +137,7 @@ bool inno_lzma2_decompressor_impl::filter(const char * & begin_in, const char * 
 		if(prop == 40) {
 			options.dict_size = 0xffffffff;
 		} else {
-			options.dict_size = ((uint32_t(2) | uint32_t((prop) & 1)) << ((prop) / 2 + 11));
+			options.dict_size = ((boost::uint32_t(2) | boost::uint32_t((prop) & 1)) << ((prop) / 2 + 11));
 		}
 		
 		stream = init_raw_lzma_stream(LZMA_FILTER_LZMA2, options);

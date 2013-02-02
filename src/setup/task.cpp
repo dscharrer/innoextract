@@ -20,7 +20,7 @@
 
 #include "setup/task.hpp"
 
-#include <stdint.h>
+#include <boost/cstdint.hpp>
 
 #include "setup/version.hpp"
 #include "util/load.hpp"
@@ -41,8 +41,8 @@ void task_entry::load(std::istream & is, const version & version) {
 	}
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
 		is >> encoded_string(check, version.codepage());
-		level = load_number<int32_t>(is);
-		used = load_number<uint8_t>(is);
+		level = load_number<boost::int32_t>(is);
+		used = load_number<boost::uint8_t>(is);
 	} else {
 		check.clear(), level = 0, used = true;
 	}

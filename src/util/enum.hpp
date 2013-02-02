@@ -46,7 +46,7 @@ struct enum_names {
 	
 	const char * name;
 	
-	const char * names[];
+	const char * names[1];
 	
 };
 

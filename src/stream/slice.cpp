@@ -20,10 +20,11 @@
 
 #include "stream/slice.hpp"
 
-#include <stdint.h>
 #include <sstream>
 #include <cstring>
 #include <limits>
+
+#include <boost/cstdint.hpp>
 
 #include "util/console.hpp"
 #include "util/load.hpp"
@@ -41,13 +42,13 @@ const char slice_ids[][8] = {
 
 } // anonymous namespace
 
-slice_reader::slice_reader(const path_type & setup_file, uint32_t data_offset)
+slice_reader::slice_reader(const path_type & setup_file, boost::uint32_t data_offset)
 	: dir(), last_dir(), base_file(), data_offset(data_offset), slices_per_disk(1),
 	  current_slice(0) {
 	
 	ifs.open(setup_file, std::ios_base::binary | std::ios_base::in | std::ios_base::ate);
 	
-	slice_size = uint32_t(std::min<std::streampos>(ifs.tellg(), std::numeric_limits<int32_t>::max()));
+	slice_size = boost::uint32_t(std::min<std::streampos>(ifs.tellg(), std::numeric_limits<boost::int32_t>::max()));
 	if(ifs.seekg(data_offset).fail()) {
 		ifs.close();
 	}
@@ -105,7 +106,7 @@ bool slice_reader::open_file(const path_type & file) {
 		return false;
 	}
 	
-	slice_size = load_number<uint32_t>(ifs);
+	slice_size = load_number<boost::uint32_t>(ifs);
 	if(ifs.fail() || std::streampos(slice_size) > fileSize) {
 		log_error << "[slice] bad slice size: " << slice_size << " > " << fileSize;
 		ifs.close();
@@ -140,7 +141,7 @@ bool slice_reader::open(size_t slice, const path_type & file) {
 		} else {
 			size_t major = (slice / slices_per_disk) + 1;
 			size_t minor = slice % slices_per_disk;
-			oss << major << char(uint8_t('a') + minor);
+			oss << major << char(boost::uint8_t('a') + minor);
 		}
 		oss << ".bin";
 		
@@ -158,7 +159,7 @@ bool slice_reader::open(size_t slice, const path_type & file) {
 	return false;
 }
 
-bool slice_reader::seek(size_t slice, uint32_t offset) {
+bool slice_reader::seek(size_t slice, boost::uint32_t offset) {
 	
 	if(!seek(slice)) {
 		return false;

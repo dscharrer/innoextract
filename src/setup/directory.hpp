@@ -21,9 +21,10 @@
 #ifndef INNOEXTRACT_SETUP_DIRECTORY_HPP
 #define INNOEXTRACT_SETUP_DIRECTORY_HPP
 
-#include <stdint.h>
 #include <string>
 #include <iosfwd>
+
+#include <boost/cstdint.hpp>
 
 #include "setup/item.hpp"
 #include "util/enum.hpp"
@@ -46,7 +47,7 @@ struct directory_entry : public item {
 	std::string name;
 	std::string permissions;
 	
-	uint32_t attributes;
+	boost::uint32_t attributes;
 	
 	int permission; //!< index into the permission entry list
 	

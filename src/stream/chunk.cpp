@@ -91,7 +91,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 		default: throw chunk_error("unknown compression");
 	}
 	
-	result->push(io::restrict(boost::ref(base), 0, int64_t(chunk.size)));
+	result->push(io::restrict(boost::ref(base), 0, boost::int64_t(chunk.size)));
 	
 	return result;
 }

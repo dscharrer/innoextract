@@ -20,12 +20,13 @@
 
 #include "loader/exereader.hpp"
 
-#include <stdint.h>
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
 #include <cstring>
 #include <vector>
+
+#include <boost/cstdint.hpp>
 
 #include "util/load.hpp"
 
@@ -38,22 +39,22 @@ struct exe_reader_impl : public exe_reader {
 	struct header {
 		
 		//! Number of CoffSection structures following this header after optionalHeaderSize bytes
-		uint16_t nsections;
+		boost::uint16_t nsections;
 		
 		//! Offset of the section table in the file
-		uint32_t section_table_offset;
+		boost::uint32_t section_table_offset;
 		
 		//! Virtual memory address of the resource root table
-		uint32_t resource_table_address;
+		boost::uint32_t resource_table_address;
 		
 	};
 	
 	struct section {
 		
-		uint32_t virtual_size; //!< Section size in virtual memory
-		uint32_t virtual_address; //!< Base virtual memory address
+		boost::uint32_t virtual_size; //!< Section size in virtual memory
+		boost::uint32_t virtual_address; //!< Base virtual memory address
 		
-		uint32_t raw_address; //!< Base file offset
+		boost::uint32_t raw_address; //!< Base file offset
 		
 	};
 	
@@ -70,7 +71,7 @@ struct exe_reader_impl : public exe_reader {
 	 *   Remaining 31 bits: Offset to the resource table / leaf relative to
 	 *                      the directory start.
 	 */
-	static uint32_t find_resource_entry(std::istream & is, uint32_t id);
+	static boost::uint32_t find_resource_entry(std::istream & is, boost::uint32_t id);
 	
 	static bool load_header(std::istream & is, header & coff);
 	
@@ -79,25 +80,25 @@ struct exe_reader_impl : public exe_reader {
 	/*!
 	 * Convert a memory address to a file offset according to the given section list.
 	 */
-	static uint32_t to_file_offset(const section_list & sections, uint32_t address);
+	static boost::uint32_t to_file_offset(const section_list & sections, boost::uint32_t address);
 	
-	static resource find_resource(std::istream & is, uint32_t name, uint32_t type = TypeData,
-	                              uint32_t language = LanguageDefault);
+	static resource find_resource(std::istream & is, boost::uint32_t name, boost::uint32_t type = TypeData,
+	                              boost::uint32_t language = LanguageDefault);
 	
 };
 
 static const char PE_MAGIC[] = { 'P', 'E', 0, 0 };
 
-bool get_resource_table(uint32_t & entry, uint32_t resource_offset) {
+bool get_resource_table(boost::uint32_t & entry, boost::uint32_t resource_offset) {
 	
-	bool is_table = (entry & (uint32_t(1) << 31));
+	bool is_table = (entry & (boost::uint32_t(1) << 31));
 	
 	entry &= ~(1 << 31), entry += resource_offset;
 	
 	return is_table;
 }
 
-uint32_t exe_reader_impl::find_resource_entry(std::istream & is, uint32_t needle) {
+boost::uint32_t exe_reader_impl::find_resource_entry(std::istream & is, boost::uint32_t needle) {
 	
 	// skip: characteristics + timestamp + major version + minor version
 	if(is.seekg(4 + 4 + 2 + 2, std::ios_base::cur).fail()) {
@@ -105,22 +106,22 @@ uint32_t exe_reader_impl::find_resource_entry(std::istream & is, uint32_t needle
 	}
 	
 	// Number of named resource entries.
-	uint16_t nbnames = load_number<uint16_t>(is);
+	boost::uint16_t nbnames = load_number<boost::uint16_t>(is);
 	
 	// Number of id resource entries.
-	uint16_t nbids = load_number<uint16_t>(is);
+	boost::uint16_t nbids = load_number<boost::uint16_t>(is);
 	
 	
 	// Ignore named resource entries.
-	const uint32_t entry_size = 4 + 4; // id / string address + offset
+	const boost::uint32_t entry_size = 4 + 4; // id / string address + offset
 	if(is.seekg(nbnames * entry_size, std::ios_base::cur).fail()) {
 		return 0;
 	}
 	
 	for(size_t i = 0; i < nbids; i++) {
 		
-		uint32_t id = load_number<uint32_t>(is);
-		uint32_t offset = load_number<uint32_t>(is);
+		boost::uint32_t id = load_number<boost::uint32_t>(is);
+		boost::uint32_t offset = load_number<boost::uint32_t>(is);
 		if(is.fail()) {
 			return 0;
 		}
@@ -136,7 +137,7 @@ uint32_t exe_reader_impl::find_resource_entry(std::istream & is, uint32_t needle
 bool exe_reader_impl::load_header(std::istream & is, header & coff) {
 	
 	// Skip the DOS stub.
-	uint16_t peOffset = load_number<uint16_t>(is.seekg(0x3c));
+	boost::uint16_t peOffset = load_number<boost::uint16_t>(is.seekg(0x3c));
 	if(is.fail()) {
 		return false;
 	}
@@ -150,15 +151,15 @@ bool exe_reader_impl::load_header(std::istream & is, header & coff) {
 	}
 	
 	is.seekg(2, std::ios_base::cur); // machine
-	coff.nsections = load_number<uint16_t>(is);
+	coff.nsections = load_number<boost::uint16_t>(is);
 	is.seekg(4 + 4 + 4, std::ios_base::cur); // creation time + symbol table offset + nbsymbols
-	uint16_t optional_header_size = load_number<uint16_t>(is);
+	boost::uint16_t optional_header_size = load_number<boost::uint16_t>(is);
 	is.seekg(2, std::ios_base::cur); // characteristics
 	
-	coff.section_table_offset = uint32_t(is.tellg()) + optional_header_size;
+	coff.section_table_offset = boost::uint32_t(is.tellg()) + optional_header_size;
 	
 	// Skip the optional header.
-	uint16_t optionalHeaderMagic = load_number<uint16_t>(is);
+	boost::uint16_t optionalHeaderMagic = load_number<boost::uint16_t>(is);
 	if(is.fail()) {
 		return false;
 	}
@@ -168,16 +169,16 @@ bool exe_reader_impl::load_header(std::istream & is, header & coff) {
 		is.seekg(90, std::ios_base::cur);
 	}
 	
-	uint32_t ndirectories = load_number<uint32_t>(is);
+	boost::uint32_t ndirectories = load_number<boost::uint32_t>(is);
 	if(is.fail() || ndirectories < 3) {
 		return false;
 	}
-	const uint32_t directory_header_size = 4 + 4; // address + size
+	const boost::uint32_t directory_header_size = 4 + 4; // address + size
 	is.seekg(2 * directory_header_size, std::ios_base::cur);
 	
 	// Virtual memory address and size of the start of resource directory.
-	coff.resource_table_address = load_number<uint32_t>(is);
-	uint32_t resource_size = load_number<uint32_t>(is);
+	coff.resource_table_address = load_number<boost::uint32_t>(is);
+	boost::uint32_t resource_size = load_number<boost::uint32_t>(is);
 	if(is.fail() || !coff.resource_table_address || !resource_size) {
 		return false;
 	}
@@ -196,11 +197,11 @@ bool exe_reader_impl::load_section_list(std::istream & is, const header & coff,
 		
 		is.seekg(8, std::ios_base::cur); // name
 		
-		section.virtual_size = load_number<uint32_t>(is);
-		section.virtual_address = load_number<uint32_t>(is);
+		section.virtual_size = load_number<boost::uint32_t>(is);
+		section.virtual_address = load_number<boost::uint32_t>(is);
 		
 		is.seekg(4, std::ios_base::cur); // raw size
-		section.raw_address = load_number<uint32_t>(is);
+		section.raw_address = load_number<boost::uint32_t>(is);
 		
 		// relocation addr + line number addr + relocation count
 		// + line number count + characteristics
@@ -211,7 +212,7 @@ bool exe_reader_impl::load_section_list(std::istream & is, const header & coff,
 	return !is.fail();
 }
 
-uint32_t exe_reader_impl::to_file_offset(const section_list & sections, uint32_t memory) {
+boost::uint32_t exe_reader_impl::to_file_offset(const section_list & sections, boost::uint32_t memory) {
 	
 	for(section_list::const_iterator i = sections.begin(); i != sections.end(); ++i) {
 		const section & s = *i;
@@ -223,8 +224,8 @@ uint32_t exe_reader_impl::to_file_offset(const section_list & sections, uint32_t
 	return 0;
 }
 
-exe_reader_impl::resource exe_reader_impl::find_resource(std::istream & is, uint32_t name,
-                                                         uint32_t type, uint32_t language) {
+exe_reader_impl::resource exe_reader_impl::find_resource(std::istream & is, boost::uint32_t name,
+                                                         boost::uint32_t type, boost::uint32_t language) {
 	
 	is.seekg(0);
 	
@@ -241,39 +242,39 @@ exe_reader_impl::resource exe_reader_impl::find_resource(std::istream & is, uint
 		return result;
 	}
 	
-	uint32_t resource_offset = to_file_offset(sections, coff.resource_table_address);
+	boost::uint32_t resource_offset = to_file_offset(sections, coff.resource_table_address);
 	if(!resource_offset) {
 		return result;
 	}
 	
 	is.seekg(resource_offset);
-	uint32_t type_offset = find_resource_entry(is, type);
+	boost::uint32_t type_offset = find_resource_entry(is, type);
 	if(!get_resource_table(type_offset, resource_offset)) {
 		return result;
 	}
 	
 	is.seekg(type_offset);
-	uint32_t name_offset = find_resource_entry(is, name);
+	boost::uint32_t name_offset = find_resource_entry(is, name);
 	if(!get_resource_table(name_offset, resource_offset)) {
 		return result;
 	}
 	
 	is.seekg(name_offset);
-	uint32_t leaf_offset = find_resource_entry(is, language);
+	boost::uint32_t leaf_offset = find_resource_entry(is, language);
 	if(!leaf_offset || get_resource_table(leaf_offset, resource_offset)) {
 		return result;
 	}
 	
 	// Virtual memory address and size of the resource data.
 	is.seekg(leaf_offset);
-	uint32_t data_address = load_number<uint32_t>(is);
-	uint32_t data_size = load_number<uint32_t>(is);
+	boost::uint32_t data_address = load_number<boost::uint32_t>(is);
+	boost::uint32_t data_size = load_number<boost::uint32_t>(is);
 	// ignore codepage and reserved word
 	if(is.fail()) {
 		return result;
 	}
 	
-	uint32_t data_offset = to_file_offset(sections, data_address);
+	boost::uint32_t data_offset = to_file_offset(sections, data_address);
 	if(!data_offset) {
 		return result;
 	}
@@ -286,8 +287,8 @@ exe_reader_impl::resource exe_reader_impl::find_resource(std::istream & is, uint
 
 } // anonymous namespace
 
-exe_reader::resource exe_reader::find_resource(std::istream & is, uint32_t name,
-                                               uint32_t type, uint32_t language) {
+exe_reader::resource exe_reader::find_resource(std::istream & is, boost::uint32_t name,
+                                               boost::uint32_t type, boost::uint32_t language) {
 	return exe_reader_impl::find_resource(is, name, type, language);
 }
 

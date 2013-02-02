@@ -44,22 +44,22 @@ namespace detail {
 	
 	template <>
 	struct uint_t<8> : public boost::uint_t<8> {
-		typedef uint8_t exact;
+		typedef boost::uint8_t exact;
 	};
 	
 	template <>
 	struct uint_t<16> : public boost::uint_t<16> {
-		typedef uint16_t exact;
+		typedef boost::uint16_t exact;
 	};
 	
 	template <>
 	struct uint_t<32> : public boost::uint_t<32> {
-		typedef uint32_t exact;
+		typedef boost::uint32_t exact;
 	};
 	
 	template <>
 	struct uint_t<64> {
-		typedef uint64_t exact;
+		typedef boost::uint64_t exact;
 	};
 	
 	template <size_t Bits>
@@ -67,22 +67,22 @@ namespace detail {
 	
 	template <>
 	struct int_t<8> : public boost::int_t<8> {
-		typedef int8_t exact;
+		typedef boost::int8_t exact;
 	};
 	
 	template <>
 	struct int_t<16> : public boost::int_t<16> {
-		typedef int16_t exact;
+		typedef boost::int16_t exact;
 	};
 	
 	template <>
 	struct int_t<32> : public boost::int_t<32> {
-		typedef int32_t exact;
+		typedef boost::int32_t exact;
 	};
 	
 	template <>
 	struct int_t<64> {
-		typedef int64_t exact;
+		typedef boost::int64_t exact;
 	};
 	
 }
