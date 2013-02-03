@@ -301,6 +301,9 @@ static void process_file(const fs::path & file, const options & o) {
 				          << color::reset << ")";
 				}
 				std::cout << '\n';
+				if(!o.list) {
+					std::cout.flush();
+				}
 				
 				extract_progress.update(0, true);
 			}
