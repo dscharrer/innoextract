@@ -31,8 +31,6 @@
 #include "util/util.hpp"
 #include "util/log.hpp"
 
-using std::string;
-
 namespace setup {
 
 namespace {
@@ -207,9 +205,9 @@ void version::load(std::istream & is) {
 		std::string version_str(legacy_version, legacy_version + ARRAY_SIZE(legacy_version));
 		
 		try {
-			unsigned a = boost::lexical_cast<unsigned>(version_str.substr(1, 1));
-			unsigned b = boost::lexical_cast<unsigned>(version_str.substr(3, 1));
-			unsigned c = boost::lexical_cast<unsigned>(version_str.substr(5, 2));
+			unsigned a = boost::lexical_cast<unsigned>(version_str.data() + 1, 1);
+			unsigned b = boost::lexical_cast<unsigned>(version_str.data() + 3, 1);
+			unsigned c = boost::lexical_cast<unsigned>(version_str.data() + 5, 2);
 			value = INNO_VERSION(a, b, c);
 		} catch(boost::bad_lexical_cast) {
 			throw version_error();
@@ -239,14 +237,14 @@ void version::load(std::istream & is) {
 	}
 	
 	char * end = std::find(version, version + ARRAY_SIZE(version), '\0');
-	string version_str(version, end);
+	std::string version_str(version, end);
 	debug("unknown version: \"" << version_str << '"');
-	if(version_str.find("Inno Setup") == string::npos) {
+	if(version_str.find("Inno Setup") == std::string::npos) {
 		throw version_error();
 	}
 	
 	size_t bracket = version_str.find('(');
-	for(; bracket != string::npos; bracket = version_str.find('(', bracket + 1)) {
+	for(; bracket != std::string::npos; bracket = version_str.find('(', bracket + 1)) {
 		
 		if(version_str.length() - bracket < 6) {
 			continue;
@@ -256,24 +254,27 @@ void version::load(std::istream & is) {
 			
 			size_t a_start = bracket + 1;
 			size_t a_end = version_str.find_first_not_of(digits, a_start);
-			if(a_end == string::npos || version_str[a_end] != '.') {
+			if(a_end == std::string::npos || version_str[a_end] != '.') {
 				continue;
 			}
-			unsigned a = boost::lexical_cast<unsigned>(version_str.substr(a_start, a_end - a_start));
+			unsigned a = boost::lexical_cast<unsigned>(version_str.data() + a_start,
+			                                           a_end - a_start);
 			
 			size_t b_start = a_end + 1;
 			size_t b_end = version_str.find_first_not_of(digits, b_start);
-			if(b_end == string::npos || version_str[b_end] != '.') {
+			if(b_end == std::string::npos || version_str[b_end] != '.') {
 				continue;
 			}
-			unsigned b = boost::lexical_cast<unsigned>(version_str.substr(b_start, b_end - b_start));
+			unsigned b = boost::lexical_cast<unsigned>(version_str.data() + b_start,
+			                                           b_end - b_start);
 			
 			size_t c_start = b_end + 1;
 			size_t c_end = version_str.find_first_not_of(digits, c_start);
-			if(c_end == string::npos) {
+			if(c_end == std::string::npos) {
 				continue;
 			}
-			unsigned c = boost::lexical_cast<unsigned>(version_str.substr(c_start, c_end - c_start));
+			unsigned c = boost::lexical_cast<unsigned>(version_str.data() + c_start,
+			                                           c_end - c_start);
 			
 			size_t d_start = c_end;
 			if(version_str[d_start] == 'a') {
@@ -287,8 +288,9 @@ void version::load(std::istream & is) {
 			if(version_str[d_start] == '.') {
 				d_start++;
 				size_t d_end = version_str.find_first_not_of(digits, d_start);
-				if(d_end != string::npos && d_end != d_start) {
-					d = boost::lexical_cast<unsigned>(version_str.substr(d_start, d_end - d_start));
+				if(d_end != std::string::npos && d_end != d_start) {
+					d = boost::lexical_cast<unsigned>(version_str.data() + d_start,
+					                                  d_end - d_start);
 				}
 			}
 			
@@ -299,12 +301,12 @@ void version::load(std::istream & is) {
 			continue;
 		}
 	}
-	if(bracket == string::npos) {
+	if(bracket == std::string::npos) {
 		throw version_error();
 	}
 	
 	bits = 32;
-	unicode = (version_str.find("(u)") != string::npos);
+	unicode = (version_str.find("(u)") != std::string::npos);
 	known = false;
 }
 

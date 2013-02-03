@@ -62,13 +62,6 @@
 #include "util/output.hpp"
 #include "util/time.hpp"
 
-using std::cout;
-using std::string;
-using std::endl;
-using std::setw;
-using std::setfill;
-
-namespace io = boost::iostreams;
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
@@ -164,12 +157,12 @@ static void process_file(const fs::path & file, const options & o) {
 	loader::offsets offsets;
 	offsets.load(ifs);
 	
-	cout << std::boolalpha;
+	std::cout << std::boolalpha;
 	
 #ifdef DEBUG
 	if(logger::debug) {
 		print_offsets(offsets);
-		cout << '\n';
+		std::cout << '\n';
 	}
 #endif
 	
@@ -180,17 +173,17 @@ static void process_file(const fs::path & file, const options & o) {
 	if(!logger::quiet) {
 		const std::string & name = info.header.app_versioned_name.empty()
 		                           ? info.header.app_name : info.header.app_versioned_name;
-		cout << (o.list ? "Listing" : o.test ? "Testing" : "Extracting")
-		     << " \"" << color::green << name << color::reset
-		     << "\" - setup data version " << color::white << info.version << color::reset
-		     << std::endl;
+		std::cout << (o.list ? "Listing" : o.test ? "Testing" : "Extracting")
+		          << " \"" << color::green << name << color::reset
+		          << "\" - setup data version " << color::white << info.version << color::reset
+		          << std::endl;
 	}
 	
 #ifdef DEBUG
 	if(logger::debug) {
-		cout << '\n';
+		std::cout << '\n';
 		print_info(info);
-		cout << '\n';
+		std::cout << '\n';
 	}
 #endif
 	
@@ -428,7 +421,7 @@ int main(int argc, char * argv[]) {
 	
 	po::options_description hidden("Hidden options");
 	hidden.add_options()
-		("setup-files", po::value< std::vector<string> >(), "Setup files to be extracted")
+		("setup-files", po::value< std::vector<std::string> >(), "Setup files to be extracted")
 		/**/;
 	
 	po::options_description options_desc;
@@ -551,7 +544,8 @@ int main(int argc, char * argv[]) {
 		return ExitSuccess;
 	}
 	
-	const std::vector<string> & files = options["setup-files"].as< std::vector<string> >();
+	const std::vector<std::string> & files = options["setup-files"]
+	                                         .as< std::vector<std::string> >();
 	
 	try {
 		BOOST_FOREACH(const std::string & file, files) {

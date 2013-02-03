@@ -25,32 +25,31 @@
 
 #include "util/log.hpp"
 
-using std::string;
 namespace fs = boost::filesystem;
 
 namespace setup {
 
-const string & filename_map::lookup(const string & key) const {
-	std::map<string, string>::const_iterator i = find(key);
+const std::string & filename_map::lookup(const std::string & key) const {
+	std::map<std::string, std::string>::const_iterator i = find(key);
 	return (i == end()) ? key : i->second;
 }
 
-fs::path filename_map::convert(const string & name) const {
+fs::path filename_map::convert(const std::string & name) const {
 	
 	size_t start = 0;
-	string buffer;
+	std::string buffer;
 	fs::path result;
 	
 	while(true) {
 		
 		size_t pos = name.find_first_of("{\\", start);
 		
-		if(pos == string::npos || name[pos] == '\\') {
+		if(pos == std::string::npos || name[pos] == '\\') {
 			
 			// Directory segment without constant
 			
-			size_t n = (pos == string::npos) ? string::npos : pos - start;
-			string segment = name.substr(start, n);
+			size_t n = (pos == std::string::npos) ? std::string::npos : pos - start;
+			std::string segment = name.substr(start, n);
 			
 			if(lowercase) {
 				std::transform(segment.begin(), segment.end(), segment.begin(), ::tolower);
@@ -63,7 +62,7 @@ fs::path filename_map::convert(const string & name) const {
 				buffer.clear();
 			}
 			
-			if(pos == string::npos) {
+			if(pos == std::string::npos) {
 				return result;
 			}
 			
@@ -73,7 +72,7 @@ fs::path filename_map::convert(const string & name) const {
 			
 			// Constant or escape sequence
 			
-			string segment = name.substr(start, pos - start);
+			std::string segment = name.substr(start, pos - start);
 			if(lowercase) {
 				std::transform(segment.begin(), segment.end(), segment.begin(), ::tolower);
 			}
@@ -93,12 +92,12 @@ fs::path filename_map::convert(const string & name) const {
 				do {
 					end = name.find_first_of("}{", end + 1);
 					(name[end] == '}') ? count-- : count++;
-				} while(count > 0 && end != string::npos);
+				} while(count > 0 && end != std::string::npos);
 				
-				if(end == string::npos) {
+				if(end == std::string::npos) {
 					start = pos + 1;
 				} else {
-					string key = name.substr(pos + 1, end - pos - 1);
+					std::string key = name.substr(pos + 1, end - pos - 1);
 					std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 					buffer += lookup(key);
 					start = end + 1;
