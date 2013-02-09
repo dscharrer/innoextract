@@ -21,10 +21,19 @@
 # Once done this will define
 #
 # LZMA_FOUND
-# LZMA_INCLUDE_DIR - where to find lzma.h
-# LZMA_LIBRARIES - liblzma.so
-
-# option(LZMA_USE_STATIC_LIBS "Statically link liblzma" OFF)
+# LZMA_INCLUDE_DIR   Where to find lzma.h
+# LZMA_LIBRARIES     The liblzma library library
+# LZMA_DEFINITIONS   Definitions to use when compiling code that uses liblzma
+#
+# Typical usage could be something like:
+#   find_package(LZMA REQUIRED)
+#   include_directories(SYSTEM ${LZMA_INCLUDE_DIR})
+#   add_definitions(${LZMA_DEFINITIONS})
+#   ...
+#   target_link_libraries(myexe ${LZMA_LIBRARIES})
+#
+# The following additional options can be defined before the find_package() call:
+# LZMA_USE_STATIC_LIBS  Statically link against liblzma (default: OFF)
 
 include(UseStaticLibs)
 use_static_libs(LZMA)

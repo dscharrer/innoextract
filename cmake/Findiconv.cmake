@@ -21,11 +21,21 @@
 # Once done this will define
 #
 # iconv_FOUND
-# iconv_INCLUDE_DIR - where to find iconv.h
-# iconv_LIBRARIES - libiconv.so or empty if none was found
+# iconv_INCLUDE_DIR   Where to find iconv.h
+# iconv_LIBRARIES     The libiconv library or empty if none was found
+# iconv_DEFINITIONS   Definitions to use when compiling code that uses iconv
+#
 # An empty iconv_LIBRARIES is not an error as iconv is often included in the system libc.
-
-# option(iconv_USE_STATIC_LIBS "Statically link libiconv" OFF)
+#
+# Typical usage could be something like:
+#   find_package(iconv REQUIRED)
+#   include_directories(SYSTEM ${iconv_INCLUDE_DIR})
+#   add_definitions(${iconv_DEFINITIONS})
+#   ...
+#   target_link_libraries(myexe ${iconv_LIBRARIES})
+#
+# The following additional options can be defined before the find_package() call:
+# iconv_USE_STATIC_LIBS  Statically link against libiconv (default: OFF)
 
 include(UseStaticLibs)
 use_static_libs(iconv)

@@ -78,8 +78,8 @@ unset(LIBRARIES)
 if(USE_LZMA)
 	find_package(LZMA REQUIRED)
 	check_link_library(LZMA LZMA_LIBRARIES)
-	list(APPEND LIBRARIES "${LZMA_LIBRARIES}")
-	include_directories(SYSTEM "${LZMA_INCLUDE_DIR}")
+	list(APPEND LIBRARIES ${LZMA_LIBRARIES})
+	include_directories(SYSTEM ${LZMA_INCLUDE_DIR})
 	add_definitions(${LZMA_DEFINITIONS})
 	set(INNOEXTRACT_HAVE_LZMA 1)
 else()
@@ -96,9 +96,9 @@ find_package(Boost REQUIRED COMPONENTS
 	program_options
 )
 check_link_library(Boost Boost_LIBRARIES)
-list(APPEND LIBRARIES "${Boost_LIBRARIES}")
-link_directories("${Boost_LIBRARY_DIRS}")
-include_directories(SYSTEM "${Boost_INCLUDE_DIR}")
+list(APPEND LIBRARIES ${Boost_LIBRARIES})
+link_directories(${Boost_LIBRARY_DIRS})
+include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
 if(Boost_USE_STATIC_LIBS)
 	
@@ -106,20 +106,20 @@ if(Boost_USE_STATIC_LIBS)
 	find_package(ZLIB REQUIRED)
 	use_static_libs_restore()
 	check_link_library(ZLIB ZLIB_LIBRARIES)
-	list(APPEND LIBRARIES "${ZLIB_LIBRARIES}")
+	list(APPEND LIBRARIES ${ZLIB_LIBRARIES})
 	
 	use_static_libs(BZip2)
 	find_package(BZip2 REQUIRED)
 	use_static_libs_restore()
 	check_link_library(BZip2 BZIP2_LIBRARIES)
-	list(APPEND LIBRARIES "${BZIP2_LIBRARIES}")
+	list(APPEND LIBRARIES ${BZIP2_LIBRARIES})
 	
 endif()
 
 find_package(iconv REQUIRED)
 check_link_library(iconv iconv_LIBRARIES)
-list(APPEND LIBRARIES "${iconv_LIBRARIES}")
-include_directories(SYSTEM "${iconv_INCLUDE_DIR}")
+list(APPEND LIBRARIES ${iconv_LIBRARIES})
+include_directories(SYSTEM ${iconv_INCLUDE_DIR})
 add_definitions(${iconv_DEFINITIONS})
 
 
