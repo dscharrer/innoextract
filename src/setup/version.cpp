@@ -266,24 +266,21 @@ void version::load(std::istream & is) {
 			if(a_end == std::string::npos || version_str[a_end] != '.') {
 				continue;
 			}
-			unsigned a = to_unsigned(version_str.data() + a_start,
-			                                           a_end - a_start);
+			unsigned a = to_unsigned(version_str.data() + a_start, a_end - a_start);
 			
 			size_t b_start = a_end + 1;
 			size_t b_end = version_str.find_first_not_of(digits, b_start);
 			if(b_end == std::string::npos || version_str[b_end] != '.') {
 				continue;
 			}
-			unsigned b = to_unsigned(version_str.data() + b_start,
-			                                           b_end - b_start);
+			unsigned b = to_unsigned(version_str.data() + b_start, b_end - b_start);
 			
 			size_t c_start = b_end + 1;
 			size_t c_end = version_str.find_first_not_of(digits, c_start);
 			if(c_end == std::string::npos) {
 				continue;
 			}
-			unsigned c = to_unsigned(version_str.data() + c_start,
-			                                           c_end - c_start);
+			unsigned c = to_unsigned(version_str.data() + c_start, c_end - c_start);
 			
 			size_t d_start = c_end;
 			if(version_str[d_start] == 'a') {
