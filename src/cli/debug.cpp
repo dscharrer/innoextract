@@ -493,7 +493,8 @@ static void print_header(const setup::header & header) {
 	          << header.architectures_installed_in_64bit_mode << color::reset << '\n';
 	
 	if(header.options & setup::header::SignedUninstaller) {
-		std::cout << if_not_zero("Size before signing uninstaller", header.signed_uninstaller_original_size);
+		std::cout << if_not_zero("Size before signing uninstaller",
+		                         header.signed_uninstaller_original_size);
 		std::cout << if_not_zero("Uninstaller header checksum",
 		                         header.signed_uninstaller_header_checksum);
 	}
