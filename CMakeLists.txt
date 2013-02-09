@@ -137,6 +137,9 @@ add_cxxflag("-fvisibility-inlines-hidden")
 # Check for optional functionality and system configuration
 
 check_symbol_exists(isatty "unistd.h" INNOEXTRACT_HAVE_ISATTY)
+if(NOT INNOEXTRACT_HAVE_ISATTY)
+	check_symbol_exists(_isatty "io.h" INNOEXTRACT_HAVE_MS_ISATTY)
+endif()
 check_symbol_exists(ioctl "sys/ioctl.h" INNOEXTRACT_HAVE_IOCTL)
 check_symbol_exists(_mkgmtime64 "time.h" INNOEXTRACT_HAVE_MKGMTIME64)
 if(NOT INNOEXTRACT_HAVE_MKGMTIME64)

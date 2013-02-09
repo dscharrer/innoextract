@@ -78,7 +78,6 @@ time parse_time(std::tm tm) {
 	
 	return _mkgmtime64(&tm);
 	
-	
 #elif INNOEXTRACT_HAVE_TIMEGM
 	
 	// GNU / BSD extension
@@ -260,7 +259,7 @@ bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t
 	// fallback with second precision or worse
 	
 	try {
-		(void)nsec; // sub-second precision not supported by boost
+		(void)nsec; // sub-second precision not supported by Boost
 		std::time_t tt = to_time_t<std::time_t>(t, path.string().c_str());
 		boost::filesystem::last_write_time(path, tt);
 		return true;

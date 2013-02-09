@@ -34,6 +34,9 @@
 
 #if INNOEXTRACT_HAVE_ISATTY
 #include <unistd.h>
+#elif INNOEXTRACT_HAVE_MS_ISATTY
+#include <stdio.h>
+#include <io.h>
 #endif
 
 #if INNOEXTRACT_HAVE_IOCTL
@@ -145,6 +148,8 @@ void init(is_enabled color, is_enabled progress) {
 	bool is_tty = false;
 	#if INNOEXTRACT_HAVE_ISATTY
 	is_tty = isatty(1) && isatty(2);
+	#elif INNOEXTRACT_HAVE_MS_ISATTY
+	is_tty = _isatty(_fileno(stdout)) && _isatty(_fileno(stderr));
 	#endif
 	
 	#if defined(_WIN32)
