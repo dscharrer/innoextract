@@ -109,6 +109,12 @@ function(add_cxxflag FLAG)
 	
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${RESULT}" PARENT_SCOPE)
 	
+	if(RESULT STREQUAL "")
+		set(FLAG_FOUND 0 PARENT_SCOPE)
+	else()
+		set(FLAG_FOUND 1 PARENT_SCOPE)
+	endif()
+	
 endfunction(add_cxxflag)
 
 function(add_ldflag FLAG)
@@ -118,6 +124,12 @@ function(add_ldflag FLAG)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${RESULT}" PARENT_SCOPE)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${RESULT}" PARENT_SCOPE)
 	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${RESULT}" PARENT_SCOPE)
+	
+	if(RESULT STREQUAL "")
+		set(FLAG_FOUND 0 PARENT_SCOPE)
+	else()
+		set(FLAG_FOUND 1 PARENT_SCOPE)
+	endif()
 	
 endfunction(add_ldflag)
 

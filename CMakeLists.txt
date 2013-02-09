@@ -125,10 +125,19 @@ add_definitions(${iconv_DEFINITIONS})
 
 # Set compiler flags
 
-if(${Boost_VERSION} LESS 104800)
+set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE "unsigned long")
+if(MSVC)
+	if(NOT MSVC_VERSION LESS 1600)
+		# MSVC 10+
+		set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE "unsigned long long")
+	endif()
+elseif(${Boost_VERSION} LESS 104800)
 	# Older Boost versions don't work with C++11
 elseif(USE_CXX11)
 	add_cxxflag("-std=c++11")
+	if(FLAG_FOUND)
+		set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE "unsigned long long")
+	endif()
 endif()
 
 # Don't expose internal symbols to the outside world by default

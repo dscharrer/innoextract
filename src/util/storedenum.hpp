@@ -34,6 +34,8 @@
 #include "util/log.hpp"
 #include "util/util.hpp"
 
+#include "configure.hpp"
+
 template <class Enum>
 struct enum_value_map {
 	
@@ -129,19 +131,17 @@ public:
 	operator std::bitset<size>() const {
 		
 		// Make `make style` shut up since we really need unsigned long here.
-		#define stored_enum_concat_(a, b, c, d) a##b c##d
-		typedef stored_enum_concat_(unsi, gned, lo, ng) ulong_type;
-		#undef stored_enum_concat_
+		typedef INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE construct_type;
 		
-		static const size_t ulong_size = sizeof(ulong_type) * 8;
+		static const size_t construct_size = sizeof(construct_type) * 8;
 		
-		BOOST_STATIC_ASSERT(base_size % ulong_size == 0 || base_size < ulong_size);
+		BOOST_STATIC_ASSERT(base_size % construct_size == 0 || base_size < construct_size);
 		
 		std::bitset<size> result(0);
 		for(size_t i = 0; i < count; i++) {
-			for(size_t j = 0; j < ceildiv(base_size, ulong_size); j++) {
-				ulong_type chunk = static_cast<ulong_type>(bits[i] >> (j * ulong_size));
-				result |= std::bitset<size>(chunk) << ((i * base_size) + (j * ulong_size));
+			for(size_t j = 0; j < ceildiv(base_size, construct_size); j++) {
+				construct_type chunk = static_cast<construct_type>(bits[i] >> (j * construct_size));
+				result |= std::bitset<size>(chunk) << ((i * base_size) + (j * construct_size));
 			}
 		}
 		return result;
