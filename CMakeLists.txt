@@ -49,8 +49,10 @@ if(WIN32)
 endif()
 
 if(USE_STATIC_LIBS)
-	add_cxxflag("-static-libgcc")
-	add_cxxflag("-static-libstdc++")
+	if(NOT MSVC)
+		add_cxxflag("-static-libgcc")
+		add_cxxflag("-static-libstdc++")
+	endif()
 	set(LZMA_USE_STATIC_LIBS ON)
 	set(Boost_USE_STATIC_LIBS ON)
 	set(ZLIB_USE_STATIC_LIBS ON)
@@ -141,8 +143,10 @@ elseif(USE_CXX11)
 endif()
 
 # Don't expose internal symbols to the outside world by default
-add_cxxflag("-fvisibility=hidden")
-add_cxxflag("-fvisibility-inlines-hidden")
+if(NOT MSVC)
+	add_cxxflag("-fvisibility=hidden")
+	add_cxxflag("-fvisibility-inlines-hidden")
+endif()
 
 
 # Check for optional functionality and system configuration
