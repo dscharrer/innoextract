@@ -20,7 +20,7 @@
 # Try to find the iconv library and include path for iconv.h.
 # Once done this will define
 #
-# iconv_FOUND
+# ICONV_FOUND
 # iconv_INCLUDE_DIR   Where to find iconv.h
 # iconv_LIBRARIES     The libiconv library or empty if none was found
 # iconv_DEFINITIONS   Definitions to use when compiling code that uses iconv
