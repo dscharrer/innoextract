@@ -80,6 +80,7 @@ if(USE_LZMA)
 	check_link_library(LZMA LZMA_LIBRARIES)
 	list(APPEND LIBRARIES "${LZMA_LIBRARIES}")
 	include_directories(SYSTEM "${LZMA_INCLUDE_DIR}")
+	add_definitions(${LZMA_DEFINITIONS})
 	set(INNOEXTRACT_HAVE_LZMA 1)
 else()
 	message(WARNING "\nDisabling LZMA decompression support.\n"
@@ -119,6 +120,7 @@ find_package(iconv REQUIRED)
 check_link_library(iconv iconv_LIBRARIES)
 list(APPEND LIBRARIES "${iconv_LIBRARIES}")
 include_directories(SYSTEM "${iconv_INCLUDE_DIR}")
+add_definitions(${iconv_DEFINITIONS})
 
 
 # Set compiler flags

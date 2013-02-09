@@ -40,6 +40,11 @@ mark_as_advanced(LZMA_LIBRARY)
 
 use_static_libs_restore()
 
+set(LZMA_DEFINITIONS)
+if(WIN32 AND LZMA_USE_STATIC_LIBS)
+	set(LZMA_DEFINITIONS -DLZMA_API_STATIC)
+endif()
+
 # handle the QUIETLY and REQUIRED arguments and set LZMA_FOUND to TRUE if 
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)

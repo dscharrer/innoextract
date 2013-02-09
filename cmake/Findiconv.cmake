@@ -60,6 +60,11 @@ mark_as_advanced(iconv_LIBRARY)
 
 use_static_libs_restore()
 
+set(iconv_DEFINITIONS)
+if(WIN32 AND iconv_USE_STATIC_LIBS)
+	set(iconv_DEFINITIONS -DLIBICONV_STATIC)
+endif()
+
 # handle the QUIETLY and REQUIRED arguments and set iconv_FOUND to TRUE if 
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
