@@ -25,6 +25,7 @@
 #include <signal.h>
 #include <iostream>
 #include <cstdlib>
+#include <cstdio>
 
 #include "configure.hpp"
 
@@ -115,7 +116,12 @@ shell_command dim_magenta = { FOREGROUND_RED | FOREGROUND_BLUE };
 shell_command dim_cyan =    { FOREGROUND_BLUE | FOREGROUND_GREEN };
 shell_command dim_white =   { FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE };
 
-shell_command reset =       { boost::uint16_t(-1) };
+shell_command reset =       dim_white;
+shell_command original_color;
+
+static void restore_color() {
+	std::cout << original_color;
+}
 
 #else
 
@@ -156,7 +162,7 @@ void init(is_enabled color, is_enabled progress) {
 	console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	if(console_handle && GetConsoleScreenBufferInfo(console_handle, &info)) {
-		reset.command = info.wAttributes;
+		original_color.command = info.wAttributes;
 	} else {
 		is_tty = false;
 		color = disable;
@@ -177,6 +183,13 @@ void init(is_enabled color, is_enabled progress) {
 		show_progress = true;
 	}
 	#endif
+	#if defined(_WIN32)
+	if(show_progress) {
+		// Buffer output so that the progress bar won't flicker (we flush after each update)
+		static char buffer[BUFSIZ];
+		std::setbuf(stdout, buffer);
+	}
+	#endif
 	
 	// Initialize color output
 	
@@ -193,6 +206,11 @@ void init(is_enabled color, is_enabled progress) {
 		dim_blue = dim_magenta = dim_cyan = dim_white = reset;
 		current = reset;
 		
+	} else {
+		#if defined(_WIN32)
+		std::cout << reset;
+		std::atexit(restore_color);
+		#endif
 	}
 	
 }
