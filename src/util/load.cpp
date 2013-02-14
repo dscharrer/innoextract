@@ -97,7 +97,7 @@ void encoded_string::load(std::istream & is, std::string & target, boost::uint32
 static void to_utf8_fallback(const std::string & from, std::string & to,
                              boost::uint32_t codepage) {
 	
-	size_t skip = ((codepage == cp_utf16) ? 2 : 1);
+	size_t skip = ((codepage == cp_utf16) ? 2u : 1u);
 	
 	to.clear();
 	to.reserve(ceildiv(from.size(), skip));
@@ -151,7 +151,7 @@ void to_utf8(const std::string & from, std::string & to, boost::uint32_t codepag
 	
 	iconv(converter, NULL, NULL, NULL, NULL);
 	
-	size_t skip = ((codepage == cp_utf16) ? 2 : 1);
+	size_t skip = ((codepage == cp_utf16) ? 2u : 1u);
 	
 	bool warn = false;
 	
