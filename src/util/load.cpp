@@ -32,6 +32,10 @@
 
 namespace {
 
+static const boost::uint32_t cp_utf8 = 65001;
+static const boost::uint32_t cp_utf16 = 1200;
+static const char replacement_char = '_';
+
 std::map<boost::uint32_t, iconv_t> converters;
 
 iconv_t get_converter(boost::uint32_t codepage) {
@@ -43,7 +47,7 @@ iconv_t get_converter(boost::uint32_t codepage) {
 	}
 	
 	std::ostringstream oss;
-	if(codepage == 1200) {
+	if(codepage == cp_utf16) {
 		// iconv's behavior for "UTF-16" is platform-dependant if there is no BOM.
 		// There never is any BOM in Inno Setup files and it's always little-endian,
 		// so we specify the exact encoding.
@@ -52,7 +56,13 @@ iconv_t get_converter(boost::uint32_t codepage) {
 		oss << "CP" << codepage;
 	}
 	
-	return converters[codepage] = iconv_open("UTF-8", oss.str().c_str());
+	iconv_t handle = iconv_open("UTF-8", oss.str().c_str());
+	
+	if(handle == iconv_t(-1)) {
+		log_warning << "could not get " << oss.str() << " -> UTF-8 converter";
+	}
+	
+	return converters[codepage] = handle;
 }
 
 };
@@ -83,9 +93,40 @@ void encoded_string::load(std::istream & is, std::string & target, boost::uint32
 	to_utf8(temp, target, codepage);
 }
 
+//! Fallback conversion that will at least work for ASCII characters
+static void to_utf8_fallback(const std::string & from, std::string & to,
+                             boost::uint32_t codepage) {
+	
+	size_t skip = ((codepage == cp_utf16) ? 2 : 1);
+	
+	to.clear();
+	to.reserve(ceildiv(from.size(), skip));
+	
+	for(size_t i = 0; i < from.size(); i += skip) {
+		if((unsigned char)from[i] <= 127) {
+			// copy ASCII characters
+			to.push_back(from[i]);
+		} else {
+			// replace everything else with underscores
+			to.push_back(replacement_char);
+		}
+	}
+}
+
 void to_utf8(const std::string & from, std::string & to, boost::uint32_t codepage) {
 	
+	if(codepage == cp_utf8) {
+		// copy UTF-8 directly
+		to = from;
+		return;
+	}
+	
 	iconv_t converter = get_converter(codepage);
+	if(converter == iconv_t(-1)) {
+		to_utf8_fallback(from, to, codepage);
+		return;
+	}
+	
 	
 	/*
 	 * Some iconv implementations declare the second parameter of iconv() as
@@ -110,21 +151,44 @@ void to_utf8(const std::string & from, std::string & to, boost::uint32_t codepag
 	
 	iconv(converter, NULL, NULL, NULL, NULL);
 	
+	size_t skip = ((codepage == cp_utf16) ? 2 : 1);
+	
+	bool warn = false;
+	
 	while(insize) {
 		
-		to.resize(outbase + insize + 4);
+		to.resize(outbase + ceildiv(insize, skip) + 4);
 		
 		char * outbuf = &to[0] + outbase;
 		size_t outsize = to.size() - outbase;
 		
 		size_t ret = iconv(converter, inbuf, &insize, &outbuf, &outsize);
-		if(ret == size_t(-1) && errno != E2BIG) {
-			log_error << "iconv error while converting from CP" << codepage << ": " << errno;
-			to.clear();
-			return;
+		if(ret == size_t(-1)) {
+			if(errno == E2BIG) {
+				// not enough output space - we'll allocate more in the next loop
+			} else if(/*errno == EILSEQ &&*/ insize >= 2) {
+				// invalid byte (sequence) - add a replacement char nd try the next byte
+				if(outsize == 0) {
+					to.push_back(replacement_char);
+				} else {
+					*outbuf = replacement_char;
+					outsize--;
+				}
+				inbuf.buf += skip;
+				insize -= skip;
+				warn = true;
+			} else {
+				// something else went wrong - return what we have so far
+				insize = 0;
+				warn = true;
+			}
 		}
 		
 		outbase = to.size() - outsize;
+	}
+	
+	if(warn) {
+		log_warning << "unexpected data while converting from CP" << codepage << " to UTF-8";
 	}
 	
 	to.resize(outbase);
