@@ -15,20 +15,18 @@ option(ZLIB_USE_STATIC_LIBS "Statically link libz" OFF)
 option(BZip2_USE_STATIC_LIBS "Statically link libbz2" OFF)
 
 # Install destinations
-if(NOT WIN32)
-	if(CMAKE_VERSION VERSION_LESS 2.8.5)
-		set(CMAKE_INSTALL_DATAROOTDIR "share" CACHE
-		    STRING "read-only architecture-independent data root (share) (relative to prefix).")
-		mark_as_advanced(CMAKE_INSTALL_DATAROOTDIR)
-		set(CMAKE_INSTALL_BINDIR "bin" CACHE
-		    STRING "user executables (bin) (relative to prefix).")
-		mark_as_advanced(CMAKE_INSTALL_BINDIR)
-		set(CMAKE_INSTALL_MANDIR "${CMAKE_INSTALL_DATAROOTDIR}/man" CACHE
-		    STRING "man documentation (DATAROOTDIR/man) (relative to prefix).")
-		mark_as_advanced(CMAKE_INSTALL_MANDIR)
-	else()
-		include(GNUInstallDirs)
-	endif()
+if(CMAKE_VERSION VERSION_LESS 2.8.5)
+	set(CMAKE_INSTALL_DATAROOTDIR "share" CACHE
+			STRING "read-only architecture-independent data root (share) (relative to prefix).")
+	mark_as_advanced(CMAKE_INSTALL_DATAROOTDIR)
+	set(CMAKE_INSTALL_BINDIR "bin" CACHE
+			STRING "user executables (bin) (relative to prefix).")
+	mark_as_advanced(CMAKE_INSTALL_BINDIR)
+	set(CMAKE_INSTALL_MANDIR "${CMAKE_INSTALL_DATAROOTDIR}/man" CACHE
+			STRING "man documentation (DATAROOTDIR/man) (relative to prefix).")
+	mark_as_advanced(CMAKE_INSTALL_MANDIR)
+else()
+	include(GNUInstallDirs)
 endif()
 
 
