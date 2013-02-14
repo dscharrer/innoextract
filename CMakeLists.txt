@@ -14,8 +14,22 @@ option(USE_STATIC_LIBS "Statically link libraries" OFF)
 option(ZLIB_USE_STATIC_LIBS "Statically link libz" OFF)
 option(BZip2_USE_STATIC_LIBS "Statically link libbz2" OFF)
 
-set(MAN_DIR "share/man" CACHE STRING "Install path for man pages (relative to prefix).")
-mark_as_advanced(MAN_DIR)
+# Install destinations
+if(NOT WIN32)
+	if(CMAKE_VERSION VERSION_LESS 2.8.5)
+		set(CMAKE_INSTALL_DATAROOTDIR "share" CACHE
+		    STRING "read-only architecture-independent data root (share) (relative to prefix).")
+		mark_as_advanced(CMAKE_INSTALL_DATAROOTDIR)
+		set(CMAKE_INSTALL_BINDIR "bin" CACHE
+		    STRING "user executables (bin) (relative to prefix).")
+		mark_as_advanced(CMAKE_INSTALL_BINDIR)
+		set(CMAKE_INSTALL_MANDIR "${CMAKE_INSTALL_DATAROOTDIR}/man" CACHE
+		    STRING "man documentation (DATAROOTDIR/man) (relative to prefix).")
+		mark_as_advanced(CMAKE_INSTALL_MANDIR)
+	else()
+		include(GNUInstallDirs)
+	endif()
+endif()
 
 
 # Helper scrips
@@ -288,9 +302,9 @@ list(APPEND INNOEXTRACT_SOURCES "${VERSION_FILE}")
 add_executable(innoextract ${INNOEXTRACT_SOURCES} ${ALL_INCLUDES})
 target_link_libraries(innoextract ${LIBRARIES})
 
-install(TARGETS innoextract RUNTIME DESTINATION bin)
+install(TARGETS innoextract RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-install(FILES doc/innoextract.1 DESTINATION ${MAN_DIR}/man1 OPTIONAL)
+install(FILES doc/innoextract.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL)
 
 
 # Additional targets.

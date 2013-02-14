@@ -44,18 +44,25 @@ Build options:
 |:------------------------ |:------------:|:----------- |
 | `USE_LZMA`               | `ON`         | Use `liblzma` if available.
 | `CMAKE_BUILD_TYPE`       | `Release`    | Set to `Debug` to enable debug output.
-| `CMAKE_INSTALL_PREFIX`   | `/usr/local` | Where to install innoextract.
 | `SET_WARNING_FLAGS`      | `ON`         | Adjust compiler warning flags. This should not affect the produced binaries but is useful to catch potential problems.
 | `SET_OPTIMIZATION_FLAGS` | `ON`         | Adjust compiler optimization flags. For non-debug builds the only thing this does is instruct the linker to only link against libraries that are actually needed.
 | `USE_CXX11`              | `ON`         | Try to compile in C++11 mode if available.
 | `DEBUG_EXTRA`            | `OFF`        | Expensive debug options.
-| `MAN_DIR`                | `share/man`  | Install location for man pages (relative to prefix). |
 | `USE_STATIC_LIBS`        | `OFF`        | Turns on static linking for all libraries, including `-static-libgcc` and `-static-libstdc++`. You can also use the individual options below:
 | `LZMA_USE_STATIC_LIBS`   | `OFF`        | Statically link `liblzma`.
 | `Boost_USE_STATIC_LIBS`  | `OFF`        | Statically link Boost. See also `FindBoost.cmake`
 | `ZLIB_USE_STATIC_LIBS`   | `OFF`        | Statically link `libz`. (used via Boost)
 | `BZip2_USE_STATIC_LIBS`  | `OFF`        | Statically link `libbz2`. (used via Boost)
 | `iconv_USE_STATIC_LIBS`  | `OFF`        | Statically link `libiconv`.
+
+Install options:
+
+| Option                      | Default              | Description |
+|:--------------------------- |:--------------------:|:----------- |
+| `CMAKE_INSTALL_PREFIX`      | `/usr/local`         | Where to install innoextract.
+| `CMAKE_INSTALL_BINDIR`      | `bin`                | Location for binaries (relative to prefix).
+| `CMAKE_INSTALL_DATAROOTDIR` | `share/man`          | Location for data files (relative to prefix).
+| `CMAKE_INSTALL_MANDIR`      | `${DATAROOTDIR}/man` | Location for man pages (relative to prefix).
 
 Set options by passing `-D<option>=<value>` to cmake.
 
