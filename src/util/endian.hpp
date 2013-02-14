@@ -42,10 +42,12 @@ inline boost::int8_t byteswap(boost::int8_t value) {
 inline boost::uint16_t byteswap(boost::uint16_t value) {
 #if defined(_MSC_VER) && _MSC_VER >= 1300
 	return _byteswap_ushort(value);
-#elif INNOEXTRACT_HAVE_BSWAP_16
+#elif INNOEXTRACT_HAVE_BSWAP_16 \
+	&& (!defined(__GLIBC_PREREQ) || __GLIBC_PREREQ(2, 16)) // prevent conversion warnings
 	return bswap_16(value);
 #else
-	return boost::uint16_t((boost::uint16_t(boost::uint8_t(value)) << 8) | boost::uint8_t(value >> 8));
+	return boost::uint16_t((boost::uint16_t(boost::uint8_t(value)) << 8)
+	                       | boost::uint8_t(value >> 8));
 #endif
 }
 
