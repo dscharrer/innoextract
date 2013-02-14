@@ -50,8 +50,8 @@ endif()
 
 if(USE_STATIC_LIBS)
 	if(NOT MSVC)
-		add_ldflag("-static-libgcc")
 		add_ldflag("-static-libstdc++")
+		add_ldflag("-static-libgcc")
 	endif()
 	set(LZMA_USE_STATIC_LIBS ON)
 	set(Boost_USE_STATIC_LIBS ON)
@@ -148,8 +148,26 @@ if(NOT MSVC)
 	add_cxxflag("-fvisibility-inlines-hidden")
 endif()
 
+# Define _POSIX_C_SOURCE and _XOPEN_SOURCE for GNU systems
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "GNU"
+		OR ${CMAKE_SYSTEM_NAME} MATCHES "kFreeBSD")
+	set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=600")
+	add_definitions(-D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=600)
+	if(${CMAKE_SYSTEM_NAME} MATCHES "kFreeBSD")
+		set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} -D_BSD_SOURCE")
+		add_definitions(-D_BSD_SOURCE)
+	endif()
+endif()
+
 
 # Check for optional functionality and system configuration
+
+# Older glibc versions won't provide some useful symbols by default - request them
+# This flag is currently also set by gcc when compiling C++, but not for plain C
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE=1")
+	add_definitions(-D_GNU_SOURCE=1)
+endif()
 
 check_symbol_exists(isatty "unistd.h" INNOEXTRACT_HAVE_ISATTY)
 if(NOT INNOEXTRACT_HAVE_ISATTY)
@@ -173,7 +191,9 @@ endif()
 if(NOT WIN32)
 	check_symbol_exists(utimensat "sys/stat.h" INNOEXTRACT_HAVE_UTIMENSAT)
 	check_symbol_exists(AT_FDCWD "fcntl.h" INNOEXTRACT_HAVE_AT_FDCWD)
-	if(NOT (INNOEXTRACT_HAVE_UTIMENSAT AND INNOEXTRACT_HAVE_AT_FDCWD))
+	if(INNOEXTRACT_HAVE_UTIMENSAT AND INNOEXTRACT_HAVE_AT_FDCWD)
+		set(INNOEXTRACT_HAVE_UTIMENSAT_d 1)
+	else()
 		check_symbol_exists(utimes "sys/time.h" INNOEXTRACT_HAVE_UTIMES)
 	endif()
 endif()
@@ -290,9 +310,9 @@ print_configuration("LZMA decompression" FIRST
 	1                     "disabled"
 )
 print_configuration("File time precision" FIRST
-	INNOEXTRACT_HAVE_UTIMENSAT "nanoseconds"
-	WIN32                      "100-nanoseconds"
-	INNOEXTRACT_HAVE_UTIMES    "microseconds"
-	1                          "seconds"
+	INNOEXTRACT_HAVE_UTIMENSAT_d "nanoseconds"
+	WIN32                        "100-nanoseconds"
+	INNOEXTRACT_HAVE_UTIMES      "microseconds"
+	1                            "seconds"
 )
 message("")
