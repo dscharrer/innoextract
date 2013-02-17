@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+#include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -70,6 +71,32 @@ enum ExitValues {
 	ExitUserError = 1,
 	ExitDataError = 2
 };
+
+static const char * get_command(const char * argv0) {
+	
+	if(!argv0) {
+		argv0 = innoextract_name;
+	}
+	std::string var = argv0;
+	
+#ifdef _WIN32
+	size_t pos = var.find_last_of("/\\");
+#else
+	size_t pos = var.find_last_of('/');
+#endif
+	if(pos != std::string::npos) {
+		var = var.substr(pos + 1);
+	}
+	
+	var += "_COMMAND";
+	
+	const char * env = std::getenv(var.c_str());
+	if(env) {
+		return env;
+	} else {
+		return argv0;
+	}
+}
 
 static void print_version() {
 	std::cout << color::white << innoextract_name
@@ -445,7 +472,7 @@ int main(int argc, char * argv[]) {
 		po::notify(options);
 	} catch(po::error & e) {
 		std::cerr << "Error parsing command-line: " << e.what() << "\n\n";
-		print_help(argv[0], visible);
+		print_help(get_command(argv[0]), visible);
 		return ExitUserError;
 	}
 	
@@ -477,7 +504,7 @@ int main(int argc, char * argv[]) {
 	
 	// Help output.
 	if(options.count("help") != 0) {
-		print_help(argv[0], visible);
+		print_help(get_command(argv[0]), visible);
 		return ExitSuccess;
 	}
 	
@@ -541,8 +568,8 @@ int main(int argc, char * argv[]) {
 	
 	if(!options.count("setup-files") != 0) {
 		if(!o.silent) {
-			std::cout << argv[0] << ": no input files specified\n";
-			std::cout << "Try `" << argv[0] << " -h` for more information.\n";
+			std::cout << get_command(argv[0]) << ": no input files specified\n";
+			std::cout << "Try the --help (-h) option for usage information.\n";
 		}
 		return ExitSuccess;
 	}
