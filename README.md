@@ -1,7 +1,7 @@
 
 # innoextract - A tool to unpack installers created by Inno Setup
 
-[Inno Setup](http://www.jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. innoextract allows to extract such installers under non-windows systems without running the actual installer using wine. innoextract currently supports installers created by Inno Setup 1.2.10 to 5.5.3.
+[Inno Setup](http://www.jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. innoextract allows to extract such installers under non-Windows systems without running the actual installer using wine. innoextract currently supports installers created by Inno Setup 1.2.10 to 5.5.3.
 
 innoextract is available under the ZLIB license - see the LICENSE file.
 
@@ -96,7 +96,7 @@ Documentation is also available as a man page:
 
 A perhaps more complete, but Windows-only, tool to extract Inno Setup files is [innounp](http://innounp.sourceforge.net/).
 
-Extracting windows installer executables created by programs other than Inno Setup is out of the scope of this project. Some of these can be unpacked by the following programs:
+Extracting Windows installer executables created by programs other than Inno Setup is out of the scope of this project. Some of these can be unpacked by the following programs:
 
 * [cabextract](http://www.cabextract.org.uk/)
 
