@@ -50,45 +50,45 @@ Here is a short summary of the options available in innoextract. Please refer to
 .fi
 .SH OPTIONS
 .TP
-.B \-c --color[=ENABLE]
+\fB-c\fP, \fB--color\fP[=ENABLE]
 By default
 .B innoextract
 will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB--color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
 .TP
-.B --dump
+\fB--dump\fP
 Don't convert Windows paths to UNIX paths and don't substitute variables in paths.
 .TP
-.B \-e --extract
+\fB-e\fP, \fB--extract\fP
 Extract all files to the current directory. This is the default action. You may only specify one of \fB--extract\fP, \fB--list\fP and \fB--test\fP.
 .TP
-.B \-h --help
+\fB-h\fP, \fB--help\fP
 Show a list of the supported options.
 .TP
-.B \--language LANG
+\fB--language\fP=LANG
 Extract only language-independent files and files for the given language. By default all files are extracted.
 .TP
-.B \--license
+\fB--license\fP
 Show license information.
 .TP
-.B \-l --list
+\fB-l\fP, \fB--list\fP
 List files contained in the installer but don't extract anything. You may only specify one of \fB--extract\fP, \fB--list\fP and \fB--test\fP.
 .TP
-.B \-L --lowercase
+\fB-L\fP, \fB--lowercase\fP
 Convert filenames stored in the installer to lower-case before extracting.
 .TP
-.B \-p --progress[=ENABLE]
+\fB-p\fP, \fB--progress\fP[=ENABLE]
 By default \fBinnoextract\fP will try to detect if the terminal supports shell escape codes and enable or disable progress bar output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB--progress\fP to force progress bar output. Pass \fB0\fP or \fBfalse\fP to never show a progress bar.
 .TP
-.B \-q --quiet
+\fB-q\fP, \fB--quiet\fP
 Less verbose output.
 .TP
-.B \-s --silent
+\fB-s\fP, \fB--silent\fP
 Don't output anything except errors and warnings.
 .TP
-.B \-t --test
+\fB-t\fP, \fB--test\fP
 Test archive integrity but don't write any output files. You may only specify one of \fB--extract\fP, \fB--list\fP and \fB--test\fP.
 .TP
-.B \-T --timestamps TZ
+\fB-T\fP, \fB--timestamps\fP=TZ
 Inno Setup installers can contain timestamps in both UTC and 'local' timezones.
 
 The \fB--timestamps\fP option specifies what timezone should be used to adjust these 'local' file times.
@@ -103,7 +103,7 @@ Besides timezones, two special values are accepted:
 
 The default value for this option is \fBUTC\fP, causing innoextract to not adjust 'local' file times. File times marked as UTC in the Inno Setup file will never be adjusted no matter what \fB--timestamps\fP is set to.
 .TP
-.B \-v --version
+\fB-v\fP, \fB--version\fP
 Show the \fBinnoextract\fP version number and supported Inno Setup versions.
 .SH EXIT VALUES
 .PP
