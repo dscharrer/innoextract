@@ -160,26 +160,15 @@ if(NOT MSVC)
 	add_cxxflag("-fvisibility-inlines-hidden")
 endif()
 
-# Define _POSIX_C_SOURCE and _XOPEN_SOURCE for GNU systems
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "GNU"
-		OR ${CMAKE_SYSTEM_NAME} MATCHES "kFreeBSD")
-	set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=600")
-	add_definitions(-D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=600)
-	if(${CMAKE_SYSTEM_NAME} MATCHES "kFreeBSD")
-		set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} -D_BSD_SOURCE")
-		add_definitions(-D_BSD_SOURCE)
-	endif()
-endif()
-
-
-# Check for optional functionality and system configuration
-
 # Older glibc versions won't provide some useful symbols by default - request them
 # This flag is currently also set by gcc when compiling C++, but not for plain C
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE=1")
 	add_definitions(-D_GNU_SOURCE=1)
 endif()
+
+
+# Check for optional functionality and system configuration
 
 check_symbol_exists(isatty "unistd.h" INNOEXTRACT_HAVE_ISATTY)
 if(NOT INNOEXTRACT_HAVE_ISATTY)
