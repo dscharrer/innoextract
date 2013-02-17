@@ -138,8 +138,10 @@ struct options {
 	bool silent;
 	
 	bool dump;
-	bool list;
-	bool test;
+	
+	bool list; // The --list action has been explicitely specified
+	bool test; // The --test action has been explicit specified
+	bool extract; // The --extract action has been specified or automatically enabled
 	
 	bool preserve_file_times;
 	bool local_timestamps;
@@ -200,7 +202,7 @@ static void process_file(const fs::path & file, const options & o) {
 	if(!logger::quiet) {
 		const std::string & name = info.header.app_versioned_name.empty()
 		                           ? info.header.app_name : info.header.app_versioned_name;
-		std::cout << (o.list ? "Listing" : o.test ? "Testing" : "Extracting")
+		std::cout << (o.extract ? "Extracting" : o.test ? "Testing" : "Listing")
 		          << " \"" << color::green << name << color::reset
 		          << "\" - setup data version " << color::white << info.version << color::reset
 		          << std::endl;
@@ -237,7 +239,7 @@ static void process_file(const fs::path & file, const options & o) {
 	}
 	
 	boost::scoped_ptr<stream::slice_reader> slice_reader;
-	if(!o.list) {
+	if(o.extract || o.test) {
 		if(offsets.data_offset) {
 			slice_reader.reset(new stream::slice_reader(file, offsets.data_offset));
 		} else {
@@ -255,7 +257,7 @@ static void process_file(const fs::path & file, const options & o) {
 		      << ']');
 		
 		stream::chunk_reader::pointer chunk_source;
-		if(!o.list) {
+		if(o.extract || o.test) {
 			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);
 		}
 		
@@ -321,21 +323,28 @@ static void process_file(const fs::path & file, const options & o) {
 					std::cout << color::white << "unnamed file" << color::reset;
 				}
 				if(!logger::quiet) {
-				#ifdef DEBUG
-					std::cout << " @ " << print_hex(file.offset);
-				#endif
-				std::cout << " (" << color::dim_cyan << print_bytes(file.size)
-				          << color::reset << ")";
+					if(logger::debug) {
+						std::cout << " @ " << print_hex(file.offset);
+					}
+					std::cout << " (" << color::dim_cyan << print_bytes(file.size)
+					          << color::reset << ")";
 				}
 				std::cout << '\n';
-				if(!o.list) {
+				if(o.extract || o.test) {
 					std::cout.flush();
 				}
 				
 				extract_progress.update(0, true);
+				
+			} else if(o.list) {
+				extract_progress.clear();
+				BOOST_FOREACH(const file_t & path, output_names) {
+					std::cout << color::white << path.first.string() << color::reset << '\n';
+				}
+				extract_progress.update(0, true);
 			}
 			
-			if(o.list) {
+			if(!o.extract && !o.test) {
 				continue;
 			}
 			
@@ -516,17 +525,17 @@ int main(int argc, char * argv[]) {
 	
 	// Main action.
 	o.list = (options.count("list") != 0);
-	bool extract = (options.count("extract") != 0);
+	o.extract = (options.count("extract") != 0);
 	o.test = (options.count("test") != 0);
-	bool explicit_action = o.list || extract || o.test;
+	bool explicit_action = o.list || o.test;
 	if(!explicit_action) {
-		extract = true;
+		o.extract = true;
 	}
-	if(o.list + extract + o.test > 1) {
+	if(o.extract + o.test > 1) {
 		log_error << "cannot specify multiple actions";
 		return ExitUserError;
 	}
-	if(o.list) {
+	if(!o.extract && !o.test) {
 		progress::set_enabled(false);
 	}
 	

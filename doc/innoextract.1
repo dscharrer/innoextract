@@ -59,7 +59,7 @@ will try to detect if the terminal supports shell escape codes and enable or dis
 Don't convert Windows paths to UNIX paths and don't substitute variables in paths.
 .TP
 \fB-e\fP, \fB--extract\fP
-Extract all files to the current directory. This is the default action. You may only specify one of \fB--extract\fP, \fB--list\fP and \fB--test\fP.
+Extract all files to the current directory. This action is enabled by default, unless either \fB--list\fP or \fB--extract\fP is specified. You may only specify one of \fB--extract\fP and \fB--test\fP.
 .TP
 \fB-h\fP, \fB--help\fP
 Show a list of the supported options.
@@ -71,7 +71,11 @@ Extract only language-independent files and files for the given language. By def
 Show license information.
 .TP
 \fB-l\fP, \fB--list\fP
-List files contained in the installer but don't extract anything. You may only specify one of \fB--extract\fP, \fB--list\fP and \fB--test\fP.
+List files contained in the installer but don't extract anything.
+
+This option can be combined with \fB--silent\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
+
+The \fB--list\fP option can be combined with \fB--test\fP or \fB--extract\fP to display the names of the files as they are extracted even with \fB--silent\fP.
 .TP
 \fB-L\fP, \fB--lowercase\fP
 Convert filenames stored in the installer to lower-case before extracting.
@@ -83,10 +87,12 @@ By default \fBinnoextract\fP will try to detect if the terminal supports shell e
 Less verbose output.
 .TP
 \fB-s\fP, \fB--silent\fP
-Don't output anything except errors and warnings.
+Don't output anything except errors and warnings unless explicitely requested.
+
+This option can be combined with \fB--list\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
 .TP
 \fB-t\fP, \fB--test\fP
-Test archive integrity but don't write any output files. You may only specify one of \fB--extract\fP, \fB--list\fP and \fB--test\fP.
+Test archive integrity but don't write any output files. You may only specify one of \fB--extract\fP and \fB--test\fP.
 .TP
 \fB-T\fP, \fB--timestamps\fP=TZ
 Inno Setup installers can contain timestamps in both UTC and 'local' timezones.
