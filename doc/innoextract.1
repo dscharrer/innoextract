@@ -5,10 +5,13 @@
 innoextract \- tool to extract installers created by Inno Setup
 .SH SYNOPSIS
 .B innoextract
-.RB [ -behlLqstv ]
-.RB [ -c color \fP]
-.RB [ -p progress \fP]
-.I installers ...
+.RB [ --extract ]
+.RB [ --lowercase ]
+[options] \fIinstallers\fP ...
+
+\fBinnoextract --list\fP [options] \fIinstallers\fP ...
+
+\fBinnoextract --test\fP [options] \fIinstallers\fP ...
 .SH DESCRIPTION
 \fBinnoextract\fP is a tool that can extract installer executables created by Inno Setup.
 .PP
@@ -22,8 +25,8 @@ Here is a short summary of the options available in innoextract. Please refer to
 .B Generic options:
 .nf
  \-h \-\-help               Show supported options
- \-v \-\-version            Print the version information
-     \-\-license           Show license information
+ \-v \-\-version            Print version information
+    \-\-license            Show license information
 .fi
 .TP
 .B Actions:
@@ -35,9 +38,9 @@ Here is a short summary of the options available in innoextract. Please refer to
 .TP
 .B Filters:
 .nf
-     \-\-dump              Dump contents without converting filenames
+    \-\-dump               Dump contents without converting filenames
  \-L \-\-lowercase          Convert extracted filenames to lower-case
-     \-\-language=LANG     Extract files for the given language
+    \-\-language=LANG      Extract files for the given language
  \-T \-\-timestamps=TZ      Timezone for file times or "local" or "none"
 .fi
 .TP

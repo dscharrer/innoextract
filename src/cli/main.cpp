@@ -428,7 +428,7 @@ int main(int argc, char * argv[]) {
 	po::options_description generic("Generic options");
 	generic.add_options()
 		("help,h", "Show supported options")
-		("version,v", "Print the version information")
+		("version,v", "Print version information")
 		("license", "Show license information")
 	;
 	
