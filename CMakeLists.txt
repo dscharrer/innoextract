@@ -144,6 +144,7 @@ if(MSVC)
 	if(NOT MSVC_VERSION LESS 1600)
 		# MSVC 10+
 		set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE "unsigned long long")
+		set(INNOEXTRACT_HAVE_STD_CODECVT_UTF8_UTF16 ON)
 	endif()
 elseif(${Boost_VERSION} LESS 104800)
 	# Older Boost versions don't work with C++11
@@ -152,6 +153,7 @@ elseif(USE_CXX11)
 	if(FLAG_FOUND)
 		set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE "unsigned long long")
 	endif()
+	# missing check for INNOEXTRACT_HAVE_STD_CODECVT_UTF8_UTF16
 endif()
 
 # Don't expose internal symbols to the outside world by default
@@ -165,6 +167,11 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE=1")
 	add_definitions(-D_GNU_SOURCE=1)
+endif()
+
+if(WIN32)
+	# Define this so that we don't accitenally use ANSI functions
+	add_definitions(-D_UNICODE)
 endif()
 
 
@@ -262,6 +269,10 @@ endif()
 
 if(LZMA_FOUND)
 	list(APPEND INNOEXTRACT_SOURCES src/stream/lzma.cpp)
+endif()
+
+if(WIN32)
+	list(APPEND INNOEXTRACT_SOURCES src/util/windows.cpp)
 endif()
 
 file(GLOB_RECURSE ALL_INCLUDES "${CMAKE_SOURCE_DIR}/src/*.hpp")

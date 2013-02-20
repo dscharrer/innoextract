@@ -22,7 +22,6 @@
 #include <cctype>
 #include <cstring>
 #include <cstdlib>
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -36,7 +35,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 
 #include "release.hpp"
@@ -58,19 +56,23 @@
 
 #include "util/boostfs_compat.hpp"
 #include "util/console.hpp"
+#include "util/fstream.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
 #include "util/output.hpp"
 #include "util/time.hpp"
+#include "util/windows.hpp"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
+
 
 enum ExitValues {
 	ExitSuccess = 0,
 	ExitUserError = 1,
 	ExitDataError = 2
 };
+
 
 static const char * get_command(const char * argv0) {
 	
@@ -98,6 +100,7 @@ static const char * get_command(const char * argv0) {
 	}
 }
 
+
 static void print_version() {
 	std::cout << color::white << innoextract_name
 	          << ' ' << innoextract_version << color::reset
@@ -108,6 +111,7 @@ static void print_version() {
 	std::cout << "Extracts installers created by " << color::cyan
 	          << innosetup_versions << color::reset << '\n';
 }
+
 
 static void print_help(const char * name, const po::options_description & visible) {
 	std::cout << color::white << "Usage: " << name << " [options] <setup file(s)>\n\n"
@@ -124,6 +128,7 @@ static void print_help(const char * name, const po::options_description & visibl
 	std::cout << "This is free software with absolutely no warranty.\n";
 }
 
+
 static void print_license() {
 	
 	std::cout << color::white << innoextract_name
@@ -132,6 +137,7 @@ static void print_license() {
 	std::cout << '\n'<< innoextract_license << '\n';
 	;
 }
+
 
 struct options {
 	
@@ -152,10 +158,11 @@ struct options {
 	
 };
 
+
 struct file_output {
 	
 	fs::path name;
-	fs::ofstream stream;
+	util::ofstream stream;
 	
 	explicit file_output(const fs::path & file) : name(file) {
 		try {
@@ -164,7 +171,7 @@ struct file_output {
 			throw std::runtime_error("error creating directories for \""
 			                         + name.string() + '"');
 		}
-		stream.open(name);
+		stream.open(name, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 		if(!stream.is_open()) {
 			throw std::runtime_error("error opening output file \"" + name.string() + '"');
 		}
@@ -172,13 +179,14 @@ struct file_output {
 	
 };
 
+
 static void process_file(const fs::path & file, const options & o) {
 	
 	if(fs::is_directory(file)) {
 		throw std::runtime_error("input file \"" + file.string() + "\" is a directory");
 	}
 	
-	fs::ifstream ifs(file, std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
+	util::ifstream ifs(file, std::ios_base::in | std::ios_base::binary);
 	if(!ifs.is_open()) {
 		throw std::runtime_error("error opening file \"" + file.string() + '"');
 	}
@@ -241,7 +249,7 @@ static void process_file(const fs::path & file, const options & o) {
 	boost::scoped_ptr<stream::slice_reader> slice_reader;
 	if(o.extract || o.test) {
 		if(offsets.data_offset) {
-			slice_reader.reset(new stream::slice_reader(file, offsets.data_offset));
+			slice_reader.reset(new stream::slice_reader(&ifs, offsets.data_offset));
 		} else {
 			slice_reader.reset(new stream::slice_reader(file.parent_path(), file.stem(),
 			                                            info.header.slices_per_disk));
@@ -255,12 +263,10 @@ static void process_file(const fs::path & file, const options & o) {
 		debug("[starting " << chunk.first.compression << " chunk @ slice " << chunk.first.first_slice
 		      << " + " << print_hex(offsets.data_offset) << " + " << print_hex(chunk.first.offset)
 		      << ']');
-		
 		stream::chunk_reader::pointer chunk_source;
 		if(o.extract || o.test) {
 			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);
 		}
-		
 		boost::uint64_t offset = 0;
 		
 		BOOST_FOREACH(const Files::value_type & location, chunk.second) {
@@ -341,6 +347,9 @@ static void process_file(const fs::path & file, const options & o) {
 				BOOST_FOREACH(const file_t & path, output_names) {
 					std::cout << color::white << path.first.string() << color::reset << '\n';
 				}
+				if(o.extract || o.test) {
+					std::cout.flush();
+				}
 				extract_progress.update(0, true);
 			}
 			
@@ -420,6 +429,7 @@ static void process_file(const fs::path & file, const options & o) {
 	
 	extract_progress.clear();
 }
+
 
 int main(int argc, char * argv[]) {
 	

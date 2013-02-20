@@ -23,7 +23,8 @@
 
 #include <boost/iostreams/concepts.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/filesystem/fstream.hpp>
+
+#include "util/fstream.hpp"
 
 namespace stream {
 
@@ -41,14 +42,16 @@ class slice_reader : public boost::iostreams::source {
 	path_type slice_file;
 	boost::uint32_t slice_size;
 	
-	boost::filesystem::ifstream ifs;
+	util::ifstream ifs;
+	
+	std::istream * is;
 	
 	bool seek(size_t slice);
 	bool open_file(const path_type & file);
 	
 public:
 	
-	slice_reader(const path_type & setup_file, boost::uint32_t data_offset);
+	slice_reader(std::istream * istream, boost::uint32_t data_offset);
 	
 	slice_reader(const path_type & dir, const path_type & base_file, size_t slices_per_disk);
 	
@@ -61,7 +64,7 @@ public:
 	
 	bool open(size_t slice, const path_type & slice_file);
 	
-	bool is_open() { return ifs.is_open(); }
+	bool is_open() { return (is != &ifs || ifs.is_open()); }
 	
 };
 

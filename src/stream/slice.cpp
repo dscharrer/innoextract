@@ -42,27 +42,29 @@ const char slice_ids[][8] = {
 
 } // anonymous namespace
 
-slice_reader::slice_reader(const path_type & setup_file, boost::uint32_t data_offset)
+slice_reader::slice_reader(std::istream * istream, boost::uint32_t data_offset)
 	: dir(), last_dir(), base_file(), data_offset(data_offset), slices_per_disk(1),
-	  current_slice(0) {
-	
-	ifs.open(setup_file, std::ios_base::binary | std::ios_base::in | std::ios_base::ate);
+	  current_slice(0), is(istream) {
 	
 	std::streampos max_size = std::streampos(std::numeric_limits<boost::int32_t>::max());
-	slice_size = boost::uint32_t(std::min<std::streampos>(ifs.tellg(), max_size));
-	if(ifs.seekg(data_offset).fail()) {
-		ifs.close();
+	
+	std::streampos file_size = is->seekg(0, std::ios_base::end).tellg();
+	
+	slice_size = boost::uint32_t(std::min(file_size, max_size));
+	if(is->seekg(data_offset).fail()) {
+		log_error << "could not seek to data";
 	}
 }
 
 slice_reader::slice_reader(const path_type & dir, const path_type & base_file,
                            size_t slices_per_disk)
 	: dir(dir), last_dir(dir), base_file(base_file), data_offset(0),
-	  slices_per_disk(slices_per_disk), current_slice(0) { }
+	  slices_per_disk(slices_per_disk), current_slice(0), slice_size(0),
+	  is(&ifs) { }
 
 bool slice_reader::seek(size_t slice) {
 	
-	if(slice == current_slice && ifs.is_open()) {
+	if(slice == current_slice && is_open()) {
 		return true;
 	}
 	
@@ -79,13 +81,14 @@ bool slice_reader::open_file(const path_type & file) {
 	log_info << "opening \"" << color::cyan << file.string() << color::reset << '"';
 	
 	ifs.close();
+	ifs.clear();
 	
 	ifs.open(file, std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
 	if(ifs.fail()) {
 		return false;
 	}
 	
-	std::streampos fileSize = ifs.tellg();
+	std::streampos file_size = ifs.tellg();
 	ifs.seekg(0);
 	
 	char magic[8];
@@ -108,8 +111,16 @@ bool slice_reader::open_file(const path_type & file) {
 	}
 	
 	slice_size = load_number<boost::uint32_t>(ifs);
-	if(ifs.fail() || std::streampos(slice_size) > fileSize) {
-		log_error << "[slice] bad slice size: " << slice_size << " > " << fileSize;
+	if(ifs.fail()) {
+		log_error << "[slice] error reading slice size";
+		ifs.close();
+		return false;
+	} else if(std::streampos(slice_size) > file_size) {
+		log_error << "[slice] bad slice size: " << slice_size << " > " << file_size;
+		ifs.close();
+		return false;
+	} else if(std::streampos(slice_size) < ifs.tellg()) {
+		log_error << "[slice] bad slice size: " << slice_size << " < " << ifs.tellg();
 		ifs.close();
 		return false;
 	}
@@ -124,11 +135,11 @@ bool slice_reader::open_file(const path_type & file) {
 bool slice_reader::open(size_t slice, const path_type & file) {
 	
 	current_slice = slice;
+	is = &ifs;
 	ifs.close();
 	
 	if(slices_per_disk == 0) {
-		log_error << "[slice] slices per disk must not be zero";
-		return false;
+		throw std::runtime_error("[slice] slices per disk must not be zero");
 	}
 	
 	path_type slice_file = file;
@@ -157,6 +168,12 @@ bool slice_reader::open(size_t slice, const path_type & file) {
 		return true;
 	}
 	
+	if(dir != last_dir) {
+		log_error << "error opening " << slice_file << " in " << last_dir << " or " << dir;
+	} else {
+		log_error << "error opening " << last_dir / slice_file;
+	}
+	
 	return false;
 }
 
@@ -166,11 +183,13 @@ bool slice_reader::seek(size_t slice, boost::uint32_t offset) {
 		return false;
 	}
 	
-	if(offset > slice_size - data_offset) {
+	offset += data_offset;
+	
+	if(offset > slice_size) {
 		return false;
 	}
 	
-	if(ifs.seekg(data_offset + offset).fail()) {
+	if(is->seekg(offset).fail()) {
 		return false;
 	}
 	
@@ -187,16 +206,27 @@ std::streamsize slice_reader::read(char * buffer, std::streamsize bytes) {
 	
 	while(bytes > 0) {
 		
-		std::streamsize remaining = std::streamsize(slice_size - size_t(ifs.tellg()));
+		boost::uint32_t read_pos = boost::uint32_t(is->tellg());
+		if(read_pos > slice_size) {
+			return -1;
+		}
+		std::streamsize remaining = std::streamsize(slice_size - read_pos);
 		if(!remaining) {
 			if(!seek(current_slice + 1)) {
 				return nread;
 			}
-			remaining = std::streamsize(slice_size - size_t(ifs.tellg()));
+			read_pos = boost::uint32_t(is->tellg());
+			if(read_pos > slice_size) {
+				return -1;
+			}
+			remaining = std::streamsize(slice_size - read_pos);
 		}
 		
-		std::streamsize read = ifs.read(buffer, std::min(remaining, bytes)).gcount();
+		if(is->read(buffer, std::min(remaining, bytes)).fail()) {
+			return -1;
+		}
 		
+		std::streamsize read = is->gcount();
 		nread += read, buffer += read, bytes -= read;
 	}
 	
