@@ -101,15 +101,42 @@ static const char * get_command(const char * argv0) {
 }
 
 
-static void print_version() {
+struct options {
+	
+	bool quiet;
+	bool silent;
+	
+	bool dump;
+	
+	bool list; // The --list action has been explicitely specified
+	bool test; // The --test action has been explicit specified
+	bool extract; // The --extract action has been specified or automatically enabled
+	
+	bool preserve_file_times;
+	bool local_timestamps;
+	
+	std::string language;
+	
+	setup::filename_map filenames;
+	
+};
+
+
+static void print_version(const options & o) {
+	if(o.silent) {
+		std::cout << innoextract_version << '\n';
+		return;
+	}
 	std::cout << color::white << innoextract_name
 	          << ' ' << innoextract_version << color::reset
 #ifdef DEBUG
 	          << " (with debug output)"
 #endif
 	          << '\n';
-	std::cout << "Extracts installers created by " << color::cyan
-	          << innosetup_versions << color::reset << '\n';
+	if(!o.quiet) {
+		std::cout << "Extracts installers created by " << color::cyan
+		          << innosetup_versions << color::reset << '\n';
+	}
 }
 
 
@@ -137,26 +164,6 @@ static void print_license() {
 	std::cout << '\n'<< innoextract_license << '\n';
 	;
 }
-
-
-struct options {
-	
-	bool silent;
-	
-	bool dump;
-	
-	bool list; // The --list action has been explicitely specified
-	bool test; // The --test action has been explicit specified
-	bool extract; // The --extract action has been specified or automatically enabled
-	
-	bool preserve_file_times;
-	bool local_timestamps;
-	
-	std::string language;
-	
-	setup::filename_map filenames;
-	
-};
 
 
 struct file_output {
@@ -207,7 +214,7 @@ static void process_file(const fs::path & file, const options & o) {
 	setup::info info;
 	info.load(ifs);
 	
-	if(!logger::quiet) {
+	if(!o.quiet) {
 		const std::string & name = info.header.app_versioned_name.empty()
 		                           ? info.header.app_name : info.header.app_versioned_name;
 		std::cout << (o.extract ? "Extracting" : o.test ? "Testing" : "Listing")
@@ -328,7 +335,7 @@ static void process_file(const fs::path & file, const options & o) {
 				if(!named) {
 					std::cout << color::white << "unnamed file" << color::reset;
 				}
-				if(!logger::quiet) {
+				if(!o.quiet) {
 					if(logger::debug) {
 						std::cout << " @ " << print_hex(file.offset);
 					}
@@ -497,7 +504,8 @@ int main(int argc, char * argv[]) {
 	
 	// Verbosity settings.
 	o.silent = (options.count("silent") != 0);
-	logger::quiet = o.silent || options.count("quiet");
+	o.quiet = o.silent || options.count("quiet");
+	logger::quiet = o.quiet;
 #ifdef DEBUG
 	if(options.count("debug")) {
 		logger::debug = true;
@@ -572,7 +580,7 @@ int main(int argc, char * argv[]) {
 	
 	// List version.
 	if(options.count("version") != 0) {
-		print_version();
+		print_version(o);
 		if(!explicit_action) {
 			return ExitSuccess;
 		}

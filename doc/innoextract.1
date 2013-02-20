@@ -113,7 +113,9 @@ Besides timezones, two special values are accepted:
 The default value for this option is \fBUTC\fP, causing innoextract to not adjust 'local' file times. File times marked as UTC in the Inno Setup file will never be adjusted no matter what \fB--timestamps\fP is set to.
 .TP
 \fB-v\fP, \fB--version\fP
-Show the \fBinnoextract\fP version number and supported Inno Setup versions.
+Print the \fBinnoextract\fP version number and supported Inno Setup versions.
+
+If combined with the \fB--silent\fP option, only the version \fInumber\fP is printed. Otherwise, the output will contain the name (innoextract) followed by the version number on the first line, and, unless the \fB--quiet\fP options is specified, the range of suuported Inno Setup installer versions on the second line.
 .SH EXIT VALUES
 .PP
 .IP \fB0\fP
