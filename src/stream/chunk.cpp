@@ -22,12 +22,11 @@
 
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
-#include <boost/iostreams/restrict.hpp>
 #include <boost/make_shared.hpp>
-#include <boost/ref.hpp>
 
 #include "release.hpp"
 #include "stream/lzma.hpp"
+#include "stream/restrict.hpp"
 #include "stream/slice.hpp"
 #include "util/log.hpp"
 #include "util/util.hpp"
@@ -91,7 +90,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 		default: throw chunk_error("unknown compression");
 	}
 	
-	result->push(io::restrict(boost::ref(base), 0, boost::int64_t(chunk.size)));
+	result->push(stream::restrict(base, chunk.size));
 	
 	return result;
 }

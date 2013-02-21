@@ -28,6 +28,7 @@
 #include <boost/iostreams/char_traits.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/get.hpp>
+#include <boost/iostreams/read.hpp>
 
 class inno_exe_decoder_4108 : public boost::iostreams::multichar_input_filter {
 	

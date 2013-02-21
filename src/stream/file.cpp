@@ -26,6 +26,7 @@
 
 #include "stream/checksum.hpp"
 #include "stream/exefilter.hpp"
+#include "stream/restrict.hpp"
 
 namespace io = boost::iostreams;
 
@@ -67,7 +68,7 @@ file_reader::pointer file_reader::get(base_type & base, const file & file,
 		case InstructionFilter5309: result->push(inno_exe_decoder_5200(true), 8192); break;
 	}
 	
-	result->push(io::restrict(base, 0, boost::int64_t(file.size)));
+	result->push(stream::restrict(base, file.size));
 	
 	return result;
 }

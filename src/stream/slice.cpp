@@ -198,39 +198,39 @@ bool slice_reader::seek(size_t slice, boost::uint32_t offset) {
 
 std::streamsize slice_reader::read(char * buffer, std::streamsize bytes) {
 	
-	std::streamsize nread = 0;
-	
 	if(!seek(current_slice)) {
-		return nread;
+		return (bytes == 0) ? 0 : -1;
 	}
+	
+	std::streamsize nread = 0;
 	
 	while(bytes > 0) {
 		
 		boost::uint32_t read_pos = boost::uint32_t(is->tellg());
 		if(read_pos > slice_size) {
-			return -1;
+			break;
 		}
 		std::streamsize remaining = std::streamsize(slice_size - read_pos);
 		if(!remaining) {
 			if(!seek(current_slice + 1)) {
-				return nread;
+				break;
 			}
 			read_pos = boost::uint32_t(is->tellg());
 			if(read_pos > slice_size) {
-				return -1;
+				break;
 			}
 			remaining = std::streamsize(slice_size - read_pos);
 		}
 		
 		if(is->read(buffer, std::min(remaining, bytes)).fail()) {
-			return -1;
+			break;
 		}
 		
 		std::streamsize read = is->gcount();
 		nread += read, buffer += read, bytes -= read;
 	}
 	
-	return nread;
+	return (nread != 0 || bytes == 0) ? nread : -1;
 }
 
 } // namespace stream

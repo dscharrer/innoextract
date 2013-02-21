@@ -399,8 +399,8 @@ static void process_file(const fs::path & file, const options & o) {
 					BOOST_FOREACH(file_output & out, output) {
 						out.stream.write(buffer, n);
 						if(out.stream.fail()) {
-							throw new std::runtime_error("error writing file \""
-							                             + out.name.string() + '"');
+							throw std::runtime_error("error writing file \""
+							                         + out.name.string() + '"');
 						}
 					}
 					extract_progress.update(boost::uint64_t(n));
@@ -428,7 +428,7 @@ static void process_file(const fs::path & file, const options & o) {
 				            << "actual:   " << checksum << '\n'
 				            << "expected: " << file.checksum;
 				if(o.test) {
-					throw new std::runtime_error("integrity test failed");
+					throw std::runtime_error("integrity test failed");
 				}
 			}
 		}
@@ -545,7 +545,7 @@ int main(int argc, char * argv[]) {
 	o.list = (options.count("list") != 0);
 	o.extract = (options.count("extract") != 0);
 	o.test = (options.count("test") != 0);
-	bool explicit_action = o.list || o.test;
+	bool explicit_action = o.list || o.test || o.extract;
 	if(!explicit_action) {
 		o.extract = true;
 	}
