@@ -18,6 +18,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Filter to be used with boost::iostreams for calculating a \ref crypto::checksum.
+ */
 #ifndef INNOEXTRACT_STREAM_CHECKSUM_HPP
 #define INNOEXTRACT_STREAM_CHECKSUM_HPP
 
@@ -29,6 +32,12 @@
 
 namespace stream {
 
+/*!
+ * Filters to be used with boost::iostreams for calculating a \ref crypto::checksum.
+ *
+ * An internal checksum state is updated as bytes are read and the final checksum is
+ * written to the given checksum object when the end of the source stream is reached.
+ */
 class checksum_filter : public boost::iostreams::multichar_input_filter {
 	
 private:
@@ -40,6 +49,10 @@ public:
 	typedef base_type::char_type char_type;
 	typedef base_type::category category;
 	
+	/*!
+	 * \param output Location to store the final checksum at.
+	 * \param type   The type of checksum to calculate.
+	 */
 	checksum_filter(crypto::checksum * output, crypto::checksum_type type)
 		: output(output) {
 		hasher.init(type);
