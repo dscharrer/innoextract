@@ -18,8 +18,13 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Abstraction for reading the embedded or external raw setup data.
+ */
 #ifndef INNOEXTRACT_STREAM_SLICEREADER_HPP
 #define INNOEXTRACT_STREAM_SLICEREADER_HPP
+
+#include <ios>
 
 #include <boost/iostreams/concepts.hpp>
 #include <boost/filesystem/path.hpp>
@@ -28,42 +33,117 @@
 
 namespace stream {
 
+//! Error thrown by \ref chunk_reader if there was a problem.
+struct slice_error : public std::ios_base::failure {
+	
+	explicit slice_error(std::string msg) : std::ios_base::failure(msg) { }
+	
+};
+
+/*!
+ * Abstraction for reading either data embedded inside the setup executable or from
+ * multiple external slices.
+ *
+ * Setup data contained in the executable is located by a non-zeore
+ * \ref loader::offsets::data_offset.
+ *
+ * The contained data is made up of one or more \ref chunk "chunks"
+ * (read by \ref chunk_reader), which in turn contain one or more  \ref file "files"
+ * (read by \ref file_reader).
+ */
 class slice_reader : public boost::iostreams::source {
 	
 	typedef boost::filesystem::path path_type;
 	
-	path_type dir;
-	path_type last_dir;
-	path_type base_file;
+	// Information for reading embedded setup data
 	const boost::uint32_t data_offset;
-	const size_t slices_per_disk;
 	
-	size_t current_slice;
-	path_type slice_file;
-	boost::uint32_t slice_size;
+	// Information for eading external setup data
+	path_type    dir;             //!< Slice directory specified at construction.
+	path_type    last_dir;        //!< Directory containing the current slice.
+	path_type    base_file;       //!< Base file name for slices.
+	const size_t slices_per_disk; //!< Number of slices grouped into each disk (for names).
 	
-	util::ifstream ifs;
+	// Information about the current slice
+	size_t          current_slice; //!< Number of the currently opened slice.
+	path_type       slice_file;    //!< Filename of the currently opened slice.
+	boost::uint32_t slice_size;    //!< Size in bytes of the currently opened slice.
 	
-	std::istream * is;
+	// Streams
+	util::ifstream ifs; //!< File input stream used when reading from external slices.
+	std::istream * is;  //!< Input stream to read from.
 	
 	bool seek(size_t slice);
 	bool open_file(const path_type & file);
+	bool open(size_t slice, const path_type & slice_file);
 	
 public:
 	
+	/*!
+	 * Construct a \ref slice_reader to read from data inside the setup file.
+	 * Seeking to anything except the zeroeth slice is not allowed.
+	 *
+	 * \param istream     A seekable input stream for the setup executable.
+	 *                    The initial read position of the stream is ignored.
+	 * \param data_offset The offset within the given stream where the setup data starts.
+	 *                    This offset is given by \ref loader::offsets::data_offset.
+	 *
+	 * The constructed reader will allow reading the byte range [data_offset, file end)
+	 * from the setup executable and provide this as the range [0, file end - data_offset).
+	 */
 	slice_reader(std::istream * istream, boost::uint32_t data_offset);
 	
-	slice_reader(const path_type & dir, const path_type & base_file, size_t slices_per_disk);
+	/*!
+	 * Construct a \ref slice_reader to read from external data slices (aka disks).
+	 *
+	 * Slice files must be located at \c <dir>/<base_file>-<disk>.bin
+	 * or \c <dir>/<base_file>-<disk><sliceletter>.bin if \ref slices_per_disk is greater
+	 * than \c 1.
+	 *
+	 * The disk number is given by \code slice / slices_per_disk + 1 \endcode while
+	 * the sliceletter is the ASCII char \code 'a' + (slice % slices_per_disk) \endcode.
+	 *
+	 * \param dir             The directory containing the slice files.
+	 * \param basename        The base name for slice files.
+	 * \param slices_per_disk How many slices are grouped into one disk. Must not be \c 0.
+	 */
+	slice_reader(const path_type & dir, const path_type & basename, size_t slices_per_disk);
 	
+	/*!
+	 * Attempt to seek to an offset within a slice.
+	 *
+	 * \param slice  The slice to seek to.
+	 * \param offset The byte offset to seek to within the given slice.
+	 *
+	 * \return \c false if the requested slice could not be opened, or if the requested
+	 *         offset is not a valid position in that slice - \c true otherwise.
+	 */
 	bool seek(size_t slice, boost::uint32_t offset);
 	
+	/*!
+	 * Read a number of bytes starting at the current slice and offset within that slice.
+	 *
+	 * \param buffer Buffer to receive the bytes read.
+	 * \param bytes  Number of bytes to read.
+	 *
+	 * The current offset will be advanced by the number of bytes read. It is not an error
+	 * to read past the end of the current slice (unless it is the last slice). Doing so
+	 * will automatically seek to the start of the next slice and continue reading from
+	 * there.
+	 *
+	 * \return The number of bytes read or \c -1 if there was an error. Unless we are at the
+	 *         end of the last slice, this function blocks until the number of requested
+	 *         bytes have been read.
+	 */
 	std::streamsize read(char * buffer, std::streamsize bytes);
 	
+	//! \return the number currently opened slice.
 	size_t slice() { return current_slice; }
+	
+	//! \return filename for the currently opened slice.
 	path_type & file() { return slice_file; }
 	
-	bool open(size_t slice, const path_type & slice_file);
-	
+	//! \return true a slice is currently open.
 	bool is_open() { return (is != &ifs || ifs.is_open()); }
 	
 };

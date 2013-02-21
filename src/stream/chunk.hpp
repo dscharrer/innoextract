@@ -19,11 +19,11 @@
  */
 
 /*!
- * Wrapper to read and decompress a chunk from a \ref slice_reader.
+ * Wrapper to read and decompress a chunk from a \ref stream::slice_reader.
  *
- * A chunk consists of one compression stream (one of \ref compression_method) and
+ * A chunk consists of one compression stream (one of \ref stream::compression_method) and
  * contains one or more files. Files may also have additional filters managed by
- * \ref file_reader.
+ * \ref stream::file_reader.
  */
 #ifndef INNOEXTRACT_STREAM_CHUNK_HPP
 #define INNOEXTRACT_STREAM_CHUNK_HPP
@@ -62,6 +62,8 @@ enum compression_method {
  * Information specifying a compressed chunk.
  *
  * This data is stored in \ref setup::data entries.
+ *
+ * Chunks specified by this struct can be read using \ref chunk_reader.
  */
 struct chunk {
 	

@@ -19,7 +19,7 @@
  */
 
 /*!
- * Wrapper to read a single file from a chunk (\ref chunk_reader).
+ * Wrapper to read a single file from a chunk (\ref stream::chunk_reader).
  */
 #ifndef INNOEXTRACT_STREAM_FILE_HPP
 #define INNOEXTRACT_STREAM_FILE_HPP
@@ -44,6 +44,8 @@ enum compression_filter {
  * Information specifying a single file inside a compressed chunk.
  *
  * This data is stored in \ref setup::data entries.
+ *
+ * Files specified by this struct can be read using \ref file_reader.
  */
 struct file {
 	

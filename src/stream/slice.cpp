@@ -43,8 +43,10 @@ const char slice_ids[][8] = {
 } // anonymous namespace
 
 slice_reader::slice_reader(std::istream * istream, boost::uint32_t data_offset)
-	: dir(), last_dir(), base_file(), data_offset(data_offset), slices_per_disk(1),
-	  current_slice(0), is(istream) {
+	: data_offset(data_offset),
+	  dir(), last_dir(), base_file(), slices_per_disk(1),
+	  current_slice(0), slice_file(), slice_size(0),
+	  ifs(), is(istream) {
 	
 	std::streampos max_size = std::streampos(std::numeric_limits<boost::int32_t>::max());
 	
@@ -52,15 +54,16 @@ slice_reader::slice_reader(std::istream * istream, boost::uint32_t data_offset)
 	
 	slice_size = boost::uint32_t(std::min(file_size, max_size));
 	if(is->seekg(data_offset).fail()) {
-		log_error << "could not seek to data";
+		throw slice_error("could not seek to data");
 	}
 }
 
 slice_reader::slice_reader(const path_type & dir, const path_type & base_file,
                            size_t slices_per_disk)
-	: dir(dir), last_dir(dir), base_file(base_file), data_offset(0),
-	  slices_per_disk(slices_per_disk), current_slice(0), slice_size(0),
-	  is(&ifs) { }
+	: data_offset(0),
+	  dir(dir), last_dir(dir), base_file(base_file), slices_per_disk(slices_per_disk),
+	  current_slice(0), slice_file(), slice_size(0),
+	  ifs(), is(&ifs) { }
 
 bool slice_reader::seek(size_t slice) {
 	
@@ -69,8 +72,7 @@ bool slice_reader::seek(size_t slice) {
 	}
 	
 	if(data_offset != 0) {
-		log_error << "[slice] cannot change slices in single-file setup";
-		return false;
+		throw slice_error("[slice] cannot change slices in single-file setup");
 	}
 	
 	return open(slice, path_type());
@@ -94,8 +96,7 @@ bool slice_reader::open_file(const path_type & file) {
 	char magic[8];
 	if(ifs.read(magic, 8).fail()) {
 		ifs.close();
-		log_error << "[slice] error reading magic number";
-		return false;
+		throw slice_error("error reading slice magic number");
 	}
 	bool found = false;
 	for(size_t i = 0; ARRAY_SIZE(slice_ids); i++) {
@@ -105,24 +106,24 @@ bool slice_reader::open_file(const path_type & file) {
 		}
 	}
 	if(!found) {
-		log_error << "[slice] bad magic number";
 		ifs.close();
-		return false;
+		throw slice_error("bad slice magic number");
 	}
 	
 	slice_size = load_number<boost::uint32_t>(ifs);
 	if(ifs.fail()) {
-		log_error << "[slice] error reading slice size";
 		ifs.close();
-		return false;
+		throw slice_error("error reading slice size");
 	} else if(std::streampos(slice_size) > file_size) {
-		log_error << "[slice] bad slice size: " << slice_size << " > " << file_size;
 		ifs.close();
-		return false;
+		std::ostringstream oss;
+		oss << "bad slice size: " << slice_size << " > " << file_size;
+		throw slice_error(oss.str());
 	} else if(std::streampos(slice_size) < ifs.tellg()) {
-		log_error << "[slice] bad slice size: " << slice_size << " < " << ifs.tellg();
 		ifs.close();
-		return false;
+		std::ostringstream oss;
+		oss << "bad slice size: " << slice_size << " < " << ifs.tellg();
+		throw slice_error(oss.str());
 	}
 	
 	slice_file = file;
