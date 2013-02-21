@@ -20,7 +20,6 @@
 
 #include "stream/file.hpp"
 
-#include <boost/make_shared.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/restrict.hpp>
 
@@ -55,7 +54,7 @@ bool file::operator==(const file & o) const {
 file_reader::pointer file_reader::get(base_type & base, const file & file,
                                       crypto::checksum * checksum) {
 	
-	boost::shared_ptr<io::filtering_istream> result = boost::make_shared<io::filtering_istream>();
+	util::unique_ptr<io::filtering_istream>::type result(new io::filtering_istream);
 	
 	if(checksum) {
 		result->push(stream::checksum_filter(checksum, file.checksum.type), 8192);
@@ -70,7 +69,7 @@ file_reader::pointer file_reader::get(base_type & base, const file & file,
 	
 	result->push(restrict(base, file.size));
 	
-	return result;
+	return pointer(result);
 }
 
 } // namespace stream

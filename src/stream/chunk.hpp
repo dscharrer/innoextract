@@ -33,9 +33,9 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/iostreams/chain.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include "util/enum.hpp"
+#include "util/unique_ptr.hpp"
 
 namespace stream {
 
@@ -89,7 +89,7 @@ class chunk_reader {
 public:
 	
 	typedef boost::iostreams::chain<boost::iostreams::input> type;
-	typedef boost::shared_ptr<type>                          pointer;
+	typedef util::unique_ptr<type>::type                     pointer;
 	
 	/*!
 	 * Wrap a \ref slice_reader to read and decompress a single chunk.

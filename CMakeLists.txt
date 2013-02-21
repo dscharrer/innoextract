@@ -143,8 +143,9 @@ set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE "unsigned long")
 if(MSVC)
 	if(NOT MSVC_VERSION LESS 1600)
 		# MSVC 10+
-		set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE "unsigned long long")
+		set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE   "unsigned long long")
 		set(INNOEXTRACT_HAVE_STD_CODECVT_UTF8_UTF16 ON)
+		set(INNOEXTRACT_HAVE_STD_UNIQUE_PTR         ON)
 	endif()
 elseif(${Boost_VERSION} LESS 104800)
 	# Older Boost versions don't work with C++11
@@ -152,6 +153,7 @@ elseif(USE_CXX11)
 	add_cxxflag("-std=c++11")
 	if(FLAG_FOUND)
 		set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE "unsigned long long")
+		set(INNOEXTRACT_HAVE_STD_UNIQUE_PTR       ON)
 	endif()
 	# missing check for INNOEXTRACT_HAVE_STD_CODECVT_UTF8_UTF16
 endif()

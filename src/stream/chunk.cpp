@@ -73,7 +73,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 		throw chunk_error("bad chunk magic");
 	}
 	
-	pointer result = boost::make_shared<type>();
+	pointer result(new boost::iostreams::chain<boost::iostreams::input>);
 	
 	switch(chunk.compression) {
 		case Stored: break;

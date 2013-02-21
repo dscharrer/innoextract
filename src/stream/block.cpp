@@ -192,7 +192,7 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 	
 	debug("[block] size: " << stored_size << "  compression: " << compression);
 	
-	boost::shared_ptr<io::filtering_istream> fis = boost::make_shared<io::filtering_istream>();
+	util::unique_ptr<io::filtering_istream>::type fis(new io::filtering_istream);
 	
 	switch(compression) {
 		case Stored: break;
@@ -209,7 +209,7 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 	
 	fis->push(io::restrict(base, 0, stored_size));
 	
-	return fis;
+	return pointer(fis);
 }
 
 } // namespace stream

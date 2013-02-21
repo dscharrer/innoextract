@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2013 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -18,36 +18,28 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef INNOEXTRACT_STREAM_BLOCK_HPP
-#define INNOEXTRACT_STREAM_BLOCK_HPP
+/*!
+ * Wrapper to select std::unique_ptr if available, std::auto_ptr otherwise.
+ */
+#ifndef INNOEXTRACT_UTIL_UNIQUE_PTR_HPP
+#define INNOEXTRACT_UTIL_UNIQUE_PTR_HPP
 
-#include <ios>
-#include <string>
+#include <memory>
 
-#include "util/unique_ptr.hpp"
+#include "configure.hpp"
 
-namespace setup { struct version; }
+namespace util {
 
-namespace stream {
-
-struct block_error : public std::ios_base::failure {
-	
-	explicit block_error(std::string msg) : std::ios_base::failure(msg) { }
-	
+//! Get a unique_ptr or auto_ptr for the given type.
+template <typename T>
+struct unique_ptr {
+#if INNOEXTRACT_HAVE_STD_UNIQUE_PTR
+	typedef std::unique_ptr<T> type;
+#else
+	typedef std::auto_ptr<T> type;
+#endif
 };
 
-//! Reads a compressed and checksumed block of data used to store the setup headers.
-class block_reader {
-	
-public:
-	
-	typedef std::istream                 type;
-	typedef util::unique_ptr<type>::type pointer;
-	
-	static pointer get(std::istream & base, const setup::version & version);
-	
-};
+} // namespace util
 
-} // namespace stream
-
-#endif // INNOEXTRACT_STREAM_BLOCK_HPP
+#endif // INNOEXTRACT_UTIL_UNIQUE_PTR_HPP
