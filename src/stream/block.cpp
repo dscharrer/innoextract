@@ -209,7 +209,7 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 	
 	fis->push(io::restrict(base, 0, stored_size));
 	
-	return pointer(fis);
+	return pointer(fis.release());
 }
 
 } // namespace stream

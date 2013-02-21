@@ -69,7 +69,7 @@ file_reader::pointer file_reader::get(base_type & base, const file & file,
 	
 	result->push(restrict(base, file.size));
 	
-	return pointer(result);
+	return pointer(result.release());
 }
 
 } // namespace stream
