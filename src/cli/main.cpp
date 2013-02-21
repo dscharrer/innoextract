@@ -270,6 +270,12 @@ static void process_file(const fs::path & file, const options & o) {
 		debug("[starting " << chunk.first.compression << " chunk @ slice " << chunk.first.first_slice
 		      << " + " << print_hex(offsets.data_offset) << " + " << print_hex(chunk.first.offset)
 		      << ']');
+		
+		if(chunk.first.encrypted) {
+			log_warning << "skipping encrypted chunk (unsupported)";
+			continue;
+		}
+		
 		stream::chunk_reader::pointer chunk_source;
 		if(o.extract || o.test) {
 			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);
