@@ -90,7 +90,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 		default: throw chunk_error("unknown compression");
 	}
 	
-	result->push(stream::restrict(base, chunk.size));
+	result->push(restrict(base, chunk.size));
 	
 	return result;
 }

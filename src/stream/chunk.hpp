@@ -18,6 +18,13 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Wrapper to read and decompress a chunk from a \ref slice_reader.
+ *
+ * A chunk consists of one compression stream (one of \ref compression_method) and
+ * contains one or more files. Files may also have additional filters managed by
+ * \ref file_reader.
+ */
 #ifndef INNOEXTRACT_STREAM_CHUNK_HPP
 #define INNOEXTRACT_STREAM_CHUNK_HPP
 
@@ -34,12 +41,14 @@ namespace stream {
 
 class slice_reader;
 
+//! Error thrown by \ref chunk_reader::get if there was a problem.
 struct chunk_error : public std::ios_base::failure {
 	
 	explicit chunk_error(std::string msg) : std::ios_base::failure(msg) { }
 	
 };
 
+//! Compression methods supported by chunks.
 enum compression_method {
 	Stored,
 	Zlib,
@@ -49,16 +58,21 @@ enum compression_method {
 	UnknownCompression
 };
 
+/*!
+ * Information specifying a compressed chunk.
+ *
+ * This data is stored in \ref setup::data entries.
+ */
 struct chunk {
 	
-	size_t first_slice; //!< Slice where the chunk starts.
-	size_t last_slice;
+	size_t first_slice;             //!< Slice where the chunk starts.
+	size_t last_slice;              //!< Slice where the chunk ends.
 	
-	boost::uint32_t offset;    //!< Offset of the compressed chunk in firstSlice.
-	boost::uint64_t size;      //! Total compressed size of the chunk.
+	boost::uint32_t offset;         //!< Offset of the compressed chunk in firstSlice.
+	boost::uint64_t size;           //! Total compressed size of the chunk.
 	
-	compression_method compression;
-	bool encrypted;
+	compression_method compression; //!< Compression method used by the chunk.
+	bool encrypted;                 //!< Is the chunk encrypted? Unsupported for now.
 	
 	bool operator<(const chunk & o) const;
 	bool operator==(const chunk & o) const;
@@ -66,13 +80,27 @@ struct chunk {
 
 class silce_source;
 
+/*!
+ * Wrapper to read and decompress a chunk from a \ref slice_reader.
+ * Restrics the stream to the chunk size and applies the appropriate decompression.
+ */
 class chunk_reader {
 	
 public:
 	
 	typedef boost::iostreams::chain<boost::iostreams::input> type;
-	typedef boost::shared_ptr<type> pointer;
+	typedef boost::shared_ptr<type>                          pointer;
 	
+	/*!
+	 * Wrap a \ref slice_reader to read and decompress a single chunk.
+	 *
+	 * Only one wrapper can be used at the same time for each \ref base.
+	 *
+	 * \param base     The slice reader for the setup file(s).
+	 * \param chunk    Information specifying the chunk to read.
+	 *
+	 * \return a pointer to a non-seekable input filter chain for the requested file.
+	 */
 	static pointer get(slice_reader & base, const ::stream::chunk & chunk);
 	
 };

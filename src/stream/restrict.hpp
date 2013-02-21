@@ -35,8 +35,8 @@ namespace stream {
 template <typename BaseSource>
 class restricted_source : public boost::iostreams::source {
 	
-	BaseSource &    base;      //!< The base source to read from
-	boost::uint64_t remaining; //!< Number of bytes remaining in the restricted source
+	BaseSource &    base;      //!< The base source to read from.
+	boost::uint64_t remaining; //!< Number of bytes remaining in the restricted source.
 	
 public:
 	

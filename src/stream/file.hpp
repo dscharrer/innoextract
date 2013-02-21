@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Daniel Scharrer
+ * Copyright (C) 2011-2013 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -18,6 +18,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Wrapper to read a single file from a chunk (\ref chunk_reader).
+ */
 #ifndef INNOEXTRACT_STREAM_FILE_HPP
 #define INNOEXTRACT_STREAM_FILE_HPP
 
@@ -37,33 +40,57 @@ enum compression_filter {
 	InstructionFilter5309,
 };
 
+/*!
+ * Information specifying a single file inside a compressed chunk.
+ *
+ * This data is stored in \ref setup::data entries.
+ */
 struct file {
 	
-	boost::uint64_t offset; //!< Offset of this file within the decompressed chunk.
-	boost::uint64_t size; //!< Decompressed size of this file.
+	boost::uint64_t    offset;   //!< Offset of this file within the decompressed chunk.
+	boost::uint64_t    size;     //!< Decompressed size of this file.
 	
-	crypto::checksum checksum;
+	crypto::checksum   checksum; //!< Checksum for the file.
 	
-	compression_filter filter; //!< Additional filter used before compression.
+	compression_filter filter;   //!< Additional filter used before compression.
 	
 	bool operator<(const file & o) const;
 	bool operator==(const file & o) const;
 	
 };
 
+/*!
+ * Wrapper to read a single file from a \ref chunk_reader.
+ * Restrics the stream to the file size and applies the appropriate filters.
+ */
 class file_reader {
 	
 	typedef boost::iostreams::chain<boost::iostreams::input> base_type;
 	
 public:
 	
-	typedef std::istream type;
+	typedef std::istream            type;
 	typedef boost::shared_ptr<type> pointer;
+	typedef file                    file_t;
 	
-	static pointer get(base_type & base, const file & file, crypto::checksum * checksum_output);
+	/*!
+	 * Wrap a \ref chunk_reader to read a single file.
+	 *
+	 * Only one wrapper can be used at the same time for each \ref base.
+	 *
+	 * \param base     The chunk reader containing the file.
+	 *                 It must already be positioned at the file's offset.
+	 * \param file     Information specifying the file to read.
+	 * \param checksum Optional pointer to a checksum that is updated as the file is read.
+	 *                 The type of the checksum will be the same as that stored in the file
+	 *                 struct.
+	 *
+	 * \return a pointer to a non-seekable input stream for the requested file.
+	 */
+	static pointer get(base_type & base, const file_t & file, crypto::checksum * checksum);
 	
 };
 
-}
+} // namespace stream
 
 #endif // INNOEXTRACT_STREAM_FILE_HPP

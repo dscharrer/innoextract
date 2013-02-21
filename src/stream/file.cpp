@@ -68,7 +68,7 @@ file_reader::pointer file_reader::get(base_type & base, const file & file,
 		case InstructionFilter5309: result->push(inno_exe_decoder_5200(true), 8192); break;
 	}
 	
-	result->push(stream::restrict(base, file.size));
+	result->push(restrict(base, file.size));
 	
 	return result;
 }
