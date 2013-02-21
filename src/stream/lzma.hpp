@@ -115,7 +115,8 @@ public:
  *
  * The LZMA1 streams used by Inno Setup differ slightly from the LZMA Alone file format:
  * The stream header only stores the properties (lc, lp, pb) and the dictionary size and
- * is missing the uncompressed size field. The fiels that are present are encoded identically.
+ * is missing the uncompressed size field. The fiels that are present are encoded
+ * identically.
  */
 typedef lzma_decompressor<inno_lzma1_decompressor_impl> inno_lzma1_decompressor;
 
@@ -123,7 +124,8 @@ typedef lzma_decompressor<inno_lzma1_decompressor_impl> inno_lzma1_decompressor;
  * A filter that decompressess LZMA2 streams found in Inno Setup installers,
  * to be used with boost::iostreams.
  *
- * Inno Setup uses raw LZMA2 streams. (preceded only by the dictionary size encoded as one byte)
+ * Inno Setup uses raw LZMA2 streams.
+ * (preceded only by the dictionary size encoded as one byte)
  */
 typedef lzma_decompressor<inno_lzma2_decompressor_impl> inno_lzma2_decompressor;
 

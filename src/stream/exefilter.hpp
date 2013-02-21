@@ -18,6 +18,10 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Filters to be used with boost::iostreams for undoing transformations Inno Setup applies
+ * to stored executable files to make them more compressible.
+ */
 #ifndef INNOEXTRACT_STREAM_EXEFILTER_HPP
 #define INNOEXTRACT_STREAM_EXEFILTER_HPP
 
@@ -30,6 +34,12 @@
 #include <boost/iostreams/get.hpp>
 #include <boost/iostreams/read.hpp>
 
+/*!
+ * Filter to decode executable files stored by Inno Setup versions before 5.2.0.
+ *
+ * Essentially, it tries to change the addresses stored for x86 CALL and JMP instructions
+ * to be relative to the instruction's position.
+ */
 class inno_exe_decoder_4108 : public boost::iostreams::multichar_input_filter {
 	
 private:
@@ -58,6 +68,12 @@ public:
 	
 };
 
+/*!
+ * Filter to decode executable files stored by Inno Setup versions after 5.2.0.
+ *
+ * It tries to change the addresses stored for x86 CALL and JMP instructions to be
+ * relative to the instruction's position, plus a few other tweaks.
+ */
 class inno_exe_decoder_5200 : public boost::iostreams::multichar_input_filter {
 	
 private:
@@ -69,8 +85,12 @@ public:
 	typedef base_type::char_type char_type;
 	typedef base_type::category category;
 	
-	explicit inno_exe_decoder_5200(bool _flip_high_byte)
-		: flip_high_byte(_flip_high_byte) { close(0); }
+	/*!
+	 * \param flip_high_byte true if the high byte of addresses is flipped if bit 23 is set.
+	 *                       This optimization is used in Inno Setup 5.3.9 and later.
+	 */
+	explicit inno_exe_decoder_5200(bool flip_high_byte)
+		: flip_high_byte(flip_high_byte) { close(0); }
 	
 	template<typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n);
