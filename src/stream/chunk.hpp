@@ -96,8 +96,11 @@ public:
 	 *
 	 * Only one wrapper can be used at the same time for each \ref base.
 	 *
-	 * \param base     The slice reader for the setup file(s).
-	 * \param chunk    Information specifying the chunk to read.
+	 * \param base  The slice reader for the setup file(s).
+	 * \param chunk Information specifying the chunk to read.
+	 *
+	 * \throws chunk_error if the chunk header could not be read or was invalid,
+	 *                     or if the chunk compression is not supported by this build.
 	 *
 	 * \return a pointer to a non-seekable input filter chain for the requested file.
 	 */

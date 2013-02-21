@@ -187,7 +187,7 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 	}
 	
 	if(actual_checksum.finalize() != expected_checksum) {
-		throw block_error("block CRC32 mismatch");
+		throw block_error("block header CRC32 mismatch");
 	}
 	
 	debug("[block] size: " << stored_size << "  compression: " << compression);

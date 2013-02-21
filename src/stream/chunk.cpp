@@ -65,7 +65,7 @@ bool chunk::operator==(const chunk & o) const {
 chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk) {
 	
 	if(!base.seek(chunk.first_slice, chunk.offset)) {
-		throw chunk_error("error seeking");
+		throw chunk_error("error seeking to chunk start");
 	}
 	
 	char magic[ARRAY_SIZE(chunk_id)];
@@ -87,7 +87,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 			throw chunk_error("LZMA decompression not supported by this "
 			                  + std::string(innoextract_name) + " build");
 	#endif
-		default: throw chunk_error("unknown compression");
+		default: throw chunk_error("unknown chunk compression");
 	}
 	
 	result->push(restrict(base, chunk.size));

@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Wrapper to read, checksum and decompress header blocks.
+ *
+ * Thse blocks are used to store the setup headers (\ref setup).
+ */
 #ifndef INNOEXTRACT_STREAM_BLOCK_HPP
 #define INNOEXTRACT_STREAM_BLOCK_HPP
 
@@ -30,13 +35,18 @@ namespace setup { struct version; }
 
 namespace stream {
 
+//! Error thrown by \ref chunk_reader::get or the returned stream if there was a problem.
 struct block_error : public std::ios_base::failure {
 	
 	explicit block_error(std::string msg) : std::ios_base::failure(msg) { }
 	
 };
 
-//! Reads a compressed and checksumed block of data used to store the setup headers.
+/*!
+ * Wrapper to read compressed and checksumed block of data used to store setup headers.
+ *
+ * The decompressed headers are parsed in \ref setup::info.
+ */
 class block_reader {
 	
 public:
@@ -44,6 +54,25 @@ public:
 	typedef std::istream                 type;
 	typedef util::unique_ptr<type>::type pointer;
 	
+	/*!
+	 * Wrap a \ref std::istrean to read and decompress setup header blocks.
+	 *
+	 * Only one wrapper can be used at the same time for each \ref base.
+	 *
+	 * \param base     The input stream for the main setup files.
+	 *                 It must already be positioned at start of the first block.
+	 *                 The first block starts directly after the \ref setup::version
+	 *                 identifier whose position is given by
+	 *                 \ref loader::offsets::header_offset.
+	 * \param version  The version of the setup data.
+	 *
+	 * \throws block_error if the block stream header checksum was invalid,
+	 *                     or if the block compression is not supported by this build.
+	 *
+	 * \return a pointer to a non-seekable input stream for the uncompressed headers.
+	 *         Reading from this stream may throw a \ref block_error if a block checksum
+	 *         was invalid.
+	 */
 	static pointer get(std::istream & base, const setup::version & version);
 	
 };
