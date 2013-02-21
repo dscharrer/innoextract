@@ -117,6 +117,8 @@ struct options {
 	
 	setup::filename_map filenames;
 	
+	fs::path output_dir;
+	
 };
 
 
@@ -375,7 +377,7 @@ static void process_file(const fs::path & file, const options & o) {
 			if(!o.test) {
 				output.reserve(output_names.size());
 				BOOST_FOREACH(const file_t & path, output_names) {
-					output.push_back(new file_output(path.first));
+					output.push_back(new file_output(o.output_dir / path.first));
 				}
 			}
 			
@@ -445,15 +447,16 @@ int main(int argc, char * argv[]) {
 		("list,l", "Only list files, don't write anything")
 	;
 	
-	po::options_description filter("Filters");
+	po::options_description filter("Modifiers");
 	filter.add_options()
 		("dump", "Dump contents without converting filenames")
 		("lowercase,L", "Convert extracted filenames to lower-case")
 		("language", po::value<std::string>(), "Extract files for the given language")
 		("timestamps,T", po::value<std::string>(), "Timezone for file times or \"local\" or \"none\"")
+		("output-dir,d", po::value<fs::path>(), "Extract files into the given directory")
 	;
 	
-	po::options_description io("I/O options");
+	po::options_description io("Display options");
 	io.add_options()
 		("quiet,q", "Output less information")
 		("silent,s", "Output only error/warning information")
@@ -588,6 +591,21 @@ int main(int argc, char * argv[]) {
 			std::cout << "Try the --help (-h) option for usage information.\n";
 		}
 		return ExitSuccess;
+	}
+	
+	{
+		po::variables_map::const_iterator i = options.find("output-dir");
+		if(i != options.end()) {
+			o.output_dir = i->second.as<fs::path>();
+			if(!fs::exists(o.output_dir)) {
+				try {
+					fs::create_directory(o.output_dir);
+				} catch(...) {
+					log_error << "could not create output directory " << o.output_dir;
+					return ExitDataError;
+				}
+			}
+		}
 	}
 	
 	const std::vector<std::string> & files = options["setup-files"]

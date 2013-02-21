@@ -36,15 +36,16 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-l \-\-list               Only list files, don't write anything
 .fi
 .TP
-.B Filters:
+.B Modifiers:
 .nf
     \-\-dump               Dump contents without converting filenames
  \-L \-\-lowercase          Convert extracted filenames to lower-case
     \-\-language=LANG      Extract files for the given language
  \-T \-\-timestamps=TZ      Timezone for file times or "local" or "none"
+ \-d \-\-output-dir=DIR     Extract files into the given directory
 .fi
 .TP
-.B I/O options:
+.B Display options:
 .nf
  \-q \-\-quiet              Output less information
  \-s \-\-silent             Output only error/warning information
@@ -82,6 +83,11 @@ The \fB--list\fP option can be combined with \fB--test\fP or \fB--extract\fP to 
 .TP
 \fB-L\fP, \fB--lowercase\fP
 Convert filenames stored in the installer to lower-case before extracting.
+.TP
+\fB-d\fP, \fB--output-dir\fP=DIR
+Extract all files into the given directory. By default, \fBinnoextract\fP will extract all files to the current directory.
+
+If the specified directory does not exist, it will be created. However, the parent directory must exist or extracting will fail.
 .TP
 \fB-p\fP, \fB--progress\fP[=ENABLE]
 By default \fBinnoextract\fP will try to detect if the terminal supports shell escape codes and enable or disable progress bar output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB--progress\fP to force progress bar output. Pass \fB0\fP or \fBfalse\fP to never show a progress bar.
@@ -123,7 +129,7 @@ Success
 .IP \fB1\fP
 Syntax or usage error
 .IP \fB2+\fP
-Broken or unsupported setup file
+Broken or unsupported setup file, or input/output error
 .SH LIMITATIONS
 \fBinnoextract\fP currently only supports extracting all the data. There is no support for extracting individual files or components and limited support for extracting language-specific files.
 

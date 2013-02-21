@@ -86,11 +86,11 @@ Documentation is also available as a man page:
 
 * Included scripts and checks are not executed.
 
-* Data is always extracted to the current directory and the mapping from Inno Setup variables like the application directory to subdirectories is hard-coded.
+* The mapping from Inno Setup variables like the application directory to subdirectories is hard-coded.
 
 * innoextract does not check if an installer includes multiple files with the same name and will continually overwrite the destination file when extracting.
 
-* Names for data files in multi-file installers must follow the standard naming scheme.
+* Names for data slice/disk files in multi-file installers must follow the standard naming scheme.
 
 * Encrypted installers are not supported.
 
