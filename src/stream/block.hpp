@@ -61,10 +61,12 @@ public:
 	 * Only one wrapper can be used at the same time for each \c base.
 	 *
 	 * \param base     The input stream for the main setup files.
-	 *                 It must already be positioned at start of the first block.
-	 *                 The first block starts directly after the \ref setup::version
+	 *                 It must already be positioned at start of the block stream.
+	 *                 The first block stream starts directly after the \ref setup::version
 	 *                 identifier whose position is given by
 	 *                 \ref loader::offsets::header_offset.
+	 *                 A second block stream directly follows the first one and contains
+	 *                 the \ref setup::data_entry "data entries".
 	 * \param version  The version of the setup data.
 	 *
 	 * \throws block_error if the block stream header checksum was invalid,

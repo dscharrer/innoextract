@@ -92,7 +92,7 @@ static void load_wizard_and_decompressor(std::istream & is, const setup::version
 void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
 	
 	stream::block_reader::pointer is = stream::block_reader::get(ifs, v);
-	assert(is);
+	assert(is.get() != NULL);
 	is->exceptions(std::ios_base::badbit | std::ios_base::failbit);
 	
 	header.load(*is, v);
@@ -131,7 +131,7 @@ void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
 	}
 	
 	is = stream::block_reader::get(ifs, v);
-	assert(is);
+	assert(is.get() != NULL);
 	is->exceptions(std::ios_base::badbit | std::ios_base::failbit);
 	
 	load_entries(*is, v, e, header.data_entry_count, data_entries, DataEntries);

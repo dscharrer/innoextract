@@ -27,6 +27,7 @@
 
 #include <stddef.h>
 #include <iosfwd>
+#include <cassert>
 
 #include <boost/cstdint.hpp>
 #include <boost/iostreams/char_traits.hpp>

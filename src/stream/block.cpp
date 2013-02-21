@@ -24,7 +24,6 @@
 #include <string>
 #include <istream>
 #include <algorithm>
-#include <cassert>
 
 #include <boost/cstdint.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
