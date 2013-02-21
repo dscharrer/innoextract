@@ -27,6 +27,7 @@
 #define INNOEXTRACT_STREAM_BLOCK_HPP
 
 #include <ios>
+#include <istream>
 #include <string>
 
 #include "util/unique_ptr.hpp"
@@ -55,9 +56,9 @@ public:
 	typedef util::unique_ptr<type>::type pointer;
 	
 	/*!
-	 * Wrap a \ref std::istrean to read and decompress setup header blocks.
+	 * Wrap an input stream to read and decompress setup header blocks.
 	 *
-	 * Only one wrapper can be used at the same time for each \ref base.
+	 * Only one wrapper can be used at the same time for each \c base.
 	 *
 	 * \param base     The input stream for the main setup files.
 	 *                 It must already be positioned at start of the first block.

@@ -43,7 +43,7 @@ enum compression_filter {
 /*!
  * Information specifying a single file inside a compressed chunk.
  *
- * This data is stored in \ref setup::data entries.
+ * This data is stored in \ref setup::data_entry "data entries".
  *
  * Files specified by this struct can be read using \ref file_reader.
  */
@@ -78,7 +78,7 @@ public:
 	/*!
 	 * Wrap a \ref chunk_reader to read a single file.
 	 *
-	 * Only one wrapper can be used at the same time for each \ref base.
+	 * Only one wrapper can be used at the same time for each \c base.
 	 *
 	 * \param base     The chunk reader containing the file.
 	 *                 It must already be positioned at the file's offset.

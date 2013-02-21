@@ -61,7 +61,7 @@ enum compression_method {
 /*!
  * Information specifying a compressed chunk.
  *
- * This data is stored in \ref setup::data entries.
+ * This data is stored in \ref setup::data_entry "data entries".
  *
  * Chunks specified by this struct can be read using \ref chunk_reader.
  */
@@ -96,7 +96,7 @@ public:
 	/*!
 	 * Wrap a \ref slice_reader to read and decompress a single chunk.
 	 *
-	 * Only one wrapper can be used at the same time for each \ref base.
+	 * Only one wrapper can be used at the same time for each \c base.
 	 *
 	 * \param base  The slice reader for the setup file(s).
 	 * \param chunk Information specifying the chunk to read.

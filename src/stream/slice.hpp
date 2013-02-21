@@ -96,8 +96,8 @@ public:
 	/*!
 	 * Construct a \ref slice_reader to read from external data slices (aka disks).
 	 *
-	 * Slice files must be located at \c <dir>/<base_file>-<disk>.bin
-	 * or \c <dir>/<base_file>-<disk><sliceletter>.bin if \ref slices_per_disk is greater
+	 * Slice files must be located at \c $dir/$base_file-$disk.bin
+	 * or \c $dir/$base_file-$disk$sliceletter.bin if \c slices_per_disk is greater
 	 * than \c 1.
 	 *
 	 * The disk number is given by \code slice / slices_per_disk + 1 \endcode while
