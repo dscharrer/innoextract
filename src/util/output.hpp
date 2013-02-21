@@ -145,12 +145,16 @@ detail::print_hex<T> print_hex(T value) {
 	return detail::print_hex<T>(value);
 }
 
-const char * const byte_size_units[5] = {
+const char * const byte_size_units[] = {
 	"B",
 	"KiB",
 	"MiB",
 	"GiB",
-	"TiB"
+	"TiB",
+	"PiB",
+	"EiB",
+	"ZiB",
+	"YiB",
 };
 
 namespace detail {
