@@ -106,8 +106,6 @@ struct options {
 	bool quiet;
 	bool silent;
 	
-	bool dump;
-	
 	bool list; // The --list action has been explicitely specified
 	bool test; // The --test action has been explicit specified
 	bool extract; // The --extract action has been specified or automatically enabled
@@ -280,7 +278,7 @@ static void process_file(const fs::path & file, const options & o) {
 			const stream::file & file = location.first;
 			
 			// Convert output filenames
-			typedef std::pair<fs::path, size_t> file_t;
+			typedef std::pair<std::string, size_t> file_t;
 			std::vector<file_t> output_names;
 			for(size_t i = 0; i < files_for_location[location.second].size(); i++) {
 				
@@ -293,16 +291,7 @@ static void process_file(const fs::path & file, const options & o) {
 				}
 				
 				if(!info.files[file_i].destination.empty()) {
-					fs::path path;
-					if(o.dump) {
-						std::string file = info.files[file_i].destination;
-						if(o.filenames.lowercase) {
-							std::transform(file.begin(), file.end(), file.begin(), ::tolower);
-						}
-						path = file;
-					} else {
-						path = o.filenames.convert(info.files[file_i].destination);
-					}
+					std::string path = o.filenames.convert(info.files[file_i].destination);
 					if(!path.empty()) {
 						output_names.push_back(std::make_pair(path, file_i));
 					}
@@ -325,7 +314,7 @@ static void process_file(const fs::path & file, const options & o) {
 					if(named) {
 						std::cout << ", ";
 					}
-					std::cout << '"' << color::white << path.first.string() << color::reset << '"';
+					std::cout << '"' << color::white << path.first << color::reset << '"';
 					if(!info.files[path.second].languages.empty()) {
 						std::cout << " [" << color::green << info.files[path.second].languages
 						          << color::reset << "]";
@@ -352,7 +341,7 @@ static void process_file(const fs::path & file, const options & o) {
 			} else if(o.list) {
 				extract_progress.clear();
 				BOOST_FOREACH(const file_t & path, output_names) {
-					std::cout << color::white << path.first.string() << color::reset << '\n';
+					std::cout << color::white << path.first << color::reset << '\n';
 				}
 				if(o.extract || o.test) {
 					std::cout.flush();
@@ -558,7 +547,7 @@ int main(int argc, char * argv[]) {
 	}
 	
 	// Additional actions.
-	o.dump = (options.count("dump") != 0);
+	o.filenames.set_expand(options.count("dump") == 0);
 	o.filenames.set_lowercase(options.count("lowercase") != 0);
 	
 	// File timestamps

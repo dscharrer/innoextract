@@ -18,29 +18,44 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Map for converting between stored filenames and output filenames.
+ */
 #ifndef INNOEXTRACT_SETUP_FILENAME_MAP_HPP
 #define INNOEXTRACT_SETUP_FILENAME_MAP_HPP
 
 #include <string>
 #include <map>
 
-#include <boost/filesystem/path.hpp>
-
 namespace setup {
 
+/*!
+ * Map to convert between raw windows file paths stored in the setup file (which can
+ * contain variables) and output filenames.
+ */
 class filename_map : public std::map<std::string, std::string> {
 	
 	const std::string & lookup(const std::string & key) const;
 	
+	bool lowercase;
+	bool expand;
+	
+	typedef std::string::const_iterator it;
+	
+	std::string expand_variables(it & begin, it end, bool close = false) const;
+	std::string shorten_path(const std::string & path) const;
+	
 public:
 	
-	bool lowercase;
+	filename_map() : lowercase(false), expand(false) { }
 	
-	filename_map() : lowercase(false) { }
+	std::string convert(std::string path) const;
 	
-	boost::filesystem::path convert(const std::string & name) const;
-	
+	//! Set if paths should be converted to lower-case.
 	void set_lowercase(bool enable) { lowercase = enable; }
+	
+	//! Set if variables should be expanded and path separators converted.
+	void set_expand(bool enable) { expand = enable; }
 	
 };
 

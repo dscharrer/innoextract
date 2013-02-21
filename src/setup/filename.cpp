@@ -20,93 +20,132 @@
 
 #include "setup/filename.hpp"
 
+#include <stddef.h>
 #include <algorithm>
 #include <cctype>
 
-#include "util/log.hpp"
-
-namespace fs = boost::filesystem;
-
 namespace setup {
+
+#if defined(_WIN32)
+static const char path_sep = '\\';
+#else
+static const char path_sep = '/';
+#endif
 
 const std::string & filename_map::lookup(const std::string & key) const {
 	std::map<std::string, std::string>::const_iterator i = find(key);
 	return (i == end()) ? key : i->second;
 }
 
-fs::path filename_map::convert(const std::string & name) const {
+std::string filename_map::expand_variables(it & begin, it end, bool close) const {
 	
-	size_t start = 0;
-	std::string buffer;
-	fs::path result;
+	std::string result;
+	result.reserve(size_t(end - begin));
 	
-	while(true) {
+	while(begin != end) {
 		
-		size_t pos = name.find_first_of("{\\", start);
+		// Flush everything before the next bracket
+		it pos = begin;
+		while(pos != end && *pos != '{' && *pos != '}') {
+			pos++;
+		}
+		result.append(begin, pos);
+		begin = pos;
 		
-		if(pos == std::string::npos || name[pos] == '\\') {
-			
-			// Directory segment without constant
-			
-			size_t n = (pos == std::string::npos) ? std::string::npos : pos - start;
-			std::string segment = name.substr(start, n);
-			
-			if(lowercase) {
-				std::transform(segment.begin(), segment.end(), segment.begin(), ::tolower);
-			}
-			
-			if(buffer.empty()) {
-				result /= segment;
-			} else {
-				result /= buffer + segment;
-				buffer.clear();
-			}
-			
-			if(pos == std::string::npos) {
-				return result;
-			}
-			
-			start = pos + 1;
-			
-		} else {
-			
-			// Constant or escape sequence
-			
-			std::string segment = name.substr(start, pos - start);
-			if(lowercase) {
-				std::transform(segment.begin(), segment.end(), segment.begin(), ::tolower);
-			}
-			buffer += segment;
-			
-			if(pos + 1 < name.length() && name[pos + 1] == '{') {
-				
-				// Handle '{{' escape sequence
-				buffer += '{';
-				start = pos + 2;
-				
-			} else {
-				
-				// Handle nested constants.
-				size_t count = 1;
-				size_t end = pos;
-				do {
-					end = name.find_first_of("}{", end + 1);
-					(name[end] == '}') ? count-- : count++;
-				} while(count > 0 && end != std::string::npos);
-				
-				if(end == std::string::npos) {
-					start = pos + 1;
-				} else {
-					std::string key = name.substr(pos + 1, end - pos - 1);
-					std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-					buffer += lookup(key);
-					start = end + 1;
-				}
-				
-			}
+		if(pos == end) {
+			// No more variables or escape sequences
+			break;
 		}
 		
+		begin++;
+		
+		if(close && *pos == '}') {
+			// Current context closed
+			break;
+		}
+		
+		if(!close && *pos == '}') {
+			// literal '}' character
+			result.push_back('}');
+			continue;
+		}
+		
+		// '{{' escape sequence
+		if(begin != end && *begin == '{') {
+			result.push_back('{');
+			begin++;
+			continue;
+		}
+		
+		// Recursively expand variables until we reach the end of this context
+		result.append(lookup(expand_variables(begin, end, true)));
 	}
+	
+	return result;
+}
+
+std::string filename_map::shorten_path(const std::string & path) const {
+	
+	std::string result;
+	result.reserve(path.size());
+	
+	it begin = path.begin();
+	it end = path.end();
+	while(begin != end) {
+		
+		it s_begin = begin;
+		it s_end = std::find(begin, end, '\\');
+		begin = (s_end == end) ? end : (s_end + 1);
+		
+		size_t segment_length = size_t(s_end - s_begin);
+		
+		// Empty segment - ignore
+		if(segment_length == 0) {
+			continue;
+		}
+		
+		// '.' segment - ignore
+		if(segment_length == 1 && *s_begin == '.') {
+			continue;
+		}
+		
+		// '..' segment - backtrace in result path
+		if(segment_length == 2 && *s_begin == '.' && *(s_begin + 1) == '.') {
+			size_t last_sep = result.find_last_of(path_sep);
+			if(last_sep == std::string::npos) {
+				last_sep = 0;
+			}
+			result.resize(last_sep);
+			continue;
+		}
+		
+		// Normal segment - append to the result path
+		if(!result.empty()) {
+			result.push_back(path_sep);
+		}
+		result.append(s_begin, s_end);
+		
+	}
+	
+	return result;
+}
+
+std::string filename_map::convert(std::string input) const {
+	
+	// Convert paths to lower-case if requested
+	if(lowercase) {
+		std::transform(input.begin(), input.end(), input.begin(), ::tolower);
+	}
+	
+	// Don't expand variables if requested
+	if(!expand) {
+		return input;
+	}
+	
+	it begin = input.begin();
+	std::string expanded = expand_variables(begin, input.end());
+	
+	return shorten_path(expanded);
 }
 
 } // namespace setup
