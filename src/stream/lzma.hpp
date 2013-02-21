@@ -18,6 +18,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * LZMA 1 and 2 (aka xz) descompression filters to be used with boost::iostreams.
+ */
 #ifndef INNOEXTRACT_STREAM_LZMA_HPP
 #define INNOEXTRACT_STREAM_LZMA_HPP
 
@@ -33,11 +36,13 @@
 
 namespace stream {
 
+//! Error thrown if there was en error in an LZMA stream
 struct lzma_error : public std::ios_base::failure {
 	
 	lzma_error(std::string msg, int code)
 		: std::ios_base::failure(msg), error_code(code) { }
 	
+	//! \return the liblzma code for the error.
 	int error() const { return error_code; }
 	
 private:
