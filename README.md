@@ -40,20 +40,20 @@ To install the binaries system-wide, run as root:
 
 Build options:
 
-| Option                   | Default      | Description |
-|:------------------------ |:------------:|:----------- |
-| `USE_LZMA`               | `ON`         | Use `liblzma` if available.
-| `CMAKE_BUILD_TYPE`       | `Release`    | Set to `Debug` to enable debug output.
-| `SET_WARNING_FLAGS`      | `ON`         | Adjust compiler warning flags. This should not affect the produced binaries but is useful to catch potential problems.
-| `SET_OPTIMIZATION_FLAGS` | `ON`         | Adjust compiler optimization flags. For non-debug builds the only thing this does is instruct the linker to only link against libraries that are actually needed.
-| `USE_CXX11`              | `ON`         | Try to compile in C++11 mode if available.
-| `DEBUG_EXTRA`            | `OFF`        | Expensive debug options.
-| `USE_STATIC_LIBS`        | `OFF`^1      | Turns on static linking for all libraries, including `-static-libgcc` and `-static-libstdc++`. You can also use the individual options below:
-| `LZMA_USE_STATIC_LIBS`   | `OFF`^2      | Statically link `liblzma`.
-| `Boost_USE_STATIC_LIBS`  | `OFF`^2      | Statically link Boost. See also `FindBoost.cmake`
-| `ZLIB_USE_STATIC_LIBS`   | `OFF`^2      | Statically link `libz`. (used via Boost)
-| `BZip2_USE_STATIC_LIBS`  | `OFF`^2      | Statically link `libbz2`. (used via Boost)
-| `iconv_USE_STATIC_LIBS`  | `OFF`^2      | Statically link `libiconv`.
+| Option                   | Default   | Description |
+|:------------------------ |:---------:|:----------- |
+| `USE_LZMA`               | `ON`      | Use `liblzma` if available.
+| `CMAKE_BUILD_TYPE`       | `Release` | Set to `Debug` to enable debug output.
+| `SET_WARNING_FLAGS`      | `ON`      | Adjust compiler warning flags. This should not affect the produced binaries but is useful to catch potential problems.
+| `SET_OPTIMIZATION_FLAGS` | `ON`      | Adjust compiler optimization flags. For non-debug builds the only thing this does is instruct the linker to only link against libraries that are actually needed.
+| `USE_CXX11`              | `ON`      | Try to compile in C++11 mode if available.
+| `DEBUG_EXTRA`            | `OFF`     | Expensive debug options.
+| `USE_STATIC_LIBS`        | `OFF`^1   | Turns on static linking for all libraries, including `-static-libgcc` and `-static-libstdc++`. You can also use the individual options below:
+| `LZMA_USE_STATIC_LIBS`   | `OFF`^2   | Statically link `liblzma`.
+| `Boost_USE_STATIC_LIBS`  | `OFF`^2   | Statically link Boost. See also `FindBoost.cmake`
+| `ZLIB_USE_STATIC_LIBS`   | `OFF`^2   | Statically link `libz`. (used via Boost)
+| `BZip2_USE_STATIC_LIBS`  | `OFF`^2   | Statically link `libbz2`. (used via Boost)
+| `iconv_USE_STATIC_LIBS`  | `OFF`^2   | Statically link `libiconv`.
 1. Under Windows, the default is `ON`.
 2. Default is `ON` if `USE_STATIC_LIBS` is enabled.
 
