@@ -22,7 +22,7 @@
 #
 # LZMA_FOUND
 # LZMA_INCLUDE_DIR   Where to find lzma.h
-# LZMA_LIBRARIES     The liblzma library library
+# LZMA_LIBRARIES     The liblzma library
 # LZMA_DEFINITIONS   Definitions to use when compiling code that uses liblzma
 #
 # Typical usage could be something like:

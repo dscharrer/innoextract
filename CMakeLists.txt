@@ -10,21 +10,32 @@ option(DEBUG_EXTRA "Expensive debug options" OFF)
 option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
 option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
 option(USE_CXX11 "Try to use C++11 if available" ON)
-option(USE_STATIC_LIBS "Statically link libraries" OFF)
-option(ZLIB_USE_STATIC_LIBS "Statically link libz" OFF)
-option(BZip2_USE_STATIC_LIBS "Statically link libbz2" OFF)
+
+set(default_USE_STATIC_LIBS OFF)
+if(WIN32)
+	set(default_USE_STATIC_LIBS ON)
+endif()
+option(USE_STATIC_LIBS       "Statically link libraries" ${default_USE_STATIC_LIBS})
+option(LZMA_USE_STATIC_LIBS  "Statically link liblzma"   ${USE_STATIC_LIBS})
+option(ZLIB_USE_STATIC_LIBS  "Statically link libz"      ${USE_STATIC_LIBS})
+option(BZip2_USE_STATIC_LIBS "Statically link libbz2"    ${USE_STATIC_LIBS})
+option(Boost_USE_STATIC_LIBS "Statically link Boost"     ${USE_STATIC_LIBS})
+option(iconv_USE_STATIC_LIBS "Statically link libiconv"  ${USE_STATIC_LIBS})
+
 
 # Install destinations
 if(CMAKE_VERSION VERSION_LESS 2.8.5)
 	set(CMAKE_INSTALL_DATAROOTDIR "share" CACHE
 			STRING "read-only architecture-independent data root (share) (relative to prefix).")
-	mark_as_advanced(CMAKE_INSTALL_DATAROOTDIR)
 	set(CMAKE_INSTALL_BINDIR "bin" CACHE
 			STRING "user executables (bin) (relative to prefix).")
-	mark_as_advanced(CMAKE_INSTALL_BINDIR)
 	set(CMAKE_INSTALL_MANDIR "${CMAKE_INSTALL_DATAROOTDIR}/man" CACHE
 			STRING "man documentation (DATAROOTDIR/man) (relative to prefix).")
-	mark_as_advanced(CMAKE_INSTALL_MANDIR)
+	mark_as_advanced(
+		CMAKE_INSTALL_DATAROOTDIR
+		CMAKE_INSTALL_BINDIR
+		CMAKE_INSTALL_MANDIR
+	)
 else()
 	include(GNUInstallDirs)
 endif()
@@ -60,16 +71,9 @@ if(WIN32)
 	endif()
 endif()
 
-if(USE_STATIC_LIBS)
-	if(NOT MSVC)
-		add_ldflag("-static-libstdc++")
-		add_ldflag("-static-libgcc")
-	endif()
-	set(LZMA_USE_STATIC_LIBS ON)
-	set(Boost_USE_STATIC_LIBS ON)
-	set(ZLIB_USE_STATIC_LIBS ON)
-	set(BZip2_USE_STATIC_LIBS ON)
-	set(iconv_USE_STATIC_LIBS ON)
+if(USE_STATIC_LIBS AND NOT MSVC)
+	add_ldflag("-static-libstdc++")
+	add_ldflag("-static-libgcc")
 endif()
 
 # Force re-checking libraries if the compiler or compiler flags change
