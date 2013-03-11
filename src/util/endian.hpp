@@ -161,7 +161,7 @@ struct endianness {
 	/*!
 	 * Store an array of integers.
 	 *
-	 * \param value  The integers to store.
+	 * \param values The integers to store.
 	 * \param count  How many integers to store.
 	 * \param buffer Memory location to receive the integers (without padding).
 	 *               Will write <code>sizeof(T) * count</code> bytes.

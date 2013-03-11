@@ -141,6 +141,7 @@ inline bool load_bool(std::istream & is) {
 
 /*!
  * Load a value of type T that is stored with a specific endianness.
+ * \param is   Input stream to load from.
  * \param bits The number of bits used to store the number.
  */
 template <class T, class Endianness>
@@ -157,6 +158,7 @@ T load(std::istream & is, size_t bits) {
 }
 /*!
  * Load a value of type T that is stored as little endian.
+ * \param is   Input stream to load from.
  * \param bits The number of bits used to store the number.
  */
 template <class T>

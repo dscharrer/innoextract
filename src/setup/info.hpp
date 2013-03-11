@@ -82,30 +82,30 @@ struct info {
 	
 	setup::header header;
 	
-	std::vector<component_entry>  components;               //! \ref Components
-	std::vector<data_entry>       data_entries;             //! \ref DataEntries
-	std::vector<delete_entry>     delete_entries;           //! \ref DeleteEntries
-	std::vector<delete_entry>     uninstall_delete_entries; //! \ref UninstallDeleteEntries
-	std::vector<directory_entry>  directories;              //! \ref Directories
-	std::vector<file_entry>       files;                    //! \ref Files
-	std::vector<icon_entry>       icons;                    //! \ref Icons
-	std::vector<ini_entry>        ini_entries;              //! \ref IniEntries
-	std::vector<language_entry>   languages;                //! \ref Languages
-	std::vector<message_entry>    messages;                 //! \ref Messages
-	std::vector<permission_entry> permissions;              //! \ref Permissions
-	std::vector<registry_entry>   registry_entries;         //! \ref RegistryEntries
-	std::vector<run_entry>        run_entries;              //! \ref RunEntries
-	std::vector<run_entry>        uninstall_run_entries;    //! \ref UninstallRunEntries
-	std::vector<task_entry>       tasks;                    //! \ref Tasks
-	std::vector<type_entry>       types;                    //! \ref Types
+	std::vector<component_entry>  components;               //! \c Components
+	std::vector<data_entry>       data_entries;             //! \c DataEntries
+	std::vector<delete_entry>     delete_entries;           //! \c DeleteEntries
+	std::vector<delete_entry>     uninstall_delete_entries; //! \c UninstallDeleteEntries
+	std::vector<directory_entry>  directories;              //! \c Directories
+	std::vector<file_entry>       files;                    //! \c Files
+	std::vector<icon_entry>       icons;                    //! \c Icons
+	std::vector<ini_entry>        ini_entries;              //! \c IniEntries
+	std::vector<language_entry>   languages;                //! \c Languages
+	std::vector<message_entry>    messages;                 //! \c Messages
+	std::vector<permission_entry> permissions;              //! \c Permissions
+	std::vector<registry_entry>   registry_entries;         //! \c RegistryEntries
+	std::vector<run_entry>        run_entries;              //! \c RunEntries
+	std::vector<run_entry>        uninstall_run_entries;    //! \c UninstallRunEntries
+	std::vector<task_entry>       tasks;                    //! \c Tasks
+	std::vector<type_entry>       types;                    //! \c Types
 	
 	//! Images displayed in the installer UI.
-	//! Loading enabled by \ref WizardImages
+	//! Loading enabled by \c WizardImages
 	std::string wizard_image;
 	std::string wizard_image_small;
 	
 	//! Contents of the helper DLL used to decompress setup data in some versions.
-	//! Loading enabled by \ref DecompressorDll
+	//! Loading enabled by \c DecompressorDll
 	std::string decompressor_dll;
 	
 	/*!
