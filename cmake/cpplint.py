@@ -1,6 +1,6 @@
 #!/usr/bin/python2.4
 #
-# Note: this file has been adjusted to fit InnoExtract:
+# Note: this file has been adjusted to fit innoextract:
 #  - adjusted include guard style
 #  - hacked so that build/include doesn't complain about #include "Configure.h" lines
 #  - Allow lines that are only whitespace.
@@ -10,6 +10,7 @@
 #  - Don't require two spaces between code and comments
 #  - Warn if spaces are used for identation.
 #  - Allow //! comments
+#  - Allo struct name { typedef a type; }; one-liners
 #
 # Copyright (c) 2009 Google Inc. All rights reserved.
 #
