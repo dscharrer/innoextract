@@ -48,6 +48,7 @@ include(CheckSymbolExists)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake") # For custom cmake modules
 include(BuildType)
 include(CompileCheck)
+include(CXX11Check)
 include(Doxygen)
 include(PrintConfiguration)
 include(StyleCheck)
@@ -142,23 +143,14 @@ add_definitions(${iconv_DEFINITIONS})
 
 # Set compiler flags
 
-set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE "unsigned long")
-if(MSVC)
-	if(NOT MSVC_VERSION LESS 1600)
-		# MSVC 10+
-		set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE   "unsigned long long")
-		set(INNOEXTRACT_HAVE_STD_CODECVT_UTF8_UTF16 ON)
-		set(INNOEXTRACT_HAVE_STD_UNIQUE_PTR         ON)
-	endif()
-elseif(${Boost_VERSION} LESS 104800)
+if(${Boost_VERSION} LESS 104800)
 	# Older Boost versions don't work with C++11
 elseif(USE_CXX11)
-	add_cxxflag("-std=c++11")
-	if(FLAG_FOUND)
-		set(INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE "unsigned long long")
-		set(INNOEXTRACT_HAVE_STD_UNIQUE_PTR       ON)
+	enable_cxx11()
+	check_cxx11("std::unique_ptr" INNOEXTRACT_HAVE_STD_UNIQUE_PTR)
+	if(WIN32)
+		check_cxx11("std::codecvt_utf8_utf16" INNOEXTRACT_HAVE_STD_CODECVT_UTF8_UTF16)
 	endif()
-	# missing check for INNOEXTRACT_HAVE_STD_CODECVT_UTF8_UTF16
 endif()
 
 # Don't expose internal symbols to the outside world by default

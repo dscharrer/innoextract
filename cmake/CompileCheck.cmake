@@ -17,10 +17,13 @@
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 
-function(check_flag RESULT FLAG TYPE)
+function(check_compile RESULT FILE FLAG TYPE)
 	
-	if(DEFINED CHECK_COMPILER_FLAG_${FLAG})
-		if(CHECK_COMPILER_FLAG_${FLAG})
+	string(REGEX REPLACE "[^a-zA-Z0-9_][^a-zA-Z0-9_]*" "-" cachevar "${TYPE}-${FLAG}")
+	set(cahevar "CHECK_COMPILE_${cahevar}")
+	
+	if(DEFINED ${cachevar})
+		if(${cachevar})
 			set(${RESULT} "${FLAG}" PARENT_SCOPE)
 		else()
 			set(${RESULT} "" PARENT_SCOPE)
@@ -57,19 +60,17 @@ function(check_flag RESULT FLAG TYPE)
 	set(old_CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 	set(old_CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 	set(old_CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
-	if("${TYPE}" STREQUAL linker)
+	if("${TYPE}" STREQUAL "linker flag")
 		set(CMAKE_EXE_LINKER_FLAGS "${old_CMAKE_EXE_LINKER_FLAGS} ${FLAG}")
 		set(CMAKE_SHARED_LINKER_FLAGS "${old_CMAKE_SHARED_LINKER_FLAGS} ${FLAG}")
 		set(CMAKE_MODULE_LINKER_FLAGS "${old_CMAKE_MODULE_LINKER_FLAGS} ${FLAG}")
-	else()
+	elseif("${TYPE}" STREQUAL "compiler flag")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAG}")
 	endif()
 	
 	# Check if we can compile and link a simple file with the new flags
-	set(compile_test_file "${CMAKE_CURRENT_BINARY_DIR}/compile_flag_test.cpp")
-	file(WRITE ${compile_test_file} "__attribute__((const)) int main(){ return 0; }\n")
 	try_compile(
-		CHECK_COMPILER_FLAG ${CMAKE_BINARY_DIR} ${compile_test_file}
+		check_compiler_flag ${CMAKE_BINARY_DIR} ${FILE}
 		CMAKE_FLAGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
 		            "-DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}"
 		            "-DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}"
@@ -83,10 +84,10 @@ function(check_flag RESULT FLAG TYPE)
 	set(CMAKE_SHARED_LINKER_FLAGS "${old_CMAKE_SHARED_LINKER_FLAGS}")
 	set(CMAKE_MODULE_LINKER_FLAGS "${old_CMAKE_MODULE_LINKER_FLAGS}")
 	
-	if(NOT CHECK_COMPILER_FLAG)
-		message(STATUS "Checking ${TYPE} flag: ${FLAG} - unsupported")
+	if(NOT check_compiler_flag)
+		message(STATUS "Checking ${TYPE}: ${FLAG} - unsupported")
 		set(${RESULT} "" PARENT_SCOPE)
-		set("CHECK_COMPILER_FLAG_${FLAG}" 0 CACHE INTERNAL "...")
+		set("${cachevar}" 0 CACHE INTERNAL "...")
 	else()
 		
 		set(has_warning 0)
@@ -97,17 +98,24 @@ function(check_flag RESULT FLAG TYPE)
 		endforeach()
 		
 		if(has_warning)
-			message(STATUS "Checking ${TYPE} flag: ${FLAG} - unsupported (warning)")
+			message(STATUS "Checking ${TYPE}: ${FLAG} - unsupported (warning)")
 			set(${RESULT} "" PARENT_SCOPE)
-			set("CHECK_COMPILER_FLAG_${FLAG}" 0 CACHE INTERNAL "...")
+			set("${cachevar}" 0 CACHE INTERNAL "...")
 		else()
-			message(STATUS "Checking ${TYPE} flag: ${FLAG}")
+			message(STATUS "Checking ${TYPE}: ${FLAG}")
 			set(${RESULT} "${FLAG}" PARENT_SCOPE)
-			set("CHECK_COMPILER_FLAG_${FLAG}" 1 CACHE INTERNAL "...")
+			set("${cachevar}" 1 CACHE INTERNAL "...")
 		endif()
 		
 	endif()
 	
+endfunction(check_compile)
+
+function(check_flag RESULT FLAG TYPE)
+	set(compile_test_file "${CMAKE_CURRENT_BINARY_DIR}/compile_flag_test.cpp")
+	file(WRITE ${compile_test_file} "__attribute__((const)) int main(){ return 0; }\n")
+	check_compile(result "${compile_test_file}" "${FLAG}" "${TYPE} flag")
+	set(${RESULT} "${result}" PARENT_SCOPE)
 endfunction(check_flag)
 
 function(check_compiler_flag RESULT FLAG)

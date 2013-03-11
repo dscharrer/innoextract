@@ -23,6 +23,7 @@
 
 #include <stddef.h>
 #include <vector>
+#include <bitset>
 
 #include <boost/cstdint.hpp>
 #include <boost/static_assert.hpp>
@@ -130,19 +131,13 @@ public:
 	
 	operator std::bitset<size>() const {
 		
-		// Make `make style` shut up since we really need unsigned long here.
-		typedef INNOEXTRACT_STD_BITSET_CONSTRUCT_TYPE construct_type;
-		
-		static const size_t construct_size = sizeof(construct_type) * 8;
-		
-		BOOST_STATIC_ASSERT(base_size % construct_size == 0 || base_size < construct_size);
+		#define concat(a, b) a##b
+		BOOST_STATIC_ASSERT(sizeof(base_type) <= sizeof(concat(unsi, gned) concat(lo, ng)));
+		#undef concat
 		
 		std::bitset<size> result(0);
 		for(size_t i = 0; i < count; i++) {
-			for(size_t j = 0; j < util::ceildiv(base_size, construct_size); j++) {
-				construct_type chunk = static_cast<construct_type>(bits[i] >> (j * construct_size));
-				result |= std::bitset<size>(chunk) << ((i * base_size) + (j * construct_size));
-			}
+			result |= std::bitset<size>(bits[i]) << (i * base_size);
 		}
 		return result;
 	}
