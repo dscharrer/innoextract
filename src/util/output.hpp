@@ -21,7 +21,7 @@
 #ifndef INNOEXTRACT_UTIL_OUTPUT_HPP
 #define INNOEXTRACT_UTIL_OUTPUT_HPP
 
-#include <iostream>
+#include <ostream>
 #include <string>
 
 #include <boost/cstdint.hpp>

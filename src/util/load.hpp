@@ -22,7 +22,7 @@
 #define INNOEXTRACT_UTIL_LOAD_HPP
 
 #include <cstring>
-#include <iostream>
+#include <istream>
 #include <string>
 
 #include <boost/cstdint.hpp>

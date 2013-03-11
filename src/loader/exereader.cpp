@@ -20,7 +20,7 @@
 
 #include "loader/exereader.hpp"
 
-#include <iostream>
+#include <istream>
 #include <iomanip>
 #include <algorithm>
 #include <cstring>
