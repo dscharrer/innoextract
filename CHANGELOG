@@ -1,4 +1,24 @@
 
+innoextract 1.4 (2013-03-11)
+ - Fixed build on non-Linux platforms with a separate libiconv (Windows™, Mac OS X)
+ - Fixed build on systems with non-standard iconv function prototypes (FreeBSD)
+ - Fixed MSVC build
+ - Fixed build with older glibc versions
+ - Fixed issues with the progress bar in sandbox environments
+ - Fixed string conversion on systems where libiconv defaults to big-endian variants
+ - Fixed extracting very large installers with 32-bit innoextract builds
+ - Improved handling of invalid encoded strings
+ - Improved error messages when input or output files could not be opened
+ - The --list command-line option can now combined with --test or --extract
+ - The --version command-line option can now be modified with --quiet or --silent
+ - Added color output and progress bar support for Windows™
+ - Added support for Unicode filenames under Windows™
+ - Added support for preserving timestamps of extracted files (enabled by default)
+ - Added a --timestamps (-T) command-line options to control or disable file timestamps
+ - Added an --output-dir (-d) command-line option to control where files are extracted
+ - Added various CMake options to fine-tune the build process
+ - Various bug fixes and tweaks
+
 innoextract 1.3 (2012-07-03)
  - Fixed --quiet and --silent flags being ignored for some multi-file installers output
  - Now compiles in C++11 mode if supported
