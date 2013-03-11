@@ -2156,6 +2156,10 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, error):
             'Lines should very rarely be longer than 100 characters')
 
   if (cleansed_line.count(';') > 1 and
+      # allow one-line definitions for small structs or classes
+      not ((cleansed_line.find('struct ') != -1 or
+            cleansed_line.find('class ') != -1) and
+           cleansed_line.find('};') != -1) and
       # for loops are allowed two ;'s (and may run over two lines).
       cleansed_line.find('for') == -1 and
       (GetPreviousNonBlankLine(clean_lines, linenum)[0].find('for') == -1 or
