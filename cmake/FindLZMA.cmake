@@ -35,16 +35,30 @@
 # The following additional options can be defined before the find_package() call:
 # LZMA_USE_STATIC_LIBS  Statically link against liblzma (default: OFF)
 
+if(UNIX)
+	find_package(PkgConfig QUIET)
+	pkg_check_modules(_PC_LZMA liblzma)
+endif()
+
 include(UseStaticLibs)
 use_static_libs(LZMA)
 
-find_path(LZMA_INCLUDE_DIR lzma.h DOC "The directory where lzma.h resides")
+find_path(LZMA_INCLUDE_DIR lzma.h
+	HINTS
+		${_PC_LZMA_INCLUDE_DIRS}
+	DOC "The directory where lzma.h resides"
+)
 mark_as_advanced(LZMA_INCLUDE_DIR)
 
 # Prefer libraries in the same prefix as the include files
 string(REGEX REPLACE "(.*)/include/?" "\\1" LZMA_BASE_DIR ${LZMA_INCLUDE_DIR})
 
-find_library(LZMA_LIBRARY lzma liblzma HINTS "${LZMA_BASE_DIR}/lib" DOC "The LZMA library")
+find_library(LZMA_LIBRARY lzma liblzma
+	HINTS
+		"${LZMA_BASE_DIR}/lib"
+		${_PC_LZMA_LIBRARY_DIRS}
+	DOC "The LZMA library"
+)
 mark_as_advanced(LZMA_LIBRARY)
 
 use_static_libs_restore()
