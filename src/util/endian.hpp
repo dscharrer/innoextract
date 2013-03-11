@@ -245,7 +245,7 @@ private:
 		}
 	}
 	
-	friend class endianness<little_endian>;
+	friend struct endianness<little_endian>;
 };
 
 //! Load and store big-endian integers.
@@ -274,7 +274,7 @@ private:
 		}
 	}
 	
-	friend class endianness<big_endian>;
+	friend struct endianness<big_endian>;
 };
 
 } // namespace util
