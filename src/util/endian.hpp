@@ -233,7 +233,7 @@ private:
 	static T decode(const char * buffer) {
 		T value = 0;
 		for(size_t i = 0; i < sizeof(T); i++) {
-			value |= T(T(buffer[i]) << (i * 8));
+			value = T(value | (T(buffer[i]) << (i * 8)));
 		}
 		return value;
 	}
@@ -262,7 +262,7 @@ private:
 	static T decode(const char * buffer) {
 		T value = 0;
 		for(size_t i = 0; i < sizeof(T); i++) {
-			value |= T(T(buffer[i]) << ((sizeof(T) - i - 1) * 8));
+			value = T(value | T(buffer[i]) << ((sizeof(T) - i - 1) * 8));
 		}
 		return value;
 	}
