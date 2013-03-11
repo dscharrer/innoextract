@@ -40,21 +40,21 @@ Here is a short summary of the options available in innoextract. Please refer to
 .nf
     \-\-dump               Dump contents without converting filenames
  \-L \-\-lowercase          Convert extracted filenames to lower-case
-    \-\-language LANG      Extract files for the given language
- \-T \-\-timestamps TZ      Timezone for file times or "local" or "none"
- \-d \-\-output-dir DIR     Extract files into the given directory
+    \-\-language \fILANG\fP      Extract files for the given language
+ \-T \-\-timestamps \fITZ\fP      Timezone for file times or "local" or "none"
+ \-d \-\-output-dir \fIDIR\fP     Extract files into the given directory
 .fi
 .TP
 .B Display options:
 .nf
  \-q \-\-quiet              Output less information
  \-s \-\-silent             Output only error/warning information
- \-c \-\-color[=ENABLE]     Enable/disable color output
- \-p \-\-progress[=ENABLE]  Enable/disable the progress bar
+ \-c \-\-color[=\fIENABLE\fP]     Enable/disable color output
+ \-p \-\-progress[=\fIENABLE\fP]  Enable/disable the progress bar
 .fi
 .SH OPTIONS
 .TP
-\fB-c\fP, \fB--color\fP[=ENABLE]
+\fB-c\fP, \fB--color\fP[=\fIENABLE\fP]
 By default
 .B innoextract
 will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB--color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
@@ -68,7 +68,7 @@ Extract all files to the current directory. This action is enabled by default, u
 \fB-h\fP, \fB--help\fP
 Show a list of the supported options.
 .TP
-\fB--language\fP LANG
+\fB--language\fP \fILANG\fP
 Extract only language-independent files and files for the given language. By default all files are extracted.
 .TP
 \fB--license\fP
@@ -84,12 +84,12 @@ The \fB--list\fP option can be combined with \fB--test\fP or \fB--extract\fP to 
 \fB-L\fP, \fB--lowercase\fP
 Convert filenames stored in the installer to lower-case before extracting.
 .TP
-\fB-d\fP, \fB--output-dir\fP DIR
+\fB-d\fP, \fB--output-dir\fP \fIDIR\fP
 Extract all files into the given directory. By default, \fBinnoextract\fP will extract all files to the current directory.
 
 If the specified directory does not exist, it will be created. However, the parent directory must exist or extracting will fail.
 .TP
-\fB-p\fP, \fB--progress\fP[=ENABLE]
+\fB-p\fP, \fB--progress\fP[=\fIENABLE\fP]
 By default \fBinnoextract\fP will try to detect if the terminal supports shell escape codes and enable or disable progress bar output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB--progress\fP to force progress bar output. Pass \fB0\fP or \fBfalse\fP to never show a progress bar.
 .TP
 \fB-q\fP, \fB--quiet\fP
@@ -103,7 +103,7 @@ This option can be combined with \fB--list\fP to print only the names of the con
 \fB-t\fP, \fB--test\fP
 Test archive integrity but don't write any output files. You may only specify one of \fB--extract\fP and \fB--test\fP.
 .TP
-\fB-T\fP, \fB--timestamps\fP TZ
+\fB-T\fP, \fB--timestamps\fP \fITZ\fP
 Inno Setup installers can contain timestamps in both UTC and 'local' timezones.
 
 The \fB--timestamps\fP option specifies what timezone should be used to adjust these 'local' file times.
