@@ -32,6 +32,8 @@
 
 #include "util/util.hpp"
 
+#include "configure.hpp"
+
 namespace util {
 
 #if BOOST_VERSION < 104200
@@ -91,7 +93,9 @@ struct compatible_integer<Base, Bits, true> {
 //! Get the alignment of a type.
 template <class T>
 unsigned int alignment_of() {
-#if defined(_MSC_VER) && _MSC_VER >= 1300
+#if INNOEXTRACT_HAVE_ALIGNOF
+	return alignof(T);
+#elif defined(_MSC_VER) && _MSC_VER >= 1300
 	return __alignof(T);
 #elif defined(__GNUC__)
 	return __alignof__(T);

@@ -147,10 +147,11 @@ if(${Boost_VERSION} LESS 104800)
 	# Older Boost versions don't work with C++11
 elseif(USE_CXX11)
 	enable_cxx11()
-	check_cxx11("std::unique_ptr" INNOEXTRACT_HAVE_STD_UNIQUE_PTR)
+	check_cxx11("alignof" INNOEXTRACT_HAVE_ALIGNOF)
 	if(WIN32)
 		check_cxx11("std::codecvt_utf8_utf16" INNOEXTRACT_HAVE_STD_CODECVT_UTF8_UTF16)
 	endif()
+	check_cxx11("std::unique_ptr" INNOEXTRACT_HAVE_STD_UNIQUE_PTR)
 endif()
 
 # Don't expose internal symbols to the outside world by default
