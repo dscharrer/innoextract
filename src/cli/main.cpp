@@ -189,7 +189,14 @@ struct file_output {
 
 static void process_file(const fs::path & file, const options & o) {
 	
-	if(fs::is_directory(file)) {
+	bool is_directory;
+	try {
+		is_directory = fs::is_directory(file);
+	} catch(...) {
+		throw std::runtime_error("error opening file \"" + file.string()
+		                         + "\": access denied");
+	}
+	if(is_directory) {
 		throw std::runtime_error("input file \"" + file.string() + "\" is a directory");
 	}
 	
@@ -610,13 +617,13 @@ int main(int argc, char * argv[]) {
 		po::variables_map::const_iterator i = options.find("output-dir");
 		if(i != options.end()) {
 			o.output_dir = i->second.as<fs::path>();
-			if(!fs::exists(o.output_dir)) {
-				try {
+			try {
+				if(!fs::exists(o.output_dir)) {
 					fs::create_directory(o.output_dir);
-				} catch(...) {
-					log_error << "could not create output directory " << o.output_dir;
-					return ExitDataError;
 				}
+			} catch(...) {
+				log_error << "could not create output directory " << o.output_dir;
+				return ExitDataError;
 			}
 		}
 	}
