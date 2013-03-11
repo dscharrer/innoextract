@@ -21,6 +21,7 @@
 #include "cli/debug.hpp"
 
 #include <ctime>
+#include <iostream>
 
 #include <boost/foreach.hpp>
 
