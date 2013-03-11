@@ -48,21 +48,21 @@ STORED_FLAGS_MAP(stored_inno_directory_options_1,
 void directory_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<boost::uint32_t>(is); // uncompressed size of the directory entry structure
+		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> encoded_string(name, version.codepage());
+	is >> util::encoded_string(name, version.codepage());
 	
 	load_condition_data(is, version);
 	
 	if(version >= INNO_VERSION(4, 0, 11) && version < INNO_VERSION(4, 1, 0)) {
-		is >> encoded_string(permissions, version.codepage());
+		is >> util::encoded_string(permissions, version.codepage());
 	} else {
 		permissions.clear();
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 11)) {
-		attributes = load_number<boost::uint32_t>(is);
+		attributes = util::load<boost::uint32_t>(is);
 	} else {
 		attributes = 0;
 	}
@@ -70,7 +70,7 @@ void directory_entry::load(std::istream & is, const version & version) {
 	load_version_data(is, version);
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		permission = load_number<boost::int16_t>(is);
+		permission = util::load<boost::int16_t>(is);
 	} else {
 		permission = -1;
 	}

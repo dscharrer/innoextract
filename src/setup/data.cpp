@@ -31,8 +31,8 @@ namespace setup {
 
 void data_entry::load(std::istream & is, const version & version) {
 	
-	chunk.first_slice = load_number<boost::uint32_t>(is, version.bits);
-	chunk.last_slice = load_number<boost::uint32_t>(is, version.bits);
+	chunk.first_slice = util::load<boost::uint32_t>(is, version.bits);
+	chunk.last_slice = util::load<boost::uint32_t>(is, version.bits);
 	if(version < INNO_VERSION(4, 0, 0)) {
 		if(chunk.first_slice < 1 || chunk.last_slice < 1) {
 			log_warning << "[file location] unexpected disk number: " << chunk.first_slice
@@ -42,20 +42,20 @@ void data_entry::load(std::istream & is, const version & version) {
 		}
 	}
 	
-	chunk.offset = load_number<boost::uint32_t>(is);
+	chunk.offset = util::load<boost::uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 0, 1)) {
-		file.offset = load_number<boost::uint64_t>(is);
+		file.offset = util::load<boost::uint64_t>(is);
 	} else {
 		file.offset = 0;
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		file.size = load_number<boost::uint64_t>(is);
-		chunk.size = load_number<boost::uint64_t>(is);
+		file.size = util::load<boost::uint64_t>(is);
+		chunk.size = util::load<boost::uint64_t>(is);
 	} else {
-		file.size = load_number<boost::uint32_t>(is);
-		chunk.size = load_number<boost::uint32_t>(is);
+		file.size = util::load<boost::uint32_t>(is);
+		chunk.size = util::load<boost::uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION(5, 3, 9)) {
@@ -65,10 +65,10 @@ void data_entry::load(std::istream & is, const version & version) {
 		is.read(file.checksum.md5, std::streamsize(sizeof(file.checksum.md5)));
 		file.checksum.type = crypto::MD5;
 	} else if(version >= INNO_VERSION(4, 0, 1)) {
-		file.checksum.crc32 = load_number<boost::uint32_t>(is);
+		file.checksum.crc32 = util::load<boost::uint32_t>(is);
 		file.checksum.type = crypto::CRC32;
 	} else {
-		file.checksum.adler32 = load_number<boost::uint32_t>(is);
+		file.checksum.adler32 = util::load<boost::uint32_t>(is);
 		file.checksum.type = crypto::Adler32;
 	}
 	
@@ -76,16 +76,16 @@ void data_entry::load(std::istream & is, const version & version) {
 		
 		// 16-bit installers use the FAT filetime format
 		
-		boost::uint16_t time = load_number<boost::uint16_t>(is);
-		boost::uint16_t date = load_number<boost::uint16_t>(is);
+		boost::uint16_t time = util::load<boost::uint16_t>(is);
+		boost::uint16_t date = util::load<boost::uint16_t>(is);
 		
 		struct tm t;
-		t.tm_sec  = get_bits(time,  0,  4) * 2;           // [0, 58]
-		t.tm_min  = get_bits(time,  5, 10);               // [0, 59]
-		t.tm_hour = get_bits(time, 11, 15);               // [0, 23]
-		t.tm_mday = get_bits(date,  0,  4);               // [1, 31]
-		t.tm_mon  = get_bits(date,  5,  8) - 1;           // [0, 11]
-		t.tm_year = get_bits(date,  9, 15) + 1980 - 1900; // [80, 199]
+		t.tm_sec  = util::get_bits(time,  0,  4) * 2;           // [0, 58]
+		t.tm_min  = util::get_bits(time,  5, 10);               // [0, 59]
+		t.tm_hour = util::get_bits(time, 11, 15);               // [0, 23]
+		t.tm_mday = util::get_bits(date,  0,  4);               // [1, 31]
+		t.tm_mon  = util::get_bits(date,  5,  8) - 1;           // [0, 11]
+		t.tm_year = util::get_bits(date,  9, 15) + 1980 - 1900; // [80, 199]
 		
 		timestamp = util::parse_time(t);
 		timestamp_nsec = 0;
@@ -94,7 +94,7 @@ void data_entry::load(std::istream & is, const version & version) {
 		
 		// 32-bit installers use the Win32 FILETIME format
 		
-		boost::int64_t filetime = load_number<boost::int64_t>(is);
+		boost::int64_t filetime = util::load<boost::int64_t>(is);
 		
 		static const boost::int64_t FiletimeOffset = 0x19DB1DED53E8000ll;
 		if(filetime < FiletimeOffset) {
@@ -107,8 +107,8 @@ void data_entry::load(std::istream & is, const version & version) {
 		
 	}
 	
-	file_version_ms = load_number<boost::uint32_t>(is);
-	file_version_ls = load_number<boost::uint32_t>(is);
+	file_version_ms = util::load<boost::uint32_t>(is);
+	file_version_ls = util::load<boost::uint32_t>(is);
 	
 	options = 0;
 	

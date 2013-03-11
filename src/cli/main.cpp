@@ -210,9 +210,16 @@ static void process_file(const fs::path & file, const options & o) {
 	}
 #endif
 	
+	setup::info::entry_types entries = setup::info::DataEntries | setup::info::Files;
+#ifdef DEBUG
+	if(logger::debug) {
+		entries = setup::info::entry_types::all();
+	}
+#endif
+	
 	ifs.seekg(offsets.header_offset);
 	setup::info info;
-	info.load(ifs);
+	info.load(ifs, entries);
 	
 	if(!o.quiet) {
 		const std::string & name = info.header.app_versioned_name.empty()
@@ -368,7 +375,7 @@ static void process_file(const fs::path & file, const options & o) {
 			}
 			if(file.offset > offset) {
 				debug("discarding " << print_bytes(file.offset - offset));
-				discard(*chunk_source, file.offset - offset);
+				util::discard(*chunk_source, file.offset - offset);
 			}
 			offset = file.offset + file.size;
 			

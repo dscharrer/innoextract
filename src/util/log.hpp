@@ -18,6 +18,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Logging functions.
+ */
 #ifndef INNOEXTRACT_UTIL_LOG_HPP
 #define INNOEXTRACT_UTIL_LOG_HPP
 
@@ -60,12 +63,18 @@ private:
 	
 public:
 	
-	static size_t total_warnings;
-	static size_t total_errors;
+	static size_t total_warnings; //! Total number of \ref log_warning uses so far.
+	static size_t total_errors;   //! Total number of \ref log_error uses so far.
 	
-	static bool debug;
-	static bool quiet;
+	static bool debug; //! Is \ref debug output enabled?
+	static bool quiet; //! Is \ref log_info disabled?
 	
+	/*!
+	 * Construct a log line output stream.
+	 *
+	 * You probably don't want to use this directly - use \ref debug, \ref log_info,
+	 * \ref log_warning and \ref log_error instead.
+	 */
 	explicit logger(log_level _level) : level(_level) { }
 	
 	template<class T>

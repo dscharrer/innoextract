@@ -43,7 +43,7 @@ void md5_transform::transform(hash_word * digest, const hash_word * in) {
 #define F4(x, y, z) (y ^ (x | ~z))
 	
 #define MD5STEP(f, w, x, y, z, data, s) \
-	w = rotl_fixed(w + f(x, y, z) + data, s) + x
+	w = util::rotl_fixed(w + f(x, y, z) + data, s) + x
 	
 	hash_word a, b, c, d;
 	

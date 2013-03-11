@@ -33,7 +33,8 @@ class md5_transform {
 public:
 	
 	typedef boost::uint32_t hash_word;
-	typedef little_endian byte_order;
+	typedef util::little_endian byte_order;
+	static const size_t offset = 0;
 	static const size_t block_size = 64;
 	static const size_t hash_size = 16;
 	

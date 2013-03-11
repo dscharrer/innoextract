@@ -38,8 +38,8 @@ void sha1_transform::init(hash_word * state) {
 void sha1_transform::transform(hash_word * state, const hash_word * data) {
 	
 #define blk0(i) (W[i] = data[i])
-#define blk1(i) (W[i & 15] = rotl_fixed(W[(i + 13) & 15] ^ W[(i + 8) & 15] \
-                                       ^ W[(i + 2) & 15] ^ W[i & 15], 1))
+#define blk1(i) (W[i & 15] = util::rotl_fixed(W[(i + 13) & 15] ^ W[(i + 8) & 15] \
+                                              ^ W[(i + 2) & 15] ^ W[i & 15], 1))
 	
 #define f1(x, y, z) (z ^ (x & (y ^ z)))
 #define f2(x, y, z) (x ^ y ^ z)
@@ -47,16 +47,21 @@ void sha1_transform::transform(hash_word * state, const hash_word * data) {
 #define f4(x, y, z) (x ^ y ^ z)
 	
 /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
-#define R0(v, w, x, y, z, i) z += f1(w, x, y) + blk0(i) + 0x5A827999 + rotl_fixed(v, 5); \
-                             w = rotl_fixed(w, 30);
-#define R1(v, w, x, y, z, i) z += f1(w, x, y) + blk1(i) + 0x5A827999 + rotl_fixed(v, 5); \
-                             w = rotl_fixed(w, 30);
-#define R2(v, w, x, y, z, i) z += f2(w, x, y) + blk1(i) + 0x6ED9EBA1 + rotl_fixed(v, 5); \
-                             w = rotl_fixed(w, 30);
-#define R3(v, w, x, y, z, i) z += f3(w, x, y) + blk1(i) + 0x8F1BBCDC + rotl_fixed(v, 5); \
-                             w = rotl_fixed(w, 30);
-#define R4(v, w, x, y, z, i) z += f4(w, x, y) + blk1(i) + 0xCA62C1D6 + rotl_fixed(v, 5); \
-                             w = rotl_fixed(w, 30);
+#define R0(v, w, x, y, z, i) \
+	z += f1(w, x, y) + blk0(i) + 0x5A827999 + util::rotl_fixed(v, 5); \
+	w = util::rotl_fixed(w, 30);
+#define R1(v, w, x, y, z, i) \
+	z += f1(w, x, y) + blk1(i) + 0x5A827999 + util::rotl_fixed(v, 5); \
+	w = util::rotl_fixed(w, 30);
+#define R2(v, w, x, y, z, i) \
+	z += f2(w, x, y) + blk1(i) + 0x6ED9EBA1 + util::rotl_fixed(v, 5); \
+	w = util::rotl_fixed(w, 30);
+#define R3(v, w, x, y, z, i) \
+	z += f3(w, x, y) + blk1(i) + 0x8F1BBCDC + util::rotl_fixed(v, 5); \
+	w = util::rotl_fixed(w, 30);
+#define R4(v, w, x, y, z, i) \
+	z += f4(w, x, y) + blk1(i) + 0xCA62C1D6 + util::rotl_fixed(v, 5); \
+	w = util::rotl_fixed(w, 30);
 	
 	hash_word W[16];
 	

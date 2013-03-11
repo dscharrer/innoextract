@@ -55,29 +55,29 @@ STORED_FLAGS_MAP(stored_component_flags_2,
 
 void component_entry::load(std::istream & is, const version & version) {
 	
-	is >> encoded_string(name, version.codepage());
-	is >> encoded_string(description, version.codepage());
-	is >> encoded_string(types, version.codepage());
+	is >> util::encoded_string(name, version.codepage());
+	is >> util::encoded_string(description, version.codepage());
+	is >> util::encoded_string(types, version.codepage());
 	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> encoded_string(languages, version.codepage());
+		is >> util::encoded_string(languages, version.codepage());
 	} else {
 		languages.clear();
 	}
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
-		is >> encoded_string(check, version.codepage());
+		is >> util::encoded_string(check, version.codepage());
 	} else {
 		check.clear();
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		extra_disk_pace_required = load_number<boost::uint64_t>(is);
+		extra_disk_pace_required = util::load<boost::uint64_t>(is);
 	} else {
-		extra_disk_pace_required = load_number<boost::uint32_t>(is);
+		extra_disk_pace_required = util::load<boost::uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
-		level = load_number<boost::int32_t>(is);
-		used = load_bool(is);
+		level = util::load<boost::int32_t>(is);
+		used = util::load_bool(is);
 	} else {
 		level = 0, used = true;
 	}
@@ -93,9 +93,9 @@ void component_entry::load(std::istream & is, const version & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		size = load_number<boost::uint64_t>(is);
+		size = util::load<boost::uint64_t>(is);
 	} else {
-		size = load_number<boost::uint32_t>(is);
+		size = util::load<boost::uint32_t>(is);
 	}
 }
 

@@ -18,6 +18,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Utility function to load stored data while properly handling encodings and endianness.
+ */
 #ifndef INNOEXTRACT_UTIL_LOAD_HPP
 #define INNOEXTRACT_UTIL_LOAD_HPP
 
@@ -31,87 +34,139 @@
 #include "util/types.hpp"
 #include "util/util.hpp"
 
+namespace util {
+
+/*!
+ * Convert a string to UTF-8 from a specified encoding.
+ * \param from     The input string to convert.
+ * \param to       The output for the converted string.
+ * \param codepage The Windows codepage number for the input string encoding.
+ */
+void to_utf8(const std::string & from, std::string & to, boost::uint32_t codepage = 1252);
+
+/*!
+ * Wrapper to load a length-prefixed string from an input stream into a std::string.
+ * The string length is stored as 32-bit integer.
+ *
+ * Usage: <code>is >> binary_string(str)</code>
+ *
+ * Use \ref encoded_string to also convert the string to UTF-8.
+ */
 struct binary_string {
 	
 	std::string & data;
 	
+	/*!
+	 * \param target The std::string object to receive the loaded string.
+	 */
 	explicit binary_string(std::string & target) : data(target) { }
 	
+	//! Load a length-prefixed string
 	static void load(std::istream & is, std::string & target);
 	
+	static void skip(std::istream & is);
+	
+	//! Load a length-prefixed string
+	static std::string load(std::istream & is) {
+		std::string target;
+		load(is, target);
+		return target;
+	}
+	
 };
-
 inline std::istream & operator>>(std::istream & is, const binary_string & str) {
 	binary_string::load(is, str.data);
 	return is;
 }
 
-void to_utf8(const std::string & from, std::string & to, boost::uint32_t codepage = 1252);
-
+/*!
+ * Wrapper to load a length-prefixed string with a specified encoding from an input stream
+ * into a UTF-8 encoded std::string.
+ * The string length is stored as 32-bit integer.
+ *
+ * Usage: <code>is >> encoded_string(str, codepage)</code>
+ *
+ * You can also use the \ref ansi_string convenience wrapper for Windows-1252 strings.
+ */
 struct encoded_string {
 	
 	std::string & data;
 	boost::uint32_t codepage;
 	
-	encoded_string(std::string & target, boost::uint32_t _codepage)
-		: data(target), codepage(_codepage) { }
+	/*!
+	 * \param target   The std::string object to receive the loaded UTF-8 string.
+	 * \param codepage The Windows codepage for the encoding of the stored string.
+	 */
+	encoded_string(std::string & target, boost::uint32_t codepage)
+		: data(target), codepage(codepage) { }
 	
+	//! Load and convert a length-prefixed string
 	static void load(std::istream & is, std::string & target, boost::uint32_t codepage);
 	
+	//! Load and convert a length-prefixed string
+	static std::string load(std::istream & is, boost::uint32_t codepage) {
+		std::string target;
+		load(is, target, codepage);
+		return target;
+	}
+	
 };
-
 inline std::istream & operator>>(std::istream & is, const encoded_string & str) {
 	encoded_string::load(is, str.data, str.codepage);
 	return is;
 }
 
+//! Convenience specialization of \ref encoded_string for loading Windows-1252 strings
 struct ansi_string : encoded_string {
 	
 	explicit ansi_string(std::string & target) : encoded_string(target, 1252) { }
 	
 };
 
-template <class T>
+//! Load a value of type T that is stored with a specific endianness.
+template <class T, class Endianness>
 T load(std::istream & is) {
-	T value;
-	char buffer[sizeof(value)];
+	char buffer[sizeof(T)];
 	is.read(buffer, std::streamsize(sizeof(buffer)));
-	std::memcpy(&value, buffer, sizeof(value));
-	return value;
+	return Endianness::template load<T>(buffer);
 }
-
-inline bool load_bool(std::istream & is) {
-	return (load<boost::uint8_t>(is) != 0);
-}
-
-template <class T, class Endianness>
-T load_number(std::istream & is) {
-	return Endianness::byteswap_if_alien(load<T>(is));
-}
-
+//! Load a value of type T that is stored as little endian.
 template <class T>
-T load_number(std::istream & is) {
-	return load_number<T, little_endian>(is);
+T load(std::istream & is) { return load<T, little_endian>(is); }
+
+//! Load a bool value
+inline bool load_bool(std::istream & is) {
+	return !!load<boost::uint8_t>(is);
 }
 
+/*!
+ * Load a value of type T that is stored with a specific endianness.
+ * \param bits The number of bits used to store the number.
+ */
 template <class T, class Endianness>
-T load_number(std::istream & is, size_t bits) {
+T load(std::istream & is, size_t bits) {
 	if(bits == 8) {
-		return load_number<typename compatible_integer<T, 8>::type, Endianness>(is);
+		return load<typename compatible_integer<T, 8>::type, Endianness>(is);
 	} else if(bits == 16) {
-		return load_number<typename compatible_integer<T, 16>::type, Endianness>(is);
+		return load<typename compatible_integer<T, 16>::type, Endianness>(is);
 	} else if(bits == 32) {
-		return load_number<typename compatible_integer<T, 32>::type, Endianness>(is);
+		return load<typename compatible_integer<T, 32>::type, Endianness>(is);
 	} else {
-		return load_number<typename compatible_integer<T, 64>::type, Endianness>(is);
+		return load<typename compatible_integer<T, 64>::type, Endianness>(is);
 	}
 }
-
+/*!
+ * Load a value of type T that is stored as little endian.
+ * \param bits The number of bits used to store the number.
+ */
 template <class T>
-T load_number(std::istream & is, size_t bits) {
-	return load_number<T, little_endian>(is, bits);
-}
+T load(std::istream & is, size_t bits) { return load<T, little_endian>(is, bits); }
 
+/*!
+ * Discard a number of bytes from a non-seekable input stream or stream-like object
+ * \param is    The stream to "seek"
+ * \param bytes Number of bytes to skip ahead
+ */
 template <class T>
 void discard(T & is, boost::uint64_t bytes) {
 	char buf[1024];
@@ -122,13 +177,22 @@ void discard(T & is, boost::uint64_t bytes) {
 	}
 }
 
+/*!
+ * Get the number represented by a specific range of bits of another number.
+ * All other bis are masked and the requested bits are shifted to position 0.
+ * \param number The number containing the desired bits.
+ * \param first  Index of the first desired bit.
+ * \param last   Index of the last desired bit (inclusive).
+ */
 template <typename T>
 T get_bits(T number, int first, int last) {
-	typedef typename detail::uint_t<sizeof(T) * 8>::exact UT;
+	typedef typename uint_t<sizeof(T) * 8>::exact UT;
 	UT data = UT(number);
 	data = UT(data >> first), last -= first;
 	UT mask = UT(((last + 1 == sizeof(T) * 8) ? UT(0) : UT(UT(1) << (last + 1))) - 1);
 	return T(data & mask);
 }
+
+} // namespace util
 
 #endif // INNOEXTRACT_UTIL_LOAD_HPP

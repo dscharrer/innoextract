@@ -18,6 +18,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Output utility functions.
+ */
 #ifndef INNOEXTRACT_UTIL_OUTPUT_HPP
 #define INNOEXTRACT_UTIL_OUTPUT_HPP
 

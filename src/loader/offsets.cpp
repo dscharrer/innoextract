@@ -66,14 +66,14 @@ bool offsets::load_from_exe_file(std::istream & is) {
 	
 	is.seekg(SetupLoaderHeaderOffset);
 	
-	boost::uint32_t magic = load_number<boost::uint32_t>(is);
+	boost::uint32_t magic = util::load<boost::uint32_t>(is);
 	if(is.fail() || magic != SetupLoaderHeaderMagic) {
 		is.clear();
 		return false;
 	}
 	
-	boost::uint32_t offset_table_offset = load_number<boost::uint32_t>(is);
-	boost::uint32_t not_offset_table_offset = load_number<boost::uint32_t>(is);
+	boost::uint32_t offset_table_offset = util::load<boost::uint32_t>(is);
+	boost::uint32_t not_offset_table_offset = util::load<boost::uint32_t>(is);
 	if(is.fail() || offset_table_offset != ~not_offset_table_offset) {
 		is.clear();
 		return false;
@@ -124,40 +124,40 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	checksum.update(magic, ARRAY_SIZE(magic));
 	
 	if(version >= INNO_VERSION(5, 1,  5)) {
-		boost::uint32_t revision = checksum.load_number<boost::uint32_t>(is);
+		boost::uint32_t revision = checksum.load<boost::uint32_t>(is);
 		if(is.fail() || revision != 1) {
 			is.clear();
 			return false;
 		}
 	}
 	
-	(void)checksum.load_number<boost::uint32_t>(is);
-	exe_offset = checksum.load_number<boost::uint32_t>(is);
+	(void)checksum.load<boost::uint32_t>(is);
+	exe_offset = checksum.load<boost::uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 1, 6)) {
 		exe_compressed_size = 0;
 	} else {
-		exe_compressed_size = checksum.load_number<boost::uint32_t>(is);
+		exe_compressed_size = checksum.load<boost::uint32_t>(is);
 	}
 	
-	exe_uncompressed_size = checksum.load_number<boost::uint32_t>(is);
+	exe_uncompressed_size = checksum.load<boost::uint32_t>(is);
 	
 	if(version >= INNO_VERSION(4, 0, 3)) {
 		exe_checksum.type = crypto::CRC32;
-		exe_checksum.crc32 = checksum.load_number<boost::uint32_t>(is);
+		exe_checksum.crc32 = checksum.load<boost::uint32_t>(is);
 	} else {
 		exe_checksum.type = crypto::Adler32;
-		exe_checksum.adler32 = checksum.load_number<boost::uint32_t>(is);
+		exe_checksum.adler32 = checksum.load<boost::uint32_t>(is);
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
 		message_offset = 0;
 	} else {
-		message_offset = load_number<boost::uint32_t>(is);
+		message_offset = util::load<boost::uint32_t>(is);
 	}
 	
-	header_offset = checksum.load_number<boost::uint32_t>(is);
-	data_offset = checksum.load_number<boost::uint32_t>(is);
+	header_offset = checksum.load<boost::uint32_t>(is);
+	data_offset = checksum.load<boost::uint32_t>(is);
 	
 	if(is.fail()) {
 		is.clear();
@@ -165,7 +165,7 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 10)) {
-		boost::uint32_t expected = load_number<boost::uint32_t>(is);
+		boost::uint32_t expected = util::load<boost::uint32_t>(is);
 		if(is.fail()) {
 			is.clear();
 			return false;

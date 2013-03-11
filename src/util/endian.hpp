@@ -18,10 +18,14 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Utility function for dealing with different endiannesses.
+ */
 #ifndef INNOEXTRACT_UTIL_ENDIAN_HPP
 #define INNOEXTRACT_UTIL_ENDIAN_HPP
 
 #include <cstdlib>
+#include <cstring>
 
 #include "configure.hpp"
 
@@ -30,6 +34,10 @@
 #endif
 
 #include <boost/cstdint.hpp>
+
+namespace util {
+
+namespace detail {
 
 inline boost::uint8_t byteswap(boost::uint8_t value) {
 	return value;
@@ -93,74 +101,182 @@ inline boost::int64_t byteswap(boost::int64_t value) {
 	return boost::int64_t(byteswap(boost::uint64_t(value)));
 }
 
-template <class T>
-void byteswap(T * out, const T * in, size_t byte_count) {
-	for(size_t i = 0; i < byte_count / sizeof(T); i++) {
-		out[i] = byteswap(in[i]);
-	}
-}
+} // namespace detail
 
-template <bool Native>
+//! Load/store functions for a specific endianness.
+template <typename Endianness>
 struct endianness {
 	
-	static const size_t native = false;
-	
-	template <class T>
-	static T byteswap_if_alien(T value) { return byteswap(value); }
-	
-	template <class T>
-	static void byteswap_if_alien(const T * in, T * out, size_t byte_count) {
-		byteswap(out, in, byte_count);
+	/*!
+	 * Load a single integer.
+	 *
+	 * \param buffer Memory location containing the integer. Will read sizeof(T) bytes.
+	 * \return the loaded integer.
+	 */
+	template <typename T>
+	static T load(const char * buffer) {
+		if(Endianness::native()) {
+			T value;
+			std::memcpy(&value, buffer, sizeof(value));
+			return value;
+		} else {
+			return load_alien<T>(buffer);
+		}
 	}
 	
-};
-
-template <>
-struct endianness<true> {
+	/*!
+	 * Load an array of integers.
+	 *
+	 * \param buffer Memory location containing the integers (without padding).
+	 *               Will read <code>sizeof(T) * count</code> bytes.
+	 * \param values Output array for the loaded integers.
+	 * \param count  How many integers to load.
+	 */
+	template <typename T>
+	static void load(const char * buffer, T * values, size_t count) {
+		if(Endianness::native() || sizeof(*values) == 8) {
+			std::memcpy(values, buffer, sizeof(*values) * count);
+		} else {
+			for(size_t i = 0; i < count; i++, buffer += sizeof(*values)) {
+				values[i] = load_alien<T>(buffer);
+			}
+		}
+	}
 	
-	static const size_t native = true;
+	/*!
+	 * Store a single integer.
+	 *
+	 * \param value  The integer to store.
+	 * \param buffer Memory location to receive the integer. Will write sizeof(T) bytes.
+	 */
+	template <typename T>
+	static void store(T value, char * buffer) {
+		if(Endianness::native()) {
+			std::memcpy(buffer, &value, sizeof(value));
+		} else {
+			return store_alien(value, buffer);
+		}
+	}
 	
-	template <class T>
-	static T byteswap_if_alien(T value) { return value; }
+	/*!
+	 * Store an array of integers.
+	 *
+	 * \param value  The integers to store.
+	 * \param count  How many integers to store.
+	 * \param buffer Memory location to receive the integers (without padding).
+	 *               Will write <code>sizeof(T) * count</code> bytes.
+	 */
+	template <typename T>
+	static void store(T * values, size_t count, char * buffer) {
+		if(Endianness::native() || sizeof(*values) == 8) {
+			std::memcpy(buffer, values, sizeof(*values) * count);
+		} else {
+			for(size_t i = 0; i < count; i++, buffer += sizeof(*values)) {
+				store_alien(values[i], buffer);
+			}
+		}
+	}
 	
-	template <class T>
-	static void byteswap_if_alien(const T * in, T * out, size_t byte_count) {
-		if(in != out) {
-			std::memcpy(out, in, byte_count);
+private:
+	
+	bool reversed() { return false; }
+	
+	template <typename T>
+	static T load_alien(const char * buffer) {
+		if(Endianness::reversed()) {
+			T value;
+			std::memcpy(&value, buffer, sizeof(value));
+			return detail::byteswap(value);
+		} else {
+			return Endianness::template decode<T>(buffer);
+		}
+	}
+	
+	template <typename T>
+	static void store_alien(T value, char * buffer) {
+		if(Endianness::reversed()) {
+			value = detail::byteswap(value);
+			std::memcpy(buffer, &value, sizeof(value));
+		} else {
+			Endianness::template encode<T>(value, buffer);
 		}
 	}
 	
 };
 
-#ifndef LITTLE_ENDIAN
-#define LITTLE_ENDIAN 1234
-#endif
+namespace detail {
 
-#ifndef BIG_ENDIAN
-#define BIG_ENDIAN    4321
-#endif
+inline bool is_little_endian() {
+	boost::uint32_t signature = 0x04030201;
+	return (*reinterpret_cast<char *>(&signature) == 1);
+}
 
-#if INNOEXTRACT_IS_BIG_ENDIAN
-#define INNOEXTRACT_ENDIANNESS    BIG_ENDIAN
-#else
-#define INNOEXTRACT_ENDIANNESS    LITTLE_ENDIAN
-#endif
+inline bool is_big_endian() {
+	boost::uint32_t signature = 0x04030201;
+	return (*reinterpret_cast<char *>(&signature) == 4);
+}
+
+} // namespace detail
 
 
-struct little_endian : public endianness<INNOEXTRACT_ENDIANNESS == LITTLE_ENDIAN> {
-	static const size_t offset = 0;
+//! Load and store little-endian integers.
+struct little_endian : endianness<little_endian> {
+	
+	//! \return true if we are running on a little-endian machine.
+	static bool native() { return detail::is_little_endian(); }
+	
+private:
+	
+	static bool reversed() { return detail::is_big_endian(); }
+	
+	template <typename T>
+	static T decode(const char * buffer) {
+		T value = 0;
+		for(size_t i = 0; i < sizeof(T); i++) {
+			value |= T(T(buffer[i]) << (i * 8));
+		}
+		return value;
+	}
+	
+	template <typename T>
+	static void encode(T value, char * buffer) {
+		for(size_t i = 0; i < sizeof(T); i++) {
+			buffer[i] = char((value >> (i * 8)) & 0xff);
+		}
+	}
+	
+	friend class endianness<little_endian>;
 };
 
-struct big_endian : public endianness<INNOEXTRACT_ENDIANNESS == BIG_ENDIAN> {
-	static const size_t offset = 1;
+//! Load and store big-endian integers.
+struct big_endian : endianness<big_endian> {
+	
+	//! \return true if we are running on a big-endian machine.
+	static bool native() { return detail::is_big_endian(); }
+	
+private:
+	
+	static bool reversed() { return detail::is_little_endian(); }
+	
+	template <typename T>
+	static T decode(const char * buffer) {
+		T value = 0;
+		for(size_t i = 0; i < sizeof(T); i++) {
+			value |= T(T(buffer[i]) << ((sizeof(T) - i - 1) * 8));
+		}
+		return value;
+	}
+	
+	template <typename T>
+	static void encode(T value, char * buffer) {
+		for(size_t i = 0; i < sizeof(T); i++) {
+			buffer[i] = char((value >> ((sizeof(T) - i - 1) * 8)) & 0xff);
+		}
+	}
+	
+	friend class endianness<big_endian>;
 };
 
-#if INNOEXTRACT_ENDIANNESS == LITTLE_ENDIAN
-typedef little_endian native_endian;
-#elif INNOEXTRACT_ENDIANNESS == BIG_ENDIAN
-typedef big_endian native_endian;
-#else
-#error "Unsupported host endianness."
-#endif
+} // namespace util
 
 #endif // INNOEXTRACT_UTIL_ENDIAN_HPP

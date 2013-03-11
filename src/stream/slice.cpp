@@ -110,7 +110,7 @@ bool slice_reader::open_file(const path_type & file) {
 		throw slice_error("bad slice magic number");
 	}
 	
-	slice_size = load_number<boost::uint32_t>(ifs);
+	slice_size = util::load<boost::uint32_t>(ifs);
 	if(ifs.fail()) {
 		ifs.close();
 		throw slice_error("error reading slice size");

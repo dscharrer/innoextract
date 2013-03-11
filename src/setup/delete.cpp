@@ -39,10 +39,10 @@ STORED_ENUM_MAP(delete_target_type_map, delete_entry::Files,
 void delete_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<boost::uint32_t>(is); // uncompressed size of the directory entry structure
+		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> encoded_string(name, version.codepage());
+	is >> util::encoded_string(name, version.codepage());
 	
 	load_condition_data(is, version);
 	

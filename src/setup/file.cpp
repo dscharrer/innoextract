@@ -77,14 +77,14 @@ void file_entry::load(std::istream & is, const version & version) {
 	options = 0;
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<boost::uint32_t>(is); // uncompressed size of the file entry structure
+		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> encoded_string(source, version.codepage());
-	is >> encoded_string(destination, version.codepage());
-	is >> encoded_string(install_font_name, version.codepage());
+	is >> util::encoded_string(source, version.codepage());
+	is >> util::encoded_string(destination, version.codepage());
+	is >> util::encoded_string(install_font_name, version.codepage());
 	if(version >= INNO_VERSION(5, 2, 5)) {
-		is >> encoded_string(strong_assembly_name, version.codepage());
+		is >> util::encoded_string(strong_assembly_name, version.codepage());
 	} else {
 		strong_assembly_name.clear();
 	}
@@ -93,10 +93,10 @@ void file_entry::load(std::istream & is, const version & version) {
 	
 	load_version_data(is, version);
 	
-	location = load_number<boost::uint32_t>(is, version.bits);
-	attributes = load_number<boost::uint32_t>(is, version.bits);
-	external_size = (version >= INNO_VERSION(4, 0, 0)) ? load_number<boost::uint64_t>(is)
-	                                                  : load_number<boost::uint32_t>(is);
+	location = util::load<boost::uint32_t>(is, version.bits);
+	attributes = util::load<boost::uint32_t>(is, version.bits);
+	external_size = (version >= INNO_VERSION(4, 0, 0)) ? util::load<boost::uint64_t>(is)
+	                                                   : util::load<boost::uint32_t>(is);
 	
 	if(version < INNO_VERSION(3, 0, 5)) {
 		file_copy_mode copyMode = stored_enum<stored_file_copy_mode>(is).get();
@@ -109,7 +109,7 @@ void file_entry::load(std::istream & is, const version & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		permission = load_number<boost::int16_t>(is);
+		permission = util::load<boost::int16_t>(is);
 	} else {
 		permission = -1;
 	}

@@ -18,6 +18,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Miscellaneous utility functions.
+ */
 #ifndef INNOEXTRACT_UTIL_UTIL_HPP
 #define INNOEXTRACT_UTIL_UTIL_HPP
 
@@ -25,18 +28,24 @@
 #include <intrin.h>
 #endif
 
+namespace util {
+
+//! Get the number of elements in a statically-sized array.
 #define ARRAY_SIZE(array) (sizeof(array)/sizeof(*(array)))
 
+//! Divide by a number and round up the result.
 template <typename T>
 T ceildiv(T num, T denom) {
 	return (num + (denom - T(1))) / denom;
 }
 
+//! Check if an integer is a power of two.
 template <class T>
 bool is_power_of_2(const T & n) {
 	return n > 0 && (n & (n - 1)) == 0;
 }
 
+//! Calculate <code>a % b</code> where b is always a power of two.
 template <class T1, class T2>
 T2 mod_power_of_2(const T1 & a, const T2 & b) {
 	return T2(a) & (b - 1);
@@ -76,16 +85,19 @@ struct safe_shifter<false> {
 
 } // namespace detail
 
+//! Right-shift a value without shifting past the size of the type or return 0.
 template <unsigned int bits, class T>
 T safe_right_shift(T value) {
 	return detail::safe_shifter<(bits >= (8 * sizeof(T)))>::right_shift(value, bits);
 }
 
+//! Left-shift a value without shifting past the size of the type or return 0.
 template <unsigned int bits, class T>
 T safe_left_shift(T value) {
 	return detail::safe_shifter<(bits >= (8 * sizeof(T)))>::left_shift(value, bits);
 }
 
+//! Rotate left.
 template <class T> T rotl_fixed(T x, unsigned int y) {
 	return T((x << y) | (x >> (sizeof(T) * 8 - y)));
 }
@@ -117,5 +129,7 @@ inline boost::uint64_t rotl_fixed<boost::uint64_t>(boost::uint64_t x, unsigned i
 	return y ? _rotl64(x, y) : x;
 }
 #endif
+
+} // namespace util
 
 #endif // INNOEXTRACT_UTIL_UTIL_HPP

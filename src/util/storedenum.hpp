@@ -71,7 +71,7 @@ public:
 	
 	explicit stored_enum(std::istream & is) {
 		BOOST_STATIC_ASSERT(size <= (1 << 8));
-		value = load_number<boost::uint8_t>(is);
+		value = util::load<boost::uint8_t>(is);
 	}
 	
 	enum_type get() {
@@ -107,11 +107,11 @@ public:
 	
 	explicit stored_bitfield(std::istream & is) {
 		for(size_t i = 0; i < count; i++) {
-			bits[i] = load_number<base_type>(is);
+			bits[i] = util::load<base_type>(is);
 		}
 		if(count == 3 && PadBits == 32) {
 			// 3-byte sets are padded to 4 bytes
-			(void)load_number<base_type>(is);
+			(void)util::load<base_type>(is);
 		}
 	}
 	
@@ -139,7 +139,7 @@ public:
 		
 		std::bitset<size> result(0);
 		for(size_t i = 0; i < count; i++) {
-			for(size_t j = 0; j < ceildiv(base_size, construct_size); j++) {
+			for(size_t j = 0; j < util::ceildiv(base_size, construct_size); j++) {
 				construct_type chunk = static_cast<construct_type>(bits[i] >> (j * construct_size));
 				result |= std::bitset<size>(chunk) << ((i * base_size) + (j * construct_size));
 			}
@@ -227,7 +227,7 @@ public:
 		
 		if(pos == 0) {
 			bytes++;
-			buffer = load_number<stored_type>(is);
+			buffer = util::load<stored_type>(is);
 		}
 		
 		if(buffer & (stored_type(1) << pos)) {
@@ -240,7 +240,7 @@ public:
 	operator flag_type() const {
 		if(bytes == 3 && pad_bits == 32) {
 			// 3-byte sets are padded to 4 bytes
-			(void)load_number<stored_type>(is);
+			(void)util::load<stored_type>(is);
 		}
 		return result;
 	}

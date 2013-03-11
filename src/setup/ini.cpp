@@ -43,16 +43,16 @@ STORED_FLAGS_MAP(stored_ini_flags,
 void ini_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<boost::uint32_t>(is); // uncompressed size of the ini entry structure
+		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> encoded_string(inifile, version.codepage());
+	is >> util::encoded_string(inifile, version.codepage());
 	if(inifile.empty()) {
 		inifile = "{windows}/WIN.INI";
 	}
-	is >> encoded_string(section, version.codepage());
-	is >> encoded_string(key, version.codepage());
-	is >> encoded_string(value, version.codepage());
+	is >> util::encoded_string(section, version.codepage());
+	is >> util::encoded_string(key, version.codepage());
+	is >> util::encoded_string(value, version.codepage());
 	
 	load_condition_data(is, version);
 	

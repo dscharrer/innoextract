@@ -30,19 +30,19 @@ namespace setup {
 
 void task_entry::load(std::istream & is, const version & version) {
 	
-	is >> encoded_string(name, version.codepage());
-	is >> encoded_string(description, version.codepage());
-	is >> encoded_string(group_description, version.codepage());
-	is >> encoded_string(components, version.codepage());
+	is >> util::encoded_string(name, version.codepage());
+	is >> util::encoded_string(description, version.codepage());
+	is >> util::encoded_string(group_description, version.codepage());
+	is >> util::encoded_string(components, version.codepage());
 	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> encoded_string(languages, version.codepage());
+		is >> util::encoded_string(languages, version.codepage());
 	} else {
 		languages.clear();
 	}
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
-		is >> encoded_string(check, version.codepage());
-		level = load_number<boost::int32_t>(is);
-		used = load_bool(is);
+		is >> util::encoded_string(check, version.codepage());
+		level = util::load<boost::int32_t>(is);
+		used = util::load_bool(is);
 	} else {
 		check.clear(), level = 0, used = true;
 	}

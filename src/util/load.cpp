@@ -33,6 +33,8 @@
 
 #include "util/log.hpp"
 
+namespace util {
+
 namespace {
 
 static const boost::uint32_t cp_utf8  = 65001;
@@ -183,7 +185,7 @@ static void to_utf8_fallback(const std::string & from, std::string & to,
 
 void binary_string::load(std::istream & is, std::string & target) {
 	
-	boost::int32_t length = load_number<boost::int32_t>(is);
+	boost::uint32_t length = util::load<boost::uint32_t>(is);
 	if(is.fail()) {
 		return;
 	}
@@ -192,19 +194,25 @@ void binary_string::load(std::istream & is, std::string & target) {
 	
 	while(length) {
 		char buffer[10 * 1024];
-		boost::int32_t buf_size = std::min(length, boost::int32_t(sizeof(buffer)));
-		is.read(buffer, buf_size);
-		target.append(buffer, size_t(buf_size));
+		boost::uint32_t buf_size = std::min(length, boost::uint32_t(sizeof(buffer)));
+		is.read(buffer, std::streamsize(buf_size));
+		target.append(buffer, buf_size);
 		length -= buf_size;
 	}
 }
 
+void binary_string::skip(std::istream&  is) {
+	
+	boost::uint32_t length = util::load<boost::uint32_t>(is);
+	if(is.fail()) {
+		return;
+	}
+	
+	discard(is, length);
+}
+
 void encoded_string::load(std::istream & is, std::string & target, boost::uint32_t codepage) {
-	
-	std::string temp;
-	binary_string::load(is, temp);
-	
-	to_utf8(temp, target, codepage);
+	to_utf8(binary_string::load(is), target, codepage);
 }
 
 void to_utf8(const std::string & from, std::string & to, boost::uint32_t codepage) {
@@ -287,3 +295,5 @@ void to_utf8(const std::string & from, std::string & to, boost::uint32_t codepag
 	
 	to.resize(outbase);
 }
+
+} // namespace util

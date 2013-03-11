@@ -46,7 +46,7 @@ struct block_error : public std::ios_base::failure {
 /*!
  * Wrapper to read compressed and checksumed block of data used to store setup headers.
  *
- * The decompressed headers are parsed in \ref setup::info.
+ * The decompressed headers are parsed in \ref setup::info, which also uses this class.
  */
 class block_reader {
 	

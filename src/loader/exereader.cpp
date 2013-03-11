@@ -107,10 +107,10 @@ boost::uint32_t exe_reader_impl::find_resource_entry(std::istream & is, boost::u
 	}
 	
 	// Number of named resource entries.
-	boost::uint16_t nbnames = load_number<boost::uint16_t>(is);
+	boost::uint16_t nbnames = util::load<boost::uint16_t>(is);
 	
 	// Number of id resource entries.
-	boost::uint16_t nbids = load_number<boost::uint16_t>(is);
+	boost::uint16_t nbids = util::load<boost::uint16_t>(is);
 	
 	
 	// Ignore named resource entries.
@@ -121,8 +121,8 @@ boost::uint32_t exe_reader_impl::find_resource_entry(std::istream & is, boost::u
 	
 	for(size_t i = 0; i < nbids; i++) {
 		
-		boost::uint32_t id = load_number<boost::uint32_t>(is);
-		boost::uint32_t offset = load_number<boost::uint32_t>(is);
+		boost::uint32_t id = util::load<boost::uint32_t>(is);
+		boost::uint32_t offset = util::load<boost::uint32_t>(is);
 		if(is.fail()) {
 			return 0;
 		}
@@ -138,7 +138,7 @@ boost::uint32_t exe_reader_impl::find_resource_entry(std::istream & is, boost::u
 bool exe_reader_impl::load_header(std::istream & is, header & coff) {
 	
 	// Skip the DOS stub.
-	boost::uint16_t peOffset = load_number<boost::uint16_t>(is.seekg(0x3c));
+	boost::uint16_t peOffset = util::load<boost::uint16_t>(is.seekg(0x3c));
 	if(is.fail()) {
 		return false;
 	}
@@ -152,15 +152,15 @@ bool exe_reader_impl::load_header(std::istream & is, header & coff) {
 	}
 	
 	is.seekg(2, std::ios_base::cur); // machine
-	coff.nsections = load_number<boost::uint16_t>(is);
+	coff.nsections = util::load<boost::uint16_t>(is);
 	is.seekg(4 + 4 + 4, std::ios_base::cur); // creation time + symbol table offset + nbsymbols
-	boost::uint16_t optional_header_size = load_number<boost::uint16_t>(is);
+	boost::uint16_t optional_header_size = util::load<boost::uint16_t>(is);
 	is.seekg(2, std::ios_base::cur); // characteristics
 	
 	coff.section_table_offset = boost::uint32_t(is.tellg()) + optional_header_size;
 	
 	// Skip the optional header.
-	boost::uint16_t optionalHeaderMagic = load_number<boost::uint16_t>(is);
+	boost::uint16_t optionalHeaderMagic = util::load<boost::uint16_t>(is);
 	if(is.fail()) {
 		return false;
 	}
@@ -170,7 +170,7 @@ bool exe_reader_impl::load_header(std::istream & is, header & coff) {
 		is.seekg(90, std::ios_base::cur);
 	}
 	
-	boost::uint32_t ndirectories = load_number<boost::uint32_t>(is);
+	boost::uint32_t ndirectories = util::load<boost::uint32_t>(is);
 	if(is.fail() || ndirectories < 3) {
 		return false;
 	}
@@ -178,8 +178,8 @@ bool exe_reader_impl::load_header(std::istream & is, header & coff) {
 	is.seekg(2 * directory_header_size, std::ios_base::cur);
 	
 	// Virtual memory address and size of the start of resource directory.
-	coff.resource_table_address = load_number<boost::uint32_t>(is);
-	boost::uint32_t resource_size = load_number<boost::uint32_t>(is);
+	coff.resource_table_address = util::load<boost::uint32_t>(is);
+	boost::uint32_t resource_size = util::load<boost::uint32_t>(is);
 	if(is.fail() || !coff.resource_table_address || !resource_size) {
 		return false;
 	}
@@ -198,11 +198,11 @@ bool exe_reader_impl::load_section_list(std::istream & is, const header & coff,
 		
 		is.seekg(8, std::ios_base::cur); // name
 		
-		section.virtual_size = load_number<boost::uint32_t>(is);
-		section.virtual_address = load_number<boost::uint32_t>(is);
+		section.virtual_size = util::load<boost::uint32_t>(is);
+		section.virtual_address = util::load<boost::uint32_t>(is);
 		
 		is.seekg(4, std::ios_base::cur); // raw size
-		section.raw_address = load_number<boost::uint32_t>(is);
+		section.raw_address = util::load<boost::uint32_t>(is);
 		
 		// relocation addr + line number addr + relocation count
 		// + line number count + characteristics
@@ -271,8 +271,8 @@ exe_reader_impl::resource exe_reader_impl::find_resource(std::istream & is,
 	
 	// Virtual memory address and size of the resource data.
 	is.seekg(leaf_offset);
-	boost::uint32_t data_address = load_number<boost::uint32_t>(is);
-	boost::uint32_t data_size = load_number<boost::uint32_t>(is);
+	boost::uint32_t data_address = util::load<boost::uint32_t>(is);
+	boost::uint32_t data_size = util::load<boost::uint32_t>(is);
 	// ignore codepage and reserved word
 	if(is.fail()) {
 		return result;

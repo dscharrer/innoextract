@@ -57,7 +57,7 @@ struct checksum {
 };
 
 template <class Impl>
-class checksum_base : public static_polymorphic<Impl> {
+class checksum_base : public util::static_polymorphic<Impl> {
 	
 public:
 	
@@ -66,13 +66,11 @@ public:
 	 * Data is processed as-is and then converted according to Endianness.
 	 */
 	template <class T, class Endianness>
-	T load_number(std::istream & is) {
-		T result;
-		char buf[sizeof(result)];
-		is.read(buf, std::streamsize(sizeof(buf)));
-		this->impl().update(buf, sizeof(buf));
-		std::memcpy(&result, buf, sizeof(result));
-		return little_endian::byteswap_if_alien(result);
+	T load(std::istream & is) {
+		char buffer[sizeof(T)];
+		is.read(buffer, std::streamsize(sizeof(buffer)));
+		this->impl().update(buffer, sizeof(buffer));
+		return Endianness::template load<T>(buffer);
 	}
 	
 	/*!
@@ -80,8 +78,8 @@ public:
 	 * Data is processed as-is and then converted if the host endianness is not little_endian.
 	 */
 	template <class T>
-	T load_number(std::istream & is) {
-		return load_number<T, little_endian>(is);
+	T load(std::istream & is) {
+		return load<T, util::little_endian>(is);
 	}
 	
 };

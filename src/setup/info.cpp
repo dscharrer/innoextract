@@ -48,23 +48,46 @@ namespace setup {
 
 namespace {
 
+struct no_arg { };
+
+template <class Entry, class Arg>
+static void load_entry(std::istream & is, const setup::version & version,
+                       Entry & entity, Arg arg) {
+	entity.load(is, version, arg);
+}
 template <class Entry>
+static void load_entry(std::istream & is, const setup::version & version,
+                                    Entry & entity, no_arg arg) {
+	(void)arg;
+	entity.load(is, version);
+}
+
+template <class Entry, class Arg>
 static void load_entries(std::istream & is, const setup::version & version,
                   info::entry_types entry_types, size_t count,
-                  std::vector<Entry> & entries, info::entry_types::enum_type entry_type) {
+                  std::vector<Entry> & entries, info::entry_types::enum_type entry_type,
+                  Arg arg = Arg()) {
 	
+	entries.clear();
 	if(entry_types & entry_type) {
 		entries.resize(count);
 		for(size_t i = 0; i < count; i++) {
 			Entry & entry = entries[i];
-			entry.load(is, version);
+			load_entry(is, version, entry, arg);
 		}
 	} else {
 		for(size_t i = 0; i < count; i++) {
 			Entry entry;
-			entry.load(is, version);
+			load_entry(is, version, entry, arg);
 		}
 	}
+}
+
+template <class Entry>
+static void load_entries(std::istream & is, const setup::version & version,
+                  info::entry_types entry_types, size_t count,
+                  std::vector<Entry> & entries, info::entry_types::enum_type entry_type) {
+	load_entries<Entry, no_arg>(is, version, entry_types, count, entries, entry_type);
 }
 
 static void load_wizard_and_decompressor(std::istream & is, const setup::version & version,
@@ -73,27 +96,50 @@ static void load_wizard_and_decompressor(std::istream & is, const setup::version
 	
 	(void)entries;
 	
-	is >> binary_string(info.wizard_image);
-	
-	if(version >= INNO_VERSION(2, 0, 0)) {
-		is >> binary_string(info.wizard_image_small);
+	if(entries & (info::WizardImages | info::NoSkip)) {
+		is >> util::binary_string(info.wizard_image);
+		if(version >= INNO_VERSION(2, 0, 0)) {
+			is >> util::binary_string(info.wizard_image_small);
+		}
+	} else {
+		info.wizard_image.clear();
+		util::binary_string::skip(is);
+		info.wizard_image_small.clear();
+		if(version >= INNO_VERSION(2, 0, 0)) {
+			util::binary_string::skip(is);
+		}
 	}
 	
+	info.decompressor_dll.clear();
 	if(header.compression == stream::BZip2
 	   || (header.compression == stream::LZMA1 && version == INNO_VERSION(4, 1, 5))
 	   || (header.compression == stream::Zlib && version >= INNO_VERSION(4, 2, 6))) {
-		
-		is >> binary_string(info.decompressor_dll);
+		if(entries & (info::DecompressorDll | info::NoSkip)) {
+			is >> util::binary_string(info.decompressor_dll);
+		} else {
+			// decompressor dll - we don't need this
+			util::binary_string::skip(is);
+		}
 	}
 }
 
 } // anonymous namespace
 
+static void check_is_end(stream::block_reader::pointer & is) {
+	is->exceptions(std::ios_base::goodbit);
+	char dummy;
+	if(!is->get(dummy).eof()) {
+		throw std::ios_base::failure("expected end of stream");
+	}
+}
+
 void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
 	
+	if(e & (Messages|NoSkip)) {
+		e |= Languages;
+	}
+	
 	stream::block_reader::pointer is = stream::block_reader::get(ifs, v);
-	assert(is.get() != NULL);
-	is->exceptions(std::ios_base::badbit | std::ios_base::failbit);
 	
 	header.load(*is, v);
 	
@@ -103,7 +149,7 @@ void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
 		load_wizard_and_decompressor(*is, v, header, *this, e);
 	}
 	
-	load_entries(*is, v, e, header.message_count, messages, Messages);
+	load_entries(*is, v, e, header.message_count, messages, Messages, languages);
 	load_entries(*is, v, e, header.permission_count, permissions, Permissions);
 	load_entries(*is, v, e, header.type_count, types, Types);
 	load_entries(*is, v, e, header.component_count, components, Components);
@@ -124,42 +170,14 @@ void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
 		load_wizard_and_decompressor(*is, v, header, *this, e);
 	}
 	
-	is->exceptions(std::ios_base::goodbit);
-	char dummy;
-	if(!is->get(dummy).eof()) {
-		throw std::ios_base::failure("expected end of stream");
-	}
-	
+	// restart the compression stream
+	check_is_end(is);
 	is = stream::block_reader::get(ifs, v);
-	assert(is.get() != NULL);
-	is->exceptions(std::ios_base::badbit | std::ios_base::failbit);
 	
 	load_entries(*is, v, e, header.data_entry_count, data_entries, DataEntries);
 	
 	is->exceptions(std::ios_base::goodbit);
-	if(!is->get(dummy).eof()) {
-		throw std::ios_base::failure("expected end of stream");
-	}
-	
-	BOOST_FOREACH(setup::message_entry & entry, messages) {
-		
-		if(entry.language >= 0 ? size_t(entry.language) >= languages.size()
-		                       : entry.language != -1) {
-			log_warning << "unexpected language index: " << entry.language;
-			continue;
-		}
-		
-		boost::uint32_t codepage;
-		if(entry.language < 0) {
-			codepage = v.codepage();
-		} else {
-			codepage = languages[size_t(entry.language)].codepage;
-		}
-		
-		std::string decoded;
-		to_utf8(entry.value, decoded, codepage);
-		entry.value = decoded;
-	}
+	check_is_end(is);
 }
 
 void info::load(std::istream & is, entry_types entries) {
@@ -171,11 +189,13 @@ void info::load(std::istream & is, entry_types entries) {
 		            << color::white << version << color::reset;
 	}
 	
+	// Some setup versions didn't increment the data version number when they should have.
+	// To work around this, we try to parse the headers for both data versions.
 	bool ambiguous = version.is_ambiguous();
 	if(ambiguous) {
+		// Force parsing all headers so that we don't miss any errors.
 		entries |= NoSkip;
 	}
-	
 	if(!version.known || ambiguous) {
 		std::ios_base::streampos start = is.tellg();
 		try {
@@ -186,6 +206,7 @@ void info::load(std::istream & is, entry_types entries) {
 			if(!version) {
 				throw;
 			}
+			is.clear();
 			is.seekg(start);
 		}
 	}

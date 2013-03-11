@@ -61,21 +61,21 @@ STORED_ENUM_MAP(stored_registry_entry_type_2, registry_entry::None,
 void registry_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<boost::uint32_t>(is); // uncompressed size of the directory entry structure
+		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> encoded_string(key, version.codepage());
+	is >> util::encoded_string(key, version.codepage());
 	if(version.bits != 16) {
-		is >> encoded_string(name, version.codepage());
+		is >> util::encoded_string(name, version.codepage());
 	} else {
 		name.clear();
 	}
-	is >> encoded_string(value, version.codepage());
+	is >> util::encoded_string(value, version.codepage());
 	
 	load_condition_data(is, version);
 	
 	if(version >= INNO_VERSION(4, 0, 11) && version < INNO_VERSION(4, 1, 0)) {
-		is >> encoded_string(permissions, version.codepage());
+		is >> util::encoded_string(permissions, version.codepage());
 	} else {
 		permissions.clear();
 	}
@@ -83,13 +83,13 @@ void registry_entry::load(std::istream & is, const version & version) {
 	load_version_data(is, version);
 	
 	if(version.bits != 16) {
-		hive = hive_name(load_number<boost::uint32_t>(is) & ~0x80000000);
+		hive = hive_name(util::load<boost::uint32_t>(is) & ~0x80000000);
 	} else {
 		hive = Unset;
 	}
 	
 	if(version >= INNO_VERSION(4, 1, 0)) {
-		permission = load_number<boost::int16_t>(is);
+		permission = util::load<boost::int16_t>(is);
 	} else {
 		permission = -1;
 	}

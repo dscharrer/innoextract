@@ -18,6 +18,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Central point to load all the different headers in the correct order.
+ */
 #ifndef INNOEXTRACT_SETUP_INFO_HPP
 #define INNOEXTRACT_SETUP_INFO_HPP
 
@@ -45,6 +48,9 @@ struct run_entry;
 struct task_entry;
 struct type_entry;
 
+/*!
+ * Class used to hold and load the various \ref setup headers.
+ */
 struct info {
 	
 	info();
@@ -76,30 +82,56 @@ struct info {
 	
 	setup::header header;
 	
-	std::vector<component_entry> components;
-	std::vector<data_entry> data_entries;
-	std::vector<delete_entry> delete_entries;
-	std::vector<delete_entry> uninstall_delete_entries;
-	std::vector<directory_entry> directories;
-	std::vector<file_entry> files;
-	std::vector<icon_entry> icons;
-	std::vector<ini_entry> ini_entries;
-	std::vector<language_entry> languages;
-	std::vector<message_entry> messages;
-	std::vector<permission_entry> permissions;
-	std::vector<registry_entry> registry_entries;
-	std::vector<run_entry> run_entries;
-	std::vector<run_entry> uninstall_run_entries;
-	std::vector<task_entry> tasks;
-	std::vector<type_entry> types;
+	std::vector<component_entry>  components;               //! \ref Components
+	std::vector<data_entry>       data_entries;             //! \ref DataEntries
+	std::vector<delete_entry>     delete_entries;           //! \ref DeleteEntries
+	std::vector<delete_entry>     uninstall_delete_entries; //! \ref UninstallDeleteEntries
+	std::vector<directory_entry>  directories;              //! \ref Directories
+	std::vector<file_entry>       files;                    //! \ref Files
+	std::vector<icon_entry>       icons;                    //! \ref Icons
+	std::vector<ini_entry>        ini_entries;              //! \ref IniEntries
+	std::vector<language_entry>   languages;                //! \ref Languages
+	std::vector<message_entry>    messages;                 //! \ref Messages
+	std::vector<permission_entry> permissions;              //! \ref Permissions
+	std::vector<registry_entry>   registry_entries;         //! \ref RegistryEntries
+	std::vector<run_entry>        run_entries;              //! \ref RunEntries
+	std::vector<run_entry>        uninstall_run_entries;    //! \ref UninstallRunEntries
+	std::vector<task_entry>       tasks;                    //! \ref Tasks
+	std::vector<type_entry>       types;                    //! \ref Types
 	
+	//! Images displayed in the installer UI.
+	//! Loading enabled by \ref WizardImages
 	std::string wizard_image;
 	std::string wizard_image_small;
 	
+	//! Contents of the helper DLL used to decompress setup data in some versions.
+	//! Loading enabled by \ref DecompressorDll
 	std::string decompressor_dll;
 	
-	void load(std::istream & is, entry_types entries = setup::info::entry_types::all());
+	/*!
+	 * Load setup headers.
+	 *
+	 * \param is      The input stream to load the setup headers from.
+	 *                It must already be positioned at start of \ref setup::version
+	 *                identifier whose position is given by
+	 *                \ref loader::offsets::header_offset.
+	 * \param entries What kinds of entries to load.
+	 */
+	void load(std::istream & is, entry_types entries);
 	
+	/*!
+	 * Load setup headers for a specific version.
+	 *
+	 * \param is      The input stream to load the setup headers from.
+	 *                It must already be positioned at start of the compressed headers.
+	 *                The compressed headers start directly after the \ref setup::version
+	 *                identifier whose position is given by
+	 *                \ref loader::offsets::header_offset.
+	 * \param entries What kinds of entries to load.
+	 * \param version The setup data version of the headers.
+	 *
+	 * This function does not set the \ref version member.
+	 */
 	void load(std::istream & is, entry_types entries, const setup::version & version);
 	
 };

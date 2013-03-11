@@ -18,6 +18,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Time parsing, formatting, onversion and filetime manipulation functions.
+ */
 #ifndef INNOEXTRACT_UTIL_TIME_HPP
 #define INNOEXTRACT_UTIL_TIME_HPP
 

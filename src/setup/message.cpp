@@ -22,18 +22,31 @@
 
 #include <boost/cstdint.hpp>
 
+#include "setup/language.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 
 namespace setup {
 
-void message_entry::load(std::istream & is, const version & version) {
+void message_entry::load(std::istream & is, const version & version,
+                         const std::vector<language_entry> & languages) {
 	
-	is >> encoded_string(name, version.codepage());
-	is >> binary_string(value); // encoding depends on the codepage in the LanguageEntry
+	is >> util::encoded_string(name, version.codepage());
+	std::string raw_value = util::binary_string::load(is);
 	
-	language = load_number<boost::int32_t>(is);
+	language = util::load<boost::int32_t>(is);
 	
+	boost::uint32_t codepage;
+	if(language < 0) {
+		codepage = version.codepage();
+	} else if(language < 0 || size_t(language) >= languages.size()) {
+		value.clear();
+		return;
+	} else {
+		codepage = languages[size_t(language)].codepage;
+	}
+	
+	util::to_utf8(raw_value, value, codepage);
 }
 
 } // namespace setup

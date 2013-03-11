@@ -29,7 +29,7 @@ void permission_entry::load(std::istream & is, const version & v) {
 	
 	(void)v;
 	
-	is >> binary_string(permissions); // an array of TGrantPermissionEntry's
+	is >> util::binary_string(permissions); // an array of TGrantPermissionEntry's
 	
 }
 

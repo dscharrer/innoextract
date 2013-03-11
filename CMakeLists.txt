@@ -44,7 +44,6 @@ endif()
 # Helper scrips
 
 include(CheckSymbolExists)
-include(TestBigEndian)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake") # For custom cmake modules
 include(BuildType)
@@ -215,8 +214,6 @@ endif()
 check_symbol_exists(bswap_16 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_16)
 check_symbol_exists(bswap_32 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_32)
 check_symbol_exists(bswap_64 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_64)
-
-test_big_endian(INNOEXTRACT_IS_BIG_ENDIAN)
 
 
 # All sources:

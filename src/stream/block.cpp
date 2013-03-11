@@ -81,8 +81,7 @@ public:
 	template<typename Source>
 	bool read_chunk(Source & src) {
 		
-		boost::uint32_t block_crc32;
-		char temp[sizeof(block_crc32)];
+		char temp[sizeof(boost::uint32_t)];
 		std::streamsize temp_size = std::streamsize(sizeof(temp));
 		std::streamsize nread = boost::iostreams::read(src, temp, temp_size);
 		if(nread == EOF) {
@@ -90,8 +89,7 @@ public:
 		} else if(nread != sizeof(temp)) {
 			throw block_error("unexpected block end");
 		}
-		std::memcpy(&block_crc32, temp, sizeof(block_crc32));
-		block_crc32 = little_endian::byteswap_if_alien(block_crc32);
+		boost::uint32_t block_crc32 = util::little_endian::load<boost::uint32_t>(temp);
 		
 		length = size_t(boost::iostreams::read(src, buffer, std::streamsize(sizeof(buffer))));
 		if(length == size_t(EOF)) {
@@ -156,7 +154,7 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 	
 	USE_ENUM_NAMES(block_compression)
 	
-	boost::uint32_t expected_checksum = load_number<boost::uint32_t>(base);
+	boost::uint32_t expected_checksum = util::load<boost::uint32_t>(base);
 	crypto::crc32 actual_checksum;
 	actual_checksum.init();
 	
@@ -165,15 +163,15 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 	
 	if(version >= INNO_VERSION(4, 0, 9)) {
 		
-		stored_size = actual_checksum.load_number<boost::uint32_t>(base);
-		boost::uint8_t compressed = actual_checksum.load_number<boost::uint8_t>(base);
+		stored_size = actual_checksum.load<boost::uint32_t>(base);
+		boost::uint8_t compressed = actual_checksum.load<boost::uint8_t>(base);
 		
 		compression = compressed ? (version >= INNO_VERSION(4, 1, 6) ? LZMA1 : Zlib) : Stored;
 		
 	} else {
 		
-		boost::uint32_t compressed_size = actual_checksum.load_number<boost::uint32_t>(base);
-		boost::uint32_t uncompressed_size = actual_checksum.load_number<boost::uint32_t>(base);
+		boost::uint32_t compressed_size = actual_checksum.load<boost::uint32_t>(base);
+		boost::uint32_t uncompressed_size = actual_checksum.load<boost::uint32_t>(base);
 		
 		if(compressed_size == boost::uint32_t(-1)) {
 			stored_size = uncompressed_size, compression = Stored;
@@ -182,7 +180,7 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 		}
 		
 		// Add the size of a CRC32 checksum for each 4KiB subblock.
-		stored_size += boost::uint32_t(ceildiv<boost::uint64_t>(stored_size, 4096) * 4);
+		stored_size += boost::uint32_t(util::ceildiv<boost::uint64_t>(stored_size, 4096) * 4);
 	}
 	
 	if(actual_checksum.finalize() != expected_checksum) {
@@ -207,6 +205,8 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 	fis->push(inno_block_filter(), 4096);
 	
 	fis->push(io::restrict(base, 0, stored_size));
+	
+	fis->exceptions(std::ios_base::badbit | std::ios_base::failbit);
 	
 	return pointer(fis.release());
 }

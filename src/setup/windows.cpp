@@ -35,13 +35,13 @@ const windows_version windows_version::none = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0
 void windows_version::data::load(std::istream & is, const version & version) {
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		build = load_number<boost::uint16_t>(is);
+		build = util::load<boost::uint16_t>(is);
 	} else {
 		build = 0;
 	}
 	
-	minor = load_number<boost::uint8_t>(is);
-	major = load_number<boost::uint8_t>(is);
+	minor = util::load<boost::uint8_t>(is);
+	major = util::load<boost::uint8_t>(is);
 	
 }
 
@@ -51,8 +51,8 @@ void windows_version::load(std::istream & is, const version & version) {
 	nt_version.load(is, version);
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		nt_service_pack.minor = load_number<boost::uint8_t>(is);
-		nt_service_pack.major = load_number<boost::uint8_t>(is);
+		nt_service_pack.minor = util::load<boost::uint8_t>(is);
+		nt_service_pack.major = util::load<boost::uint8_t>(is);
 	} else {
 		nt_service_pack.major = 0, nt_service_pack.minor = 0;
 	}

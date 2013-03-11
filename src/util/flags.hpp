@@ -18,6 +18,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * Typesafe flags.
+ */
 #ifndef INNOEXTRACT_UTIL_FLAGS_HPP
 #define INNOEXTRACT_UTIL_FLAGS_HPP
 
@@ -66,10 +69,12 @@ public:
 		return flags(_flags, true);
 	}
 	
+	//! Test if a specific flag is set.
 	bool has(enum_type flag) const {
 		return _flags.test(size_t(flag));
 	}
 	
+	//! Test if a collection of flags are all set.
 	bool hasAll(flags o) const {
 		return (_flags & o._flags) == o._flags;
 	}
@@ -142,6 +147,7 @@ public:
 		return *this;
 	}
 	
+	//! Get a set of flags with all possible values set.
 	static flags all() {
 		return flags(Type().flip());
 	}

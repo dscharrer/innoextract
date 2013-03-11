@@ -40,7 +40,6 @@ private:
 	
 	static const boost::uint32_t CRC32_NEGL = 0xffffffffl;
 	
-	static const boost::uint32_t table[256];
 	boost::uint32_t crc;
 };
 

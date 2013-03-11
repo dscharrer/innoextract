@@ -39,37 +39,37 @@ STORED_ENUM_MAP(stored_close_setting, icon_entry::NoSetting,
 void icon_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<boost::uint32_t>(is); // uncompressed size of the icon entry structure
+		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> encoded_string(name, version.codepage());
-	is >> encoded_string(filename, version.codepage());
-	is >> encoded_string(parameters, version.codepage());
-	is >> encoded_string(working_dir, version.codepage());
-	is >> encoded_string(icon_file, version.codepage());
-	is >> encoded_string(comment, version.codepage());
+	is >> util::encoded_string(name, version.codepage());
+	is >> util::encoded_string(filename, version.codepage());
+	is >> util::encoded_string(parameters, version.codepage());
+	is >> util::encoded_string(working_dir, version.codepage());
+	is >> util::encoded_string(icon_file, version.codepage());
+	is >> util::encoded_string(comment, version.codepage());
 	
 	load_condition_data(is, version);
 	
 	if(version >= INNO_VERSION(5, 3, 5)) {
-		is >> encoded_string(app_user_model_id, version.codepage());
+		is >> util::encoded_string(app_user_model_id, version.codepage());
 	} else {
 		app_user_model_id.clear();
 	}
 	
 	load_version_data(is, version);
 	
-	icon_index = load_number<boost::int32_t>(is, version.bits);
+	icon_index = util::load<boost::int32_t>(is, version.bits);
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		show_command = load_number<boost::int32_t>(is);
+		show_command = util::load<boost::int32_t>(is);
 		close_on_exit = stored_enum<stored_close_setting>(is).get();
 	} else {
 		show_command = 1, close_on_exit = NoSetting;
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 7)) {
-		hotkey = load_number<boost::uint16_t>(is);
+		hotkey = util::load<boost::uint16_t>(is);
 	} else {
 		hotkey = 0;
 	}

@@ -41,29 +41,29 @@ STORED_ENUM_MAP(stored_run_wait_condition, run_entry::WaitUntilTerminated,
 void run_entry::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 21)) {
-		::load<boost::uint32_t>(is); // uncompressed size of the directory entry structure
+		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> encoded_string(name, version.codepage());
-	is >> encoded_string(parameters, version.codepage());
-	is >> encoded_string(working_dir, version.codepage());
+	is >> util::encoded_string(name, version.codepage());
+	is >> util::encoded_string(parameters, version.codepage());
+	is >> util::encoded_string(working_dir, version.codepage());
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		is >> encoded_string(run_once_id, version.codepage());
+		is >> util::encoded_string(run_once_id, version.codepage());
 	} else {
 		run_once_id.clear();
 	}
 	if(version >= INNO_VERSION(2, 0, 2)) {
-		is >> encoded_string(status_message, version.codepage());
+		is >> util::encoded_string(status_message, version.codepage());
 	} else {
 		status_message.clear();
 	}
 	if(version >= INNO_VERSION(5, 1, 13)) {
-		is >> encoded_string(verb, version.codepage());
+		is >> util::encoded_string(verb, version.codepage());
 	} else {
 		verb.clear();
 	}
 	if(version >= INNO_VERSION(2, 0, 0)) {
-		is >> encoded_string(description, version.codepage());
+		is >> util::encoded_string(description, version.codepage());
 	}
 	
 	load_condition_data(is, version);
@@ -71,7 +71,7 @@ void run_entry::load(std::istream & is, const version & version) {
 	load_version_data(is, version);
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
-		show_command = load_number<boost::int32_t>(is);
+		show_command = util::load<boost::int32_t>(is);
 	} else {
 		show_command = 0;
 	}

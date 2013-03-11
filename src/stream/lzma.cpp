@@ -26,6 +26,9 @@
 
 #include <lzma.h>
 
+#include "util/endian.hpp"
+#include "util/load.hpp"
+
 namespace stream {
 
 static lzma_stream * init_raw_lzma_stream(lzma_vli filter, lzma_options_lzma & options) {
@@ -108,10 +111,7 @@ bool inno_lzma1_decompressor_impl::filter(const char * & begin_in, const char * 
 		options.lp = (properties % (9 * 5)) / 9;
 		options.lc = properties % 9;
 		
-		options.dict_size = 0;
-		for(size_t i = 0; i < 4; i++) {
-			options.dict_size += boost::uint32_t(boost::uint8_t(header[i + 1])) << (i * 8);
-		}
+		options.dict_size = util::little_endian::load<boost::uint32_t>(header + 1);
 		
 		stream = init_raw_lzma_stream(LZMA_FILTER_LZMA1, options);
 	}

@@ -55,15 +55,15 @@ void type_entry::load(std::istream & is, const version & version) {
 	
 	USE_FLAG_NAMES(setup::type_flags)
 	
-	is >> encoded_string(name, version.codepage());
-	is >> encoded_string(description, version.codepage());
+	is >> util::encoded_string(name, version.codepage());
+	is >> util::encoded_string(description, version.codepage());
 	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> encoded_string(languages, version.codepage());
+		is >> util::encoded_string(languages, version.codepage());
 	} else {
 		languages.clear();
 	}
 	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
-		is >> encoded_string(check, version.codepage());
+		is >> util::encoded_string(check, version.codepage());
 	} else {
 		check.clear();
 	}
@@ -80,9 +80,9 @@ void type_entry::load(std::istream & is, const version & version) {
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
-		size = load_number<boost::uint64_t>(is);
+		size = util::load<boost::uint64_t>(is);
 	} else {
-		size = load_number<boost::uint32_t>(is);
+		size = util::load<boost::uint32_t>(is);
 	}
 }
 
