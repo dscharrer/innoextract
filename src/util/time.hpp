@@ -36,27 +36,49 @@ typedef boost::int64_t time;
 
 /*!
  * Convert UTC clock time to a timestamp
- * Note: may not be threadsafe on all systems!
+ *
+ * \note This function may not be thread-safe on all operating systems.
  */
 time parse_time(std::tm tm);
 
 /*!
  * Convert a timestamp to UTC clock time
- * Note: may not be threadsafe on all systems!
+ *
+ * \note This function may not be thread-safe on all operating systems.
  */
 std::tm format_time(time t);
 
 /*!
  * Convert a timestamp to local time
- * Note: may not be threadsafe on all systems!
+ *
+ * \note This function may not be thread-safe on all operating systems.
  */
 time to_local_time(time t);
 
-//! Set the local timezone used by to_local_time
+/*!
+ * Set the local timezone used by to_local_time
+ *
+ * \note This function is not thread-safe.
+ */
 void set_local_timezone(std::string timezone);
 
-//! Set a file's creation/modification time
-bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t nsec);
+/*!
+ * Set a file's access, creation and modification times.
+ *
+ * \note Not all operating systems support file creation times.
+ *
+ * \param path The file to the file to set the times for.
+ *             This file will <b>not</b> be created if it doesn't exist already.
+ * \param sec  File time to set (in seconds).
+ * \param nsec Sub-second component of the file time to set (in nanoseconds).
+ *
+ * \note The actual file time precision depends on the operating system and filesystem.
+ *       If the available file time precision is too low to represent the given timestamp,
+ *       it will be silently truncated to the available precision.
+ *
+ * \return \c true if the file time was changed, \c false otherwise.
+ */
+bool set_file_time(const boost::filesystem::path & path, time sec, boost::uint32_t nsec);
 
 } // namespace util
 

@@ -44,7 +44,7 @@ typedef boost::uint32_t codepage_id;
  * \param to       The output for the converted string.
  * \param codepage The Windows codepage number for the input string encoding.
  *
- * \note this function is not thread-safe.
+ * \note This function is not thread-safe.
  */
 void to_utf8(const std::string & from, std::string & to, codepage_id codepage = 1252);
 
@@ -92,7 +92,7 @@ inline std::istream & operator>>(std::istream & is, const binary_string & str) {
  *
  * You can also use the \ref ansi_string convenience wrapper for Windows-1252 strings.
  *
- * \note this wrapper is not thread-safe.
+ * \note This wrapper is not thread-safe.
  */
 struct encoded_string {
 	
@@ -109,14 +109,14 @@ struct encoded_string {
 	/*!
 	 * Load and convert a length-prefixed string
 	 *
-	 * \note this function is not thread-safe.
+	 * \note This function is not thread-safe.
 	 */
 	static void load(std::istream & is, std::string & target, codepage_id codepage);
 	
 	/*!
 	 * Load and convert a length-prefixed string
 	 *
-	 * \note this function is not thread-safe.
+	 * \note This function is not thread-safe.
 	 */
 	static std::string load(std::istream & is, codepage_id codepage) {
 		std::string target;
@@ -133,7 +133,7 @@ inline std::istream & operator>>(std::istream & is, const encoded_string & str) 
 /*!
  * Convenience specialization of \ref encoded_string for loading Windows-1252 strings
  *
- * \note this function is not thread-safe.
+ * \note This function is not thread-safe.
  */
 struct ansi_string : encoded_string {
 	

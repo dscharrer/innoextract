@@ -66,6 +66,11 @@ struct data_entry {
 	
 	flags options;
 	
+	/*!
+	 * Load one data entry.
+	 *
+	 * \note This function may not be thread-safe on all operating systems.
+	 */
 	void load(std::istream & is, const version & version);
 	
 };
