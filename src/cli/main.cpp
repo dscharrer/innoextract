@@ -645,24 +645,25 @@ int main(int argc, char * argv[]) {
 	
 	if(!logger::quiet || logger::total_errors || logger::total_warnings) {
 		progress::clear();
-		std::cout << color::green << "Done" << color::reset << std::dec;
+		std::ostream & os = logger::quiet ? std::cerr : std::cout;
+		os << color::green << "Done" << color::reset << std::dec;
 		if(logger::total_errors || logger::total_warnings) {
-			std::cout << " with ";
+			os << " with ";
 			if(logger::total_errors) {
-				std::cout << color::red << logger::total_errors
-				          << ((logger::total_errors == 1) ? " error" : " errors")
-				          << color::reset;
+				os << color::red << logger::total_errors
+				   << ((logger::total_errors == 1) ? " error" : " errors")
+				   << color::reset;
 			}
 			if(logger::total_errors && logger::total_warnings) {
-				std::cout << " and ";
+				os << " and ";
 			}
 			if(logger::total_warnings) {
-				std::cout << color::yellow << logger::total_warnings
-				          << ((logger::total_warnings == 1) ? " warning" : " warnings")
-				          << color::reset;
+				os << color::yellow << logger::total_warnings
+				   << ((logger::total_warnings == 1) ? " warning" : " warnings")
+				   << color::reset;
 			}
 		}
-		std::cout << '.' << std::endl;
+		os << '.' << std::endl;
 	}
 	
 	return logger::total_errors == 0 ? ExitSuccess : ExitDataError;
