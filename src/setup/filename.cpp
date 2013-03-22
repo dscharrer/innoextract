@@ -26,11 +26,23 @@
 
 namespace setup {
 
+namespace {
+
+//! Separator to use for output paths.
 #if defined(_WIN32)
 static const char path_sep = '\\';
 #else
 static const char path_sep = '/';
 #endif
+
+//! Check for separators in input paths.
+struct is_path_separator {
+	bool operator()(char c) {
+		return (c == '\\' || c == '/');
+	}
+};
+
+} // anonymous namespace
 
 const std::string & filename_map::lookup(const std::string & key) const {
 	std::map<std::string, std::string>::const_iterator i = find(key);
@@ -94,7 +106,7 @@ std::string filename_map::shorten_path(const std::string & path) const {
 	while(begin != end) {
 		
 		it s_begin = begin;
-		it s_end = std::find(begin, end, '\\');
+		it s_end = std::find_if(begin, end, is_path_separator());
 		begin = (s_end == end) ? end : (s_end + 1);
 		
 		size_t segment_length = size_t(s_end - s_begin);
