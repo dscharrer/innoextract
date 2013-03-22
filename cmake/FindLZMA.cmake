@@ -41,7 +41,7 @@ if(UNIX)
 endif()
 
 include(UseStaticLibs)
-use_static_libs(LZMA)
+use_static_libs(LZMA _PC_LZMA)
 
 find_path(LZMA_INCLUDE_DIR lzma.h
 	HINTS
@@ -55,8 +55,8 @@ string(REGEX REPLACE "(.*)/include/?" "\\1" LZMA_BASE_DIR ${LZMA_INCLUDE_DIR})
 
 find_library(LZMA_LIBRARY lzma liblzma
 	HINTS
-		"${LZMA_BASE_DIR}/lib"
 		${_PC_LZMA_LIBRARY_DIRS}
+		"${LZMA_BASE_DIR}/lib"
 	DOC "The LZMA library"
 )
 mark_as_advanced(LZMA_LIBRARY)
