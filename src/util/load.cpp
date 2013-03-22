@@ -21,7 +21,6 @@
 #include "util/load.hpp"
 
 #include <iterator>
-#include <map>
 #include <sstream>
 #include <algorithm>
 #include <iomanip>
@@ -30,6 +29,7 @@
 #include <errno.h>
 
 #include <boost/foreach.hpp>
+#include <boost/unordered_map.hpp>
 
 #include "util/log.hpp"
 
@@ -37,13 +37,14 @@ namespace util {
 
 namespace {
 
-static const boost::uint32_t cp_utf8  = 65001;
-static const boost::uint32_t cp_ascii = 20127;
+static const codepage_id cp_utf8  = 65001;
+static const codepage_id cp_ascii = 20127;
 static const char replacement_char = '_';
 
-std::map<boost::uint32_t, iconv_t> converters;
+typedef boost::unordered_map<codepage_id, iconv_t> converter_map;
+converter_map converters;
 
-static size_t get_encoding_size(boost::uint32_t codepage) {
+static size_t get_encoding_size(codepage_id codepage) {
 	switch(codepage) {
 		case  1200: return 2u; // UTF-16LE
 		case  1201: return 2u; // UTF-16BE
@@ -54,7 +55,7 @@ static size_t get_encoding_size(boost::uint32_t codepage) {
 }
 
 //! Get names for encodings where iconv doesn't have the codepage alias
-static const char * get_encoding_name(boost::uint32_t codepage) {
+static const char * get_encoding_name(codepage_id codepage) {
 	switch(codepage) {
 		case   708: return "ISO-8859-6";
 		case   936: return "GBK";
@@ -126,10 +127,10 @@ static const char * get_encoding_name(boost::uint32_t codepage) {
 	}
 }
 
-static iconv_t get_converter(boost::uint32_t codepage) {
+static iconv_t get_converter(codepage_id codepage) {
 	
 	// Try to reuse an existing converter if possible
-	std::map<boost::uint32_t, iconv_t>::iterator i = converters.find(codepage);
+	converter_map::const_iterator i = converters.find(codepage);
 	if(i != converters.end()) {
 		return i->second;
 	}
@@ -163,7 +164,7 @@ static iconv_t get_converter(boost::uint32_t codepage) {
 
 //! Fallback conversion that will at least work for ASCII characters
 static void to_utf8_fallback(const std::string & from, std::string & to,
-                             boost::uint32_t codepage) {
+                             codepage_id codepage) {
 	
 	size_t skip = get_encoding_size(codepage);
 	
@@ -211,11 +212,11 @@ void binary_string::skip(std::istream&  is) {
 	discard(is, length);
 }
 
-void encoded_string::load(std::istream & is, std::string & target, boost::uint32_t codepage) {
+void encoded_string::load(std::istream & is, std::string & target, codepage_id codepage) {
 	to_utf8(binary_string::load(is), target, codepage);
 }
 
-void to_utf8(const std::string & from, std::string & to, boost::uint32_t codepage) {
+void to_utf8(const std::string & from, std::string & to, codepage_id codepage) {
 	
 	if(codepage == cp_utf8 || codepage == cp_ascii) {
 		// copy UTF-8 directly

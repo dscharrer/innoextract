@@ -36,13 +36,17 @@
 
 namespace util {
 
+typedef boost::uint32_t codepage_id;
+
 /*!
  * Convert a string to UTF-8 from a specified encoding.
  * \param from     The input string to convert.
  * \param to       The output for the converted string.
  * \param codepage The Windows codepage number for the input string encoding.
+ *
+ * \note this function is not thread-safe.
  */
-void to_utf8(const std::string & from, std::string & to, boost::uint32_t codepage = 1252);
+void to_utf8(const std::string & from, std::string & to, codepage_id codepage = 1252);
 
 /*!
  * Wrapper to load a length-prefixed string from an input stream into a std::string.
@@ -87,24 +91,34 @@ inline std::istream & operator>>(std::istream & is, const binary_string & str) {
  * Usage: <code>is >> encoded_string(str, codepage)</code>
  *
  * You can also use the \ref ansi_string convenience wrapper for Windows-1252 strings.
+ *
+ * \note this wrapper is not thread-safe.
  */
 struct encoded_string {
 	
 	std::string & data;
-	boost::uint32_t codepage;
+	codepage_id codepage;
 	
 	/*!
 	 * \param target   The std::string object to receive the loaded UTF-8 string.
 	 * \param codepage The Windows codepage for the encoding of the stored string.
 	 */
-	encoded_string(std::string & target, boost::uint32_t codepage)
+	encoded_string(std::string & target, codepage_id codepage)
 		: data(target), codepage(codepage) { }
 	
-	//! Load and convert a length-prefixed string
-	static void load(std::istream & is, std::string & target, boost::uint32_t codepage);
+	/*!
+	 * Load and convert a length-prefixed string
+	 *
+	 * \note this function is not thread-safe.
+	 */
+	static void load(std::istream & is, std::string & target, codepage_id codepage);
 	
-	//! Load and convert a length-prefixed string
-	static std::string load(std::istream & is, boost::uint32_t codepage) {
+	/*!
+	 * Load and convert a length-prefixed string
+	 *
+	 * \note this function is not thread-safe.
+	 */
+	static std::string load(std::istream & is, codepage_id codepage) {
 		std::string target;
 		load(is, target, codepage);
 		return target;
@@ -116,7 +130,11 @@ inline std::istream & operator>>(std::istream & is, const encoded_string & str) 
 	return is;
 }
 
-//! Convenience specialization of \ref encoded_string for loading Windows-1252 strings
+/*!
+ * Convenience specialization of \ref encoded_string for loading Windows-1252 strings
+ *
+ * \note this function is not thread-safe.
+ */
 struct ansi_string : encoded_string {
 	
 	explicit ansi_string(std::string & target) : encoded_string(target, 1252) { }
