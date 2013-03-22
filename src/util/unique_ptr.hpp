@@ -30,7 +30,7 @@
 
 namespace util {
 
-//! Get a unique_ptr or auto_ptr for the given type.
+//! Get a std::unique_ptr or std::auto_ptr for the given type.
 template <typename T>
 struct unique_ptr {
 #if INNOEXTRACT_HAVE_STD_UNIQUE_PTR
