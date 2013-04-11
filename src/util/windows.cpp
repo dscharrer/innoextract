@@ -52,7 +52,7 @@ int main() {
 	
 	std::setlocale(LC_ALL, "");
 	
-	// Get the UTF-16 command-line parameters and convert it them to UTF-8 ourself.
+	// Get the UTF-16 command-line parameters and convert them to UTF-8 ourself.
 	int argc = __argc;
 	wchar_t ** wargv = __wargv;
 	char ** argv = new char *[argc + 1];
