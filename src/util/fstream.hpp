@@ -19,7 +19,7 @@
  */
 
 /*!
- * boost::filesystems::{i,o,}fstream doesn't support unicode names on windows
+ * boost::filesystem::{i,o,}fstream doesn't support unicode names on windows
  * Implement our own wrapper using boost::iostreams.
  */
 #ifndef INNOEXTRACT_UTIL_FSTREAM_HPP
