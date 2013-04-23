@@ -68,6 +68,26 @@ Install options:
 
 Set options by passing `-D<option>=<value>` to cmake.
 
+### Mac OS X
+
+1. Install XCode and commandline tools from <http://developer.apple.com>
+
+2. Install homebrew
+
+        ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
+
+3. Install boost and xz
+
+        brew update
+        brew install boost
+        brew install xz
+
+4. Install innoextract
+
+        mkdir -p build && cd build && cmake ..
+        make
+        sudo make install
+
 ## Run
 
 To extract a setup file to the current directory run:
