@@ -27,6 +27,7 @@
 #include <clocale>
 
 #include <windows.h>
+#include <shellapi.h>
 
 #include <boost/filesystem/path.hpp>
 
@@ -52,9 +53,11 @@ int main() {
 	
 	std::setlocale(LC_ALL, "");
 	
-	// Get the UTF-16 command-line parameters and convert them to UTF-8 ourself.
-	int argc = __argc;
-	wchar_t ** wargv = __wargv;
+	// Emulate wmain() as it's nonstandard and not supported by MinGW.
+	int argc = 0;
+	wchar_t ** wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
+	
+	// Convert the UTF-16 command-line parameters to UTF-8 ourself.
 	char ** argv = new char *[argc + 1];
 	argv[argc] = NULL;
 	for(int i = 0; i < argc; i++) {
@@ -62,6 +65,8 @@ int main() {
 		argv[i] = new char[n];
 		WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, argv[i], n, NULL, NULL);
 	}
+	
+	LocalFree(wargv);
 	
 	// Tell boost::filesystem to interpret our path strings as UTF-8.
 	std::locale global_locale = std::locale();
