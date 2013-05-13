@@ -25,7 +25,7 @@ While the liblzma dependency is optional, it is highly recommended and you won't
 
 To build innoextract you will also need **[CMake](http://cmake.org/) 2.8** and a working C++ compiler, as well as the development headers for liblzma and boost.
 
-The website might have more [specific instructions for your Linux distribution](http://constexpr.org/innoextract/install).
+See the Website for [operating system-specific instructions](http://constexpr.org/innoextract/install).
 
 ## Compile and install
 
@@ -67,26 +67,6 @@ Install options:
 | `CMAKE_INSTALL_MANDIR`      | `${DATAROOTDIR}/man` | Location for man pages (relative to prefix).
 
 Set options by passing `-D<option>=<value>` to cmake.
-
-### Mac OS X
-
-1. Install XCode and commandline tools from <http://developer.apple.com>
-
-2. Install homebrew
-
-        ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
-
-3. Install boost and xz
-
-        brew update
-        brew install boost
-        brew install xz
-
-4. Install innoextract
-
-        mkdir -p build && cd build && cmake ..
-        make
-        sudo make install
 
 ## Run
 
