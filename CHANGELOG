@@ -1,4 +1,10 @@
 
+innoextract 1.4-windows-r1 (2013-05-14)
+ - This is a Windows-specific hotfix release, no other platforms are affected
+ - Fixed a crash on startup under Windows
+ - Reduced progress bar flickering under Windows
+ - Fixed original console text color not being restored under Windows
+
 innoextract 1.4 (2013-03-11)
  - Fixed build on non-Linux platforms with a separate libiconv (Windows™, Mac OS X)
  - Fixed build on systems with non-standard iconv function prototypes (FreeBSD)
