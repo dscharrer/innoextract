@@ -326,49 +326,48 @@ static void process_file(const fs::path & file, const options & o) {
 			}
 			
 			// Print filename and size
-			if(!o.silent) {
+			if(o.list) {
 				
 				extract_progress.clear();
 				
-				std::cout << " - ";
-				bool named = false;
-				BOOST_FOREACH(const file_t & path, output_names) {
-					if(named) {
-						std::cout << ", ";
+				if(!o.silent) {
+					
+					std::cout << " - ";
+					bool named = false;
+					BOOST_FOREACH(const file_t & path, output_names) {
+						if(named) {
+							std::cout << ", ";
+						}
+						std::cout << '"' << color::white << path.first << color::reset << '"';
+						if(!info.files[path.second].languages.empty()) {
+							std::cout << " [" << color::green << info.files[path.second].languages
+							          << color::reset << "]";
+						}
+						named = true;
 					}
-					std::cout << '"' << color::white << path.first << color::reset << '"';
-					if(!info.files[path.second].languages.empty()) {
-						std::cout << " [" << color::green << info.files[path.second].languages
-						          << color::reset << "]";
+					if(!named) {
+						std::cout << color::white << "unnamed file" << color::reset;
 					}
-					named = true;
-				}
-				if(!named) {
-					std::cout << color::white << "unnamed file" << color::reset;
-				}
-				if(!o.quiet) {
-					if(logger::debug) {
-						std::cout << " @ " << print_hex(file.offset);
+					if(!o.quiet) {
+						if(logger::debug) {
+							std::cout << " @ " << print_hex(file.offset);
+						}
+						std::cout << " (" << color::dim_cyan << print_bytes(file.size)
+						          << color::reset << ")";
 					}
-					std::cout << " (" << color::dim_cyan << print_bytes(file.size)
-					          << color::reset << ")";
+					std::cout << '\n';
+					
+				} else {
+					BOOST_FOREACH(const file_t & path, output_names) {
+						std::cout << color::white << path.first << color::reset << '\n';
+					}
 				}
-				std::cout << '\n';
-				if(o.extract || o.test) {
+				
+				bool updated = extract_progress.update(0, true);
+				if(!updated && (o.extract || o.test)) {
 					std::cout.flush();
 				}
 				
-				extract_progress.update(0, true);
-				
-			} else if(o.list) {
-				extract_progress.clear();
-				BOOST_FOREACH(const file_t & path, output_names) {
-					std::cout << color::white << path.first << color::reset << '\n';
-				}
-				if(o.extract || o.test) {
-					std::cout.flush();
-				}
-				extract_progress.update(0, true);
 			}
 			
 			if(!o.extract && !o.test) {
@@ -567,6 +566,9 @@ int main(int argc, char * argv[]) {
 	}
 	if(!o.extract && !o.test) {
 		progress::set_enabled(false);
+	}
+	if(!o.silent) {
+		o.list = true;
 	}
 	
 	// Additional actions.

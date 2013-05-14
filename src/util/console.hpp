@@ -132,8 +132,10 @@ public:
 	 *              maximum set in the constructor, the bar will be full.
 	 * \param force Force updating the progress bar. Normally, the progress bar. Otherwise,
 	 *              updates are rate-limited and small deltas are not displayed immediately.
+	 *
+	 * \return true if the progres bar was updated
 	 */
-	void update(boost::uint64_t delta = 0, bool force = false);
+	bool update(boost::uint64_t delta = 0, bool force = false);
 	
 	/*!
 	 * Draw a bounded progress bar (with a maximum).
@@ -151,8 +153,13 @@ public:
 	 */
 	static void show_unbounded(float value, const std::string & label = std::string());
 	
-	//! Clear any progress bar to make way for other output.
-	static int clear();
+	/*!
+	 * Clear any progress bar to make way for other output.
+	 *
+	 * \param reset_only Only reset the cursor if cleaning the line is expensive.
+	 *                   This should be used if the whole line will be written anyway.
+	 */
+	static int clear(bool reset_only = false);
 	
 	//! Enable or disable the progress bar.
 	static void set_enabled(bool enable);
