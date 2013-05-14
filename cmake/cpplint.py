@@ -899,7 +899,7 @@ def RemoveMultiLineCommentsFromRange(lines, begin, end):
   # Having // dummy comments makes the lines non-empty, so we will not get
   # unnecessary blank line warnings later in the code.
   for i in range(begin, end):
-    lines[i] = '// dummy'
+    lines[i] = re.search('^\t*', lines[i]).group(0) + '// dummy'
 
 
 def RemoveMultiLineComments(filename, lines, error):
@@ -2099,13 +2099,13 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, error):
       if lasttabs == 0 and char != '\t':
         break
       if lasttabs == -1:
-        if char == '\t' and last_line != '':
+        if char == '\t':
           error(filename, linenum, 'whitespace/align_tab', 4,
                 'Too much indentation or tab used as alignment.')
         break
       if lasttabs > 0 and char != '\t':
         error(filename, linenum, 'whitespace/ident_space', 4,
-                'Space used for identation, use tabs instead.')
+                'Space used for indentation, use tabs instead.')
         break
       lasttabs -= 1
 
