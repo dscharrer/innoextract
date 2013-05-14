@@ -118,10 +118,17 @@ shell_command dim_cyan =    { FOREGROUND_BLUE | FOREGROUND_GREEN };
 shell_command dim_white =   { FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE };
 
 shell_command reset =       dim_white;
-shell_command original_color;
 
+boost::uint16_t original_color = boost::uint16_t(-1);
 static void restore_color() {
-	std::cout << original_color;
+	if(original_color != boost::uint16_t(-1) && console_handle) {
+		SetConsoleTextAttribute(console_handle, original_color);
+	}
+}
+static BOOL WINAPI restore_color_handler(DWORD type) {
+	(void)type;
+	restore_color();
+	return FALSE;
 }
 
 #else
@@ -163,7 +170,7 @@ void init(is_enabled color, is_enabled progress) {
 	console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	if(console_handle && GetConsoleScreenBufferInfo(console_handle, &info)) {
-		original_color.command = info.wAttributes;
+		original_color = info.wAttributes;
 	} else {
 		is_tty = false;
 		color = disable;
@@ -208,10 +215,10 @@ void init(is_enabled color, is_enabled progress) {
 		
 		#if defined(_WIN32)
 		// Preserve the original background color if it isn't too bright
-		if(!(original_color.command & (COMMON_LVB_REVERSE_VIDEO|BACKGROUND_INTENSITY))) {
+		if(!(original_color & (COMMON_LVB_REVERSE_VIDEO|BACKGROUND_INTENSITY))) {
 			boost::uint16_t bgmask = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE;
 			if((color & bgmask) != bgmask) {
-				boost::uint16_t bg = original_color.command & bgmask;
+				boost::uint16_t bg = original_color & bgmask;
 				BOOST_FOREACH(shell_command * color, all_colors) {
 					color->command |= bg;
 				}
@@ -220,6 +227,7 @@ void init(is_enabled color, is_enabled progress) {
 		// Force dim_white as the default color under Windows, restore original color on exit
 		std::cout << reset;
 		std::atexit(restore_color);
+		SetConsoleCtrlHandler(restore_color_handler, TRUE);
 		#endif
 		
 	}
@@ -323,6 +331,8 @@ int progress::clear(bool reset_only) {
 	}
 	
 	#else
+	
+	(void)reset_only;
 	
 	// Use the ANSI/VT100 control sequence to clear the current line
 	
