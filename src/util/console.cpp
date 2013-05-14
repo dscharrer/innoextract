@@ -184,13 +184,6 @@ void init(is_enabled color, is_enabled progress) {
 		show_progress = true;
 	}
 	#endif
-	#if defined(_WIN32)
-	if(show_progress) {
-		// Buffer output so that the progress bar won't flicker (we flush after each update)
-		static char buffer[BUFSIZ];
-		std::setbuf(stdout, buffer);
-	}
-	#endif
 	
 	// Initialize color output
 	
@@ -214,7 +207,7 @@ void init(is_enabled color, is_enabled progress) {
 	} else {
 		
 		#if defined(_WIN32)
-		// Preserve the original background color if it isn't too bright.
+		// Preserve the original background color if it isn't too bright
 		if(!(original_color.command & (COMMON_LVB_REVERSE_VIDEO|BACKGROUND_INTENSITY))) {
 			boost::uint16_t bgmask = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE;
 			if((color & bgmask) != bgmask) {
@@ -224,7 +217,7 @@ void init(is_enabled color, is_enabled progress) {
 				}
 			}
 		}
-		// Force dim_white as the default color under Windows, restore original color on exit.
+		// Force dim_white as the default color under Windows, restore original color on exit
 		std::cout << reset;
 		std::atexit(restore_color);
 		#endif
@@ -288,7 +281,7 @@ static int get_screen_width() {
 
 static bool progress_cleared = true;
 
-int progress::clear() {
+int progress::clear(bool reset_only) {
 	
 	int width = get_screen_width();
 	
@@ -298,17 +291,36 @@ int progress::clear() {
 	
 	#if defined(_WIN32)
 	
-	// Overwrite the current line with whitespace
-	
-	static std::string buffer;
-	static int last_width = 0;
-	if(width != last_width) {
-		size_t cwidth = size_t(std::max(width, 1) - 1);
-		buffer.resize(cwidth, ' ');
-		last_width = width;
+	if(reset_only) {
+		
+		/*
+		 * If we overwrite the whole line with spaces, windows console likes to draw
+		 * the empty line, even if it will be overwritten in the same flush(),
+		 * causing the progress bar to flicker when updated.
+		 * To work around this, don't actually clear the line if we are just going to
+		 * overwrite it anyway.
+		 * The progress bar still flickers when there is other output printed, but
+		 * it seems there is no way around that without using the console API to manually
+		 * scroll the output.
+		 */
+		
+		std::cout << '\r';
+		
+	} else {
+		
+		// Overwrite the current line with whitespace
+		
+		static std::string buffer;
+		static int last_width = 0;
+		if(width != last_width) {
+			size_t cwidth = size_t(std::max(width, 1) - 1);
+			buffer.resize(cwidth, ' ');
+			last_width = width;
+		}
+		
+		std::cout << '\r' << buffer << '\r';
+		
 	}
-	
-	std::cout << '\r' << buffer << '\r';
 	
 	#else
 	
@@ -329,7 +341,7 @@ void progress::show(float value, const std::string & label) {
 		return;
 	}
 	
-	int width = clear();
+	int width = clear(true);
 	
 	std::ios_base::fmtflags flags = std::cout.flags();
 	
@@ -366,7 +378,7 @@ void progress::show_unbounded(float value, const std::string & label) {
 		return;
 	}
 	
-	int width = clear();
+	int width = clear(true);
 	
 	std::ios_base::fmtflags flags = std::cout.flags();
 	
@@ -402,10 +414,10 @@ progress::progress(boost::uint64_t max, bool show_rate)
 	  start_time(boost::posix_time::microsec_clock::universal_time()),
 	  last_status(-1.f), last_time(0), last_rate(0.f) { }
 
-void progress::update(boost::uint64_t delta, bool force) {
+bool progress::update(boost::uint64_t delta, bool force) {
 	
 	if(!show_progress) {
-		return;
+		return false;
 	}
 	
 	force = force || progress_cleared;
@@ -417,7 +429,7 @@ void progress::update(boost::uint64_t delta, bool force) {
 		status = float(std::min(value, max)) / float(max);
 		status = float(size_t(1000.f * status)) * (1.f / 1000.f);
 		if(!force && status == last_status) {
-			return;
+			return false;
 		}
 	}
 	
@@ -430,7 +442,7 @@ void progress::update(boost::uint64_t delta, bool force) {
 	const boost::uint64_t update_interval = 50000;
 	#endif
 	if(!force && time - last_time < update_interval) {
-		return;
+		return false;
 	}
 	
 	last_time = time;
@@ -461,6 +473,7 @@ void progress::update(boost::uint64_t delta, bool force) {
 		show_unbounded(status, label.str());
 	}
 	
+	return true;
 }
 
 void progress::set_enabled(bool enable) {
