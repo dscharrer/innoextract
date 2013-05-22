@@ -65,7 +65,7 @@ bool chunk::operator==(const chunk & o) const {
 chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk) {
 	
 	if(!base.seek(chunk.first_slice, chunk.offset)) {
-		throw chunk_error("error seeking to chunk start");
+		throw chunk_error("could not seek to chunk start");
 	}
 	
 	char magic[ARRAY_SIZE(chunk_id)];

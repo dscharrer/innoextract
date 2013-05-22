@@ -96,7 +96,7 @@ bool slice_reader::open_file(const path_type & file) {
 	char magic[8];
 	if(ifs.read(magic, 8).fail()) {
 		ifs.close();
-		throw slice_error("error reading slice magic number");
+		throw slice_error("could not read slice magic number");
 	}
 	bool found = false;
 	for(size_t i = 0; ARRAY_SIZE(slice_ids); i++) {
@@ -113,7 +113,7 @@ bool slice_reader::open_file(const path_type & file) {
 	slice_size = util::load<boost::uint32_t>(ifs);
 	if(ifs.fail()) {
 		ifs.close();
-		throw slice_error("error reading slice size");
+		throw slice_error("could not read slice size");
 	} else if(std::streampos(slice_size) > file_size) {
 		ifs.close();
 		std::ostringstream oss;
@@ -170,9 +170,9 @@ bool slice_reader::open(size_t slice, const path_type & file) {
 	}
 	
 	if(dir != last_dir) {
-		log_error << "error opening " << slice_file << " in " << last_dir << " or " << dir;
+		log_error << "could not open " << slice_file << " in " << last_dir << " or " << dir;
 	} else {
-		log_error << "error opening " << last_dir / slice_file;
+		log_error << "could not open " << last_dir / slice_file;
 	}
 	
 	return false;
