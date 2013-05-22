@@ -56,7 +56,6 @@ static lzma_stream * init_raw_lzma_stream(lzma_vli filter, lzma_options_lzma & o
 
 bool lzma_decompressor_impl_base::filter(const char * & begin_in, const char * end_in,
                                          char * & begin_out, char * end_out, bool flush) {
-	(void)flush;
 	
 	lzma_stream * strm = static_cast<lzma_stream *>(stream);
 	
@@ -67,6 +66,10 @@ bool lzma_decompressor_impl_base::filter(const char * & begin_in, const char * e
 	strm->avail_out = size_t(end_out - begin_out);
 	
 	lzma_ret ret = lzma_code(strm, LZMA_RUN);
+	
+	if(flush && ret == LZMA_BUF_ERROR && strm->avail_out > 0) {
+		throw lzma_error("truncated lzma stream", ret);
+	}
 	
 	begin_in = reinterpret_cast<const char *>(strm->next_in);
 	begin_out = reinterpret_cast<char *>(strm->next_out);
