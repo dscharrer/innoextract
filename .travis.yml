@@ -1,0 +1,16 @@
+language: cpp
+compiler:
+  - gcc
+before_install:
+ - sudo apt-get update -qq
+ - sudo apt-get install -qq build-essential cmake libboost-all-dev liblzma-dev
+script: mkdir build && cd build && cmake .. && make
+branches:
+  only:
+    - master
+notifications:
+  email:
+    recipients:
+      - daniel@constexpr.org
+    on_success: change
+    on_failure: always
