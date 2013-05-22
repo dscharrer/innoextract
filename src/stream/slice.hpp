@@ -73,9 +73,9 @@ class slice_reader : public boost::iostreams::source {
 	util::ifstream ifs; //!< File input stream used when reading from external slices.
 	std::istream * is;  //!< Input stream to read from.
 	
-	bool seek(size_t slice);
+	void seek(size_t slice);
 	bool open_file(const path_type & file);
-	bool open(size_t slice, const path_type & slice_file);
+	void open(size_t slice);
 	
 public:
 	

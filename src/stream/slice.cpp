@@ -65,17 +65,17 @@ slice_reader::slice_reader(const path_type & dir, const path_type & base_file,
 	  current_slice(0), slice_file(), slice_size(0),
 	  ifs(), is(&ifs) { }
 
-bool slice_reader::seek(size_t slice) {
+void slice_reader::seek(size_t slice) {
 	
 	if(slice == current_slice && is_open()) {
-		return true;
+		return;
 	}
 	
 	if(data_offset != 0) {
-		throw slice_error("[slice] cannot change slices in single-file setup");
+		throw slice_error("cannot change slices in single-file setup");
 	}
 	
-	return open(slice, path_type());
+	open(slice);
 }
 
 bool slice_reader::open_file(const path_type & file) {
@@ -133,20 +133,18 @@ bool slice_reader::open_file(const path_type & file) {
 	return true;
 }
 
-bool slice_reader::open(size_t slice, const path_type & file) {
+void slice_reader::open(size_t slice) {
 	
 	current_slice = slice;
 	is = &ifs;
 	ifs.close();
 	
 	if(slices_per_disk == 0) {
-		throw std::runtime_error("[slice] slices per disk must not be zero");
+		throw slice_error("slices per disk must not be zero");
 	}
 	
-	path_type slice_file = file;
-	
-	if(slice_file.empty()) {
-		
+	path_type slice_file;
+	{
 		std::ostringstream oss;
 		oss << base_file.string() << '-';
 		if(slices_per_disk == 1) {
@@ -157,32 +155,25 @@ bool slice_reader::open(size_t slice, const path_type & file) {
 			oss << major << char(boost::uint8_t('a') + minor);
 		}
 		oss << ".bin";
-		
 		slice_file = oss.str();
 	}
 	
 	if(open_file(last_dir / slice_file)) {
-		return true;
+		return;
 	}
 	
 	if(dir != last_dir && open_file(dir / slice_file)) {
-		return true;
+		return;
 	}
 	
-	if(dir != last_dir) {
-		log_error << "could not open " << slice_file << " in " << last_dir << " or " << dir;
-	} else {
-		log_error << "could not open " << last_dir / slice_file;
-	}
-	
-	return false;
+	std::ostringstream oss;
+	oss << "could not open slice " << slice << ": " << slice_file;
+	throw slice_error(oss.str());
 }
 
 bool slice_reader::seek(size_t slice, boost::uint32_t offset) {
 	
-	if(!seek(slice)) {
-		return false;
-	}
+	seek(slice);
 	
 	offset += data_offset;
 	
@@ -199,9 +190,7 @@ bool slice_reader::seek(size_t slice, boost::uint32_t offset) {
 
 std::streamsize slice_reader::read(char * buffer, std::streamsize bytes) {
 	
-	if(!seek(current_slice)) {
-		return (bytes == 0) ? 0 : -1;
-	}
+	seek(current_slice);
 	
 	std::streamsize nread = 0;
 	
@@ -213,9 +202,7 @@ std::streamsize slice_reader::read(char * buffer, std::streamsize bytes) {
 		}
 		std::streamsize remaining = std::streamsize(slice_size - read_pos);
 		if(!remaining) {
-			if(!seek(current_slice + 1)) {
-				break;
-			}
+			seek(current_slice + 1);
 			read_pos = boost::uint32_t(is->tellg());
 			if(read_pos > slice_size) {
 				break;
