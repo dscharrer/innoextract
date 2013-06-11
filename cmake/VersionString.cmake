@@ -55,7 +55,7 @@ function(version_file SRC DST VERSION_SOURCES GIT_DIR)
 			set(mode "file")
 		else()
 			get_filename_component(arg "${arg}" ABSOLUTE)
-			list(APPEND dependencies ${abs_file})
+			list(APPEND dependencies ${arg})
 			set(mode "variable")
 		endif()
 		
