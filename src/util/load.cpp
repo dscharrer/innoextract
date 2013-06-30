@@ -61,7 +61,7 @@ static const char * get_encoding_name(codepage_id codepage) {
 		case   936: return "GBK";
 		case   949: return "UHC";
 		case   950: return "BIG5";
-		// iconv's behavior for "UTF-16" is platform-dependant if there is no BOM.
+		// iconv's behavior for "UTF-16" is platform-dependent if there is no BOM.
 		// There never is any BOM in Inno Setup files and it's always little-endian,
 		// so we specify the exact encoding.
 		case  1200: return "UTF-16LE";
@@ -270,7 +270,7 @@ void to_utf8(const std::string & from, std::string & to, codepage_id codepage) {
 			if(errno == E2BIG) {
 				// not enough output space - we'll allocate more in the next loop
 			} else if(/*errno == EILSEQ &&*/ insize >= 2) {
-				// invalid byte (sequence) - add a replacement char nd try the next byte
+				// invalid byte (sequence) - add a replacement char and try the next byte
 				if(outsize == 0) {
 					to.push_back(replacement_char);
 				} else {
