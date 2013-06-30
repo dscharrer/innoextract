@@ -8,10 +8,6 @@ option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
 if(CMAKE_BUILD_TYPE STREQUAL "")
 	set(CMAKE_BUILD_TYPE "Release")
 endif()
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_definitions(-DDEBUG)
-	set(DEBUG 1)
-endif()
 
 if(MSVC)
 	
