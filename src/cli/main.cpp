@@ -607,7 +607,7 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	
-	if(!options.count("setup-files") != 0) {
+	if(options.count("setup-files") == 0) {
 		if(!o.silent) {
 			std::cout << get_command(argv[0]) << ": no input files specified\n";
 			std::cout << "Try the --help (-h) option for usage information.\n";
