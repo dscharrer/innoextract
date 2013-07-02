@@ -26,6 +26,15 @@ if((NOT DEFINED INPUT) OR (NOT DEFINED OUTPUT) OR (NOT DEFINED VERSION_SOURCES) 
 	message(SEND_ERROR "Invalid arguments.")
 endif()
 
+# configure_file doesn't handle newlines correctly - pre-escape variables
+function(escape_var VAR)
+	# Escape the escape character and quotes
+	string(REGEX REPLACE "([\\\\\"])" "\\\\\\1" escaped "${${VAR}}")
+	# Pull newlines out of string
+	string(REGEX REPLACE "\n" "\\\\n\"\n\t\"" escaped "${escaped}")
+	set(${VAR} "${escaped}" PARENT_SCOPE)
+endfunction(escape_var)
+
 set(var "")
 foreach(arg IN LISTS VERSION_SOURCES)
 	
@@ -44,6 +53,7 @@ foreach(arg IN LISTS VERSION_SOURCES)
 		foreach(line IN LISTS lines)
 			
 			set(${var}_${${var}_COUNT} "${line}")
+			escape_var(${var}_${${var}_COUNT})
 			
 			# Find the first and last spaces
 			string(STRIP "${line}" line)
@@ -62,26 +72,32 @@ foreach(arg IN LISTS VERSION_SOURCES)
 				endif()
 			endforeach()
 			
-			# Get everything before the first space
 			if(${first_space} GREATER -1)
+				
+				# Get everything before the first space
 				string(SUBSTRING "${line}" 0 ${first_space} line_name)
 				string(STRIP "${line_name}" ${var}_${${var}_COUNT}_SHORTNAME)
+				escape_var(${var}_${${var}_COUNT}_SHORTNAME)
+				
+				# Get everything after the first space
+				math(EXPR num_length "${line_length} - ${first_space}")
+				string(SUBSTRING "${line}" ${first_space} ${num_length} line_num)
+				string(STRIP "${line_num}" ${var}_${${var}_COUNT}_STRING)
+				escape_var(${var}_${${var}_COUNT}_STRING)
+				
 			endif()
-			
-			# Get everything after the first space
-			math(EXPR num_length "${line_length} - ${first_space}")
-			string(SUBSTRING "${line}" ${first_space} ${num_length} line_num)
-			string(STRIP "${line_num}" ${var}_${${var}_COUNT}_STRING)
 			
 			# Get everything before the last space
 			string(SUBSTRING "${line}" 0 ${last_space} line_name)
 			string(STRIP "${line_name}" ${var}_${${var}_COUNT}_NAME)
+			escape_var(${var}_${${var}_COUNT}_NAME)
 			
 			# Get everything after the last space
 			if(${last_space} LESS ${line_length})
 				math(EXPR num_length "${line_length} - ${last_space}")
 				string(SUBSTRING "${line}" ${last_space} ${num_length} line_num)
 				string(STRIP "${line_num}" ${var}_${${var}_COUNT}_NUMBER)
+				escape_var(${var}_${${var}_COUNT}_NUMBER)
 			endif()
 			
 			math(EXPR ${var}_COUNT "${${var}_COUNT} + 1")
@@ -92,9 +108,9 @@ foreach(arg IN LISTS VERSION_SOURCES)
 		string(REGEX MATCH "\n\n.*" ${var}_TAIL "${${var}}")
 		string(STRIP "${${var}_TAIL}" ${var}_TAIL)
 		
-		string(REGEX REPLACE "\n" "\\\\n" ${var} "${${var}}")
-		string(REGEX REPLACE "\n" "\\\\n" ${var}_HEAD "${${var}_HEAD}")
-		string(REGEX REPLACE "\n" "\\\\n" ${var}_TAIL "${${var}_TAIL}")
+		escape_var(${var})
+		escape_var(${var}_HEAD)
+		escape_var(${var}_TAIL)
 		
 		set(var "")
 	endif()
@@ -136,4 +152,4 @@ if(EXISTS "${GIT_DIR}")
 	
 endif()
 
-configure_file("${INPUT}" "${OUTPUT}" ESCAPE_QUOTES)
+configure_file("${INPUT}" "${OUTPUT}")
