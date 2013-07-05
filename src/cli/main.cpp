@@ -560,7 +560,7 @@ int main(int argc, char * argv[]) {
 	if(!explicit_action) {
 		o.extract = true;
 	}
-	if(o.extract + o.test > 1) {
+	if(o.extract && o.test) {
 		log_error << "cannot specify multiple actions";
 		return ExitUserError;
 	}
