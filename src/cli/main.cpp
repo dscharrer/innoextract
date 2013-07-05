@@ -637,11 +637,11 @@ int main(int argc, char * argv[]) {
 		BOOST_FOREACH(const std::string & file, files) {
 			process_file(file, o);
 		}
-	} catch(std::ios_base::failure e) {
+	} catch(const std::ios_base::failure & e) {
 		log_error << "stream error: " << e.what();
-	} catch(std::runtime_error e) {
+	} catch(const std::runtime_error & e) {
 		log_error << e.what();
-	} catch(setup::version_error e) {
+	} catch(const setup::version_error & e) {
 		log_error << "not a supported Inno Setup installer";
 	}
 	
