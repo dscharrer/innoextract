@@ -59,7 +59,7 @@ std::string filename_map::expand_variables(it & begin, it end, bool close) const
 		// Flush everything before the next bracket
 		it pos = begin;
 		while(pos != end && *pos != '{' && *pos != '}') {
-			pos++;
+			++pos;
 		}
 		result.append(begin, pos);
 		begin = pos;
