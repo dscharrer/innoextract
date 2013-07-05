@@ -49,7 +49,7 @@ struct version {
 	
 	bool known;
 	
-	version() : known(false) { }
+	version() : value(0), bits(0), unicode(false), known(false) { }
 	
 	version(version_constant value, bool unicode = false,
 	        bool known = false, boost::uint8_t bits = 32)
