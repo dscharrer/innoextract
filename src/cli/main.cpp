@@ -641,7 +641,7 @@ int main(int argc, char * argv[]) {
 		log_error << "stream error: " << e.what();
 	} catch(const std::runtime_error & e) {
 		log_error << e.what();
-	} catch(const setup::version_error & e) {
+	} catch(const setup::version_error &) {
 		log_error << "not a supported Inno Setup installer";
 	}
 	
