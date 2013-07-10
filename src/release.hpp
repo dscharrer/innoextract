@@ -18,8 +18,8 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef INNOEXTRACT_VERSION_HPP
-#define INNOEXTRACT_VERSION_HPP
+#ifndef INNOEXTRACT_RELEASE_HPP
+#define INNOEXTRACT_RELEASE_HPP
 
 //! Name of the program being built
 extern const char innoextract_name[];
@@ -36,4 +36,4 @@ extern const char innoextract_copyright[];
 //! License text for the current program
 extern const char innoextract_license[];
 
-#endif // INNOEXTRACT_VERSION_HPP
+#endif // INNOEXTRACT_RELEASE_HPP

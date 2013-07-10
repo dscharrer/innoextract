@@ -147,10 +147,10 @@ std::tm format_time(time t) {
 	
 #else
 	
-	// Standard C++, but may not be thread-safe
+	// Standard C++
 	
 	std::time_t tt = to_time_t<std::time_t>(t);
-	std::tm * tmp = std::gmtime(&tt);
+	std::tm * tmp = std::gmtime(&tt); /* not thread-safe */
 	if(tmp) {
 		ret = *tmp;
 	} else {

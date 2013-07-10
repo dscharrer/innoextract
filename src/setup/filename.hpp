@@ -21,8 +21,8 @@
 /*!
  * Map for converting between stored filenames and output filenames.
  */
-#ifndef INNOEXTRACT_SETUP_FILENAME_MAP_HPP
-#define INNOEXTRACT_SETUP_FILENAME_MAP_HPP
+#ifndef INNOEXTRACT_SETUP_FILENAME_HPP
+#define INNOEXTRACT_SETUP_FILENAME_HPP
 
 #include <string>
 #include <map>
@@ -61,4 +61,4 @@ public:
 
 } // namespace setup
 
-#endif // INNOEXTRACT_SETUP_FILENAME_MAP_HPP
+#endif // INNOEXTRACT_SETUP_FILENAME_HPP

@@ -225,7 +225,6 @@ check_symbol_exists(bswap_64 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_64)
 set(INNOEXTRACT_SOURCES
 	
 	src/release.hpp
-	${VERSION_FILE}
 	
 	src/cli/debug.hpp
 	src/cli/debug.cpp if DEBUG
@@ -359,7 +358,7 @@ install(FILES doc/innoextract.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONA
 
 # Additional targets.
 
-add_style_check_target(style "${ALL_INNOEXTRACT_SOURCES}")
+add_style_check_target(style "${ALL_INNOEXTRACT_SOURCES}" innoextract)
 
 add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/doc")
 

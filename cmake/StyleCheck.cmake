@@ -19,13 +19,12 @@
 
 find_package(PythonInterp)
 
-unset(STYLE_FILTER)
+set(STYLE_FILTER)
 
 # Complains about any c-style cast -> too annoying.
 set(STYLE_FILTER ${STYLE_FILTER},-readability/casting)
 
 # Insists on including evrything in the .cpp file even if it is included in the header.
-# This behaviour conflicts with orther tools.
 set(STYLE_FILTER ${STYLE_FILTER},-build/include_what_you_use)
 
 # Too many false positives and not very helpful error messages.
@@ -58,14 +57,14 @@ set(STYLE_FILTER ${STYLE_FILTER},-whitespace/semicolon)
 # Parameters:
 # - TARGET_NAME the name of the target to add
 # - SOURCES_LIST a complete list of source and include files to check
-function(add_style_check_target TARGET_NAME SOURCES_LIST)
+function(add_style_check_target TARGET_NAME SOURCES_LIST PROJECT)
 	
 	if(NOT PYTHONINTERP_FOUND)
 		return()
 	endif()
 	
 	list(SORT SOURCES_LIST)
-  list(REMOVE_DUPLICATES SOURCES_LIST)
+	list(REMOVE_DUPLICATES SOURCES_LIST)
 	
 	add_custom_target(${TARGET_NAME}
 		COMMAND "${CMAKE_COMMAND}" -E chdir
@@ -73,6 +72,7 @@ function(add_style_check_target TARGET_NAME SOURCES_LIST)
 			"${PYTHON_EXECUTABLE}"
 			"${CMAKE_MODULE_PATH}/cpplint.py"
 			"--filter=${STYLE_FILTER}"
+			"--project=${PROJECT}"
 			${SOURCES_LIST}
 		DEPENDS ${SOURCES_LIST}
 		COMMENT "Checking code style."

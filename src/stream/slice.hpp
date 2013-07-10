@@ -21,8 +21,8 @@
 /*!
  * Abstraction for reading the embedded or external raw setup data.
  */
-#ifndef INNOEXTRACT_STREAM_SLICEREADER_HPP
-#define INNOEXTRACT_STREAM_SLICEREADER_HPP
+#ifndef INNOEXTRACT_STREAM_SLICE_HPP
+#define INNOEXTRACT_STREAM_SLICE_HPP
 
 #include <ios>
 
@@ -150,4 +150,4 @@ public:
 
 } // namespace stream
 
-#endif // INNOEXTRACT_STREAM_SLICEREADER_HPP
+#endif // INNOEXTRACT_STREAM_SLICE_HPP

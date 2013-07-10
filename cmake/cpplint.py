@@ -1,6 +1,6 @@
-#!/usr/bin/python2.4
+#!/usr/bin/env python
 #
-# Note: this file has been adjusted to fit innoextract:
+# Note: this file has been adjusted to fit the innoextract project:
 #  - adjusted include guard style
 #  - hacked so that build/include doesn't complain about #include "Configure.h" lines
 #  - Allow lines that are only whitespace.
@@ -9,9 +9,12 @@
 #  - Warn if a tab follows a non-tab character.
 #  - Don't require two spaces between code and comments
 #  - Warn if spaces are used for identation.
-#  - Allow //! comments
-#  - Allo struct name { typedef a type; }; one-liners
+#  - Allow //! and //!< comments
+#  - Allow struct name { typedef a type; }; one-liners
+#  - Allow #ifdef BOOST_PP_IS_ITERATING + #endif in place of header guards
+#  - C++ source files are named .cpp, not .cc
 #
+# Copyright (c) 2011-1013 Daniel Scharrer
 # Copyright (c) 2009 Google Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -101,10 +104,15 @@ import string
 import sys
 import unicodedata
 
+EXTENSIONS = ['c', 'cc', 'cpp', 'cxx', 'c++',
+              'h', 'hpp', 'hxx', 'h++']
+
+HEADER_EXTENSIONS = ['h', 'hpp', 'hxx', 'h++']
 
 _USAGE = """
 Syntax: cpplint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
                    [--counting=total|toplevel|detailed]
+                   [--project=name]
         <file> [file] ...
 
   The style guidelines this tries to follow are those in
@@ -119,13 +127,16 @@ Syntax: cpplint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
   suppresses errors of all categories on that line.
 
   The files passed in will be linted; at least one file must be provided.
-  Linted extensions are .cc, .cpp, and .h.  Other file types will be ignored.
+  Linted extensions are %s.  Other file types will be ignored.
 
   Flags:
 
     output=vs7
       By default, the output is formatted to ease emacs parsing.  Visual Studio
       compatible output (vs7) may also be used.  Other formats are unsupported.
+
+    project=name
+      Project name to use as include guard prefix.
 
     verbose=#
       Specify a number 0-5 to restrict errors to certain verbosity levels.
@@ -151,7 +162,7 @@ Syntax: cpplint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
       the top-level categories like 'build' and 'whitespace' will
       also be printed. If 'detailed' is provided, then a count
       is provided for each category like 'build/class'.
-"""
+""" % (EXTENSIONS)
 
 # We categorize each error message we print.  Here are the categories.
 # We want an explicit list so we can list them all in cpplint --filter=.
@@ -162,6 +173,7 @@ _ERROR_CATEGORIES = [
   'build/class',
   'build/deprecated',
   'build/endif_comment',
+  'build/explicit_make_pair',
   'build/forward_decl',
   'build/header_guard',
   'build/include',
@@ -204,6 +216,7 @@ _ERROR_CATEGORIES = [
   'whitespace/align_tab'
   'whitespace/blank_line',
   'whitespace/braces',
+  'whitespace/carriage-return',
   'whitespace/comma',
   'whitespace/comments',
   'whitespace/end_of_line',
@@ -224,11 +237,11 @@ _ERROR_CATEGORIES = [
 # flag. By default all errors are on, so only add here categories that should be
 # off by default (i.e., categories that must be enabled by the --filter= flags).
 # All entries here should start with a '-' or '+', as in the --filter= flag.
-_DEFAULT_FILTERS = [ '-build/include_alpha' ]
+_DEFAULT_FILTERS = ['-build/include_alpha']
 
 # We used to check for high-bit characters, but after much discussion we
 # decided those were OK, as long as they were in UTF-8 and didn't represent
-# hard-coded international strings, which belong in a seperate i18n file.
+# hard-coded international strings, which belong in a separate i18n file.
 
 # Headers that we consider STL headers.
 _STL_HEADERS = frozenset([
@@ -249,11 +262,11 @@ _CPP_HEADERS = frozenset([
     'cstdio', 'cstdlib', 'cstring', 'ctime', 'cwchar', 'cwctype',
     'defalloc.h', 'deque.h', 'editbuf.h', 'exception', 'fstream',
     'fstream.h', 'hashtable.h', 'heap.h', 'indstream.h', 'iomanip',
-    'iomanip.h', 'ios', 'iosfwd', 'iostream', 'iostream.h', 'istream.h',
-    'iterator.h', 'limits', 'map.h', 'multimap.h', 'multiset.h',
-    'numeric', 'ostream.h', 'parsestream.h', 'pfstream.h', 'PlotFile.h',
-    'procbuf.h', 'pthread_alloc.h', 'rope', 'rope.h', 'ropeimpl.h',
-    'SFile.h', 'slist', 'slist.h', 'stack.h', 'stdexcept',
+    'iomanip.h', 'ios', 'iosfwd', 'iostream', 'iostream.h', 'istream',
+    'istream.h', 'iterator.h', 'limits', 'map.h', 'multimap.h', 'multiset.h',
+    'numeric', 'ostream', 'ostream.h', 'parsestream.h', 'pfstream.h',
+    'PlotFile.h', 'procbuf.h', 'pthread_alloc.h', 'rope', 'rope.h',
+    'ropeimpl.h', 'SFile.h', 'slist', 'slist.h', 'stack.h', 'stdexcept',
     'stdiostream.h', 'streambuf.h', 'stream.h', 'strfile.h', 'string',
     'strstream', 'strstream.h', 'tempbuf.h', 'tree.h', 'typeinfo', 'valarray',
     ])
@@ -310,6 +323,23 @@ _RE_SUPPRESSION = re.compile(r'\bNOLINT\b(\([^)]*\))?')
 # on which those errors are expected and should be suppressed.
 _error_suppressions = {}
 
+
+if sys.version_info < (3,):
+    def u(x):
+        return codecs.unicode_escape_decode(x)[0]
+    TEXT_TYPE = unicode
+    # BINARY_TYPE = str
+    range = xrange
+    itervalues = dict.itervalues
+    iteritems = dict.iteritems
+else:
+    def u(x):
+        return x
+    TEXT_TYPE = str
+    # BINARY_TYPE = bytes
+    itervalues = dict.values
+    iteritems = dict.items
+
 def ParseNolintSuppressions(filename, raw_line, linenum, error):
   """Updates the global list of error-suppressions.
 
@@ -324,9 +354,9 @@ def ParseNolintSuppressions(filename, raw_line, linenum, error):
     error: function, an error handler.
   """
   # FIXME(adonovan): "NOLINT(" is misparsed as NOLINT(*).
-  m = _RE_SUPPRESSION.search(raw_line)
-  if m:
-    category = m.group(1)
+  matched = _RE_SUPPRESSION.search(raw_line)
+  if matched:
+    category = matched.group(1)
     if category in (None, '(*)'):  # => "suppress all"
       _error_suppressions.setdefault(None, set()).add(linenum)
     else:
@@ -336,7 +366,7 @@ def ParseNolintSuppressions(filename, raw_line, linenum, error):
           _error_suppressions.setdefault(category, set()).add(linenum)
         else:
           error(filename, linenum, 'readability/nolint', 5,
-            'Unknown NOLINT error category: %s' % category)
+                'Unknown NOLINT error category: %s' % category)
 
 
 def ResetNolintSuppressions():
@@ -418,7 +448,7 @@ class _IncludeState(dict):
     self._last_header = ''
 
   def CanonicalizeAlphabeticalOrder(self, header_path):
-    """Returns a path canonicalized for alphabetical comparisson.
+    """Returns a path canonicalized for alphabetical comparison.
 
     - replaces "-" with "_" so they both cmp the same.
     - removes '-inl' since we don't require them to be after the main header.
@@ -505,6 +535,7 @@ class _CppLintState(object):
   """Maintains module-wide state.."""
 
   def __init__(self):
+    self.project_name = 'src'
     self.verbose_level = 1  # global setting.
     self.error_count = 0    # global count of reported errors
     # filters to apply when emitting error messages
@@ -526,6 +557,12 @@ class _CppLintState(object):
     last_verbose_level = self.verbose_level
     self.verbose_level = level
     return last_verbose_level
+
+  def SetProjectName(self, name):
+    """Sets the module's verbosity, and returns the previous setting."""
+    last_project_name = self.project_name
+    self.project_name = name
+    return last_project_name
 
   def SetCountingStyle(self, counting_style):
     """Sets the module's counting options."""
@@ -573,7 +610,7 @@ class _CppLintState(object):
 
   def PrintErrorCounts(self):
     """Print a summary of errors by category, and the total."""
-    for category, count in self.errors_by_category.iteritems():
+    for category, count in iteritems(self.errors_by_category):
       sys.stderr.write('Category \'%s\' errors found: %d\n' %
                        (category, count))
     sys.stderr.write('Total errors found: %d\n' % self.error_count)
@@ -599,6 +636,16 @@ def _VerboseLevel():
 def _SetVerboseLevel(level):
   """Sets the module's verbosity, and returns the previous setting."""
   return _cpplint_state.SetVerboseLevel(level)
+
+
+def _ProjectName():
+  """Returns the module's project name setting."""
+  return _cpplint_state.project_name
+
+
+def _SetProjectName(name):
+  """Sets the module's project name, and returns the previous setting."""
+  return _cpplint_state.SetProjectName(name)
 
 
 def _SetCountingStyle(level):
@@ -676,7 +723,7 @@ class _FunctionState(object):
                 self.current_function, self.lines_in_function, trigger))
 
   def End(self):
-    """Stop analizing function body."""
+    """Stop analyzing function body."""
     self.in_a_function = False
 
 
@@ -726,18 +773,20 @@ class FileInfo:
         prefix = os.path.commonprefix([root_dir, project_dir])
         return fullname[len(prefix) + 1:]
 
-      # Not SVN? Try to find a git or hg top level directory by searching up
-      # from the current path.
+      # Not SVN <= 1.6? Try to find a git, hg, or svn top level directory by
+      # searching up from the current path.
       root_dir = os.path.dirname(fullname)
       while (root_dir != os.path.dirname(root_dir) and
              os.path.basename(root_dir) != "src" and
              not os.path.exists(os.path.join(root_dir, ".git")) and
-             not os.path.exists(os.path.join(root_dir, ".hg"))):
+             not os.path.exists(os.path.join(root_dir, ".hg")) and
+             not os.path.exists(os.path.join(root_dir, ".svn"))):
         root_dir = os.path.dirname(root_dir)
 
       if (os.path.basename(root_dir) == "src" or
           os.path.exists(os.path.join(root_dir, ".git")) or
-          os.path.exists(os.path.join(root_dir, ".hg"))):
+          os.path.exists(os.path.join(root_dir, ".hg")) or
+          os.path.exists(os.path.join(root_dir, ".svn"))):
         prefix = os.path.commonprefix([root_dir, project_dir])
         return fullname[len(prefix) + 1:]
 
@@ -747,8 +796,8 @@ class FileInfo:
   def Split(self):
     """Splits the file into the directory, basename, and extension.
 
-    For 'chrome/browser/browser.cc', Split() would
-    return ('chrome/browser', 'browser', '.cc')
+    For 'chrome/browser/browser.cpp', Split() would
+    return ('chrome/browser', 'browser', '.cpp')
 
     Returns:
       A tuple of (directory, basename, extension).
@@ -772,12 +821,11 @@ class FileInfo:
 
   def IsSource(self):
     """File has a source file extension."""
-    return self.Extension()[1:] in ('c', 'cc', 'cpp', 'cxx')
+    return self.Extension()[1:] in EXTENSIONS
 
 
 def _ShouldPrintError(category, confidence, linenum):
-  """Returns true iff confidence >= verbose, category passes
-  filter and is not NOLINT-suppressed."""
+  """If confidence >= verbose, category passes filter and is not suppressed."""
 
   # There are three ways we might decide not to print an error message:
   # a "NOLINT(category)" comment appears in the source,
@@ -831,9 +879,9 @@ def Error(filename, linenum, category, confidence, message):
       sys.stderr.write('%s(%s):  %s  [%s] [%d]\n' % (
           filename, linenum, message, category, confidence))
     else:
-      sys.stderr.write('%s:%s:  %s  [%s] [%d]\n' % (
-          filename, linenum, message, category, confidence))
-
+      m = '%s:%s:  %s  [%s] [%d]\n' % (
+          filename, linenum, message, category, confidence)
+      sys.stderr.write(m)
 
 # Matches standard C++ escape esequences per 2.13.2.3 of the C++ standard.
 _RE_PATTERN_CLEANSE_LINE_ESCAPES = re.compile(
@@ -929,7 +977,7 @@ def CleanseComments(line):
   """
   commentpos = line.find('//')
   if commentpos != -1 and not IsCppString(line[:commentpos]):
-    line = line[:commentpos]
+    line = line[:commentpos].rstrip()
   # get rid of /* ... */
   return _RE_PATTERN_CLEANSE_LINE_C_COMMENTS.sub('', line)
 
@@ -982,7 +1030,7 @@ class CleansedLines(object):
 def CloseExpression(clean_lines, linenum, pos):
   """If input points to ( or { or [, finds the position that closes it.
 
-  If lines[linenum][pos] points to a '(' or '{' or '[', finds the the
+  If lines[linenum][pos] points to a '(' or '{' or '[', finds the
   linenum/pos that correspond to the closing of the expression.
 
   Args:
@@ -1023,8 +1071,9 @@ def CheckForCopyright(filename, lines, error):
 
   # We'll say it should occur by line 10. Don't forget there's a
   # dummy line at the front.
-  for line in xrange(1, min(len(lines), 11)):
-    if re.search(r'Copyright', lines[line], re.I): break
+  for line in range(1, min(len(lines), 11)):
+    if re.search(r'Copyright', lines[line], re.I):
+      break
   else:                       # means no copyright line was found
     error(filename, 0, 'legal/copyright', 5,
           'No copyright message found.  '
@@ -1048,7 +1097,7 @@ def GetHeaderGuardCPPVariable(filename):
   filename = re.sub(r'_flymake\.h$', '.h', filename)
 
   fileinfo = FileInfo(filename)
-  return "ARX_" + re.sub(r'[-./\s]', '_', fileinfo.RepositoryName()).upper()
+  return (_ProjectName() + '_' + re.sub(r'[-./\s]', '_', fileinfo.RepositoryName())).upper()
 
 
 def CheckForHeaderGuard(filename, lines, error):
@@ -1070,30 +1119,39 @@ def CheckForHeaderGuard(filename, lines, error):
   define = None
   endif = None
   endif_linenum = 0
+  boostppiterating = None
   for linenum, line in enumerate(lines):
     linesplit = line.split()
     if len(linesplit) >= 2:
+      if not ifndef and linesplit[0] == '#ifdef' and linesplit[1] == 'BOOST_PP_IS_ITERATING':
+        boostppiterating = linesplit[1]
       # find the first occurrence of #ifndef and #define, save arg
-      if not ifndef and linesplit[0] == '#ifndef':
+      if not boostppiterating and not ifndef and linesplit[0] == '#ifndef':
         # set ifndef to the header guard presented on the #ifndef line.
         ifndef = linesplit[1]
         ifndef_linenum = linenum
-      if not define and linesplit[0] == '#define':
+      if not boostppiterating and not define and linesplit[0] == '#define':
         define = linesplit[1]
     # find the last occurrence of #endif, save entire line
     if line.startswith('#endif'):
       endif = line
       endif_linenum = linenum
 
-  if not ifndef or not define or ifndef != define:
+  if not boostppiterating and not ifndef:
     error(filename, 0, 'build/header_guard', 5,
           'No #ifndef header guard found, suggested CPP variable is: %s' %
           cppvar)
     return
 
+  if not boostppiterating and not define:
+    error(filename, 0, 'build/header_guard', 5,
+          'No #define header guard found, suggested CPP variable is: %s' %
+          cppvar)
+    return
+
   # The guard should be PATH_FILE_H_, but we also allow PATH_FILE_H__
   # for backward compatibility.
-  if ifndef != cppvar:
+  if not boostppiterating and ifndef != cppvar:
     error_level = 0
     if ifndef != cppvar + '_':
       error_level = 5
@@ -1103,7 +1161,13 @@ def CheckForHeaderGuard(filename, lines, error):
     error(filename, ifndef_linenum, 'build/header_guard', error_level,
           '#ifndef header guard has wrong style, please use: %s' % cppvar)
 
-  if endif != ('#endif // %s' % cppvar):
+  if not boostppiterating and define != ifndef:
+    error(filename, 0, 'build/header_guard', 5,
+          '#ifndef and #define don\'t match, suggested CPP variable is: %s' %
+          cppvar)
+    return
+
+  if not boostppiterating and endif != ('#endif // %s' % cppvar):
     error_level = 0
     if endif != ('#endif // %s' % (cppvar + '_')):
       error_level = 5
@@ -1112,6 +1176,14 @@ def CheckForHeaderGuard(filename, lines, error):
                             error)
     error(filename, endif_linenum, 'build/header_guard', error_level,
           '#endif line should be "#endif // %s"' % cppvar)
+
+  if boostppiterating and endif != ('#endif // %s' % boostppiterating):
+    error_level = 5
+
+    ParseNolintSuppressions(filename, lines[endif_linenum], endif_linenum,
+                            error)
+    error(filename, endif_linenum, 'build/header_guard', error_level,
+          '#endif line should be "#endif // %s"' % boostppiterating)
 
 
 def CheckForUnicodeReplacementCharacters(filename, lines, error):
@@ -1128,7 +1200,7 @@ def CheckForUnicodeReplacementCharacters(filename, lines, error):
     error: The function to call with any errors found.
   """
   for linenum, line in enumerate(lines):
-    if u'\ufffd' in line:
+    if u('\ufffd') in line:
       error(filename, linenum, 'readability/utf8', 5,
             'Line contains invalid UTF-8 (or Unicode replacement character).')
 
@@ -1197,6 +1269,7 @@ threading_list = (
     ('getlogin(', 'getlogin_r('),
     ('getpwnam(', 'getpwnam_r('),
     ('getpwuid(', 'getpwuid_r('),
+    ('gmtime(', 'gmtime_r('),
     ('localtime(', 'localtime_r('),
     ('rand(', 'rand_r('),
     ('readdir(', 'readdir_r('),
@@ -1220,6 +1293,8 @@ def CheckPosixThreading(filename, clean_lines, linenum, error):
     linenum: The number of the line to check.
     error: The function to call with any errors found.
   """
+  if '/* not thread-safe */' in clean_lines.raw_lines[linenum]:
+    return
   line = clean_lines.elided[linenum]
   for single_thread_function, multithread_safe_function in threading_list:
     ix = line.find(single_thread_function)
@@ -1263,7 +1338,7 @@ def CheckInvalidIncrement(filename, clean_lines, linenum, error):
 class _ClassInfo(object):
   """Stores information about a class."""
 
-  def __init__(self, name, linenum):
+  def __init__(self, name, clean_lines, linenum):
     self.name = name
     self.linenum = linenum
     self.seen_open_brace = False
@@ -1271,6 +1346,20 @@ class _ClassInfo(object):
     self.virtual_method_linenumber = None
     self.has_virtual_destructor = False
     self.brace_depth = 0
+
+    # Try to find the end of the class.  This will be confused by things like:
+    #   class A {
+    #   } *x = { ...
+    #
+    # But it's still good enough for CheckSectionSpacing.
+    self.last_line = 0
+    depth = 0
+    for i in range(linenum, clean_lines.NumLines()):
+      line = clean_lines.lines[i]
+      depth += line.count('{') - line.count('}')
+      if not depth:
+        self.last_line = i
+        break
 
 
 class _ClassState(object):
@@ -1393,11 +1482,16 @@ def CheckForNonStandardConstructs(filename, clean_lines, linenum,
   # style guidelines, but it seems to perform well enough in testing
   # to be a worthwhile addition to the checks.
   classinfo_stack = class_state.classinfo_stack
-  # Look for a class declaration
+  # Look for a class declaration. The regexp accounts for decorated classes
+  # such as in:
+  # class LOCKABLE API Object {
+  # };
   class_decl_match = Match(
-      r'\s*(template\s*<[\w\s<>,:]*>\s*)?(class|struct)\s+(\w+(::\w+)*)', line)
+      r'\s*(template\s*<[\w\s<>,:]*>\s*)?'
+      '(class|struct)\s+([A-Z_]+\s+)*(\w+(::\w+)*)', line)
   if class_decl_match:
-    classinfo_stack.append(_ClassInfo(class_decl_match.group(3), linenum))
+    classinfo_stack.append(_ClassInfo(
+        class_decl_match.group(4), clean_lines, linenum))
 
   # Everything else in this function uses the top of the stack if it's
   # not empty.
@@ -1427,12 +1521,13 @@ def CheckForNonStandardConstructs(filename, clean_lines, linenum,
 
   # Look for single-argument constructors that aren't marked explicit.
   # Technically a valid construct, but against style.
-  args = Match(r'(?<!explicit)\s+%s\s*\(([^,()]+)\)'
+  args = Match(r'\s+(?:inline\s+)?%s\s*\(([^,()]+)\)'
                % re.escape(base_classname),
                line)
   if (args and
       args.group(1) != 'void' and
-      not Match(r'(const\s+)?%s\s*&' % re.escape(base_classname),
+      clean_lines.raw_lines[linenum].find('/* implicit */') < 0 and
+      not Match(r'(const\s+)?%s\s*(?:<\w+>\s*)?&' % re.escape(base_classname),
                 args.group(1).strip())):
     error(filename, linenum, 'runtime/explicit', 5,
           'Single-argument constructors should be marked explicit.')
@@ -1523,8 +1618,14 @@ def CheckSpacingForFunctionCall(filename, line, linenum, error):
     # If the ) is followed only by a newline or a { + newline, assume it's
     # part of a control statement (if/while/etc), and don't complain
     if Search(r'[^)]\s+\)\s*[^{\s]', fncall):
-      error(filename, linenum, 'whitespace/parens', 2,
-            'Extra space before )')
+      # If the closing parenthesis is preceded by only whitespaces,
+      # try to give a more descriptive error message.
+      if Search(r'^\s+\)', fncall):
+        error(filename, linenum, 'whitespace/parens', 2,
+              'Closing ) should be moved to the previous line')
+      else:
+        error(filename, linenum, 'whitespace/parens', 2,
+              'Extra space before )')
 
 
 def IsBlankLine(line):
@@ -1555,7 +1656,7 @@ def CheckForFunctionLengths(filename, clean_lines, linenum,
   Trivial bodies are unchecked, so constructors with huge initializer lists
   may be missed.
   Blank/comment lines are not counted so as to avoid encouraging the removal
-  of vertical space and commments just to get through a lint check.
+  of vertical space and comments just to get through a lint check.
   NOLINT *on the last line of a function* disables this check.
 
   Args:
@@ -1584,7 +1685,7 @@ def CheckForFunctionLengths(filename, clean_lines, linenum,
 
   if starting_func:
     body_found = False
-    for start_linenum in xrange(linenum, clean_lines.NumLines()):
+    for start_linenum in range(linenum, clean_lines.NumLines()):
       start_line = lines[start_linenum]
       joined_line += ' ' + start_line.lstrip()
       if Search(r'(;|})', start_line):  # Declarations and trivial functions
@@ -1651,8 +1752,8 @@ def CheckSpacing(filename, clean_lines, linenum, error):
   Things we check for: spaces around operators, spaces after
   if/for/while/switch, no spaces around parens in function calls, two
   spaces between code and comment, don't start a block with a blank
-  line, don't end a function with a blank line, don't have too many
-  blank lines in a row.
+  line, don't end a function with a blank line, don't add a blank line
+  after public/protected/private, don't have too many blank lines in a row.
 
   Args:
     filename: The name of the current file.
@@ -1679,7 +1780,7 @@ def CheckSpacing(filename, clean_lines, linenum, error):
         and prev_line[:prevbrace].find('namespace') == -1):
       # OK, we have a blank line at the start of a code block.  Before we
       # complain, we check if it is an exception to the rule: The previous
-      # non-empty line has the paramters of a function header that are indented
+      # non-empty line has the parameters of a function header that are indented
       # 4 spaces (because they did not fit in a 80 column line when placed on
       # the same line as the function name).  We also check for the case where
       # the previous line is indented 6 spaces, which may happen when the
@@ -1729,6 +1830,11 @@ def CheckSpacing(filename, clean_lines, linenum, error):
           and next_line.find('} else ') == -1):
         error(filename, linenum, 'whitespace/blank_line', 3,
               'Blank line at the end of a code block.  Is this needed?')
+
+    matched = Match(r'\s*(public|protected|private):', prev_line)
+    if matched:
+      error(filename, linenum, 'whitespace/blank_line', 3,
+            'Do not leave a blank line after "%s:"' % matched.group(1))
 
   # Next, we complain if there's a comment too near the text
   commentpos = line.find('//')
@@ -1841,13 +1947,22 @@ def CheckSpacing(filename, clean_lines, linenum, error):
     error(filename, linenum, 'whitespace/comma', 3,
           'Missing space after ,')
 
+  # You should always have a space after a semicolon
+  # except for few corner cases
+  # TODO(unknown): clarify if 'if (1) { return 1;}' is requires one more
+  # space after ;
+  if Search(r';[^\s};\\)/]', line):
+    error(filename, linenum, 'whitespace/semicolon', 3,
+          'Missing space after ;')
+
   # Next we will look for issues with function calls.
   CheckSpacingForFunctionCall(filename, line, linenum, error)
 
-  # Except after an opening paren, you should have spaces before your braces.
-  # And since you should never have braces at the beginning of a line, this is
-  # an easy test.
-  if Search(r'[^ (\t]{', line):
+  # Except after an opening paren, or after another opening brace (in case of
+  # an initializer list, for instance), you should have spaces before your
+  # braces. And since you should never have braces at the beginning of a line,
+  # this is an easy test.
+  if Search(r'[^ (\t{]{', line):
     error(filename, linenum, 'whitespace/braces', 5,
           'Missing space before {')
 
@@ -1877,6 +1992,58 @@ def CheckSpacing(filename, clean_lines, linenum, error):
     error(filename, linenum, 'whitespace/semicolon', 5,
           'Extra space before last semicolon. If this should be an empty '
           'statement, use { } instead.')
+
+
+def CheckSectionSpacing(filename, clean_lines, class_info, linenum, error):
+  """Checks for additional blank line issues related to sections.
+
+  Currently the only thing checked here is blank line before protected/private.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    class_info: A _ClassInfo objects.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  # Skip checks if the class is small, where small means 25 lines or less.
+  # 25 lines seems like a good cutoff since that's the usual height of
+  # terminals, and any class that can't fit in one screen can't really
+  # be considered "small".
+  #
+  # Also skip checks if we are on the first line.  This accounts for
+  # classes that look like
+  #   class Foo { public: ... };
+  #
+  # If we didn't find the end of the class, last_line would be zero,
+  # and the check will be skipped by the first condition.
+  if (class_info.last_line - class_info.linenum <= 24 or
+      linenum <= class_info.linenum):
+    return
+
+  matched = Match(r'\s*(public|protected|private):', clean_lines.lines[linenum])
+  if matched:
+    # Issue warning if the line before public/protected/private was
+    # not a blank line, but don't do this if the previous line contains
+    # "class" or "struct".  This can happen two ways:
+    #  - We are at the beginning of the class.
+    #  - We are forward-declaring an inner class that is semantically
+    #    private, but needed to be public for implementation reasons.
+    prev_line = clean_lines.lines[linenum - 1]
+    if (not IsBlankLine(prev_line) and
+        not Search(r'\b(class|struct)\b', prev_line)):
+      # Try a bit harder to find the beginning of the class.  This is to
+      # account for multi-line base-specifier lists, e.g.:
+      #   class Derived
+      #       : public Base {
+      end_class_head = class_info.linenum
+      for i in range(class_info.linenum, linenum):
+        if Search(r'\{\s*$', clean_lines.lines[i]):
+          end_class_head = i
+          break
+      if end_class_head < linenum - 1:
+        error(filename, linenum, 'whitespace/blank_line', 3,
+              '"%s:" should be preceded by a blank line' % matched.group(1))
 
 
 def GetPreviousNonBlankLine(clean_lines, linenum):
@@ -2054,19 +2221,20 @@ def GetLineWidth(line):
     The width of the line in column positions, accounting for Unicode
     combining characters and wide characters.
   """
-  if isinstance(line, unicode):
+  if isinstance(line, TEXT_TYPE):
     width = 0
-    for c in unicodedata.normalize('NFC', line):
-      if unicodedata.east_asian_width(c) in ('W', 'F'):
+    for uc in unicodedata.normalize('NFC', line):
+      if unicodedata.east_asian_width(uc) in ('W', 'F'):
         width += 2
-      elif not unicodedata.combining(c):
+      elif not unicodedata.combining(uc):
         width += 1
     return width
   else:
     return len(line)
 
 
-def CheckStyle(filename, clean_lines, linenum, file_extension, error):
+def CheckStyle(filename, clean_lines, linenum, file_extension, class_state,
+               error):
   """Checks rules from the 'C++ style rules' section of cppguide.html.
 
   Most of these rules are hard to test (naming, comment style), but we
@@ -2099,13 +2267,13 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, error):
       if lasttabs == 0 and char != '\t':
         break
       if lasttabs == -1:
-        if char == '\t':
+        if char == '\t' and last_line != '':
           error(filename, linenum, 'whitespace/align_tab', 4,
                 'Too much indentation or tab used as alignment.')
         break
       if lasttabs > 0 and char != '\t':
         error(filename, linenum, 'whitespace/ident_space', 4,
-                'Space used for indentation, use tabs instead.')
+                'Space used for identation, use tabs instead.')
         break
       lasttabs -= 1
 
@@ -2138,7 +2306,7 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, error):
 
   # Check if the line is a header guard.
   is_header_guard = False
-  if file_extension == 'h':
+  if file_extension in HEADER_EXTENSIONS:
     cppvar = GetHeaderGuardCPPVariable(filename)
     if (line.startswith('#ifndef %s' % cppvar) or
         line.startswith('#define %s' % cppvar) or
@@ -2149,8 +2317,12 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, error):
   #
   # URLs can be long too.  It's possible to split these, but it makes them
   # harder to cut&paste.
+  #
+  # The "$Id:...$" comment may also get very long without it being the
+  # developers fault.
   if (not line.startswith('#include') and not is_header_guard and
-      not Match(r'^\s*//.*http(s?)://\S*$', line)):
+      not Match(r'^\s*//.*http(s?)://\S*$', line) and
+      not Match(r'^// \$Id:.*#[0-9]+ \$$', line)):
     line_width = GetLineWidth(line)
     if line_width > 100:
       error(filename, linenum, 'whitespace/line_length', 4,
@@ -2176,25 +2348,30 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, error):
   CheckBraces(filename, clean_lines, linenum, error)
   CheckSpacing(filename, clean_lines, linenum, error)
   CheckCheck(filename, clean_lines, linenum, error)
+  if class_state and class_state.classinfo_stack:
+    CheckSectionSpacing(filename, clean_lines,
+                        class_state.classinfo_stack[-1], linenum, error)
 
 
+_RE_PATTERN_INCLUDE_DUPLICATE = re.compile('// +duplicate-include')
 _RE_PATTERN_INCLUDE_NEW_STYLE = re.compile(r'#include +"[^/]+\.h"')
+_RE_PATTERN_INCLUDE_QT = re.compile(r'#include +"(ui_|moc_)[^/]+\.h"')
 _RE_PATTERN_INCLUDE = re.compile(r'^\s*#\s*include\s*([<"])([^>"]*)[>"].*$')
 # Matches the first component of a filename delimited by -s and _s. That is:
 #  _RE_FIRST_COMPONENT.match('foo').group(0) == 'foo'
-#  _RE_FIRST_COMPONENT.match('foo.cc').group(0) == 'foo'
-#  _RE_FIRST_COMPONENT.match('foo-bar_baz.cc').group(0) == 'foo'
-#  _RE_FIRST_COMPONENT.match('foo_bar-baz.cc').group(0) == 'foo'
+#  _RE_FIRST_COMPONENT.match('foo.cpp').group(0) == 'foo'
+#  _RE_FIRST_COMPONENT.match('foo-bar_baz.cpp').group(0) == 'foo'
+#  _RE_FIRST_COMPONENT.match('foo_bar-baz.cpp').group(0) == 'foo'
 _RE_FIRST_COMPONENT = re.compile(r'^[^-_.]+')
 
 
 def _DropCommonSuffixes(filename):
-  """Drops common suffixes like _test.cc or -inl.h from filename.
+  """Drops common suffixes like _test.cpp or -inl.h from filename.
 
   For example:
     >>> _DropCommonSuffixes('foo/foo-inl.h')
     'foo/foo'
-    >>> _DropCommonSuffixes('foo/bar/foo.cc')
+    >>> _DropCommonSuffixes('foo/bar/foo.cpp')
     'foo/bar/foo'
     >>> _DropCommonSuffixes('foo/foo_internal.h')
     'foo/foo'
@@ -2207,7 +2384,7 @@ def _DropCommonSuffixes(filename):
   Returns:
     The filename with the common suffix removed.
   """
-  for suffix in ('test.cc', 'regtest.cc', 'unittest.cc',
+  for suffix in ('test.cpp', 'regtest.cpp', 'unittest.cpp',
                  'inl.h', 'impl.h', 'internal.h'):
     if (filename.endswith(suffix) and len(filename) > len(suffix) and
         filename[-len(suffix) - 1] in ('-', '_')):
@@ -2224,9 +2401,9 @@ def _IsTestFilename(filename):
   Returns:
     True if 'filename' looks like a test, False otherwise.
   """
-  if (filename.endswith('_test.cc') or
-      filename.endswith('_unittest.cc') or
-      filename.endswith('_regtest.cc')):
+  if (filename.endswith('_test.cpp') or
+      filename.endswith('_unittest.cpp') or
+      filename.endswith('_regtest.cpp')):
     return True
   else:
     return False
@@ -2244,16 +2421,16 @@ def _ClassifyInclude(fileinfo, include, is_system):
     One of the _XXX_HEADER constants.
 
   For example:
-    >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'stdio.h', True)
+    >>> _ClassifyInclude(FileInfo('foo/foo.cpp'), 'stdio.h', True)
     _C_SYS_HEADER
-    >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'string', True)
+    >>> _ClassifyInclude(FileInfo('foo/foo.cpp'), 'string', True)
     _CPP_SYS_HEADER
-    >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'foo/foo.h', False)
+    >>> _ClassifyInclude(FileInfo('foo/foo.cpp'), 'foo/foo.h', False)
     _LIKELY_MY_HEADER
-    >>> _ClassifyInclude(FileInfo('foo/foo_unknown_extension.cc'),
+    >>> _ClassifyInclude(FileInfo('foo/foo_unknown_extension.cpp'),
     ...                  'bar/foo_other_ext.h', False)
     _POSSIBLE_MY_HEADER
-    >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'foo/bar.h', False)
+    >>> _ClassifyInclude(FileInfo('foo/foo.cpp'), 'foo/bar.h', False)
     _OTHER_HEADER
   """
   # This is a list of all standard c++ header files, except
@@ -2312,7 +2489,7 @@ def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
   line = clean_lines.lines[linenum]
 
   # "include" should use the new style "foo/bar.h" instead of just "bar.h"
-  if _RE_PATTERN_INCLUDE_NEW_STYLE.search(line) and line != "#include \"Configure.h\"":
+  if _RE_PATTERN_INCLUDE_NEW_STYLE.search(line) and line != "#include \"Configure.h\"" and not  _RE_PATTERN_INCLUDE_QT.search(line):
     error(filename, linenum, 'build/include', 4,
           'Include the directory when naming .h files')
 
@@ -2323,7 +2500,7 @@ def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
   if match:
     include = match.group(2)
     is_system = (match.group(1) == '<')
-    if include in include_state:
+    if include in include_state and not _RE_PATTERN_INCLUDE_DUPLICATE.search(clean_lines.raw_lines[linenum]):
       error(filename, linenum, 'build/include', 4,
             '"%s" already included at %s:%s' %
             (include, filename, include_state[include]))
@@ -2331,10 +2508,10 @@ def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
       include_state[include] = linenum
 
       # We want to ensure that headers appear in the right order:
-      # 1) for foo.cc, foo.h  (preferred location)
+      # 1) for foo.cpp, foo.h  (preferred location)
       # 2) c system files
       # 3) cpp system files
-      # 4) for foo.cc, foo.h  (deprecated location)
+      # 4) for foo.cpp, foo.h  (deprecated location)
       # 5) other google headers
       #
       # We classify each include statement as one of those 5 types
@@ -2360,6 +2537,63 @@ def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
       if not _IsTestFilename(filename):
         error(filename, linenum, 'readability/streams', 3,
               'Streams are highly discouraged.')
+
+
+def _GetTextInside(text, start_pattern):
+  """Retrieves all the text between matching open and close parentheses.
+
+  Given a string of lines and a regular expression string, retrieve all the text
+  following the expression and between opening punctuation symbols like
+  (, [, or {, and the matching close-punctuation symbol. This properly nested
+  occurrences of the punctuations, so for the text like
+    printf(a(), b(c()));
+  a call to _GetTextInside(text, r'printf\(') will return 'a(), b(c())'.
+  start_pattern must match string having an open punctuation symbol at the end.
+
+  Args:
+    text: The lines to extract text. Its comments and strings must be elided.
+           It can be single line and can span multiple lines.
+    start_pattern: The regexp string indicating where to start extracting
+                   the text.
+  Returns:
+    The extracted text.
+    None if either the opening string or ending punctuation could not be found.
+  """
+  # TODO(sugawarayu): Audit cpplint.py to see what places could be profitably
+  # rewritten to use _GetTextInside (and use inferior regexp matching today).
+
+  # Give opening punctuations to get the matching close-punctuations.
+  matching_punctuation = {'(': ')', '{': '}', '[': ']'}
+  closing_punctuation = set(itervalues(matching_punctuation))
+
+  # Find the position to start extracting text.
+  match = re.search(start_pattern, text, re.M)
+  if not match:  # start_pattern not found in text.
+    return None
+  start_position = match.end(0)
+
+  assert start_position > 0, (
+      'start_pattern must ends with an opening punctuation.')
+  assert text[start_position - 1] in matching_punctuation, (
+      'start_pattern must ends with an opening punctuation.')
+  # Stack of closing punctuations we expect to have in text after position.
+  punctuation_stack = [matching_punctuation[text[start_position - 1]]]
+  position = start_position
+  while punctuation_stack and position < len(text):
+    if text[position] == punctuation_stack[-1]:
+      punctuation_stack.pop()
+    elif text[position] in closing_punctuation:
+      # A closing punctuation without matching opening punctuations.
+      return None
+    elif text[position] in matching_punctuation:
+      punctuation_stack.append(matching_punctuation[text[position]])
+    position += 1
+  if punctuation_stack:
+    # Opening punctuations left without matching close-punctuations.
+    return None
+  # punctuations match.
+  return text[start_position:position - 1]
+
 
 def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
                   error):
@@ -2406,7 +2640,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
   # These are complicated re's.  They try to capture the following:
   # paren (for fn-prototype start), typename, &, varname.  For the const
   # version, we're willing for const to be before typename or after
-  # Don't check the implemention on same line.
+  # Don't check the implementation on same line.
   fnline = line.split('{', 1)[0]
   if (len(re.findall(r'\([^()]*\b(?:[\w:]|<[^()]*>)+(\s?&|&\s?)\w+', fnline)) >
       len(re.findall(r'\([^()]*\bconst\s+(?:typename\s+)?(?:struct\s+)?'
@@ -2433,9 +2667,12 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
   if match:
     # gMock methods are defined using some variant of MOCK_METHODx(name, type)
     # where type may be float(), int(string), etc.  Without context they are
-    # virtually indistinguishable from int(x) casts.
+    # virtually indistinguishable from int(x) casts. Likewise, gMock's
+    # MockCallback takes a template parameter of the form return_type(arg_type),
+    # which looks much like the cast we're trying to detect.
     if (match.group(1) is None and  # If new operator, then this isn't a cast
-        not Match(r'^\s*MOCK_(CONST_)?METHOD\d+(_T)?\(', line)):
+        not (Match(r'^\s*MOCK_(CONST_)?METHOD\d+(_T)?\(', line) or
+             Match(r'^\s*MockCallback<.*>', line))):
       error(filename, linenum, 'readability/casting', 4,
             'Using deprecated casting style.  '
             'Use static_cast<%s>(...) instead' %
@@ -2443,11 +2680,19 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
 
   CheckCStyleCast(filename, linenum, line, clean_lines.raw_lines[linenum],
                   'static_cast',
-                  r'\((int|float|double|bool|char|u?int(16|32|64))\)',
-                  error)
-  # This doesn't catch all cases.  Consider (const char * const)"hello".
-  CheckCStyleCast(filename, linenum, line, clean_lines.raw_lines[linenum],
-                  'reinterpret_cast', r'\((\w+\s?\*+\s?)\)', error)
+                  r'\((int|float|double|bool|char|u?int(16|32|64))\)', error)
+
+  # This doesn't catch all cases. Consider (const char * const)"hello".
+  #
+  # (char *) "foo" should always be a const_cast (reinterpret_cast won't
+  # compile).
+  if CheckCStyleCast(filename, linenum, line, clean_lines.raw_lines[linenum],
+                     'const_cast', r'\((char\s?\*+\s?)\)\s*"', error):
+    pass
+  else:
+    # Check pointer casts for other than string constants
+    CheckCStyleCast(filename, linenum, line, clean_lines.raw_lines[linenum],
+                    'reinterpret_cast', r'\((\w+\s?\*+\s?)\)', error)
 
   # In addition, we look for people taking the address of a cast.  This
   # is dangerous -- casts can assign to temporaries, so the pointer doesn't
@@ -2486,7 +2731,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
     error(filename, linenum, 'runtime/init', 4,
           'You seem to be initializing a member variable with itself.')
 
-  if file_extension == 'h':
+  if file_extension in HEADER_EXTENSIONS:
     # TODO(unknown): check that 1-arg constructors are explicit.
     #                How to tell it's a constructor?
     #                (handled in CheckForNonStandardConstructs for now)
@@ -2546,11 +2791,19 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
   # Check for potential format string bugs like printf(foo).
   # We constrain the pattern not to pick things like DocidForPrintf(foo).
   # Not perfect but it can catch printf(foo.c_str()) and printf(foo->c_str())
-  match = re.search(r'\b((?:string)?printf)\s*\(([\w.\->()]+)\)', line, re.I)
-  if match:
-    error(filename, linenum, 'runtime/printf', 4,
-          'Potential format string bug. Do %s("%%s", %s) instead.'
-          % (match.group(1), match.group(2)))
+  # TODO(sugawarayu): Catch the following case. Need to change the calling
+  # convention of the whole function to process multiple line to handle it.
+  #   printf(
+  #       boy_this_is_a_really_long_variable_that_cannot_fit_on_the_prev_line);
+  printf_args = _GetTextInside(line, r'(?i)\b(string)?printf\s*\(')
+  if printf_args:
+    match = Match(r'([\w.\->()]+)$', printf_args)
+    if match:
+      function_name = re.search(r'\b((?:string)?printf)\s*\(',
+                                line, re.I).group(1)
+      error(filename, linenum, 'runtime/printf', 4,
+            'Potential format string bug. Do %s("%%s", %s) instead.'
+            % (function_name, match.group(1)))
 
   # Check for potential memset bugs like memset(buf, sizeof(buf), 0).
   match = Search(r'memset\s*\(([^,]*),\s*([^,]*),\s*0\s*\)', line)
@@ -2592,7 +2845,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
       if Match(r'(.+::)?[A-Z][A-Z0-9_]*', tok): continue
       # A catch all for tricky sizeof cases, including 'sizeof expression',
       # 'sizeof(*type)', 'sizeof(const type)', 'sizeof(struct StructName)'
-      # requires skipping the next token becasue we split on ' ' and '*'.
+      # requires skipping the next token because we split on ' ' and '*'.
       if tok.startswith('sizeof'):
         skip_next = True
         continue
@@ -2613,14 +2866,20 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
       line)
   if match and linenum + 1 < clean_lines.NumLines():
     next_line = clean_lines.elided[linenum + 1]
-    if not Search(r'^\s*};', next_line):
+    # We allow some, but not all, declarations of variables to be present
+    # in the statement that defines the class.  The [\w\*,\s]* fragment of
+    # the regular expression below allows users to declare instances of
+    # the class or pointers to instances, but not less common types such
+    # as function pointers or arrays.  It's a tradeoff between allowing
+    # reasonable code and avoiding trying to parse more C++ using regexps.
+    if not Search(r'^\s*}[\w\*,\s]*;', next_line):
       error(filename, linenum, 'readability/constructors', 3,
             match.group(1) + ' should be the last thing in the class')
 
   # Check for use of unnamed namespaces in header files.  Registration
   # macros are typically OK, so we allow use of "namespace {" on lines
   # that end with backslashes.
-  if (file_extension == 'h'
+  if (file_extension in HEADER_EXTENSIONS
       and Search(r'\bnamespace\s*{', line)
       and line[-1] != '\\'):
     error(filename, linenum, 'build/namespaces', 4,
@@ -2641,20 +2900,24 @@ def CheckCStyleCast(filename, linenum, line, raw_line, cast_type, pattern,
     line: The line of code to check.
     raw_line: The raw line of code to check, with comments.
     cast_type: The string for the C++ cast to recommend.  This is either
-      reinterpret_cast or static_cast, depending.
+      reinterpret_cast, static_cast, or const_cast, depending.
     pattern: The regular expression used to find C-style casts.
     error: The function to call with any errors found.
+
+  Returns:
+    True if an error was emitted.
+    False otherwise.
   """
   match = Search(pattern, line)
   if not match:
-    return
+    return False
 
   # e.g., sizeof(int)
   sizeof_match = Match(r'.*sizeof\s*$', line[0:match.start(1) - 1])
   if sizeof_match:
     error(filename, linenum, 'runtime/sizeof', 1,
           'Using sizeof(type).  Use sizeof(varname) instead if possible')
-    return
+    return True
 
   remainder = line[match.end(0):]
 
@@ -2665,23 +2928,29 @@ def CheckCStyleCast(filename, linenum, line, raw_line, cast_type, pattern,
   # eg, void foo(int); or void foo(int) const;
   # The equals check is for function pointer assignment.
   # eg, void *(*foo)(int) = ...
+  # The > is for MockCallback<...> ...
   #
   # Right now, this will only catch cases where there's a single argument, and
   # it's unnamed.  It should probably be expanded to check for multiple
   # arguments with some unnamed.
-  function_match = Match(r'\s*(\)|=|(const)?\s*(;|\{|throw\(\)))', remainder)
+  function_match = Match(r'\s*(\)|=|(const)?\s*(;|\{|throw\(\)|>))', remainder)
   if function_match:
-    if (not function_match.group(3) or
+    if ((not function_match.group(3) or
         function_match.group(3) == ';' or
-        raw_line.find('/*') < 0):
+        ('MockCallback<' not in raw_line and
+         '/*' not in raw_line)) and
+        'SIGNAL' not in raw_line and
+        'SLOT' not in raw_line):
       error(filename, linenum, 'readability/function', 3,
             'All parameters should be named in a function')
-    return
+    return True
 
   # At this point, all that should be left is actual casts.
   error(filename, linenum, 'readability/casting', 4,
         'Using C-style cast.  Use %s<%s>(...) instead' %
         (cast_type, match.group(1)))
+
+  return True
 
 
 _HEADERS_CONTAINING_TEMPLATES = (
@@ -2721,11 +2990,6 @@ _HEADERS_CONTAINING_TEMPLATES = (
     ('<slist>', ('slist',)),
     )
 
-_HEADERS_ACCEPTED_BUT_NOT_PROMOTED = {
-    # We can trust with reasonable confidence that map gives us pair<>, too.
-    'pair<>': ('map', 'multimap', 'hash_map', 'hash_multimap')
-}
-
 _RE_PATTERN_STRING = re.compile(r'\bstring\b')
 
 _re_pattern_algorithm_header = []
@@ -2751,24 +3015,24 @@ def FilesBelongToSameModule(filename_cc, filename_h):
   """Check if these two filenames belong to the same module.
 
   The concept of a 'module' here is a as follows:
-  foo.h, foo-inl.h, foo.cc, foo_test.cc and foo_unittest.cc belong to the
+  foo.h, foo-inl.h, foo.cpp, foo_test.cpp and foo_unittest.cpp belong to the
   same 'module' if they are in the same directory.
   some/path/public/xyzzy and some/path/internal/xyzzy are also considered
   to belong to the same module here.
 
   If the filename_cc contains a longer path than the filename_h, for example,
-  '/absolute/path/to/base/sysinfo.cc', and this file would include
+  '/absolute/path/to/base/sysinfo.cpp', and this file would include
   'base/sysinfo.h', this function also produces the prefix needed to open the
   header. This is used by the caller of this function to more robustly open the
   header file. We don't have access to the real include paths in this context,
   so we need this guesswork here.
 
-  Known bugs: tools/base/bar.cc and base/bar.h belong to the same module
+  Known bugs: tools/base/bar.cpp and base/bar.h belong to the same module
   according to this implementation. Because of this, this function gives
   some false positives. This should be sufficiently rare in practice.
 
   Args:
-    filename_cc: is the path for the .cc file
+    filename_cc: is the path for the .cpp file
     filename_h: is the path for the header path
 
   Returns:
@@ -2777,9 +3041,9 @@ def FilesBelongToSameModule(filename_cc, filename_h):
     string: the additional prefix needed to open the header file.
   """
 
-  if not filename_cc.endswith('.cc'):
+  if not filename_cc.endswith('.cpp'):
     return (False, '')
-  filename_cc = filename_cc[:-len('.cc')]
+  filename_cc = filename_cc[:-len('.cpp')]
   if filename_cc.endswith('_unittest'):
     filename_cc = filename_cc[:-len('_unittest')]
   elif filename_cc.endswith('_test'):
@@ -2852,17 +3116,17 @@ def CheckForIncludeWhatYouUse(filename, clean_lines, include_state, error,
   required = {}  # A map of header name to linenumber and the template entity.
                  # Example of required: { '<functional>': (1219, 'less<>') }
 
-  for linenum in xrange(clean_lines.NumLines()):
+  for linenum in range(clean_lines.NumLines()):
     line = clean_lines.elided[linenum]
     if not line or line[0] == '#':
       continue
 
     # String is special -- it is a non-templatized type in STL.
-    m = _RE_PATTERN_STRING.search(line)
-    if m:
+    matched = _RE_PATTERN_STRING.search(line)
+    if matched:
       # Don't warn about strings in non-STL namespaces:
       # (We check only the first match per line; good enough.)
-      prefix = line[:m.start()]
+      prefix = line[:matched.start()]
       if prefix.endswith('std::') or not prefix.endswith('::'):
         required['<string>'] = (linenum, 'string')
 
@@ -2879,7 +3143,7 @@ def CheckForIncludeWhatYouUse(filename, clean_lines, include_state, error,
         required[header] = (linenum, template)
 
   # The policy is that if you #include something in foo.h you don't need to
-  # include it again in foo.cc. Here, we will look at possible includes.
+  # include it again in foo.cpp. Here, we will look at possible includes.
   # Let's copy the include_state so it is only messed up within this function.
   include_state = include_state.copy()
 
@@ -2887,49 +3151,71 @@ def CheckForIncludeWhatYouUse(filename, clean_lines, include_state, error,
   header_found = False
 
   # Use the absolute path so that matching works properly.
-  abs_filename = os.path.abspath(filename)
+  abs_filename = FileInfo(filename).FullName()
 
   # For Emacs's flymake.
   # If cpplint is invoked from Emacs's flymake, a temporary file is generated
-  # by flymake and that file name might end with '_flymake.cc'. In that case,
+  # by flymake and that file name might end with '_flymake.cpp'. In that case,
   # restore original file name here so that the corresponding header file can be
   # found.
-  # e.g. If the file name is 'foo_flymake.cc', we should search for 'foo.h'
+  # e.g. If the file name is 'foo_flymake.cpp', we should search for 'foo.h'
   # instead of 'foo_flymake.h'
-  abs_filename = re.sub(r'_flymake\.cc$', '.cc', abs_filename)
+  abs_filename = re.sub(r'_flymake\.cpp$', '.cpp', abs_filename)
 
   # include_state is modified during iteration, so we iterate over a copy of
   # the keys.
-  for header in include_state.keys():  #NOLINT
+  header_keys = list(include_state.keys())
+  for header in header_keys:
     (same_module, common_path) = FilesBelongToSameModule(abs_filename, header)
     fullpath = common_path + header
     if same_module and UpdateIncludeState(fullpath, include_state, io):
       header_found = True
 
-  # If we can't find the header file for a .cc, assume it's because we don't
+  # If we can't find the header file for a .cpp, assume it's because we don't
   # know where to look. In that case we'll give up as we're not sure they
   # didn't include it in the .h file.
   # TODO(unknown): Do a better job of finding .h files so we are confident that
   # not having the .h file means there isn't one.
-  if filename.endswith('.cc') and not header_found:
+  if filename.endswith('.cpp') and not header_found:
     return
 
   # All the lines have been processed, report the errors found.
   for required_header_unstripped in required:
     template = required[required_header_unstripped][1]
-    if template in _HEADERS_ACCEPTED_BUT_NOT_PROMOTED:
-      headers = _HEADERS_ACCEPTED_BUT_NOT_PROMOTED[template]
-      if [True for header in headers if header in include_state]:
-        continue
     if required_header_unstripped.strip('<>"') not in include_state:
       error(filename, required[required_header_unstripped][0],
             'build/include_what_you_use', 4,
             'Add #include ' + required_header_unstripped + ' for ' + template)
 
 
+_RE_PATTERN_EXPLICIT_MAKEPAIR = re.compile(r'\bmake_pair\s*<')
+
+
+def CheckMakePairUsesDeduction(filename, clean_lines, linenum, error):
+  """Check that make_pair's template arguments are deduced.
+
+  G++ 4.6 in C++0x mode fails badly if make_pair's template arguments are
+  specified explicitly, and such use isn't intended in any case.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  raw = clean_lines.raw_lines
+  line = raw[linenum]
+  match = _RE_PATTERN_EXPLICIT_MAKEPAIR.search(line)
+  if match:
+    error(filename, linenum, 'build/explicit_make_pair',
+          4,  # 4 = high confidence
+          'Omit template arguments from make_pair OR use pair directly OR'
+          ' if appropriate, construct a pair directly')
+
+
 def ProcessLine(filename, file_extension,
                 clean_lines, line, include_state, function_state,
-                class_state, error):
+                class_state, error, extra_check_functions=[]):
   """Processes a single line in the file.
 
   Args:
@@ -2944,30 +3230,39 @@ def ProcessLine(filename, file_extension,
                  the current stack of nested class declarations being parsed.
     error: A callable to which errors are reported, which takes 4 arguments:
            filename, line number, error level, and message
-
+    extra_check_functions: An array of additional check functions that will be
+                           run on each source line. Each function takes 4
+                           arguments: filename, clean_lines, line, error
   """
   raw_lines = clean_lines.raw_lines
   ParseNolintSuppressions(filename, raw_lines[line], line, error)
   CheckForFunctionLengths(filename, clean_lines, line, function_state, error)
   CheckForMultilineCommentsAndStrings(filename, clean_lines, line, error)
-  CheckStyle(filename, clean_lines, line, file_extension, error)
+  CheckStyle(filename, clean_lines, line, file_extension, class_state, error)
   CheckLanguage(filename, clean_lines, line, file_extension, include_state,
                 error)
   CheckForNonStandardConstructs(filename, clean_lines, line,
                                 class_state, error)
   CheckPosixThreading(filename, clean_lines, line, error)
   CheckInvalidIncrement(filename, clean_lines, line, error)
+  CheckMakePairUsesDeduction(filename, clean_lines, line, error)
+  for check_fn in extra_check_functions:
+    check_fn(filename, clean_lines, line, error)
 
-
-def ProcessFileData(filename, file_extension, lines, error):
+def ProcessFileData(filename, file_extension, lines, error,
+                    extra_check_functions=[]):
   """Performs lint checks and reports any errors to the given error function.
 
   Args:
     filename: Filename of the file that is being processed.
     file_extension: The extension (dot not included) of the file.
     lines: An array of strings, each representing a line of the file, with the
-           last element being empty if the file is termined with a newline.
+           last element being empty if the file is terminated with a newline.
     error: A callable to which errors are reported, which takes 4 arguments:
+           filename, line number, error level, and message
+    extra_check_functions: An array of additional check functions that will be
+                           run on each source line. Each function takes 4
+                           arguments: filename, clean_lines, line, error
   """
   lines = (['// marker so line numbers and indices both start at 1'] + lines +
            ['// marker so line numbers end in a known way'])
@@ -2980,14 +3275,15 @@ def ProcessFileData(filename, file_extension, lines, error):
 
   CheckForCopyright(filename, lines, error)
 
-  if file_extension == 'h':
+  if file_extension in HEADER_EXTENSIONS:
     CheckForHeaderGuard(filename, lines, error)
 
   RemoveMultiLineComments(filename, lines, error)
   clean_lines = CleansedLines(lines)
-  for line in xrange(clean_lines.NumLines()):
+  for line in range(clean_lines.NumLines()):
     ProcessLine(filename, file_extension, clean_lines, line,
-                include_state, function_state, class_state, error)
+                include_state, function_state, class_state, error,
+                extra_check_functions)
   class_state.CheckFinished(filename, error)
 
   CheckForIncludeWhatYouUse(filename, clean_lines, include_state, error)
@@ -2998,7 +3294,7 @@ def ProcessFileData(filename, file_extension, lines, error):
 
   CheckForNewlineAtEOF(filename, lines, error)
 
-def ProcessFile(filename, vlevel):
+def ProcessFile(filename, vlevel, extra_check_functions=[]):
   """Does google-lint on a single file.
 
   Args:
@@ -3006,6 +3302,10 @@ def ProcessFile(filename, vlevel):
 
     vlevel: The level of errors to report.  Every error of confidence
     >= verbose_level will be reported.  0 is a good default.
+
+    extra_check_functions: An array of additional check functions that will be
+                           run on each source line. Each function takes 4
+                           arguments: filename, clean_lines, line, error
   """
 
   _SetVerboseLevel(vlevel)
@@ -3017,9 +3317,7 @@ def ProcessFile(filename, vlevel):
     # contain trailing '\r' characters if we are reading a file that
     # has CRLF endings.
     # If after the split a trailing '\r' is present, it is removed
-    # below. If it is not expected to be present (i.e. os.linesep !=
-    # '\r\n' as in Windows), a warning is issued below if this file
-    # is processed.
+    # and a a warning is issued below if this file is processed.
 
     if filename == '-':
       lines = codecs.StreamReaderWriter(sys.stdin,
@@ -3046,19 +3344,19 @@ def ProcessFile(filename, vlevel):
 
   # When reading from stdin, the extension is unknown, so no cpplint tests
   # should rely on the extension.
-  if (filename != '-' and file_extension != 'hpp' and file_extension != 'cpp'):
-    sys.stderr.write('Ignoring %s; not a .cpp or .hpp file\n' % filename)
+  if (filename != '-' and file_extension not in EXTENSIONS):
+    sys.stderr.write('Ignoring %s; extension not in %s\n' % (filename, EXTENSIONS))
   else:
-    ProcessFileData(filename, file_extension, lines, Error)
-    if carriage_return_found and os.linesep != '\r\n':
-      # Use 0 for linenum since outputing only one error for potentially
+    ProcessFileData(filename, file_extension, lines, Error,
+                    extra_check_functions)
+    if carriage_return_found:
+      # Use 0 for linenum since outputting only one error for potentially
       # several lines.
-      Error(filename, 0, 'whitespace/newline', 1,
+      Error(filename, 0, 'whitespace/carriage-return', 1,
             'One or more unexpected \\r (^M) found;'
             'better to use only a \\n')
 
-  # dennda:
-  # sys.stderr.write('Done processing %s\n' % filename)
+  sys.stderr.write('Done processing %s\n' % filename)
 
 
 def PrintUsage(message):
@@ -3068,6 +3366,7 @@ def PrintUsage(message):
     message: The optional error message.
   """
   sys.stderr.write(_USAGE)
+
   if message:
     sys.exit('\nFATAL ERROR: ' + message)
   else:
@@ -3096,11 +3395,13 @@ def ParseArguments(args):
   """
   try:
     (opts, filenames) = getopt.getopt(args, '', ['help', 'output=', 'verbose=',
+                                                 'project=',
                                                  'counting=',
                                                  'filter='])
   except getopt.GetoptError:
     PrintUsage('Invalid arguments.')
 
+  project_name = _ProjectName()
   verbosity = _VerboseLevel()
   output_format = _OutputFormat()
   filters = ''
@@ -3113,6 +3414,8 @@ def ParseArguments(args):
       if not val in ('emacs', 'vs7'):
         PrintUsage('The only allowed output formats are emacs and vs7.')
       output_format = val
+    elif opt == '--project':
+      project_name = val
     elif opt == '--verbose':
       verbosity = int(val)
     elif opt == '--filter':
@@ -3128,6 +3431,7 @@ def ParseArguments(args):
     PrintUsage('No files were specified.')
 
   _SetOutputFormat(output_format)
+  _SetProjectName(project_name)
   _SetVerboseLevel(verbosity)
   _SetFilters(filters)
   _SetCountingStyle(counting_style)
@@ -3137,18 +3441,18 @@ def ParseArguments(args):
 
 def main():
   filenames = ParseArguments(sys.argv[1:])
-
-  # Change stderr to write with replacement characters so we don't die
-  # if we try to print something containing non-ASCII characters.
-  sys.stderr = codecs.StreamReaderWriter(sys.stderr,
-                                         codecs.getreader('utf8'),
-                                         codecs.getwriter('utf8'),
-                                         'replace')
-
-  _cpplint_state.ResetErrorCounts()
-  for filename in filenames:
-    ProcessFile(filename, _cpplint_state.verbose_level)
-  _cpplint_state.PrintErrorCounts()
+  backup_err = sys.stderr
+  try:
+    # Change stderr to write with replacement characters so we don't die
+    # if we try to print something containing non-ASCII characters.
+    sys.stderr = codecs.StreamReader(sys.stderr,
+                                     'replace')
+    _cpplint_state.ResetErrorCounts()
+    for filename in filenames:
+      ProcessFile(filename, _cpplint_state.verbose_level)
+    _cpplint_state.PrintErrorCounts()
+  finally:
+    sys.stderr = backup_err
 
   sys.exit(_cpplint_state.error_count > 0)
 
