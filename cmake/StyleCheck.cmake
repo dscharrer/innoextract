@@ -57,13 +57,15 @@ set(STYLE_FILTER ${STYLE_FILTER},-whitespace/semicolon)
 #
 # Parameters:
 # - TARGET_NAME the name of the target to add
-# - SOURCES_LIST a complete list of source files to check
-# - INCLUDES_LIST a complete list of include files to check
-function(add_style_check_target TARGET_NAME SOURCES_LIST INCLUDES_LIST)
+# - SOURCES_LIST a complete list of source and include files to check
+function(add_style_check_target TARGET_NAME SOURCES_LIST)
 	
 	if(NOT PYTHONINTERP_FOUND)
 		return()
 	endif()
+	
+	list(SORT SOURCES_LIST)
+  list(REMOVE_DUPLICATES SOURCES_LIST)
 	
 	add_custom_target(${TARGET_NAME}
 		COMMAND "${CMAKE_COMMAND}" -E chdir
@@ -71,8 +73,8 @@ function(add_style_check_target TARGET_NAME SOURCES_LIST INCLUDES_LIST)
 			"${PYTHON_EXECUTABLE}"
 			"${CMAKE_MODULE_PATH}/cpplint.py"
 			"--filter=${STYLE_FILTER}"
-			${SOURCES_LIST} ${INCLUDES_LIST}
-		DEPENDS ${SOURCES_LIST} ${INCLUDES_LIST}
+			${SOURCES_LIST}
+		DEPENDS ${SOURCES_LIST}
 		COMMENT "Checking code style."
 		VERBATIM
 	)

@@ -57,8 +57,10 @@ include(CheckSymbolExists)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake") # For custom cmake modules
 include(BuildType)
 include(CompileCheck)
+include(CreateSourceGroups)
 include(CXX11Check)
 include(Doxygen)
+include(FilterList)
 include(PrintConfiguration)
 include(StyleCheck)
 include(UseStaticLibs)
@@ -222,70 +224,115 @@ check_symbol_exists(bswap_64 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_64)
 
 set(INNOEXTRACT_SOURCES
 	
+	src/release.hpp
+	${VERSION_FILE}
+	
+	src/cli/debug.hpp
+	src/cli/debug.cpp if DEBUG
 	src/cli/main.cpp
 	
+	src/crypto/adler32.hpp
 	src/crypto/adler32.cpp
+	src/crypto/checksum.hpp
 	src/crypto/checksum.cpp
+	src/crypto/crc32.hpp
 	src/crypto/crc32.cpp
 	src/crypto/hasher.cpp
+	src/crypto/hasher.cpp
+	src/crypto/iteratedhash.hpp
+	src/crypto/md5.hpp
 	src/crypto/md5.cpp
+	src/crypto/sha1.hpp
 	src/crypto/sha1.cpp
 	
+	src/loader/exereader.hpp
 	src/loader/exereader.cpp
+	src/loader/offsets.hpp
 	src/loader/offsets.cpp
 	
+	src/setup/component.hpp
 	src/setup/component.cpp
+	src/setup/data.hpp
 	src/setup/data.cpp
+	src/setup/delete.hpp
 	src/setup/delete.cpp
+	src/setup/directory.hpp
 	src/setup/directory.cpp
+	src/setup/expression.hpp
 	src/setup/expression.cpp
+	src/setup/file.hpp
 	src/setup/file.cpp
+	src/setup/filename.hpp
 	src/setup/filename.cpp
+	src/setup/header.hpp
 	src/setup/header.cpp
+	src/setup/icon.hpp
 	src/setup/icon.cpp
+	src/setup/info.hpp
 	src/setup/info.cpp
+	src/setup/ini.hpp
 	src/setup/ini.cpp
+	src/setup/item.hpp
 	src/setup/item.cpp
+	src/setup/language.hpp
 	src/setup/language.cpp
+	src/setup/message.hpp
 	src/setup/message.cpp
+	src/setup/permission.hpp
 	src/setup/permission.cpp
+	src/setup/registry.hpp
 	src/setup/registry.cpp
+	src/setup/run.hpp
 	src/setup/run.cpp
+	src/setup/task.hpp
 	src/setup/task.cpp
+	src/setup/type.hpp
 	src/setup/type.cpp
+	src/setup/version.hpp
 	src/setup/version.cpp
+	src/setup/windows.hpp
 	src/setup/windows.cpp
 	
+	src/stream/block.hpp
 	src/stream/block.cpp
+	src/stream/checksum.hpp
+	src/stream/chunk.hpp
 	src/stream/chunk.cpp
+	src/stream/exefilter.hpp
+	src/stream/file.hpp
 	src/stream/file.cpp
-	
+	src/stream/lzma.hpp
+	src/stream/lzma.cpp if INNOEXTRACT_HAVE_LZMA
+	src/stream/restrict.hpp
+	src/stream/slice.hpp
 	src/stream/slice.cpp
+	
+	src/util/boostfs_compat.hpp
+	src/util/console.hpp
 	src/util/console.cpp
+	src/util/endian.hpp
+	src/util/enum.hpp
+	src/util/flags.hpp
+	src/util/fstream.hpp
+	src/util/load.hpp
 	src/util/load.cpp
+	src/util/log.hpp
 	src/util/log.cpp
+	src/util/output.hpp
+	src/util/storedenum.hpp
+	src/util/time.hpp
 	src/util/time.cpp
+	src/util/types.hpp
+	src/util/unique_ptr.hpp
+	src/util/util.hpp
+	src/util/windows.hpp
+	src/util/windows.cpp if WIN32
 	
 )
 
-if(DEBUG)
-	list(APPEND INNOEXTRACT_SOURCES src/cli/debug.cpp)
-endif()
+filter_list(INNOEXTRACT_SOURCES ALL_INNOEXTRACT_SOURCES)
 
-if(LZMA_FOUND)
-	list(APPEND INNOEXTRACT_SOURCES src/stream/lzma.cpp)
-endif()
-
-if(WIN32)
-	list(APPEND INNOEXTRACT_SOURCES src/util/windows.cpp)
-endif()
-
-file(GLOB_RECURSE ALL_INCLUDES "${CMAKE_SOURCE_DIR}/src/*.hpp")
-
-list(SORT INNOEXTRACT_SOURCES)
-list(SORT ALL_INCLUDES)
-
-list(APPEND CHECKED_SOURCES ${INNOEXTRACT_SOURCES})
+create_source_groups(ALL_INNOEXTRACT_SOURCES)
 
 
 # Prepare generated files
@@ -297,12 +344,12 @@ configure_file("src/configure.hpp.in" "configure.hpp")
 set(VERSION_FILE "${CMAKE_BINARY_DIR}/release.cpp")
 set(VERSION_SOURCES VERSION "VERSION" LICENSE "LICENSE")
 version_file("src/release.cpp.in" "${VERSION_FILE}" "${VERSION_SOURCES}" ".git")
-list(APPEND INNOEXTRACT_SOURCES "${VERSION_FILE}")
+list(APPEND INNOEXTRACT_SOURCES ${VERSION_FILE})
 
 
 # Main targets
 
-add_executable(innoextract ${INNOEXTRACT_SOURCES} ${ALL_INCLUDES})
+add_executable(innoextract ${INNOEXTRACT_SOURCES})
 target_link_libraries(innoextract ${LIBRARIES})
 
 install(TARGETS innoextract RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -312,7 +359,7 @@ install(FILES doc/innoextract.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONA
 
 # Additional targets.
 
-add_style_check_target(style "${CHECKED_SOURCES}" "${ALL_INCLUDES}")
+add_style_check_target(style "${ALL_INNOEXTRACT_SOURCES}")
 
 add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/doc")
 
