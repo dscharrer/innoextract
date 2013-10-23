@@ -159,11 +159,15 @@ shell_command current = reset;
 
 void init(is_enabled color, is_enabled progress) {
 	
-	bool is_tty = false;
+	bool is_tty;
 	#if INNOEXTRACT_HAVE_ISATTY
 	is_tty = isatty(1) && isatty(2);
 	#elif INNOEXTRACT_HAVE_MS_ISATTY
 	is_tty = _isatty(_fileno(stdout)) && _isatty(_fileno(stderr));
+	#else
+	// Since we can't check if stdout is a terminal,
+	// don't automatically enable color output and progress bar
+	is_tty = false;
 	#endif
 	
 	#if defined(_WIN32)
@@ -172,6 +176,7 @@ void init(is_enabled color, is_enabled progress) {
 	if(console_handle && GetConsoleScreenBufferInfo(console_handle, &info)) {
 		original_color = info.wAttributes;
 	} else {
+		// Color and progress bar need a console handle under Windows, but we couldn't get one
 		is_tty = false;
 		color = disable;
 		progress = disable;
