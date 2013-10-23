@@ -32,6 +32,7 @@
 #include <boost/unordered_map.hpp>
 
 #include "util/log.hpp"
+#include "util/math.hpp"
 
 namespace util {
 

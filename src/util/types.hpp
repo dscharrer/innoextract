@@ -30,10 +30,6 @@
 #include <boost/integer/static_min_max.hpp>
 #include <boost/integer.hpp>
 
-#include "util/math.hpp"
-
-#include "configure.hpp"
-
 namespace util {
 
 #if BOOST_VERSION < 104200
@@ -88,34 +84,6 @@ struct compatible_integer<Base, Bits, true> {
 		boost::static_unsigned_min<Bits, sizeof(Base) * 8>::value
 	>::exact type;
 };
-
-
-//! Get the alignment of a type.
-template <class T>
-unsigned int alignment_of() {
-#if INNOEXTRACT_HAVE_ALIGNOF
-	return alignof(T);
-#elif defined(_MSC_VER) && _MSC_VER >= 1300
-	return __alignof(T);
-#elif defined(__GNUC__)
-	return __alignof__(T);
-#else
-	return sizeof(T);
-#endif
-}
-
-//! Check if a pointer has aparticular alignment.
-inline bool is_aligned_on(const void * p, size_t alignment) {
-	return alignment == 1
-	       || (is_power_of_2(alignment) ? mod_power_of_2(size_t(p), alignment) == 0
-	                                    : size_t(p) % alignment == 0);
-}
-
-//! Check if a pointer is aligned for a specific type.
-template <class T>
-bool is_aligned(const void * p) {
-	return is_aligned_on(p, alignment_of<T>());
-}
 
 //! CRTP helper class to hide the ugly static casts needed to get to the derived class.
 template <class Impl>

@@ -29,6 +29,7 @@
 #include <boost/range/size.hpp>
 
 #include "crypto/checksum.hpp"
+#include "util/align.hpp"
 #include "util/endian.hpp"
 #include "util/math.hpp"
 #include "util/types.hpp"
