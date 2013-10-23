@@ -55,7 +55,7 @@ const MapName::enum_type MapName::default_value = Default
 
 //! Declare a mapping from bits to flag enum elements to be used for \ref stored_flags
 #define STORED_FLAGS_MAP(MapName, Flag0, /* additional flags */ ...) \
-	STORED_MAP_HELPER(MapName, Flag0, /* no default value */, Flag0, ## __VA_ARGS__)
+	STORED_MAP_HELPER(MapName, Flag0, , Flag0, ## __VA_ARGS__)
 
 template <class Mapping>
 struct stored_enum {
