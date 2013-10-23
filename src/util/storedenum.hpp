@@ -34,7 +34,6 @@
 #include "util/enum.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
-#include "util/util.hpp"
 
 // Shared info for enums and flags
 #define STORED_MAP_HELPER(MapName, TypeRep, DefaultDecl, ...) \

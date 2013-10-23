@@ -23,6 +23,7 @@
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/range/size.hpp>
 
 #include "release.hpp"
 #include "stream/lzma.hpp"
@@ -69,7 +70,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 	}
 	
 	char magic[ARRAY_SIZE(chunk_id)];
-	if(base.read(magic, 4) != 4 || memcmp(magic, chunk_id, ARRAY_SIZE(chunk_id))) {
+	if(base.read(magic, 4) != 4 || memcmp(magic, chunk_id, boost::size(chunk_id))) {
 		throw chunk_error("bad chunk magic");
 	}
 	

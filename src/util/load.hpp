@@ -29,10 +29,10 @@
 #include <string>
 
 #include <boost/cstdint.hpp>
+#include <boost/range/size.hpp>
 
 #include "util/endian.hpp"
 #include "util/types.hpp"
-#include "util/util.hpp"
 
 namespace util {
 
@@ -191,7 +191,7 @@ template <class T>
 void discard(T & is, boost::uint64_t bytes) {
 	char buf[1024];
 	while(bytes) {
-		std::streamsize n = std::streamsize(std::min<boost::uint64_t>(bytes, ARRAY_SIZE(buf)));
+		std::streamsize n = std::streamsize(std::min<boost::uint64_t>(bytes, boost::size(buf)));
 		is.read(buf, n);
 		bytes -= boost::uint64_t(n);
 	}

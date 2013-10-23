@@ -24,11 +24,11 @@
 #include <stddef.h>
 #include <ostream>
 
+#include <boost/range/size.hpp>
 #include <boost/utility/enable_if.hpp>
 
 #include "util/console.hpp"
 #include "util/flags.hpp"
-#include "util/util.hpp"
 
 template <class Enum>
 struct get_enum {
@@ -66,7 +66,7 @@ struct enum_names {
 	const char * enum_names<get_enum<Enum>::type>::name = (Name); \
 	const char * enum_names<get_enum<Enum>::type>::names[] = { __VA_ARGS__ }; \
 	const size_t enum_names<get_enum<Enum>::type>::count \
-	 = ARRAY_SIZE(enum_names<get_enum<Enum>::type>::names);
+	 = boost::size(enum_names<get_enum<Enum>::type>::names);
 
 #define USE_ENUM_NAMES(Enum) \
 	(void)enum_names<get_enum<Enum>::type>::count; \

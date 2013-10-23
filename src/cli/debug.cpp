@@ -24,6 +24,7 @@
 #include <iostream>
 
 #include <boost/foreach.hpp>
+#include <boost/range/size.hpp>
 
 #include "loader/offsets.hpp"
 #include "setup/component.hpp"
@@ -49,7 +50,6 @@
 #include "util/log.hpp"
 #include "util/output.hpp"
 #include "util/time.hpp"
-#include "util/util.hpp"
 
 void print_offsets(const loader::offsets & offsets) {
 	
@@ -524,7 +524,7 @@ static const char * magic_numbers[][2] = {
 
 static const char * guess_extension(const std::string & data) {
 	
-	for(size_t i = 0; i < ARRAY_SIZE(magic_numbers); i++) {
+	for(size_t i = 0; i < boost::size(magic_numbers); i++) {
 		
 		size_t n = strlen(magic_numbers[i][0]);
 		

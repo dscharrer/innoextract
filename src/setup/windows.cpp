@@ -23,10 +23,10 @@
 #include <ostream>
 
 #include <boost/cstdint.hpp>
+#include <boost/range/size.hpp>
 
 #include "setup/version.hpp"
 #include "util/load.hpp"
-#include "util/util.hpp"
 
 namespace setup {
 
@@ -103,9 +103,9 @@ const char * get_version_name(const windows_version::data & version, bool nt = f
 	windows_version_name * names;
 	size_t count;
 	if(nt) {
-		names = windows_nt_version_names, count = ARRAY_SIZE(windows_nt_version_names);
+		names = windows_nt_version_names, count = boost::size(windows_nt_version_names);
 	} else {
-		names = windows_version_names, count = ARRAY_SIZE(windows_version_names);
+		names = windows_version_names, count = boost::size(windows_version_names);
 	}
 	
 	for(size_t i = 0; i < count; i++) {

@@ -24,6 +24,7 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/range/size.hpp>
 
 #include <stddef.h>
 
@@ -101,16 +102,16 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	}
 	
 	char magic[12];
-	if(is.read(magic, std::streamsize(ARRAY_SIZE(magic))).fail()) {
+	if(is.read(magic, std::streamsize(boost::size(magic))).fail()) {
 		is.clear();
 		return false;
 	}
 	
 	setup::version_constant version = 0;
-	for(size_t i = 0; i < ARRAY_SIZE(known_setup_loader_versions); i++) {
+	for(size_t i = 0; i < boost::size(known_setup_loader_versions); i++) {
 		BOOST_STATIC_ASSERT(ARRAY_SIZE(known_setup_loader_versions[i].magic)
 		                    == ARRAY_SIZE(magic));
-		if(!memcmp(magic, known_setup_loader_versions[i].magic, ARRAY_SIZE(magic))) {
+		if(!memcmp(magic, known_setup_loader_versions[i].magic, boost::size(magic))) {
 			version = known_setup_loader_versions[i].version;
 			break;
 		}
@@ -121,7 +122,7 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	
 	crypto::crc32 checksum;
 	checksum.init();
-	checksum.update(magic, ARRAY_SIZE(magic));
+	checksum.update(magic, boost::size(magic));
 	
 	if(version >= INNO_VERSION(5, 1,  5)) {
 		boost::uint32_t revision = checksum.load<boost::uint32_t>(is);

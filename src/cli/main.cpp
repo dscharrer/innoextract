@@ -28,14 +28,15 @@
 #include <string>
 #include <vector>
 
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/range/size.hpp>
 
 #include "release.hpp"
 
@@ -403,7 +404,7 @@ static void process_file(const fs::path & file, const options & o) {
 			// Copy data
 			while(!file_source->eof()) {
 				char buffer[8192 * 10];
-				std::streamsize buffer_size = std::streamsize(ARRAY_SIZE(buffer));
+				std::streamsize buffer_size = std::streamsize(boost::size(buffer));
 				std::streamsize n = file_source->read(buffer, buffer_size).gcount();
 				if(n > 0) {
 					BOOST_FOREACH(file_output & out, output) {

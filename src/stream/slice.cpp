@@ -25,11 +25,11 @@
 #include <limits>
 
 #include <boost/cstdint.hpp>
+#include <boost/range/size.hpp>
 
 #include "util/console.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
-#include "util/util.hpp"
 
 namespace stream {
 
@@ -99,7 +99,7 @@ bool slice_reader::open_file(const path_type & file) {
 		throw slice_error("could not read slice magic number");
 	}
 	bool found = false;
-	for(size_t i = 0; ARRAY_SIZE(slice_ids); i++) {
+	for(size_t i = 0; boost::size(slice_ids); i++) {
 		if(!std::memcmp(magic, slice_ids[i], 8)) {
 			found = true;
 			break;
