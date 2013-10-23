@@ -29,6 +29,8 @@
 
 namespace setup {
 
+namespace {
+
 static bool is_identifier_start(char c) {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 }
@@ -145,6 +147,8 @@ struct evaluator {
 	}
 	
 };
+
+} // anonymous namespace
 
 bool expression_match(const std::string & test, const std::string & expr) {
 	try {
