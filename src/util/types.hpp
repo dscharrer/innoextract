@@ -30,7 +30,7 @@
 #include <boost/integer/static_min_max.hpp>
 #include <boost/integer.hpp>
 
-#include "util/util.hpp"
+#include "util/math.hpp"
 
 #include "configure.hpp"
 

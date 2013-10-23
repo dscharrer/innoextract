@@ -23,7 +23,7 @@
 
 #include "crypto/sha1.hpp"
 
-#include "util/util.hpp"
+#include "util/math.hpp"
 
 namespace crypto {
 

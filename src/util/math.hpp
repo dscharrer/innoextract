@@ -19,19 +19,16 @@
  */
 
 /*!
- * Miscellaneous utility functions.
+ * Math helper functions.
  */
-#ifndef INNOEXTRACT_UTIL_UTIL_HPP
-#define INNOEXTRACT_UTIL_UTIL_HPP
+#ifndef INNOEXTRACT_UTIL_MATH_HPP
+#define INNOEXTRACT_UTIL_MATH_HPP
 
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
 
 namespace util {
-
-//! Get the number of elements in a statically-sized array.
-#define ARRAY_SIZE(array) (sizeof(array)/sizeof(*(array)))
 
 //! Divide by a number and round up the result.
 template <typename T>
@@ -132,4 +129,4 @@ inline boost::uint64_t rotl_fixed<boost::uint64_t>(boost::uint64_t x, unsigned i
 
 } // namespace util
 
-#endif // INNOEXTRACT_UTIL_UTIL_HPP
+#endif // INNOEXTRACT_UTIL_MATH_HPP

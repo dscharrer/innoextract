@@ -42,7 +42,7 @@
 #include "util/enum.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
-#include "util/util.hpp"
+#include "util/math.hpp"
 
 namespace io = boost::iostreams;
 

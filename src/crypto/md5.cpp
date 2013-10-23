@@ -24,7 +24,7 @@
 
 #include "crypto/md5.hpp"
 
-#include "util/util.hpp"
+#include "util/math.hpp"
 
 namespace crypto {
 

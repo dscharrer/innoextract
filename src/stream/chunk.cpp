@@ -30,7 +30,6 @@
 #include "stream/restrict.hpp"
 #include "stream/slice.hpp"
 #include "util/log.hpp"
-#include "util/util.hpp"
 
 namespace io = boost::iostreams;
 
@@ -69,7 +68,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 		throw chunk_error("could not seek to chunk start");
 	}
 	
-	char magic[ARRAY_SIZE(chunk_id)];
+	char magic[sizeof(chunk_id)];
 	if(base.read(magic, 4) != 4 || memcmp(magic, chunk_id, boost::size(chunk_id))) {
 		throw chunk_error("bad chunk magic");
 	}

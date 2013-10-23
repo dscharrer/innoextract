@@ -317,13 +317,13 @@ set(INNOEXTRACT_SOURCES
 	src/util/load.cpp
 	src/util/log.hpp
 	src/util/log.cpp
+	src/util/math.hpp
 	src/util/output.hpp
 	src/util/storedenum.hpp
 	src/util/time.hpp
 	src/util/time.cpp
 	src/util/types.hpp
 	src/util/unique_ptr.hpp
-	src/util/util.hpp
 	src/util/windows.hpp
 	src/util/windows.cpp if WIN32
 	

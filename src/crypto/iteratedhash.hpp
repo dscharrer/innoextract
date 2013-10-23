@@ -30,8 +30,8 @@
 
 #include "crypto/checksum.hpp"
 #include "util/endian.hpp"
+#include "util/math.hpp"
 #include "util/types.hpp"
-#include "util/util.hpp"
 
 namespace crypto {
 

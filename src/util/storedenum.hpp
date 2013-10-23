@@ -44,7 +44,7 @@ struct MapName { \
 	static const size_t count; \
 }; \
 const MapName::enum_type MapName::values[] = { __VA_ARGS__ }; \
-const size_t MapName::count = ARRAY_SIZE(MapName::values)
+const size_t MapName::count = (sizeof(MapName::values)/sizeof(*(MapName::values)))
 
 //! Declare a mapping from integers to enum elements to be used for \ref stored_enum
 #define STORED_ENUM_MAP(MapName, Default, /* elements */ ...) \
