@@ -2,8 +2,8 @@ language: cpp
 compiler:
   - gcc
 before_install:
- - sudo apt-get update -qq
- - sudo apt-get install -qq build-essential cmake libboost-all-dev liblzma-dev
+ - sudo apt-get update
+ - sudo apt-get install build-essential cmake libboost-all-dev liblzma-dev
 script: mkdir build && cd build && cmake .. && make
 branches:
   only:
