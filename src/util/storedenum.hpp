@@ -36,28 +36,27 @@
 #include "util/log.hpp"
 #include "util/util.hpp"
 
-#include "configure.hpp"
-
-template <class Enum>
-struct enum_value_map {
-	
-	typedef Enum enum_type;
-	typedef Enum flag_type;
-	
-};
-
-#define STORED_ENUM_MAP(MapName, Default, ...) \
-struct MapName : public enum_value_map<BOOST_TYPEOF(Default)> { \
-	static const flag_type default_value; \
-	static const flag_type values[]; \
+// Shared info for enums and flags
+#define STORED_MAP_HELPER(MapName, TypeRep, DefaultDecl, ...) \
+struct MapName { \
+	typedef BOOST_TYPEOF(TypeRep) enum_type; \
+	DefaultDecl \
+	static const enum_type values[]; \
 	static const size_t count; \
 }; \
-const MapName::flag_type MapName::default_value = Default; \
-const MapName::flag_type MapName::values[] = { __VA_ARGS__ }; \
+const MapName::enum_type MapName::values[] = { __VA_ARGS__ }; \
 const size_t MapName::count = ARRAY_SIZE(MapName::values)
 
-#define STORED_FLAGS_MAP(MapName, Flag0, ...) \
-	STORED_ENUM_MAP(MapName, Flag0, Flag0, ## __VA_ARGS__)
+//! Declare a mapping from integers to enum elements to be used for \ref stored_enum
+#define STORED_ENUM_MAP(MapName, Default, /* elements */ ...) \
+	STORED_MAP_HELPER(MapName, Default, \
+	static const enum_type default_value;, \
+	## __VA_ARGS__); \
+const MapName::enum_type MapName::default_value = Default
+
+//! Declare a mapping from bits to flag enum elements to be used for \ref stored_flags
+#define STORED_FLAGS_MAP(MapName, Flag0, /* additional flags */ ...) \
+	STORED_MAP_HELPER(MapName, Flag0, /* no default value */, Flag0, ## __VA_ARGS__)
 
 template <class Mapping>
 struct stored_enum {
