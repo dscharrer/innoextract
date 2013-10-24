@@ -69,7 +69,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 	}
 	
 	char magic[sizeof(chunk_id)];
-	if(base.read(magic, 4) != 4 || memcmp(magic, chunk_id, boost::size(chunk_id))) {
+	if(base.read(magic, 4) != 4 || memcmp(magic, chunk_id, sizeof(chunk_id))) {
 		throw chunk_error("bad chunk magic");
 	}
 	

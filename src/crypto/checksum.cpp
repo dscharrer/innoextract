@@ -38,8 +38,8 @@ bool checksum::operator==(const checksum & o) const {
 	switch(type) {
 		case Adler32: return (adler32 == o.adler32);
 		case CRC32: return (crc32 == o.crc32);
-		case MD5: return !memcmp(md5, o.md5, boost::size(md5));
-		case SHA1: return !memcmp(sha1, o.sha1, boost::size(sha1));
+		case MD5: return !memcmp(md5, o.md5, sizeof(md5));
+		case SHA1: return !memcmp(sha1, o.sha1, sizeof(sha1));
 		default: return false;
 	};
 }
@@ -69,13 +69,13 @@ std::ostream & operator<<(std::ostream & os, const crypto::checksum & checksum) 
 			break;
 		}
 		case crypto::MD5: {
-			for(size_t i = 0; i < boost::size(checksum.md5); i++) {
+			for(size_t i = 0; i < size_t(boost::size(checksum.md5)); i++) {
 				os << std::setfill('0') << std::hex << std::setw(2) << int(boost::uint8_t(checksum.md5[i]));
 			}
 			break;
 		}
 		case crypto::SHA1: {
-			for(size_t i = 0; i < boost::size(checksum.sha1); i++) {
+			for(size_t i = 0; i < size_t(boost::size(checksum.sha1)); i++) {
 				os << std::setfill('0') << std::hex << std::setw(2) << int(boost::uint8_t(checksum.sha1[i]));
 			}
 			break;

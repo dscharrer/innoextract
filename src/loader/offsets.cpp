@@ -108,7 +108,7 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	}
 	
 	setup::version_constant version = 0;
-	for(size_t i = 0; i < boost::size(known_setup_loader_versions); i++) {
+	for(size_t i = 0; i < size_t(boost::size(known_setup_loader_versions)); i++) {
 		BOOST_STATIC_ASSERT(sizeof(known_setup_loader_versions[i].magic) == sizeof(magic));
 		if(!memcmp(magic, known_setup_loader_versions[i].magic, sizeof(magic))) {
 			version = known_setup_loader_versions[i].version;

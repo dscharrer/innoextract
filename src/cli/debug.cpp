@@ -524,7 +524,7 @@ static const char * magic_numbers[][2] = {
 
 static const char * guess_extension(const std::string & data) {
 	
-	for(size_t i = 0; i < boost::size(magic_numbers); i++) {
+	for(size_t i = 0; i < size_t(boost::size(magic_numbers)); i++) {
 		
 		size_t n = strlen(magic_numbers[i][0]);
 		

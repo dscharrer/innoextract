@@ -184,7 +184,7 @@ void version::load(std::istream & is) {
 	
 	if(legacy_version[0] == 'i' && legacy_version[sizeof(legacy_version) - 1] == '\x1a') {
 		
-		for(size_t i = 0; i < boost::size(legacy_versions); i++) {
+		for(size_t i = 0; i < size_t(boost::size(legacy_versions)); i++) {
 			if(!memcmp(legacy_version, legacy_versions[i].name, sizeof(legacy_version))) {
 				value = legacy_versions[i].version;
 				bits = legacy_versions[i].bits;
@@ -196,7 +196,7 @@ void version::load(std::istream & is) {
 		}
 		
 		debug("unknown legacy version: \""
-		      << std::string(legacy_version, boost::size(legacy_version)) << '"');
+		      << std::string(legacy_version, sizeof(legacy_version)) << '"');
 		
 		if(legacy_version[0] != 'i' || legacy_version[2] != '.' || legacy_version[4] != '.'
 		   || legacy_version[7] != '-' || legacy_version[8] != '-') {
@@ -211,7 +211,7 @@ void version::load(std::istream & is) {
 			throw version_error();
 		}
 		
-		std::string version_str(legacy_version, legacy_version + boost::size(legacy_version));
+		std::string version_str(legacy_version, sizeof(legacy_version));
 		
 		try {
 			unsigned a = to_unsigned(version_str.data() + 1, 1);
@@ -229,12 +229,13 @@ void version::load(std::istream & is) {
 	}
 	
 	stored_version version;
+	BOOST_STATIC_ASSERT(sizeof(legacy_version) <= sizeof(version));
 	memcpy(version, legacy_version, sizeof(legacy_version));
 	is.read(version + sizeof(legacy_version),
 	        std::streamsize(sizeof(version) - sizeof(legacy_version)));
 	
 	
-	for(size_t i = 0; i < boost::size(versions); i++) {
+	for(size_t i = 0; i < size_t(boost::size(versions)); i++) {
 		if(!memcmp(version, versions[i].name, sizeof(version))) {
 			value = versions[i].version;
 			bits = 32;

@@ -66,7 +66,7 @@ struct enum_names {
 	const char * enum_names<get_enum<Enum>::type>::name = (Name); \
 	const char * enum_names<get_enum<Enum>::type>::names[] = { __VA_ARGS__ }; \
 	const size_t enum_names<get_enum<Enum>::type>::count \
-	 = boost::size(enum_names<get_enum<Enum>::type>::names);
+	 = size_t(boost::size(enum_names<get_enum<Enum>::type>::names));
 
 #define USE_ENUM_NAMES(Enum) \
 	(void)enum_names<get_enum<Enum>::type>::count; \

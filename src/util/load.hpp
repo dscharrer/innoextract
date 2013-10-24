@@ -191,7 +191,7 @@ template <class T>
 void discard(T & is, boost::uint64_t bytes) {
 	char buf[1024];
 	while(bytes) {
-		std::streamsize n = std::streamsize(std::min<boost::uint64_t>(bytes, boost::size(buf)));
+		std::streamsize n = std::streamsize(std::min<boost::uint64_t>(bytes, sizeof(buf)));
 		is.read(buf, n);
 		bytes -= boost::uint64_t(n);
 	}

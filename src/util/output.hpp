@@ -185,7 +185,7 @@ std::ostream & operator<<(std::ostream & os, const print_bytes<T> & s) {
 	
 	size_t i = 0;
 	
-	while(whole > 1024 && i < boost::size(byte_size_units) - 1) {
+	while(whole > 1024 && i < size_t(boost::size(byte_size_units)) - 1) {
 		
 		frac = whole % 1024, whole /= 1024;
 		
