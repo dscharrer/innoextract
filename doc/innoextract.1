@@ -2,16 +2,16 @@
 .\" Contact daniel@constexpr.org to correct errors or typos.
 .TH innoextract 1 "2013-03-11" "1.4"
 .SH NAME
-innoextract \- tool to extract installers created by Inno Setup
+innoextract - tool to extract installers created by Inno Setup
 .SH SYNOPSIS
 .B innoextract
-.RB [ --extract ]
-.RB [ --lowercase ]
+.RB [ \-\-extract ]
+.RB [ \-\-lowercase ]
 [options] \fIinstallers\fP ...
 
-\fBinnoextract --list\fP [options] \fIinstallers\fP ...
+\fBinnoextract \-\-list\fP [options] \fIinstallers\fP ...
 
-\fBinnoextract --test\fP [options] \fIinstallers\fP ...
+\fBinnoextract \-\-test\fP [options] \fIinstallers\fP ...
 .SH DESCRIPTION
 \fBinnoextract\fP is a tool that can extract installer executables created by Inno Setup.
 .PP
@@ -42,7 +42,7 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-L \-\-lowercase          Convert extracted filenames to lower-case
     \-\-language \fILANG\fP      Extract files for the given language
  \-T \-\-timestamps \fITZ\fP      Timezone for file times or "local" or "none"
- \-d \-\-output-dir \fIDIR\fP     Extract files into the given directory
+ \-d \-\-output\-dir \fIDIR\fP     Extract files into the given directory
 .fi
 .TP
 .B Display options:
@@ -54,61 +54,61 @@ Here is a short summary of the options available in innoextract. Please refer to
 .fi
 .SH OPTIONS
 .TP
-\fB-c\fP, \fB--color\fP[=\fIENABLE\fP]
+\fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
 By default
 .B innoextract
-will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB--color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
+will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB\-\-color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
 .TP
-\fB--dump\fP
+\fB\-\-dump\fP
 Don't convert Windows paths to UNIX paths and don't substitute variables in paths.
 .TP
-\fB-e\fP, \fB--extract\fP
-Extract all files to the current directory. This action is enabled by default, unless either \fB--list\fP or \fB--extract\fP is specified. You may only specify one of \fB--extract\fP and \fB--test\fP.
+\fB\-e\fP, \fB\-\-extract\fP
+Extract all files to the current directory. This action is enabled by default, unless either \fB\-\-list\fP or \fB\-\-extract\fP is specified. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
 .TP
-\fB-h\fP, \fB--help\fP
+\fB\-h\fP, \fB\-\-help\fP
 Show a list of the supported options.
 .TP
-\fB--language\fP \fILANG\fP
+\fB\-\-language\fP \fILANG\fP
 Extract only language-independent files and files for the given language. By default all files are extracted.
 .TP
-\fB--license\fP
+\fB\-\-license\fP
 Show license information.
 .TP
-\fB-l\fP, \fB--list\fP
+\fB\-l\fP, \fB\-\-list\fP
 List files contained in the installer but don't extract anything.
 
-This option can be combined with \fB--silent\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
+This option can be combined with \fB\-\-silent\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
 
-The \fB--list\fP option can be combined with \fB--test\fP or \fB--extract\fP to display the names of the files as they are extracted even with \fB--silent\fP.
+The \fB\-\-list\fP option can be combined with \fB\-\-test\fP or \fB\-\-extract\fP to display the names of the files as they are extracted even with \fB\-\-silent\fP.
 .TP
-\fB-L\fP, \fB--lowercase\fP
+\fB\-L\fP, \fB\-\-lowercase\fP
 Convert filenames stored in the installer to lower-case before extracting.
 .TP
-\fB-d\fP, \fB--output-dir\fP \fIDIR\fP
+\fB\-d\fP, \fB\-\-output\-dir\fP \fIDIR\fP
 Extract all files into the given directory. By default, \fBinnoextract\fP will extract all files to the current directory.
 
 If the specified directory does not exist, it will be created. However, the parent directory must exist or extracting will fail.
 .TP
-\fB-p\fP, \fB--progress\fP[=\fIENABLE\fP]
-By default \fBinnoextract\fP will try to detect if the terminal supports shell escape codes and enable or disable progress bar output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB--progress\fP to force progress bar output. Pass \fB0\fP or \fBfalse\fP to never show a progress bar.
+\fB\-p\fP, \fB\-\-progress\fP[=\fIENABLE\fP]
+By default \fBinnoextract\fP will try to detect if the terminal supports shell escape codes and enable or disable progress bar output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB\-\-progress\fP to force progress bar output. Pass \fB0\fP or \fBfalse\fP to never show a progress bar.
 .TP
-\fB-q\fP, \fB--quiet\fP
+\fB\-q\fP, \fB\-\-quiet\fP
 Less verbose output.
 .TP
-\fB-s\fP, \fB--silent\fP
+\fB\-s\fP, \fB\-\-silent\fP
 Don't output anything except errors and warnings unless explicitely requested.
 
-This option can be combined with \fB--list\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
+This option can be combined with \fB\-\-list\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
 .TP
-\fB-t\fP, \fB--test\fP
-Test archive integrity but don't write any output files. You may only specify one of \fB--extract\fP and \fB--test\fP.
+\fB\-t\fP, \fB\-\-test\fP
+Test archive integrity but don't write any output files. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
 .TP
-\fB-T\fP, \fB--timestamps\fP \fITZ\fP
+\fB\-T\fP, \fB\-\-timestamps\fP \fITZ\fP
 Inno Setup installers can contain timestamps in both UTC and 'local' timezones.
 
-The \fB--timestamps\fP option specifies what timezone should be used to adjust these 'local' file times.
+The \fB\-\-timestamps\fP option specifies what timezone should be used to adjust these 'local' file times.
 
-Valid values are those accepted by \fBtzset\fP in the \fBTZ\fP environment variable, except with the direction of the time offset reversed: both \fB-T CET\fP and \fB-T GMT+1\fP will (when DST is in effect) give the same result.
+Valid values are those accepted by \fBtzset\fP in the \fBTZ\fP environment variable, except with the direction of the time offset reversed: both \fB\-T CET\fP and \fB\-T GMT+1\fP will (when DST is in effect) give the same result.
 
 Besides timezones, two special values are accepted:
 
@@ -116,12 +116,12 @@ Besides timezones, two special values are accepted:
 
   "\fBlocal\fP"  Use the system timezone for 'local' timestamps. This is the normal Inno Setup behavior, and can be used together with the \fBTZ\fP environment variable.
 
-The default value for this option is \fBUTC\fP, causing innoextract to not adjust 'local' file times. File times marked as UTC in the Inno Setup file will never be adjusted no matter what \fB--timestamps\fP is set to.
+The default value for this option is \fBUTC\fP, causing innoextract to not adjust 'local' file times. File times marked as UTC in the Inno Setup file will never be adjusted no matter what \fB\-\-timestamps\fP is set to.
 .TP
-\fB-v\fP, \fB--version\fP
+\fB\-v\fP, \fB\-\-version\fP
 Print the \fBinnoextract\fP version number and supported Inno Setup versions.
 
-If combined with the \fB--silent\fP option, only the version \fInumber\fP is printed. Otherwise, the output will contain the name (innoextract) followed by the version number on the first line, and, unless the \fB--quiet\fP options is specified, the range of suuported Inno Setup installer versions on the second line.
+If combined with the \fB\-\-silent\fP option, only the version \fInumber\fP is printed. Otherwise, the output will contain the name (innoextract) followed by the version number on the first line, and, unless the \fB\-\-quiet\fP options is specified, the range of suuported Inno Setup installer versions on the second line.
 .SH EXIT VALUES
 .PP
 .IP \fB0\fP
