@@ -57,7 +57,7 @@ int main() {
 	int argc = 0;
 	wchar_t ** wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
 	
-	// Convert the UTF-16 command-line parameters to UTF-8 ourself.
+	// Convert the UTF-16 command-line parameters to UTF-8 ourselves.
 	char ** argv = new char *[argc + 1];
 	argv[argc] = NULL;
 	for(int i = 0; i < argc; i++) {
