@@ -22,8 +22,7 @@
 
 #include "configure.hpp"
 
-#if INNOEXTRACT_HAVE_TIMEGM || INNOEXTRACT_HAVE_MKGMTIME \
-    || INNOEXTRACT_HAVE_GMTIME_R || INNOEXTRACT_HAVE_GMTIME_S
+#if INNOEXTRACT_HAVE_TIMEGM || INNOEXTRACT_HAVE_GMTIME_R
 #include <time.h>
 #endif
 
@@ -121,23 +120,11 @@ time parse_time(std::tm tm) {
 	}
 	return from_filetime(ft);
 	
-#elif INNOEXTRACT_HAVE_MKGMTIME64
-	
-	// Windows
-	
-	return _mkgmtime64(&tm);
-	
 #elif INNOEXTRACT_HAVE_TIMEGM
 	
 	// GNU / BSD extension
 	
 	return timegm(&tm);
-	
-#elif INNOEXTRACT_HAVE_MKGMTIME
-	
-	// Windows (32-bit for MinGW32)
-	
-	return _mkgmtime(&tm);
 	
 #else
 	
@@ -194,26 +181,12 @@ std::tm format_time(time t) {
 	}
 	ret.tm_isdst = -1;
 	
-#elif INNOEXTRACT_HAVE_GMTIME64_S
-	
-	// Windows
-	
-	__time64_t tt = to_time_t<__time64_t>(t);
-	_gmtime64_s(&ret, &tt);
-	
 #elif INNOEXTRACT_HAVE_GMTIME_R
 	
 	// POSIX.1
 	
 	time_t tt = to_time_t<time_t>(t);
 	gmtime_r(&tt, &ret);
-	
-#elif INNOEXTRACT_HAVE_GMTIME_S
-	
-	// Windows (MSVC)
-	
-	time_t tt = to_time_t<time_t>(t);
-	gmtime_s(&ret, &tt);
 	
 #else
 	
