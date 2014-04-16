@@ -46,6 +46,35 @@
 
 namespace util {
 
+#if defined(_WIN32)
+
+static const boost::int64_t FiletimeOffset = 0x19DB1DED53E8000ll;
+
+static time from_filetime(FILETIME ft) {
+	
+	boost::int64_t filetime = boost::int64_t(ft.dwHighDateTime) << 32;
+	filetime += boost::int64_t(ft.dwLowDateTime);
+	
+	filetime -= FiletimeOffset;
+	
+	return filetime / 10000000;
+}
+
+static FILETIME to_filetime(time t, boost::uint32_t nsec = 0) {
+	
+	static const boost::int64_t FiletimeOffset = 0x19DB1DED53E8000ll;
+	boost::int64_t time = boost::int64_t(t) * 10000000 + boost::int64_t(nsec) / 100;
+	
+	time += FiletimeOffset;
+	
+	FILETIME filetime;
+	filetime.dwLowDateTime = DWORD(time);
+	filetime.dwHighDateTime = DWORD(time >> 32);
+	return filetime;
+}
+
+#endif
+
 static void set_timezone(const char * value) {
 	
 	const char * variable = "TZ";
@@ -72,7 +101,27 @@ time parse_time(std::tm tm) {
 	
 	tm.tm_isdst = 0;
 	
-#if INNOEXTRACT_HAVE_MKGMTIME64
+#if defined(_WIN32)
+	
+	// Windows
+	
+	SYSTEMTIME st;
+	st.wYear         = WORD(tm.tm_year + 1900);
+	st.wMonth        = WORD(tm.tm_mon + 1);
+	st.wDayOfWeek    = WORD(tm.tm_wday);
+	st.wDay          = WORD(tm.tm_mday);
+	st.wHour         = WORD(tm.tm_hour);
+	st.wMinute       = WORD(tm.tm_min);
+	st.wSecond       = WORD(tm.tm_sec);
+	st.wMilliseconds = 0;
+	
+	FILETIME ft;
+	if(!SystemTimeToFileTime(&st, &ft)) {
+		return 0;
+	}
+	return from_filetime(ft);
+	
+#elif INNOEXTRACT_HAVE_MKGMTIME64
 	
 	// Windows
 	
@@ -124,7 +173,28 @@ std::tm format_time(time t) {
 	
 	std::tm ret;
 	
-#if INNOEXTRACT_HAVE_GMTIME64_S
+#if defined(_WIN32)
+	
+	// Windows
+	
+	FILETIME ft = to_filetime(t);
+	
+	SYSTEMTIME st;
+	if(FileTimeToSystemTime(&ft, &st)) {
+		ret.tm_year = int(st.wYear) - 1900;
+		ret.tm_mon  = int(st.wMonth) - 1;
+		ret.tm_wday = int(st.wDayOfWeek);
+		ret.tm_mday = int(st.wDay);
+		ret.tm_hour = int(st.wHour);
+		ret.tm_min  = int(st.wMinute);
+		ret.tm_sec  = int(st.wSecond);
+	} else {
+		ret.tm_year = ret.tm_mon = ret.tm_mday = -1;
+		ret.tm_hour = ret.tm_min = ret.tm_sec = -1;
+	}
+	ret.tm_isdst = -1;
+	
+#elif INNOEXTRACT_HAVE_GMTIME64_S
 	
 	// Windows
 	
@@ -230,13 +300,7 @@ bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t
 		return false;
 	}
 	
-	// Convert the std::time_t and nanoseconds to a FILETIME struct
-	static const boost::int64_t FiletimeOffset = 0x19DB1DED53E8000ll;
-	boost::int64_t time = boost::int64_t(t) * 10000000 + boost::int64_t(nsec) / 100;
-	time += FiletimeOffset;
-	FILETIME filetime;
-	filetime.dwLowDateTime = DWORD(time);
-	filetime.dwHighDateTime = DWORD(time >> 32);
+	FILETIME filetime = to_filetime(t, nsec);
 	
 	bool ret = (SetFileTime(handle, &filetime, &filetime, &filetime) != 0);
 	CloseHandle(handle);
