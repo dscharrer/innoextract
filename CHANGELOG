@@ -1,4 +1,8 @@
 
+innoextract 1.4-windows-r2 (2014-04-17)
+ - This is a Windows-specific hotfix release, no other platforms are affected
+ - Fixed running innoextract under Windows XP
+
 innoextract 1.4-windows-r1 (2013-05-14)
  - This is a Windows-specific hotfix release, no other platforms are affected
  - Fixed a crash on startup under Windows
