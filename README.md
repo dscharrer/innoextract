@@ -104,7 +104,7 @@ Extracting Windows installer executables created by programs other than Inno Set
 
 * [cabextract](http://www.cabextract.org.uk/)
 
-* [unshield](http://www.synce.org/oldwiki/index.php/Unshield)
+* [unshield](https://github.com/twogood/unshield)
 
 ## Disclaimer
 
