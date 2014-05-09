@@ -12,6 +12,7 @@ endif()
 if(MSVC)
 	
 	if(SET_WARNING_FLAGS)
+		add_definitions(/wd4250) # harasses you when inheriting from std::basic_{i,o}stream
 		add_definitions(/wd4996) # 'unsafe' stdlib functions used by Boost
 	endif()
 	
