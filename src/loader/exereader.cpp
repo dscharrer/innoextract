@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <boost/cstdint.hpp>
+#include <boost/foreach.hpp>
 
 #include "util/load.hpp"
 
@@ -193,16 +194,16 @@ bool exe_reader_impl::load_section_list(std::istream & is, const header & coff,
 	is.seekg(coff.section_table_offset);
 	
 	table.resize(coff.nsections);
-	for(section_list::iterator i = table.begin(); i != table.end(); ++i) {
-		section & section = *i;
+	
+	BOOST_FOREACH(section & s, table) {
 		
 		is.seekg(8, std::ios_base::cur); // name
 		
-		section.virtual_size = util::load<boost::uint32_t>(is);
-		section.virtual_address = util::load<boost::uint32_t>(is);
+		s.virtual_size = util::load<boost::uint32_t>(is);
+		s.virtual_address = util::load<boost::uint32_t>(is);
 		
 		is.seekg(4, std::ios_base::cur); // raw size
-		section.raw_address = util::load<boost::uint32_t>(is);
+		s.raw_address = util::load<boost::uint32_t>(is);
 		
 		// relocation addr + line number addr + relocation count
 		// + line number count + characteristics
@@ -216,8 +217,7 @@ bool exe_reader_impl::load_section_list(std::istream & is, const header & coff,
 boost::uint32_t exe_reader_impl::to_file_offset(const section_list & sections,
                                                 boost::uint32_t memory) {
 	
-	for(section_list::const_iterator i = sections.begin(); i != sections.end(); ++i) {
-		const section & s = *i;
+	BOOST_FOREACH(const section & s, sections) {
 		if(memory >= s.virtual_address && memory < s.virtual_address + s.virtual_size) {
 			return memory + s.raw_address - s.virtual_address;
 		}
