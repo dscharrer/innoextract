@@ -75,11 +75,6 @@ if(WIN32)
 	add_definitions(-D_WIN32_WINNT=0x0502)
 	add_definitions(-DNOMINMAX)
 	add_definitions(-DWIN32_LEAN_AND_MEAN)
-	if(NOT MSVC)
-		 # required for _gmtime64_s on MinGW
-		add_definitions(-DMINGW_HAS_SECURE_API)
-		list(APPEND CMAKE_REQUIRED_DEFINITIONS -DMINGW_HAS_SECURE_API)
-	endif()
 endif()
 
 if(USE_STATIC_LIBS AND NOT MSVC)
