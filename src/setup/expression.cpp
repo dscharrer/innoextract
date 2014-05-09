@@ -56,7 +56,7 @@ struct evaluator {
 	std::string token_str;
 	
 	evaluator(const std::string & expr, const std::string & test)
-		: test(test), expr(expr.c_str()) { }
+		: test(test), expr(expr.c_str()), token(end) { }
 	
 	token_type next() {
 		
