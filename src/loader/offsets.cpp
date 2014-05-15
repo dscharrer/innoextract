@@ -86,7 +86,7 @@ bool offsets::load_from_exe_file(std::istream & is) {
 bool offsets::load_from_exe_resource(std::istream & is) {
 	
 	exe_reader::resource resource = exe_reader::find_resource(is, ResourceNameInstaller);
-	if(!resource.offset) {
+	if(!resource) {
 		is.clear();
 		return false;
 	}

@@ -28,7 +28,7 @@
 namespace loader {
 
 /*!
- * \brief Minimal PE/COFF parser that can find resources by ID in .exe files
+ * \brief Minimal NE/LE/PE parser that can find resources by ID in binary (exe/dll) files
  *
  * This implementation is optimized to look for exactly one resource.
  */
@@ -43,19 +43,42 @@ public:
 		
 		boost::uint32_t size; //!< Size of the resource data in bytes
 		
+		operator bool() { return offset != 0; }
+		bool operator!() { return offset == 0; }
+		
 	};
 	
 	enum resource_id {
+		NameVersionInfo = 1,
+		TypeCursor = 1,
+		TypeBitmap = 2,
+		TypeIcon = 3,
+		TypeMenu = 4,
+		TypeDialog = 5,
+		TypeString = 6,
+		TypeFontDir = 7,
+		TypeFont = 8,
+		TypeAccelerator = 9,
 		TypeData = 10,
-		LanguageDefault = 0
+		TypeMessageTable = 11,
+		TypeGroupCursor = 12,
+		TypeGroupIcon = 14,
+		TypeVersion = 16,
+		TypeDlgInclude = 17,
+		TypePlugPlay = 19,
+		TypeVXD = 20,
+		TypeAniCursor = 21,
+		TypeAniIcon = 22,
+		TypeHTML = 23,
+		Default = boost::uint32_t(-1)
 	};
 	
 	/*!
-	 * \brief Find where a resource with a given ID is stored in a MS PE/COFF executable.
+	 * \brief Find where a resource with a given ID is stored in a NE or PE binary.
 	 *
 	 * Resources are addressed using a (\pname{name}, \pname{type}, \pname{language}) tuple.
 	 *
-	 * \param is       a seekable stream of the executable file containing the resource
+	 * \param is       a seekable stream of the binary containing the resource
 	 * \param name     the user-defined name of the resource
 	 * \param type     the type of the resource
 	 * \param language the localised variant of the resource
@@ -64,7 +87,20 @@ public:
 	 */
 	static resource find_resource(std::istream & is, boost::uint32_t name,
 	                              boost::uint32_t type = TypeData,
-	                              boost::uint32_t language = LanguageDefault);
+	                              boost::uint32_t language = Default);
+	
+	enum file_version {
+		FileVersionUnknown = boost::uint64_t(-1)
+	};
+	
+	/*!
+	 * \brief Get the file version number of a NE, LE or PE binary.
+	 *
+	 * \param is a seekable stream of the binary file containing the resource
+	 *
+	 * \return the file version number or FileVersionUnknown.
+	 */
+	static boost::uint64_t get_file_version(std::istream & is);
 	
 };
 

@@ -35,7 +35,193 @@ namespace loader {
 
 namespace {
 
-struct exe_reader_impl : public exe_reader {
+enum BinaryType {
+	UnknownBinary = 0,
+	DOSMagic = 0x5a4d, // "MZ"
+	OS2Magic = 0x454E, // "NE"
+	VXDMagic = 0x454C, // "LE"
+	PEMagic  = 0x4550, // "PE"
+	PEMagic2 = 0x0000, // "\0\0"
+};
+
+static BinaryType determine_binary_type(std::istream & is) {
+	
+	boost::uint16_t dos_magic = util::load<boost::uint16_t>(is.seekg(0));
+	if(is.fail() || dos_magic != DOSMagic) {
+		return UnknownBinary; // Not a DOS file
+	}
+	
+	// Skip the DOS stub
+	boost::uint16_t new_offset = util::load<boost::uint16_t>(is.seekg(0x3c));
+	if(is.fail()) {
+		return DOSMagic;
+	}
+	
+	boost::uint16_t new_magic = util::load<boost::uint16_t>(is.seekg(new_offset));
+	if(is.fail()) {
+		return DOSMagic;
+	}
+	
+	if(new_magic == PEMagic) {
+		boost::uint16_t pe2_magic = util::load<boost::uint16_t>(is);
+		if(is.fail() || pe2_magic != PEMagic2) {
+			return DOSMagic;
+		}
+	}
+	
+	return BinaryType(new_magic);
+}
+
+template <typename T>
+bool skip_to_fixed_file_info(std::istream & is, boost::uint32_t resource_offset,
+                             boost::uint32_t offset) {
+	
+	is.seekg(resource_offset + offset);
+	T key;
+	std::string str;
+	do {
+		key = util::load<T>(is);
+		if(is.fail()) {
+			return false;
+		}
+		str += char(key);
+		offset += boost::uint32_t(sizeof(key));
+	} while(key != 0);
+	
+	// Align to DWORD
+	offset = (offset + 3) & ~boost::uint32_t(3);
+	
+	is.seekg(resource_offset + offset);
+	
+	return true;
+}
+
+// Reader for OS2 binaries
+struct ne_reader : public exe_reader {
+	
+	static resource find_resource(std::istream & is, boost::uint32_t name,
+	                              boost::uint32_t type = TypeData);
+	
+	static bool get_file_version(std::istream & is);
+	
+};
+
+exe_reader::resource ne_reader::find_resource(std::istream & is, boost::uint32_t name,
+                                              boost::uint32_t type) {
+	
+	resource result;
+	result.offset = result.size = 0;
+	
+	is.seekg(0x24 - 2, std::ios_base::cur); // Already read the magic
+	boost::uint16_t resources_offset = util::load<boost::uint16_t>(is);
+	boost::uint16_t resources_end = util::load<boost::uint16_t>(is);
+	if(is.fail()) {
+		return result;
+	}
+	
+	if(resources_end == resources_offset) {
+		return result;
+	}
+	
+	is.seekg(std::streamoff(resources_offset) - 0x28, std::ios_base::cur);
+	
+	boost::uint16_t shift = util::load<boost::uint16_t>(is);
+	if(is.fail() || shift > 32) {
+		return result;
+	}
+	
+	boost::uint16_t name_count;
+	for(;;) {
+		
+		boost::uint16_t type_id = util::load<boost::uint16_t>(is);
+		name_count = util::load<boost::uint16_t>(is);
+		is.seekg(4, std::ios_base::cur);
+		if(is.fail() || type_id == 0) {
+			return result;
+		}
+		
+		if(type_id == boost::uint16_t(type | 0x8000)) {
+			break;
+		}
+		
+		is.seekg(name_count * 12, std::ios_base::cur);
+		
+	}
+	
+	for(boost::uint16_t i = 0; i < name_count; i++) {
+		
+		boost::uint16_t offset = util::load<boost::uint16_t>(is);
+		boost::uint16_t size   = util::load<boost::uint16_t>(is);
+		is.seekg(2, std::ios_base::cur);
+    boost::uint16_t name_id = util::load<boost::uint16_t>(is);
+		is.seekg(4, std::ios_base::cur);
+		if(is.fail()) {
+			return result;
+		}
+		
+		if(name_id == boost::uint16_t(name | 0x8000)) {
+			result.offset = boost::uint32_t(offset) << shift;
+			result.size   = boost::uint32_t(size)   << shift;
+			break;
+		}
+		
+	}
+	
+	return result;
+}
+
+bool ne_reader::get_file_version(std::istream & is) {
+	
+	resource res = find_resource(is, NameVersionInfo, TypeVersion);
+	if(!res) {
+		return false;
+	}
+	
+	return skip_to_fixed_file_info<boost::int8_t>(is, res.offset, 4);
+}
+
+// Reader for VXD binaries
+struct le_reader : public exe_reader {
+	
+	static bool get_file_version(std::istream & is);
+	
+};
+
+bool le_reader::get_file_version(std::istream & is) {
+	
+	is.seekg(0xb8 - 2, std::ios_base::cur);  // Already read the magic
+	boost::uint32_t resources_offset = util::load<boost::uint32_t>(is);
+	boost::uint32_t resources_size = util::load<boost::uint32_t>(is);
+	if(is.fail()) {
+		return false;
+	}
+	
+	if(resources_size <= 12) {
+		return false;
+	}
+	
+	is.seekg(resources_offset);
+	boost::uint8_t type = util::load<boost::uint8_t>(is);
+	boost::uint16_t id = util::load<boost::uint16_t>(is);
+	boost::uint8_t name = util::load<boost::uint8_t>(is);
+	is.seekg(4, std::ios_base::cur); // skip ordinal + flags
+	boost::uint32_t size = util::load<boost::uint32_t>(is);
+	if(is.fail() || type != 0xff || id != 16 || name != 0xff || size <= 20 + 52) {
+		return false;
+	}
+	
+	boost::uint16_t node = util::load<boost::uint16_t>(is);
+	boost::uint16_t data = util::load<boost::uint16_t>(is);
+	is.seekg(16, std::ios_base::cur); // skip key
+	if(is.fail() || node < 20 + 52 || data < 52) {
+		return false;
+	}
+	
+	return true;
+}
+
+// Reader for Win32 binaries
+struct pe_reader : public exe_reader {
 	
 	struct header {
 		
@@ -48,6 +234,8 @@ struct exe_reader_impl : public exe_reader {
 		//! Virtual memory address of the resource root table
 		boost::uint32_t resource_table_address;
 		
+		bool load(std::istream & is);
+		
 	};
 	
 	struct section {
@@ -59,7 +247,20 @@ struct exe_reader_impl : public exe_reader {
 		
 	};
 	
-	typedef std::vector<section> section_list;
+	struct section_table {
+		
+		std::vector<section> sections;
+		
+		bool load(std::istream & is, const header & coff);
+		
+		/*!
+		 * Convert a memory address to a file offset according to the given section list.
+		 */
+		boost::uint32_t to_file_offset(boost::uint32_t address);
+		
+	};
+	
+	static bool get_resource_table(boost::uint32_t & entry, boost::uint32_t offset);
 	
 	/*!
 	 * Find the entry in a resource table with a given ID.
@@ -74,98 +275,30 @@ struct exe_reader_impl : public exe_reader {
 	 */
 	static boost::uint32_t find_resource_entry(std::istream & is, boost::uint32_t id);
 	
-	static bool load_header(std::istream & is, header & coff);
-	
-	static bool load_section_list(std::istream & is, const header & coff, section_list & table);
-	
-	/*!
-	 * Convert a memory address to a file offset according to the given section list.
-	 */
-	static boost::uint32_t to_file_offset(const section_list & sections, boost::uint32_t address);
-	
 	static resource find_resource(std::istream & is, boost::uint32_t name,
 	                              boost::uint32_t type = TypeData,
-	                              boost::uint32_t language = LanguageDefault);
+	                              boost::uint32_t language = Default);
+	
+	static bool get_file_version(std::istream & is);
 	
 };
 
-static const char PE_MAGIC[] = { 'P', 'E', 0, 0 };
-
-bool get_resource_table(boost::uint32_t & entry, boost::uint32_t resource_offset) {
-	
-	bool is_table = ((entry & (boost::uint32_t(1) << 31)) != 0);
-	
-	entry &= ~(1 << 31), entry += resource_offset;
-	
-	return is_table;
-}
-
-boost::uint32_t exe_reader_impl::find_resource_entry(std::istream & is, boost::uint32_t needle) {
-	
-	// skip: characteristics + timestamp + major version + minor version
-	if(is.seekg(4 + 4 + 2 + 2, std::ios_base::cur).fail()) {
-		return 0;
-	}
-	
-	// Number of named resource entries.
-	boost::uint16_t nbnames = util::load<boost::uint16_t>(is);
-	
-	// Number of id resource entries.
-	boost::uint16_t nbids = util::load<boost::uint16_t>(is);
-	
-	
-	// Ignore named resource entries.
-	const boost::uint32_t entry_size = 4 + 4; // id / string address + offset
-	if(is.seekg(nbnames * entry_size, std::ios_base::cur).fail()) {
-		return 0;
-	}
-	
-	for(size_t i = 0; i < nbids; i++) {
-		
-		boost::uint32_t id = util::load<boost::uint32_t>(is);
-		boost::uint32_t offset = util::load<boost::uint32_t>(is);
-		if(is.fail()) {
-			return 0;
-		}
-		
-		if(id == needle) {
-			return offset;
-		}
-	}
-	
-	return 0;
-}
-
-bool exe_reader_impl::load_header(std::istream & is, header & coff) {
-	
-	// Skip the DOS stub.
-	boost::uint16_t peOffset = util::load<boost::uint16_t>(is.seekg(0x3c));
-	if(is.fail()) {
-		return false;
-	}
-	
-	char magic[sizeof(PE_MAGIC)];
-	if(is.seekg(peOffset).read(magic, std::streamsize(sizeof(magic))).fail()) {
-		return false;
-	}
-	if(std::memcmp(magic, PE_MAGIC, sizeof(PE_MAGIC))) {
-		return false;
-	}
+bool pe_reader::header::load(std::istream & is) {
 	
 	is.seekg(2, std::ios_base::cur); // machine
-	coff.nsections = util::load<boost::uint16_t>(is);
+	nsections = util::load<boost::uint16_t>(is);
 	is.seekg(4 + 4 + 4, std::ios_base::cur); // creation time + symbol table offset + nbsymbols
 	boost::uint16_t optional_header_size = util::load<boost::uint16_t>(is);
 	is.seekg(2, std::ios_base::cur); // characteristics
 	
-	coff.section_table_offset = boost::uint32_t(is.tellg()) + optional_header_size;
+	section_table_offset = boost::uint32_t(is.tellg()) + optional_header_size;
 	
 	// Skip the optional header.
-	boost::uint16_t optionalHeaderMagic = util::load<boost::uint16_t>(is);
+	boost::uint16_t optional_header_magic = util::load<boost::uint16_t>(is);
 	if(is.fail()) {
 		return false;
 	}
-	if(optionalHeaderMagic == 0x20b) { // PE32+
+	if(optional_header_magic == 0x20b) { // PE32+
 		is.seekg(106, std::ios_base::cur);
 	} else {
 		is.seekg(90, std::ios_base::cur);
@@ -179,23 +312,22 @@ bool exe_reader_impl::load_header(std::istream & is, header & coff) {
 	is.seekg(2 * directory_header_size, std::ios_base::cur);
 	
 	// Virtual memory address and size of the start of resource directory.
-	coff.resource_table_address = util::load<boost::uint32_t>(is);
+	resource_table_address = util::load<boost::uint32_t>(is);
 	boost::uint32_t resource_size = util::load<boost::uint32_t>(is);
-	if(is.fail() || !coff.resource_table_address || !resource_size) {
+	if(is.fail() || !resource_table_address || !resource_size) {
 		return false;
 	}
 	
 	return true;
 }
 
-bool exe_reader_impl::load_section_list(std::istream & is, const header & coff,
-                                        section_list & table) {
+bool pe_reader::section_table::load(std::istream & is, const header & coff) {
 	
 	is.seekg(coff.section_table_offset);
 	
-	table.resize(coff.nsections);
+	sections.resize(coff.nsections);
 	
-	BOOST_FOREACH(section & s, table) {
+	BOOST_FOREACH(section & s, sections) {
 		
 		is.seekg(8, std::ios_base::cur); // name
 		
@@ -214,39 +346,85 @@ bool exe_reader_impl::load_section_list(std::istream & is, const header & coff,
 	return !is.fail();
 }
 
-boost::uint32_t exe_reader_impl::to_file_offset(const section_list & sections,
-                                                boost::uint32_t memory) {
+boost::uint32_t pe_reader::section_table::to_file_offset(boost::uint32_t address) {
 	
 	BOOST_FOREACH(const section & s, sections) {
-		if(memory >= s.virtual_address && memory < s.virtual_address + s.virtual_size) {
-			return memory + s.raw_address - s.virtual_address;
+		if(address >= s.virtual_address && address < s.virtual_address + s.virtual_size) {
+			return address + s.raw_address - s.virtual_address;
 		}
 	}
 	
 	return 0;
 }
 
-exe_reader_impl::resource exe_reader_impl::find_resource(std::istream & is,
-                                                         boost::uint32_t name,
-                                                         boost::uint32_t type,
-                                                         boost::uint32_t language) {
+bool pe_reader::get_resource_table(boost::uint32_t & entry, boost::uint32_t offset) {
 	
-	is.seekg(0);
+	bool is_table = ((entry & (boost::uint32_t(1) << 31)) != 0);
+	
+	entry &= ~(1 << 31), entry += offset;
+	
+	return is_table;
+}
+
+boost::uint32_t pe_reader::find_resource_entry(std::istream & is, boost::uint32_t needle) {
+	
+	// skip: characteristics + timestamp + major version + minor version
+	if(is.seekg(4 + 4 + 2 + 2, std::ios_base::cur).fail()) {
+		return 0;
+	}
+	
+	// Number of named resource entries.
+	boost::uint16_t nbnames = util::load<boost::uint16_t>(is);
+	
+	// Number of id resource entries.
+	boost::uint16_t nbids = util::load<boost::uint16_t>(is);
+	
+	if(needle == Default) {
+		boost::uint32_t offset = util::load<boost::uint32_t>(is.seekg(4, std::ios_base::cur));
+		return is.fail() ? 0 : offset;
+	}
+	
+	// Ignore named resource entries.
+	const boost::uint32_t entry_size = 4 + 4; // id / string address + offset
+	if(is.seekg(nbnames * entry_size, std::ios_base::cur).fail()) {
+		return 0;
+	}
+	
+	for(size_t i = 0; i < nbids; i++) {
+		
+		boost::uint32_t id = util::load<boost::uint32_t>(is);
+		boost::uint32_t offset = util::load<boost::uint32_t>(is);
+		if(is.fail()) {
+			return 0;
+		}
+		
+		if(id == needle) {
+			return offset;
+		}
+		
+	}
+	
+	return 0;
+}
+
+pe_reader::resource pe_reader::find_resource(std::istream & is, boost::uint32_t name,
+                                             boost::uint32_t type,
+                                             boost::uint32_t language) {
 	
 	resource result;
 	result.offset = result.size = 0;
 	
 	header coff;
-	if(!load_header(is, coff)) {
+	if(!coff.load(is)) {
 		return result;
 	}
 	
-	section_list sections;
-	if(!load_section_list(is, coff, sections)) {
+	section_table sections;
+	if(!sections.load(is, coff)) {
 		return result;
 	}
 	
-	boost::uint32_t resource_offset = to_file_offset(sections, coff.resource_table_address);
+	boost::uint32_t resource_offset = sections.to_file_offset(coff.resource_table_address);
 	if(!resource_offset) {
 		return result;
 	}
@@ -278,7 +456,7 @@ exe_reader_impl::resource exe_reader_impl::find_resource(std::istream & is,
 		return result;
 	}
 	
-	boost::uint32_t data_offset = to_file_offset(sections, data_address);
+	boost::uint32_t data_offset = sections.to_file_offset(data_address);
 	if(!data_offset) {
 		return result;
 	}
@@ -289,11 +467,62 @@ exe_reader_impl::resource exe_reader_impl::find_resource(std::istream & is,
 	return result;
 }
 
+bool pe_reader::get_file_version(std::istream & is) {
+	
+	resource res = find_resource(is, NameVersionInfo, TypeVersion);
+	if(!res) {
+		return false;
+	}
+	
+	return skip_to_fixed_file_info<boost::uint16_t>(is, res.offset, 6);
+}
+
 } // anonymous namespace
 
 exe_reader::resource exe_reader::find_resource(std::istream & is, boost::uint32_t name,
-                                               boost::uint32_t type, boost::uint32_t language) {
-	return exe_reader_impl::find_resource(is, name, type, language);
+                                               boost::uint32_t type,
+                                               boost::uint32_t language) {
+	
+	BinaryType bintype = determine_binary_type(is);
+	switch(bintype) {
+		case OS2Magic: return ne_reader::find_resource(is, name, type);
+		case PEMagic:  return pe_reader::find_resource(is, name, type, language);
+		default: {
+			resource result;
+			result.offset = result.size = 0;
+			return result;
+		}
+	}
+	
+}
+
+boost::uint64_t exe_reader::get_file_version(std::istream & is) {
+	
+	bool found = false;
+	BinaryType bintype = determine_binary_type(is);
+	switch(bintype) {
+		case OS2Magic: found = ne_reader::get_file_version(is); break;
+		case VXDMagic: found = le_reader::get_file_version(is); break;
+		case PEMagic:  found = pe_reader::get_file_version(is); break;
+		default: break;
+	}
+	if(!found) {
+		return FileVersionUnknown;
+	}
+	
+	boost::uint32_t magic = util::load<boost::uint32_t>(is);
+	if(is.fail() || magic != 0xfeef04bd) {
+		return FileVersionUnknown;
+	}
+	
+	is.seekg(4, std::ios_base::cur); // skip struct version
+  boost::uint32_t file_version_ms = util::load<boost::uint32_t>(is);
+  boost::uint32_t file_version_ls = util::load<boost::uint32_t>(is);
+	if(is.fail()) {
+		return FileVersionUnknown;
+	}
+	
+	return (boost::uint64_t(file_version_ms) << 32) | boost::uint64_t(file_version_ls);
 }
 
 } // namespace loader
