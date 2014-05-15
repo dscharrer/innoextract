@@ -288,11 +288,10 @@ static void process_file(const fs::path & file, const options & o) {
 		
 		if(chunk.first.encrypted) {
 			log_warning << "skipping encrypted chunk (unsupported)";
-			continue;
 		}
 		
 		stream::chunk_reader::pointer chunk_source;
-		if(o.extract || o.test) {
+		if((o.extract || o.test) && !chunk.first.encrypted) {
 			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);
 		}
 		boost::uint64_t offset = 0;
@@ -339,7 +338,11 @@ static void process_file(const fs::path & file, const options & o) {
 						if(named) {
 							std::cout << ", ";
 						}
-						std::cout << '"' << color::white << path.first << color::reset << '"';
+						if(chunk.first.encrypted) {
+							std::cout << '"' << color::dim_yellow << path.first << color::reset << '"' << " skipped";
+						} else {
+							std::cout << '"' << color::white << path.first << color::reset << '"';
+						}
 						if(!info.files[path.second].languages.empty()) {
 							std::cout << " [" << color::green << info.files[path.second].languages
 							          << color::reset << "]";
@@ -371,7 +374,7 @@ static void process_file(const fs::path & file, const options & o) {
 				
 			}
 			
-			if(!o.extract && !o.test) {
+			if((!o.extract && !o.test) || chunk.first.encrypted) {
 				continue;
 			}
 			
