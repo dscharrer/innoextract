@@ -75,6 +75,7 @@ struct info {
 		Types,
 		WizardImages,
 		DecompressorDll,
+		DecryptDll,
 		NoSkip
 	);
 	
@@ -107,6 +108,10 @@ struct info {
 	//! Contents of the helper DLL used to decompress setup data in some versions.
 	//! Loading enabled by \c DecompressorDll
 	std::string decompressor_dll;
+	
+	//! Contents of the helper DLL used to decrypt setup data.
+	//! Loading enabled by \c DecryptDll
+	std::string decrypt_dll;
 	
 	/*!
 	 * Load setup headers.
