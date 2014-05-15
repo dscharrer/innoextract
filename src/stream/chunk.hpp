@@ -78,6 +78,7 @@ struct chunk {
 	
 	bool operator<(const chunk & o) const;
 	bool operator==(const chunk & o) const;
+	
 };
 
 class silce_source;
