@@ -312,7 +312,7 @@ void header::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(4, 2, 2)) {
 		is.read(password_salt, std::streamsize(sizeof(password_salt)));
 	} else {
-		memset(password_salt, 0, sizeof(password_salt));
+		std::memset(password_salt, 0, sizeof(password_salt));
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
