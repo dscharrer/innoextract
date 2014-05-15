@@ -62,8 +62,8 @@ void print_offsets(const loader::offsets & offsets) {
 			          << print_hex(offsets.exe_compressed_size) << color::reset;
 		}
 		std::cout << "  uncompressed: " << color::cyan
-		          << print_bytes(offsets.exe_uncompressed_size) << color::reset << '\n';
-		std::cout << "- exe checksum: " << color::cyan << offsets.exe_checksum
+		          << print_bytes(offsets.exe_uncompressed_size) << color::reset;
+		std::cout << "  checksum: " << color::cyan << offsets.exe_checksum
 		          << color::reset << '\n';
 	}
 	std::cout << if_not_zero("- message offset", print_hex(offsets.message_offset));
@@ -376,7 +376,9 @@ static void print_entry(const setup::info & info, size_t i,
 	          << (isUTC ? " (UTC)" : " (local)")
 	          << '\n';
 	
-	std::cout << if_not_zero("  Options", entry.options);
+	setup::data_entry::flags options = entry.options;
+	options &= ~setup::data_entry::VersionInfoNotValid;
+	std::cout << if_not_zero("  Options", options);
 	
 	if(entry.options & setup::data_entry::VersionInfoValid) {
 		std::cout << if_not_zero("  File version LS", entry.file_version_ls);
@@ -467,6 +469,18 @@ static void print_header(const setup::header & header) {
 	
 	if(header.options & (setup::header::Password | setup::header::EncryptionUsed)) {
 		std::cout << "Password: " << color::cyan << header.password << color::reset << '\n';
+		setup::salt empty_salt;
+		std::memset(empty_salt, 0, sizeof(empty_salt));
+		BOOST_STATIC_ASSERT(sizeof(empty_salt) == sizeof(header.password_salt));
+		if(memcmp(empty_salt, header.password_salt, sizeof(header.password_salt))) {
+			std::cout << "Password salt: " << color::cyan;
+			std::cout << std::hex;
+			for(std::size_t i = 0; i < boost::size(header.password_salt); i++) {
+				std::cout << std::setfill('0') << std::setw(2) << int(boost::uint8_t(header.password_salt[i]));
+			}
+			std::cout << color::reset << '\n';
+			std::cout << std::dec;
+		}
 	}
 	
 	std::cout << if_not_zero("Extra disk space required", header.extra_disk_space_required);
