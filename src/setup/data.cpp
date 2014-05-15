@@ -107,8 +107,10 @@ void data_entry::load(std::istream & is, const version & version) {
 		
 	}
 	
-	file_version_ms = util::load<boost::uint32_t>(is);
-	file_version_ls = util::load<boost::uint32_t>(is);
+	boost::uint32_t file_version_ms = util::load<boost::uint32_t>(is);
+	boost::uint32_t file_version_ls = util::load<boost::uint32_t>(is);
+	file_version = (boost::uint64_t(file_version_ms) << 32)
+	             |  boost::uint64_t(file_version_ls);
 	
 	options = 0;
 	

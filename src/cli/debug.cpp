@@ -381,8 +381,10 @@ static void print_entry(const setup::info & info, size_t i,
 	std::cout << if_not_zero("  Options", options);
 	
 	if(entry.options & setup::data_entry::VersionInfoValid) {
-		std::cout << if_not_zero("  File version LS", entry.file_version_ls);
-		std::cout << if_not_zero("  File version MS", entry.file_version_ms);
+		std::cout << "  File version: " << ((entry.file_version >> 48) & 0xffff) << '.'
+		                                << ((entry.file_version >> 32) & 0xffff) << '.'
+		                                << ((entry.file_version >> 16) & 0xffff) << '.'
+		                                << ((entry.file_version >>  0) & 0xffff) << '\n';
 	}
 }
 
