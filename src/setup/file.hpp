@@ -90,7 +90,7 @@ struct file_entry : public item {
 	boost::uint32_t attributes;
 	boost::uint64_t external_size;
 	
-	int permission; //!< index into the permission entry list
+	boost::int16_t permission; //!< index into the permission entry list
 	
 	flags options;
 	

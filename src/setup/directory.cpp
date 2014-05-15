@@ -72,7 +72,7 @@ void directory_entry::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(4, 1, 0)) {
 		permission = util::load<boost::int16_t>(is);
 	} else {
-		permission = -1;
+		permission = boost::int16_t(-1);
 	}
 	
 	if(version >= INNO_VERSION(5, 2, 0)) {

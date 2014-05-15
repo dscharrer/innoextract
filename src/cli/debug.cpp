@@ -216,7 +216,7 @@ static void print_entry(const setup::info & info, size_t i,
 	}
 	
 	std::cout << if_not_zero("  Attributes", entry.attributes);
-	std::cout << if_not_equal("  Permission entry", entry.permission, -1);
+	std::cout << if_not_equal("  Permission entry", entry.permission, boost::int16_t(-1));
 	std::cout << if_not_zero("  Options", entry.options);
 }
 
@@ -241,7 +241,7 @@ static void print_entry(const setup::info & info, size_t i,
 	
 	std::cout << if_not_zero("  Attributes", entry.attributes);
 	std::cout << if_not_zero("  Size", entry.external_size);
-	std::cout << if_not_equal("  Permission entry", entry.permission, -1);
+	std::cout << if_not_equal("  Permission entry", entry.permission, boost::int16_t(-1));
 	std::cout << if_not_zero("  Options", entry.options);
 	std::cout << if_not_equal("  Type", entry.type, setup::file_entry::UserFile);
 }

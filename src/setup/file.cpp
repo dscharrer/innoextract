@@ -111,7 +111,7 @@ void file_entry::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(4, 1, 0)) {
 		permission = util::load<boost::int16_t>(is);
 	} else {
-		permission = -1;
+		permission = boost::int16_t(-1);
 	}
 	
 	stored_flag_reader<flags> flagreader(is, version.bits);

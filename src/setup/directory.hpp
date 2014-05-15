@@ -49,7 +49,7 @@ struct directory_entry : public item {
 	
 	boost::uint32_t attributes;
 	
-	int permission; //!< index into the permission entry list
+	boost::int16_t permission; //!< index into the permission entry list
 	
 	flags options;
 	
