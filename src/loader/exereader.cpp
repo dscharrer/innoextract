@@ -20,8 +20,9 @@
 
 #include "loader/exereader.hpp"
 
-#include <istream>
 #include <iomanip>
+#include <ios>
+#include <istream>
 #include <algorithm>
 #include <cstring>
 #include <vector>
