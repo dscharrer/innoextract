@@ -477,8 +477,9 @@ static void print_header(const setup::header & header) {
 		if(memcmp(empty_salt, header.password_salt, sizeof(header.password_salt))) {
 			std::cout << "Password salt: " << color::cyan;
 			std::cout << std::hex;
-			for(std::size_t i = 0; i < boost::size(header.password_salt); i++) {
-				std::cout << std::setfill('0') << std::setw(2) << int(boost::uint8_t(header.password_salt[i]));
+			for(std::size_t i = 0; i < std::size_t(boost::size(header.password_salt)); i++) {
+				std::cout << std::setfill('0') << std::setw(2)
+				          << int(boost::uint8_t(header.password_salt[i]));
 			}
 			std::cout << color::reset << '\n';
 			std::cout << std::dec;
