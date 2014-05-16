@@ -154,7 +154,7 @@ exe_reader::resource ne_reader::find_resource(std::istream & is, boost::uint32_t
 		boost::uint16_t offset = util::load<boost::uint16_t>(is);
 		boost::uint16_t size   = util::load<boost::uint16_t>(is);
 		is.seekg(2, std::ios_base::cur);
-    boost::uint16_t name_id = util::load<boost::uint16_t>(is);
+		boost::uint16_t name_id = util::load<boost::uint16_t>(is);
 		is.seekg(4, std::ios_base::cur);
 		if(is.fail()) {
 			return result;
@@ -517,8 +517,8 @@ boost::uint64_t exe_reader::get_file_version(std::istream & is) {
 	}
 	
 	is.seekg(4, std::ios_base::cur); // skip struct version
-  boost::uint32_t file_version_ms = util::load<boost::uint32_t>(is);
-  boost::uint32_t file_version_ls = util::load<boost::uint32_t>(is);
+	boost::uint32_t file_version_ms = util::load<boost::uint32_t>(is);
+	boost::uint32_t file_version_ls = util::load<boost::uint32_t>(is);
 	if(is.fail()) {
 		return FileVersionUnknown;
 	}
