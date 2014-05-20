@@ -79,13 +79,11 @@ bool skip_to_fixed_file_info(std::istream & is, boost::uint32_t resource_offset,
 	
 	is.seekg(resource_offset + offset);
 	T key;
-	std::string str;
 	do {
 		key = util::load<T>(is);
 		if(is.fail()) {
 			return false;
 		}
-		str += char(key);
 		offset += boost::uint32_t(sizeof(key));
 	} while(key != 0);
 	
