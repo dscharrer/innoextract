@@ -182,12 +182,11 @@ endif()
 
 # Check for optional functionality and system configuration
 
-check_symbol_exists(isatty "unistd.h" INNOEXTRACT_HAVE_ISATTY)
-if(NOT INNOEXTRACT_HAVE_ISATTY)
+if(WIN32)
 	check_symbol_exists(_isatty "io.h" INNOEXTRACT_HAVE_MS_ISATTY)
-endif()
-check_symbol_exists(ioctl "sys/ioctl.h" INNOEXTRACT_HAVE_IOCTL)
-if(NOT WIN32)
+else()
+	check_symbol_exists(isatty "unistd.h" INNOEXTRACT_HAVE_ISATTY)
+	check_symbol_exists(ioctl "sys/ioctl.h" INNOEXTRACT_HAVE_IOCTL)
 	check_symbol_exists(timegm "time.h" INNOEXTRACT_HAVE_TIMEGM)
 	check_symbol_exists(gmtime_r "time.h" INNOEXTRACT_HAVE_GMTIME_R)
 	check_symbol_exists(utimensat "sys/stat.h" INNOEXTRACT_HAVE_UTIMENSAT)
@@ -197,11 +196,10 @@ if(NOT WIN32)
 	else()
 		check_symbol_exists(utimes "sys/time.h" INNOEXTRACT_HAVE_UTIMES)
 	endif()
+	check_symbol_exists(bswap_16 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_16)
+	check_symbol_exists(bswap_32 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_32)
+	check_symbol_exists(bswap_64 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_64)
 endif()
-
-check_symbol_exists(bswap_16 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_16)
-check_symbol_exists(bswap_32 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_32)
-check_symbol_exists(bswap_64 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_64)
 
 
 # All sources:
