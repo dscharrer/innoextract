@@ -34,7 +34,7 @@ namespace util {
 
 #if BOOST_VERSION < 104200
 
-template <size_t Bits>
+template <int Bits>
 struct uint_t { };
 template <>
 struct uint_t<8>  : public boost::uint_t<8>  { typedef boost::uint8_t exact; };
@@ -45,7 +45,7 @@ struct uint_t<32> : public boost::uint_t<32> { typedef boost::uint32_t exact; };
 template <>
 struct uint_t<64>                            { typedef boost::uint64_t exact; };
 
-template <size_t Bits>
+template <int Bits>
 struct int_t { };
 template <>
 struct int_t<8>  : public boost::int_t<8>  { typedef boost::int8_t exact; };
