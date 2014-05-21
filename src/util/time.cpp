@@ -80,7 +80,7 @@ static void set_timezone(const char * value) {
 	
 #if defined(_WIN32)
 	
-	SetEnvironmentVariable(variable, value);
+	SetEnvironmentVariableA(variable, value);
 	_tzset();
 	
 #else
