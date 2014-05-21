@@ -175,6 +175,7 @@ endif()
 
 if(WIN32)
 	# Define this so that we don't accitenally use ANSI functions
+	add_definitions(-DUNICODE)
 	add_definitions(-D_UNICODE)
 endif()
 
