@@ -43,6 +43,9 @@ namespace { typedef std::codecvt_utf8_utf16<wchar_t> utf8_codecvt; }
 namespace { typedef boost::filesystem::detail::utf8_codecvt_facet utf8_codecvt; }
 #endif
 
+// UTF8 -> UTF-16 converter
+static utf8_codecvt codecvt;
+
 // We really want main here, not utf8_main.
 #undef main
 int main() {
@@ -53,25 +56,27 @@ int main() {
 	
 	std::setlocale(LC_ALL, "");
 	
-	// Emulate wmain() as it's nonstandard and not supported by MinGW.
+	// Emulate wmain() as it's nonstandard and not supported by MinGW
+	// Convert the UTF-16 command-line parameters to UTF-8
 	int argc = 0;
-	wchar_t ** wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
-	
-	// Convert the UTF-16 command-line parameters to UTF-8 ourselves.
-	char ** argv = new char *[argc + 1];
-	argv[argc] = NULL;
-	for(int i = 0; i < argc; i++) {
-		int n = WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, NULL, 0,  NULL, NULL);
-		argv[i] = new char[n];
-		WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, argv[i], n, NULL, NULL);
+	char ** argv = NULL;
+	{
+		wchar_t ** wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
+		
+		argv = new char *[argc + 1];
+		argv[argc] = NULL;
+		for(int i = 0; i < argc; i++) {
+			int n = WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, NULL, 0,  NULL, NULL);
+			argv[i] = new char[n];
+			WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, argv[i], n, NULL, NULL);
+		}
+		
+		LocalFree(wargv);
 	}
 	
-	LocalFree(wargv);
+	// Tell boost::filesystem to interpret our path strings as UTF-8
+	boost::filesystem::path::imbue(std::locale(std::locale(), &codecvt));
 	
-	// Tell boost::filesystem to interpret our path strings as UTF-8.
-	std::locale global_locale = std::locale();
-	std::locale utf8_locale(global_locale, new utf8_codecvt);
-	boost::filesystem::path::imbue(utf8_locale);
 	
 	return utf8_main(argc, argv);
 }
