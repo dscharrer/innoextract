@@ -30,6 +30,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/range/size.hpp>
 
+#include "util/load.hpp"
 #include "util/log.hpp"
 
 namespace setup {
@@ -165,14 +166,6 @@ std::ostream & operator<<(std::ostream & os, const version & v) {
 	return os;
 }
 
-static unsigned to_unsigned(const char * chars, size_t count) {
-#if BOOST_VERSION < 105200
-	return boost::lexical_cast<unsigned>(std::string(chars, count));
-#else
-	return boost::lexical_cast<unsigned>(chars, count);
-#endif
-}
-
 void version::load(std::istream & is) {
 	
 	static const char digits[] = "0123456789";
@@ -214,9 +207,9 @@ void version::load(std::istream & is) {
 		std::string version_str(legacy_version, sizeof(legacy_version));
 		
 		try {
-			unsigned a = to_unsigned(version_str.data() + 1, 1);
-			unsigned b = to_unsigned(version_str.data() + 3, 1);
-			unsigned c = to_unsigned(version_str.data() + 5, 2);
+			unsigned a = util::to_unsigned(version_str.data() + 1, 1);
+			unsigned b = util::to_unsigned(version_str.data() + 3, 1);
+			unsigned c = util::to_unsigned(version_str.data() + 5, 2);
 			value = INNO_VERSION(a, b, c);
 		} catch(boost::bad_lexical_cast) {
 			throw version_error();
@@ -267,21 +260,21 @@ void version::load(std::istream & is) {
 			if(a_end == std::string::npos || version_str[a_end] != '.') {
 				continue;
 			}
-			unsigned a = to_unsigned(version_str.data() + a_start, a_end - a_start);
+			unsigned a = util::to_unsigned(version_str.data() + a_start, a_end - a_start);
 			
 			size_t b_start = a_end + 1;
 			size_t b_end = version_str.find_first_not_of(digits, b_start);
 			if(b_end == std::string::npos || version_str[b_end] != '.') {
 				continue;
 			}
-			unsigned b = to_unsigned(version_str.data() + b_start, b_end - b_start);
+			unsigned b = util::to_unsigned(version_str.data() + b_start, b_end - b_start);
 			
 			size_t c_start = b_end + 1;
 			size_t c_end = version_str.find_first_not_of(digits, c_start);
 			if(c_end == std::string::npos) {
 				continue;
 			}
-			unsigned c = to_unsigned(version_str.data() + c_start, c_end - c_start);
+			unsigned c = util::to_unsigned(version_str.data() + c_start, c_end - c_start);
 			
 			size_t d_start = c_end;
 			if(version_str[d_start] == 'a') {
@@ -296,7 +289,7 @@ void version::load(std::istream & is) {
 				d_start++;
 				size_t d_end = version_str.find_first_not_of(digits, d_start);
 				if(d_end != std::string::npos && d_end != d_start) {
-					d = to_unsigned(version_str.data() + d_start, d_end - d_start);
+					d = util::to_unsigned(version_str.data() + d_start, d_end - d_start);
 				}
 			}
 			

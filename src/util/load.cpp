@@ -29,6 +29,7 @@
 #include <errno.h>
 
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/unordered_map.hpp>
 
 #include "util/log.hpp"
@@ -296,6 +297,14 @@ void to_utf8(const std::string & from, std::string & to, codepage_id codepage) {
 	}
 	
 	to.resize(outbase);
+}
+
+unsigned to_unsigned(const char * chars, size_t count) {
+#if BOOST_VERSION < 105200
+	return boost::lexical_cast<unsigned>(std::string(chars, count));
+#else
+	return boost::lexical_cast<unsigned>(chars, count);
+#endif
 }
 
 } // namespace util

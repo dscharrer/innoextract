@@ -213,6 +213,12 @@ T get_bits(T number, int first, int last) {
 	return T(data & mask);
 }
 
+/*!
+ * Parse an ASCII representation of an unsigned integer
+ * \throws boost::bad_lexical_cast on error
+ */
+unsigned to_unsigned(const char * chars, size_t count);
+
 } // namespace util
 
 #endif // INNOEXTRACT_UTIL_LOAD_HPP
