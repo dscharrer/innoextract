@@ -79,7 +79,7 @@ public:
 	 */
 	explicit logger(log_level _level) : level(_level) { }
 	
-	template<class T>
+	template <class T>
 	logger & operator<<(const T & i) {
 		buffer << i;
 		return *this;

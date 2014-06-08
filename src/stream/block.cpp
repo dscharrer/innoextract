@@ -78,7 +78,7 @@ public:
 	
 	inno_block_filter() : pos(0), length(0) { }
 	
-	template<typename Source>
+	template <typename Source>
 	bool read_chunk(Source & src) {
 		
 		char temp[sizeof(boost::uint32_t)];
@@ -108,7 +108,7 @@ public:
 		return true;
 	}
 	
-	template<typename Source>
+	template <typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n) {
 		
 		std::streamsize read = 0;

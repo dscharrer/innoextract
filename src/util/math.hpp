@@ -67,7 +67,7 @@ struct safe_shifter {
 	
 };
 
-template<>
+template <>
 struct safe_shifter<false> {
 	
 	template <class T>
@@ -103,12 +103,12 @@ template <class T> T rotl_fixed(T x, unsigned int y) {
 
 #if defined(_MSC_VER) && _MSC_VER >= 1400 && !defined(__INTEL_COMPILER)
 
-template<>
+template <>
 inline boost::uint8_t rotl_fixed<boost::uint8_t>(boost::uint8_t x, unsigned int y) {
 	return y ? _rotl8(x, y) : x;
 }
 
-template<>
+template <>
 inline boost::uint16_t rotl_fixed<boost::uint16_t>(boost::uint16_t x, unsigned int y) {
 	return y ? _rotl16(x, y) : x;
 }
@@ -116,14 +116,14 @@ inline boost::uint16_t rotl_fixed<boost::uint16_t>(boost::uint16_t x, unsigned i
 #endif
 
 #ifdef _MSC_VER
-template<>
+template <>
 inline boost::uint32_t rotl_fixed<boost::uint32_t>(boost::uint32_t x, unsigned int y) {
 	return y ? _lrotl(x, y) : x;
 }
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1300 && !defined(__INTEL_COMPILER)
-template<>
+template <>
 inline boost::uint64_t rotl_fixed<boost::uint64_t>(boost::uint64_t x, unsigned int y) {
 	return y ? _rotl64(x, y) : x;
 }

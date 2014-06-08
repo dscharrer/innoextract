@@ -56,11 +56,11 @@ public:
 	
 	inno_exe_decoder_4108() { close(0); }
 	
-	template<typename Source>
+	template <typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n);
 	
 	
-	template<typename Source>
+	template <typename Source>
 	void close(const Source &) {
 		addr_bytes_left = 0, addr_offset = 5;
 	}
@@ -95,10 +95,10 @@ public:
 	explicit inno_exe_decoder_5200(bool flip_high_byte)
 		: flip_high_byte(flip_high_byte) { close(0); }
 	
-	template<typename Source>
+	template <typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n);
 	
-	template<typename Source>
+	template <typename Source>
 	void close(const Source &) {
 		offset = 0, flush_bytes = 0;
 	}
@@ -137,7 +137,7 @@ private:
 
 // Implementation:
 
-template<typename Source>
+template <typename Source>
 std::streamsize inno_exe_decoder_4108::read(Source & src, char * dest, std::streamsize n) {
 	
 	for(std::streamsize i = 0; i < n; i++, addr_offset++) {
@@ -167,7 +167,7 @@ std::streamsize inno_exe_decoder_4108::read(Source & src, char * dest, std::stre
 	return n;
 }
 
-template<typename Source>
+template <typename Source>
 std::streamsize inno_exe_decoder_5200::read(Source & src, char * dest, std::streamsize n) {
 	
 	char * end = dest + n;
