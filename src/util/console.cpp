@@ -26,6 +26,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 
 #include "configure.hpp"
 
@@ -168,6 +169,15 @@ void init(is_enabled color, is_enabled progress) {
 	// Since we can't check if stdout is a terminal,
 	// don't automatically enable color output and progress bar
 	is_tty = false;
+	#endif
+	
+	#if !defined(_WIN32)
+	if(is_tty) {
+		char * term = std::getenv("TERM");
+		if(!term || !std::strcmp(term, "dumb")) {
+			is_tty = false; // Terminal does not support escape sequences
+		}
+	}
 	#endif
 	
 	#if defined(_WIN32)
