@@ -286,6 +286,7 @@ set(INNOEXTRACT_SOURCES
 	src/stream/slice.cpp
 	
 	src/util/align.hpp
+	src/util/ansi.hpp
 	src/util/boostfs_compat.hpp
 	src/util/console.hpp
 	src/util/console.cpp
