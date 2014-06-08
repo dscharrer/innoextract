@@ -181,6 +181,12 @@ endfunction(try_link_library)
 # Check that a a library actually works for the current configuration
 function(check_link_library LIBRARY_NAME LIBRARY_VARIABLE)
 	
+	if(MSVC)
+		# The main point of this is to work around CMakes ignorance of lib32.
+		# This doesn't really apply for systems that don't use a unix-like library dir layout.
+		return()
+	endif()
+	
 	set(lib_current "${${LIBRARY_VARIABLE}}")
 	set(found_var "ARX_CLL_${LIBRARY_NAME}_FOUND")
 	set(working_var "ARX_CLL_${LIBRARY_NAME}_WORKING")
