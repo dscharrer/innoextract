@@ -347,7 +347,13 @@ add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/d
 
 message("")
 message("Configuration:")
-message(" - Build type: ${CMAKE_BUILD_TYPE}")
+set(BUILD_TYPE_SUFFIX "")
+if(DEBUG AND NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+	set(BUILD_TYPE_SUFFIX "${BUILD_TYPE_SUFFIX} with debug output")
+elseif(NOT DEBUG AND NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+	set(BUILD_TYPE_SUFFIX "${BUILD_TYPE_SUFFIX} without debug output")
+endif()
+message(" - Build type: ${CMAKE_BUILD_TYPE}${BUILD_TYPE_SUFFIX}")
 print_configuration("LZMA decompression" FIRST
 	INNOEXTRACT_HAVE_LZMA "enabled"
 	1                     "disabled"
