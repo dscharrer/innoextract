@@ -227,6 +227,7 @@ _ERROR_CATEGORIES = [
   'whitespace/line_length',
   'whitespace/newline',
   'whitespace/operators',
+  'whitespace/templates',
   'whitespace/parens',
   'whitespace/semicolon',
   'whitespace/tab',
@@ -1875,6 +1876,10 @@ def CheckSpacing(filename, clean_lines, linenum, error):
 
   # Don't try to do spacing checks for operator methods
   line = re.sub(r'operator(==|!=|<|<<|<=|>=|>>|>)\(', 'operator\(', line)
+
+  if Search(r'template\<', line):
+    error(filename, linenum, 'whitespace/templates', 4,
+          'Missing space beteen template and <')
 
   # We allow no-spaces around = within an if: "if ( (a=Foo()) == 0 )".
   # Otherwise not.  Note we only check for non-spaces on *both* sides;
