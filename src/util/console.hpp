@@ -150,7 +150,7 @@ public:
 	 * \param reset_only Only reset the cursor if cleaning the line is expensive.
 	 *                   This should be used if the whole line will be written anyway.
 	 */
-	static int clear(bool reset_only = false);
+	static void clear(bool reset_only = false);
 	
 	//! Enable or disable the progress bar.
 	static void set_enabled(bool enable);

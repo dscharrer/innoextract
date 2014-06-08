@@ -207,13 +207,13 @@ static int get_screen_width() {
 
 static bool progress_cleared = true;
 
-int progress::clear(bool reset_only) {
-	
-	int width = get_screen_width();
+void progress::clear(bool reset_only) {
 	
 	if(!show_progress) {
-		return width;
+		return;
 	}
+	
+	progress_cleared = true;
 	
 	#if defined(_WIN32)
 	
@@ -232,35 +232,19 @@ int progress::clear(bool reset_only) {
 		
 		std::cout << '\r';
 		
-	} else {
-		
-		// Overwrite the current line with whitespace
-		
-		static std::string buffer;
-		static int last_width = 0;
-		if(width != last_width) {
-			size_t cwidth = size_t(std::max(width, 1) - 1);
-			buffer.resize(cwidth, ' ');
-			last_width = width;
-		}
-		
-		std::cout << '\r' << buffer << '\r';
-		
+		return;
 	}
 	
 	#else
 	
 	(void)reset_only;
 	
+	#endif
+	
 	// Use the ANSI/VT100 control sequence to clear the current line
 	
 	std::cout << "\r\x1b[K";
 	
-	#endif
-	
-	progress_cleared = true;
-	
-	return width;
 }
 
 void progress::show(float value, const std::string & label) {
@@ -269,7 +253,9 @@ void progress::show(float value, const std::string & label) {
 		return;
 	}
 	
-	int width = clear(true);
+	clear(true);
+	
+	int width = get_screen_width();
 	
 	std::ios_base::fmtflags flags = std::cout.flags();
 	
@@ -306,7 +292,9 @@ void progress::show_unbounded(float value, const std::string & label) {
 		return;
 	}
 	
-	int width = clear(true);
+	clear(true);
+	
+	int width = get_screen_width();
 	
 	std::ios_base::fmtflags flags = std::cout.flags();
 	
