@@ -142,16 +142,16 @@ shell_command magenta =     { "\x1b[1;35m" };
 shell_command cyan =        { "\x1b[1;36m" };
 shell_command white =       { "\x1b[1;37m" };
 
-shell_command dim_black =   { "\x1b[0;30m" };
-shell_command dim_red =     { "\x1b[0;31m" };
-shell_command dim_green =   { "\x1b[0;32m" };
-shell_command dim_yellow =  { "\x1b[0;33m" };
-shell_command dim_blue =    { "\x1b[0;34m" };
-shell_command dim_magenta = { "\x1b[0;35m" };
-shell_command dim_cyan =    { "\x1b[0;36m" };
-shell_command dim_white =   { "\x1b[0;37m" };
+shell_command dim_black =   { "\x1b[;30m" };
+shell_command dim_red =     { "\x1b[;31m" };
+shell_command dim_green =   { "\x1b[;32m" };
+shell_command dim_yellow =  { "\x1b[;33m" };
+shell_command dim_blue =    { "\x1b[;34m" };
+shell_command dim_magenta = { "\x1b[;35m" };
+shell_command dim_cyan =    { "\x1b[;36m" };
+shell_command dim_white =   { "\x1b[;37m" };
 
-shell_command reset =       { "\x1b[0m" };
+shell_command reset =       { "\x1b[m" };
 
 #endif
 
@@ -341,7 +341,7 @@ int progress::clear(bool reset_only) {
 	
 	// Use the ANSI/VT100 control sequence to clear the current line
 	
-	std::cout << "\33[2K\r";
+	std::cout << "\r\x1b[K";
 	
 	#endif
 	
