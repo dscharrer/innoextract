@@ -43,21 +43,23 @@ Build options:
 | Option                   | Default   | Description |
 |:------------------------ |:---------:|:----------- |
 | `USE_LZMA`               | `ON`      | Use `liblzma` if available.
+| `USE_ICONV`              | `OFF`^1   | Use `libiconv` instead of native OS function
 | `CMAKE_BUILD_TYPE`       | `Release` | Set to `Debug` to enable debug output.
-| `DEBUG`                  | `OFF`^1   | Enable debug output and runtime checks.
+| `DEBUG`                  | `OFF`^2   | Enable debug output and runtime checks.
 | `DEBUG_EXTRA`            | `OFF`     | Expensive debug options.
 | `SET_WARNING_FLAGS`      | `ON`      | Adjust compiler warning flags. This should not affect the produced binaries but is useful to catch potential problems.
 | `SET_OPTIMIZATION_FLAGS` | `ON`      | Adjust compiler optimization flags. For non-debug builds the only thing this does is instruct the linker to only link against libraries that are actually needed.
 | `USE_CXX11`              | `ON`      | Try to compile in C++11 mode if available.
-| `USE_STATIC_LIBS`        | `OFF`^2   | Turns on static linking for all libraries, including `-static-libgcc` and `-static-libstdc++`. You can also use the individual options below:
-| `LZMA_USE_STATIC_LIBS`   | `OFF`^3   | Statically link `liblzma`.
-| `Boost_USE_STATIC_LIBS`  | `OFF`^3   | Statically link Boost. See also `FindBoost.cmake`
-| `ZLIB_USE_STATIC_LIBS`   | `OFF`^3   | Statically link `libz`. (used via Boost)
-| `BZip2_USE_STATIC_LIBS`  | `OFF`^3   | Statically link `libbz2`. (used via Boost)
-| `iconv_USE_STATIC_LIBS`  | `OFF`^3   | Statically link `libiconv`.
-1. Enabled automatically if `CMAKE_BUILD_TYPE` is set to `Debug`.
-2. Under Windows, the default is `ON`.
-3. Default is `ON` if `USE_STATIC_LIBS` is enabled.
+| `USE_STATIC_LIBS`        | `OFF`^3   | Turns on static linking for all libraries, including `-static-libgcc` and `-static-libstdc++`. You can also use the individual options below:
+| `LZMA_USE_STATIC_LIBS`   | `OFF`^4   | Statically link `liblzma`.
+| `Boost_USE_STATIC_LIBS`  | `OFF`^4   | Statically link Boost. See also `FindBoost.cmake`
+| `ZLIB_USE_STATIC_LIBS`   | `OFF`^4   | Statically link `libz`. (used via Boost)
+| `BZip2_USE_STATIC_LIBS`  | `OFF`^4   | Statically link `libbz2`. (used via Boost)
+| `iconv_USE_STATIC_LIBS`  | `OFF`^4   | Statically link `libiconv`.
+1. This is only meaningful for Windows
+2. Enabled automatically if `CMAKE_BUILD_TYPE` is set to `Debug`.
+3. Under Windows, the default is `ON`.
+4. Default is `ON` if `USE_STATIC_LIBS` is enabled.
 
 Install options:
 

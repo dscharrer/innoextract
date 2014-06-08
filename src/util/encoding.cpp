@@ -20,13 +20,24 @@
 
 #include "util/encoding.hpp"
 
-#include <iterator>
-#include <sstream>
+#include <stddef.h>
+
 #include <algorithm>
 #include <iomanip>
+#include <iterator>
+#include <sstream>
+#include <vector>
 
+#include "configure.hpp"
+
+#if INNOEXTRACT_HAVE_ICONV
 #include <iconv.h>
 #include <errno.h>
+#elif defined(_WIN32)
+#include <windows.h>
+#else
+#error No charset conversion library available!
+#endif
 
 #include <boost/foreach.hpp>
 #include <boost/unordered_map.hpp>
@@ -36,11 +47,14 @@
 
 namespace util {
 
-namespace {
-
 static const codepage_id cp_utf8  = 65001;
 static const codepage_id cp_ascii = 20127;
+
+#if INNOEXTRACT_HAVE_ICONV
+
 static const char replacement_char = '_';
+
+namespace {
 
 typedef boost::unordered_map<codepage_id, iconv_t> converter_map;
 converter_map converters;
@@ -265,5 +279,85 @@ void to_utf8(const std::string & from, std::string & to, codepage_id codepage) {
 	
 	to.resize(outbase);
 }
+
+#elif defined(_WIN32)
+
+static const codepage_id cp_utf16le = 1200;
+
+namespace {
+
+std::string windows_error_string(DWORD code) {
+	char * error;
+	DWORD n = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+	                         NULL, code, 0, reinterpret_cast<char *>(&error), 0,
+	                         NULL);
+	if(n == 0) {
+		return "unknown";
+	} else {
+		std::string ret(error, size_t(n));
+		LocalFree(error);
+		if(!ret.empty() && ret[ret.size() - 1] == '\n') {
+			ret.resize(ret.size() - 1);
+		}
+		return ret;
+	}
+}
+
+} // anonymous namespace
+
+void to_utf8(const std::string & from, std::string & to, codepage_id cp) {
+	
+	if(from.empty()) {
+		to.clear();
+		return;
+	}
+	
+	if(cp == cp_utf8 || cp == cp_ascii) {
+		// copy UTF-8 directly
+		to = from;
+		return;
+	}
+	
+
+	int ret = 0;
+	
+	// Convert from the source codepage to UTF-16LE
+	const WCHAR * utf16;
+	int utf16_size;
+	std::vector<WCHAR> buffer;
+	if(cp == cp_utf16le) {
+		utf16 = reinterpret_cast<const WCHAR *>(from.data());
+		utf16_size = int(from.size()) / 2;
+	} else {
+		utf16_size = MultiByteToWideChar(cp, 0, from.data(), int(from.length()), NULL, 0);
+		if(utf16_size > 0) {
+			buffer.resize(size_t(utf16_size));
+			ret = MultiByteToWideChar(cp, 0, from.data(), int(from.length()),
+			                          &buffer.front(), utf16_size);
+		}
+		if(utf16_size <= 0 || ret <= 0) {
+			log_warning << "error while converting from CP" << cp << " to UTF-16: "
+			            << windows_error_string(GetLastError());
+			return;
+		}
+		utf16 = &buffer.front();
+	}
+	
+	// Convert from UTF-16-LE to UTF-8
+	int utf8_size = WideCharToMultiByte(CP_UTF8, 0, utf16, utf16_size, NULL, 0,  NULL, NULL);
+	if(utf8_size > 0) {
+		to.resize(size_t(utf8_size));
+		ret = WideCharToMultiByte(CP_UTF8, 0, utf16, utf16_size,
+		                          &to[0], utf8_size, NULL, NULL);
+	}
+	if(utf8_size <= 0 || ret <= 0) {
+		log_warning << "error while converting from UTF-16 to UTF-8: "
+		            << windows_error_string(GetLastError());
+		return;
+	}
+	
+}
+
+#endif
 
 } // namespace util

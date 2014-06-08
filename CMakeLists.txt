@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 2.8)
 # Define configuration options
 
 option(USE_LZMA "Build lzma decompression support." ON)
+option(USE_ICONV "Build against libiconv instead of native OS functions." OFF)
 option(DEBUG_EXTRA "Expensive debug options" OFF)
 option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
 option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
@@ -137,11 +138,16 @@ if(Boost_USE_STATIC_LIBS)
 	
 endif()
 
-find_package(iconv REQUIRED)
-check_link_library(iconv iconv_LIBRARIES)
-list(APPEND LIBRARIES ${iconv_LIBRARIES})
-include_directories(SYSTEM ${iconv_INCLUDE_DIR})
-add_definitions(${iconv_DEFINITIONS})
+if(NOT WIN32 OR USE_ICONV)
+	find_package(iconv REQUIRED)
+	check_link_library(iconv iconv_LIBRARIES)
+	list(APPEND LIBRARIES ${iconv_LIBRARIES})
+	include_directories(SYSTEM ${iconv_INCLUDE_DIR})
+	add_definitions(${iconv_DEFINITIONS})
+	set(INNOEXTRACT_HAVE_ICONV 1)
+else()
+	set(INNOEXTRACT_HAVE_ICONV 0)
+endif()
 
 
 # Set compiler flags
@@ -364,5 +370,9 @@ print_configuration("File time precision" FIRST
 	WIN32                        "100-nanoseconds"
 	INNOEXTRACT_HAVE_UTIMES      "microseconds"
 	1                            "seconds"
+)
+print_configuration("Charset conversion" FIRST
+	USE_ICONV "iconv"
+	WIN32     "Win32"
 )
 message("")

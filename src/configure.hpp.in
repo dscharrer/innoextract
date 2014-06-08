@@ -27,5 +27,6 @@
 
 // Optional dependencies
 #cmakedefine01 INNOEXTRACT_HAVE_LZMA
+#cmakedefine01 INNOEXTRACT_HAVE_ICONV
 
 #endif // INNOEXTRACT_CONFIGURE_HPP
