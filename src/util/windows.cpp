@@ -320,6 +320,20 @@ int isatty(int fd) {
 	}
 }
 
+int console_width() {
+	
+	if(!stdout_info.handle) {
+		return 0;
+	}
+	
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	if(!GetConsoleScreenBufferInfo(stdout_info.handle, &info)) {
+		return 0;
+	}
+	
+	return int(info.dwSize.X);
+}
+
 // We really want main here, not utf8_main.
 #undef main
 int main() {

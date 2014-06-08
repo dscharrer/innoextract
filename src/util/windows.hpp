@@ -44,6 +44,9 @@ int utf8_main(int argc, char * argv[]);
 //! isatty() replacement (only works for fd 0, 1 and 2)
 int isatty(int fd);
 
+//! Determine the buffer width of the current console - replacement for ioctl(TIOCGWINSZ)
+int console_width();
+
 #endif // defined(_WIN32)
 
 #endif // INNOEXTRACT_UTIL_WINDOWS_HPP

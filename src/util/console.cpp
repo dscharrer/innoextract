@@ -30,10 +30,6 @@
 
 #include "configure.hpp"
 
-#if defined(_WIN32)
-#include <windows.h>
-#endif
-
 #if INNOEXTRACT_HAVE_ISATTY
 #include <unistd.h>
 #endif
@@ -158,9 +154,9 @@ static int query_screen_width() {
 	
 	#if defined(_WIN32)
 	
-	CONSOLE_SCREEN_BUFFER_INFO info;
-	if(GetConsoleScreenBufferInfo(console_handle, &info)) {
-		return info.srWindow.Right - info.srWindow.Left + 1;
+	int width = console_width();
+	if(width) {
+		return width;
 	}
 	
 	#endif
