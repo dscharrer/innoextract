@@ -26,6 +26,7 @@
 #include <boost/static_assert.hpp>
 
 #include "setup/version.hpp"
+#include "util/encoding.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
 

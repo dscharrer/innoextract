@@ -288,6 +288,8 @@ set(INNOEXTRACT_SOURCES
 	src/util/boostfs_compat.hpp
 	src/util/console.hpp
 	src/util/console.cpp
+	src/util/encoding.hpp
+	src/util/encoding.cpp
 	src/util/endian.hpp
 	src/util/enum.hpp
 	src/util/flags.hpp

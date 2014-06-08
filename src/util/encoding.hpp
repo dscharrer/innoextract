@@ -18,36 +18,32 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#include "setup/message.hpp"
+/*!
+ * \file
+ *
+ * Utility function to convert strings to UTF-8.
+ */
+#ifndef INNOEXTRACT_UTIL_ENCODING_HPP
+#define INNOEXTRACT_UTIL_ENCODING_HPP
+
+#include <string>
 
 #include <boost/cstdint.hpp>
 
-#include "setup/language.hpp"
-#include "setup/version.hpp"
-#include "util/encoding.hpp"
-#include "util/load.hpp"
+namespace util {
 
-namespace setup {
+typedef boost::uint32_t codepage_id;
 
-void message_entry::load(std::istream & is, const version & version,
-                         const std::vector<language_entry> & languages) {
-	
-	is >> util::encoded_string(name, version.codepage());
-	std::string raw_value = util::binary_string::load(is);
-	
-	language = util::load<boost::int32_t>(is);
-	
-	boost::uint32_t codepage;
-	if(language < 0) {
-		codepage = version.codepage();
-	} else if(language < 0 || size_t(language) >= languages.size()) {
-		value.clear();
-		return;
-	} else {
-		codepage = languages[size_t(language)].codepage;
-	}
-	
-	util::to_utf8(raw_value, value, codepage);
-}
+/*!
+ * Convert a string to UTF-8 from a specified encoding.
+ * \param from     The input string to convert.
+ * \param to       The output for the converted string.
+ * \param codepage The Windows codepage number for the input string encoding.
+ *
+ * \note This function is not thread-safe.
+ */
+void to_utf8(const std::string & from, std::string & to, codepage_id codepage = 1252);
 
-} // namespace setup
+} // namespace util
+
+#endif // INNOEXTRACT_UTIL_ENCODING_HPP
