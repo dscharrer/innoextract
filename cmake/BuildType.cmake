@@ -55,6 +55,7 @@ else(MSVC)
 		add_cxxflag("-Wliteral-conversion")
 		add_cxxflag("-Wshift-overflow")
 		add_cxxflag("-Wbool-conversions")
+		add_cxxflag("-Wheader-guard")
 		
 		# icc
 		if(NOT DEBUG_EXTRA)
