@@ -26,16 +26,18 @@
  *  - Sets an UTF-8 locale for boost::filesystem::path.
  *    This makes everything in boost::filesystem UTF-8 aware, except for {i,o,}fstream.
  *    For those, there are UTF-8 aware implementations in util/fstream.hpp
+ *  - Converts UTF-8 to UTF-16 in std::cout and std::cerr if attached to a console
+ *  - Interprets ANSI escape sequences in std::cout and std::cerr if attached to a console
  */
 #ifndef INNOEXTRACT_UTIL_WINDOWS_HPP
 #define INNOEXTRACT_UTIL_WINDOWS_HPP
 
 #if defined(_WIN32)
 
-//! Program entry point that will always receive UTF-8 encoded arguments.
+//! Program entry point that will always receive UTF-8 encoded arguments
 int utf8_main(int argc, char * argv[]);
 
-//! We define our own wrapper main(), so rename the real one.
+//! We define our own wrapper main(), so rename the real one
 #define main utf8_main
 
 #endif // defined(_WIN32)
