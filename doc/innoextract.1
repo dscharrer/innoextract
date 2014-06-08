@@ -57,7 +57,7 @@ Here is a short summary of the options available in innoextract. Please refer to
 \fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
 By default
 .B innoextract
-will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB\-\-color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
+will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Specifically, colors will be enabled if both \fBstdout\fP and \fBstderr\fP point to a TTY and the \fBTERM\fP environment variable is not set to "\fBdumb\fP". Pass \fB1\fP or \fBtrue\fP to \fB\-\-color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
 .TP
 \fB\-\-dump\fP
 Don't convert Windows paths to UNIX paths and don't substitute variables in paths.
