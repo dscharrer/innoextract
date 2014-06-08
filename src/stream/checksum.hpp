@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Filter to be used with boost::iostreams for calculating a \ref crypto::checksum.
  */
 #ifndef INNOEXTRACT_STREAM_CHECKSUM_HPP

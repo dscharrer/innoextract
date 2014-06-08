@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Typesafe flags.
  */
 #ifndef INNOEXTRACT_UTIL_FLAGS_HPP

@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Math helper functions.
  */
 #ifndef INNOEXTRACT_UTIL_MATH_HPP

@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Parser for ANSI escape code sequences
  */
 #ifndef INNOEXTRACT_UTIL_ANSI_HPP

@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Map for converting between stored filenames and output filenames.
  */
 #ifndef INNOEXTRACT_SETUP_FILENAME_HPP

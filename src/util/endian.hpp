@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Utility functions for dealing with different endiannesses.
  */
 #ifndef INNOEXTRACT_UTIL_ENDIAN_HPP

@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Wrapper to select std::unique_ptr if available, std::auto_ptr otherwise.
  */
 #ifndef INNOEXTRACT_UTIL_UNIQUE_PTR_HPP

@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Logging functions.
  */
 #ifndef INNOEXTRACT_UTIL_LOG_HPP

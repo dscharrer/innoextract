@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Wrapper to read, checksum and decompress header blocks.
  *
  * Thse blocks are used to store the setup headers (\ref setup).

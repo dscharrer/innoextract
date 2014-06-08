@@ -21,6 +21,8 @@
 #include "release.hpp"
 
 /*
+ * \file
+ *
  * This file is automatically processed by cmake if the version or commit id changes.
  * For the exact syntax see the documentation of the configure_file() cmake command.
  * For available variables see cmake/VersionString.cmake.

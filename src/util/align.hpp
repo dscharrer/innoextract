@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Utility functions for dealing with alignment of objects.
  */
 #ifndef INNOEXTRACT_UTIL_ALIGN_HPP

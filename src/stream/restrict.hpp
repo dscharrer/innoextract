@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Wrapper class for a boost::iostreams-compatible source that can be used to restrict
  * sources to appear smaller than they really are.
  */

@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Wrapper to read a single file from a chunk (\ref stream::chunk_reader).
  */
 #ifndef INNOEXTRACT_STREAM_FILE_HPP

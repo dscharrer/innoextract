@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Filters to be used with boost::iostreams for undoing transformations Inno Setup applies
  * to stored executable files to make them more compressible.
  */

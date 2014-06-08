@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Output utility functions.
  */
 #ifndef INNOEXTRACT_UTIL_OUTPUT_HPP

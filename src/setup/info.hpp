@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Central point to load all the different headers in the correct order.
  */
 #ifndef INNOEXTRACT_SETUP_INFO_HPP

@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Utility function to load stored data while properly handling encodings and endianness.
  */
 #ifndef INNOEXTRACT_UTIL_LOAD_HPP

@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * LZMA 1 and 2 (aka xz) descompression filters to be used with boost::iostreams.
  */
 #ifndef INNOEXTRACT_STREAM_LZMA_HPP

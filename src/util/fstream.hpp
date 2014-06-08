@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * boost::filesystem::{i,o,}fstream doesn't support unicode names on windows
  * Implement our own wrapper using boost::iostreams.
  */

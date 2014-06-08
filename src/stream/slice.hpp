@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Abstraction for reading the embedded or external raw setup data.
  */
 #ifndef INNOEXTRACT_STREAM_SLICE_HPP

@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Time parsing, formatting, onversion and filetime manipulation functions.
  */
 #ifndef INNOEXTRACT_UTIL_TIME_HPP

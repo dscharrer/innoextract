@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Terminal output functions: colors, progress bar.
  */
 #ifndef INNOEXTRACT_UTIL_CONSOLE_HPP

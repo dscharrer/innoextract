@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Compatibility wrapper to work around deficiencies in Microsoft® Windows™.
  * Mostly deals with converting between UTF-8 and UTF-16 input/output.
  * More precisely:

@@ -19,6 +19,8 @@
  */
 
 /*!
+ * \file
+ *
  * Utility functions for dealing with types.
  */
 #ifndef INNOEXTRACT_UTIL_TYPES_HPP
