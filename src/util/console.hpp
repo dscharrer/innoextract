@@ -36,16 +36,9 @@ namespace color {
 
 /*!
  * Object that can be written to the console to change the output color.
- *
- * On some operating systems these will only work if streamed directly into std::cout
- * ot std::cerr.
  */
 struct shell_command {
-#if defined(_WIN32)
-	boost::uint16_t command;
-#else
 	const char * command;
-#endif
 };
 
 std::ostream & operator<<(std::ostream & os, const shell_command command);
@@ -74,12 +67,10 @@ extern shell_command dim_white;
 //! The last set output color.
 extern shell_command current;
 
-#if !defined(_WIN32)
 inline std::ostream & operator<<(std::ostream & os, const shell_command command) {
 	color::current = command;
 	return os << command.command;
 }
-#endif
 
 enum is_enabled {
 	enable,

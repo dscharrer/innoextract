@@ -69,70 +69,7 @@ static void sigwinch_handler(int sig) {
 
 #endif
 
-#if defined(_WIN32)
-static HANDLE console_handle;
-#endif
-
 namespace color {
-
-#if defined(_WIN32)
-
-std::ostream & operator<<(std::ostream & os, const shell_command command) {
-	
-	color::current = command;
-	
-	if(command.command == boost::uint16_t(-1) || !console_handle) {
-		// Color output is disabled
-		return os;
-	}
-	
-	if(&os != &std::cout && &os != &std::cerr) {
-		// Colors are only supported for standard output
-		return os;
-	}
-	
-	std::cout.flush();
-	std::cerr.flush();
-	
-	SetConsoleTextAttribute(console_handle, command.command);
-	
-	return os;
-}
-
-shell_command black =       { FOREGROUND_INTENSITY };
-shell_command red =         { FOREGROUND_INTENSITY | FOREGROUND_RED };
-shell_command green =       { FOREGROUND_INTENSITY | FOREGROUND_GREEN };
-shell_command yellow =      { FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN };
-shell_command blue =        { FOREGROUND_INTENSITY | FOREGROUND_BLUE };
-shell_command magenta =     { FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_BLUE };
-shell_command cyan =        { FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_GREEN };
-shell_command white =       { FOREGROUND_INTENSITY
-                              | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE };
-
-shell_command dim_black =   { 0 };
-shell_command dim_red =     { FOREGROUND_RED };
-shell_command dim_green =   { FOREGROUND_GREEN };
-shell_command dim_yellow =  { FOREGROUND_RED | FOREGROUND_GREEN };
-shell_command dim_blue =    { FOREGROUND_BLUE };
-shell_command dim_magenta = { FOREGROUND_RED | FOREGROUND_BLUE };
-shell_command dim_cyan =    { FOREGROUND_BLUE | FOREGROUND_GREEN };
-shell_command dim_white =   { FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE };
-
-shell_command reset =       dim_white;
-
-boost::uint16_t original_color = boost::uint16_t(-1);
-static void restore_color() {
-	if(original_color != boost::uint16_t(-1) && console_handle) {
-		SetConsoleTextAttribute(console_handle, original_color);
-	}
-}
-static BOOL WINAPI restore_color_handler(DWORD type) {
-	(void)type;
-	restore_color();
-	return FALSE;
-}
-
-#else
 
 shell_command black =       { "\x1b[1;30m" };
 shell_command red =         { "\x1b[1;31m" };
@@ -153,8 +90,6 @@ shell_command dim_cyan =    { "\x1b[;36m" };
 shell_command dim_white =   { "\x1b[;37m" };
 
 shell_command reset =       { "\x1b[m" };
-
-#endif
 
 shell_command current = reset;
 
@@ -177,19 +112,6 @@ void init(is_enabled color, is_enabled progress) {
 		if(!term || !std::strcmp(term, "dumb")) {
 			is_tty = false; // Terminal does not support escape sequences
 		}
-	}
-	#endif
-	
-	#if defined(_WIN32)
-	console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO info;
-	if(console_handle && GetConsoleScreenBufferInfo(console_handle, &info)) {
-		original_color = info.wAttributes;
-	} else {
-		// Color and progress bar need a console handle under Windows, but we couldn't get one
-		is_tty = false;
-		color = disable;
-		progress = disable;
 	}
 	#endif
 	
@@ -219,30 +141,15 @@ void init(is_enabled color, is_enabled progress) {
 	if(color == disable || (color == automatic && !is_tty)) {
 		
 		BOOST_FOREACH(shell_command * color, all_colors) {
-			#if defined(_WIN32)
-			color->command = boost::uint16_t(-1);
-			#else
 			color->command = "";
-			#endif
 		}
 		
 	} else {
 		
 		#if defined(_WIN32)
-		// Preserve the original background color if it isn't too bright
-		if(!(original_color & (COMMON_LVB_REVERSE_VIDEO|BACKGROUND_INTENSITY))) {
-			boost::uint16_t bgmask = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE;
-			if((color & bgmask) != bgmask) {
-				boost::uint16_t bg = original_color & bgmask;
-				BOOST_FOREACH(shell_command * color, all_colors) {
-					color->command |= bg;
-				}
-			}
-		}
-		// Force dim_white as the default color under Windows, restore original color on exit
+		// For our Windows abstraction, the default color might differ from the initial one
 		std::cout << reset;
-		std::atexit(restore_color);
-		SetConsoleCtrlHandler(restore_color_handler, TRUE);
+		std::cerr << reset;
 		#endif
 		
 	}
