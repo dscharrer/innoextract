@@ -289,7 +289,7 @@ static BOOL WINAPI cleanup_console_handler(DWORD type) {
 
 static bool is_console(HANDLE handle) {
 	DWORD mode;
-	return GetConsoleMode(handle, &mode);
+	return GetConsoleMode(handle, &mode) != 0;
 }
 
 static void init_console(std::ostream & os, console_buffer_info & info, DWORD n) {
