@@ -16,6 +16,22 @@ if(MSVC)
 		add_definitions(/wd4996) # 'unsafe' stdlib functions used by Boost
 	endif()
 	
+	if(SET_OPTIMIZATION_FLAGS)
+		# Enable linker optimization in release
+		#  /OPT:REF   Eliminate unreferenced code
+		#  /OPT:ICF   COMDAT folding (merge functions generating the same code)
+		#  /GL + /LTCG
+		set(CMAKE_CXX_FLAGS_RELEASE
+		    "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Os /GL")
+		if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /arch:SSE2")
+		endif()
+		set(CMAKE_EXE_LINKER_FLAGS_RELEASE
+		    "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /OPT:REF /OPT:ICF /LTCG")
+		set(CMAKE_SHARED_LINKER_FLAGS_RELEASE
+		    "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /OPT:REF /OPT:ICF /LTCG")
+	endif()
+	
 else(MSVC)
 	
 	if(SET_WARNING_FLAGS)
