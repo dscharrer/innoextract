@@ -311,6 +311,15 @@ static void init_console() {
 	}
 }
 
+int isatty(int fd) {
+	switch(fd) {
+		case 0: return is_console(GetStdHandle(STD_INPUT_HANDLE)) ? 1 : 0;
+		case 1: return (stdout_info.buf != NULL) ? 1 : 0;
+		case 2: return (stderr_info.buf != NULL) ? 1 : 0;
+		default: return 0;
+	}
+}
+
 // We really want main here, not utf8_main.
 #undef main
 int main() {

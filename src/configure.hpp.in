@@ -4,7 +4,6 @@
 
 // Console functions
 #cmakedefine01 INNOEXTRACT_HAVE_ISATTY
-#cmakedefine01 INNOEXTRACT_HAVE_MS_ISATTY
 #cmakedefine01 INNOEXTRACT_HAVE_IOCTL
 
 // Time functions

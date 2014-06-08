@@ -36,9 +36,6 @@
 
 #if INNOEXTRACT_HAVE_ISATTY
 #include <unistd.h>
-#elif INNOEXTRACT_HAVE_MS_ISATTY
-#include <stdio.h>
-#include <io.h>
 #endif
 
 #if INNOEXTRACT_HAVE_IOCTL
@@ -50,6 +47,7 @@
 #include <boost/foreach.hpp>
 
 #include "util/output.hpp"
+#include "util/windows.hpp"
 
 static bool show_progress = true;
 
@@ -96,10 +94,8 @@ shell_command current = reset;
 void init(is_enabled color, is_enabled progress) {
 	
 	bool is_tty;
-	#if INNOEXTRACT_HAVE_ISATTY
+	#if defined(_WIN32) || INNOEXTRACT_HAVE_ISATTY
 	is_tty = isatty(1) && isatty(2);
-	#elif INNOEXTRACT_HAVE_MS_ISATTY
-	is_tty = _isatty(_fileno(stdout)) && _isatty(_fileno(stderr));
 	#else
 	// Since we can't check if stdout is a terminal,
 	// don't automatically enable color output and progress bar

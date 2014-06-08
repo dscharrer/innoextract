@@ -28,6 +28,7 @@
  *    For those, there are UTF-8 aware implementations in util/fstream.hpp
  *  - Converts UTF-8 to UTF-16 in std::cout and std::cerr if attached to a console
  *  - Interprets ANSI escape sequences in std::cout and std::cerr if attached to a console
+ *  - Provides a Windows implementation of \ref isatty()
  */
 #ifndef INNOEXTRACT_UTIL_WINDOWS_HPP
 #define INNOEXTRACT_UTIL_WINDOWS_HPP
@@ -39,6 +40,9 @@ int utf8_main(int argc, char * argv[]);
 
 //! We define our own wrapper main(), so rename the real one
 #define main utf8_main
+
+//! isatty() replacement (only works for fd 0, 1 and 2)
+int isatty(int fd);
 
 #endif // defined(_WIN32)
 

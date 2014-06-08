@@ -179,9 +179,7 @@ endif()
 
 # Check for optional functionality and system configuration
 
-if(WIN32)
-	check_symbol_exists(_isatty "io.h" INNOEXTRACT_HAVE_MS_ISATTY)
-else()
+if(NOT WIN32)
 	check_symbol_exists(isatty "unistd.h" INNOEXTRACT_HAVE_ISATTY)
 	check_symbol_exists(ioctl "sys/ioctl.h" INNOEXTRACT_HAVE_IOCTL)
 	check_symbol_exists(timegm "time.h" INNOEXTRACT_HAVE_TIMEGM)
