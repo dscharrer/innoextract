@@ -40,7 +40,7 @@ void message_entry::load(std::istream & is, const version & version,
 	boost::uint32_t codepage;
 	if(language < 0) {
 		codepage = version.codepage();
-	} else if(language < 0 || size_t(language) >= languages.size()) {
+	} else if(size_t(language) >= languages.size()) {
 		value.clear();
 		return;
 	} else {
