@@ -5,8 +5,9 @@ cmake_minimum_required(VERSION 2.8)
 
 # Define configuration options
 
-option(USE_LZMA "Build lzma decompression support." ON)
-option(USE_ICONV "Build against libiconv instead of native OS functions." OFF)
+option(USE_LZMA "Build lzma decompression support" ON)
+set(WITH_CONV CACHE STRING "The library to use for charset conversions")
+option(ENABLE_BUILTIN_CONV "Build internal charset conversion routines" ON)
 option(DEBUG_EXTRA "Expensive debug options" OFF)
 option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
 option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
@@ -138,15 +139,32 @@ if(Boost_USE_STATIC_LIBS)
 	
 endif()
 
-if(NOT WIN32 OR USE_ICONV)
-	find_package(iconv REQUIRED)
-	check_link_library(iconv iconv_LIBRARIES)
-	list(APPEND LIBRARIES ${iconv_LIBRARIES})
-	include_directories(SYSTEM ${iconv_INCLUDE_DIR})
-	add_definitions(${iconv_DEFINITIONS})
-	set(INNOEXTRACT_HAVE_ICONV 1)
-else()
-	set(INNOEXTRACT_HAVE_ICONV 0)
+set(INNOEXTRACT_HAVE_ICONV 0)
+set(INNOEXTRACT_HAVE_WIN32_CONV 0)
+set(INNOEXTRACT_HAVE_BUILTIN_CONV ${ENABLE_BUILTIN_CONV})
+if(WIN32 AND (NOT WITH_CONV OR WITH_CONV STREQUAL "win32"))
+	set(INNOEXTRACT_HAVE_WIN32_CONV 1)
+elseif(NOT WITH_CONV OR WITH_CONV STREQUAL "iconv")
+	if(STRICT_USE)
+		set(ICONV_REQUIRED REQUIRED)
+	else()
+		set(ICONV_REQUIRED)
+	endif()
+	find_package(iconv ${ICONV_REQUIRED})
+	if(ICONV_FOUND)
+		check_link_library(iconv iconv_LIBRARIES)
+		list(APPEND LIBRARIES ${iconv_LIBRARIES})
+		include_directories(SYSTEM ${iconv_INCLUDE_DIR})
+		add_definitions(${iconv_DEFINITIONS})
+		set(INNOEXTRACT_HAVE_ICONV 1)
+	endif()
+elseif(WITH_CONV AND NOT WITH_CONV STREQUAL "builtin")
+	message(FATAL_ERROR "Invalid WITH_CONV option: ${WITH_CONV}")
+endif()
+if(NOT INNOEXTRACT_HAVE_ICONV AND NOT INNOEXTRACT_HAVE_WIN32_CONV
+   AND NOT INNOEXTRACT_HAVE_BUILTIN_CONV)
+	message(WARNING "\nBuilding without any charset conversion support.\n"
+	                "Any non-ASCII characters in extracted filenames will be missing.")
 endif()
 
 
@@ -371,8 +389,9 @@ print_configuration("File time precision" FIRST
 	INNOEXTRACT_HAVE_UTIMES      "microseconds"
 	1                            "seconds"
 )
-print_configuration("Charset conversion" FIRST
-	USE_ICONV "iconv"
-	WIN32     "Win32"
+print_configuration("Charset conversion"
+	INNOEXTRACT_HAVE_ICONV        "iconv"
+	INNOEXTRACT_HAVE_WIN32_CONV   "Win32"
+	INNOEXTRACT_HAVE_BUILTIN_CONV "bultin"
 )
 message("")

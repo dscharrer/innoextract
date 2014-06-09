@@ -43,7 +43,8 @@ Build options:
 | Option                   | Default   | Description |
 |:------------------------ |:---------:|:----------- |
 | `USE_LZMA`               | `ON`      | Use `liblzma` if available.
-| `USE_ICONV`              | `OFF`^1   | Use `libiconv` instead of native OS function
+| `WITH_CONV`              | *not set* | The charset conversion library to use. Valid values are `iconv`, `win32` and `builtin`^1. If not set, a library appropriate for the target platform will be chosen.
+| `ENABLE_BUILTIN_CONV`    | `ON`      | Build internal Windows-1252 and UTF-16LE to UTF-18 charset conversion routines. These might be used even if `WITH_CONV` is not set to `builtin`.
 | `CMAKE_BUILD_TYPE`       | `Release` | Set to `Debug` to enable debug output.
 | `DEBUG`                  | `OFF`^2   | Enable debug output and runtime checks.
 | `DEBUG_EXTRA`            | `OFF`     | Expensive debug options.
@@ -56,7 +57,7 @@ Build options:
 | `ZLIB_USE_STATIC_LIBS`   | `OFF`^4   | Statically link `libz`. (used via Boost)
 | `BZip2_USE_STATIC_LIBS`  | `OFF`^4   | Statically link `libbz2`. (used via Boost)
 | `iconv_USE_STATIC_LIBS`  | `OFF`^4   | Statically link `libiconv`.
-1. This is only meaningful for Windows
+1. The builtin charset conversion only supports Windows-1252 and UTF-16LE. This is normally enough for filenames, but custom message strings (which can be included in filenames) may use arbitrary encodings.
 2. Enabled automatically if `CMAKE_BUILD_TYPE` is set to `Debug`.
 3. Under Windows, the default is `ON`.
 4. Default is `ON` if `USE_STATIC_LIBS` is enabled.
