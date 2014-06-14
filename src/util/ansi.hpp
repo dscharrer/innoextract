@@ -39,7 +39,6 @@
 #include "util/load.hpp"
 #include "util/types.hpp"
 
-struct C;
 namespace util {
 
 /*!
@@ -195,6 +194,7 @@ private:
 		this->impl().handle_command(type, cs, ce);
 		
 		in_command = 0;
+		command.clear();
 		
 		return cmd + 1;
 	}
