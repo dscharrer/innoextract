@@ -224,24 +224,22 @@ static void utf16le_to_utf8(const std::string & from, std::string & to) {
 		
 		// If it's a surrogate pair, convert to a single UTF-32 character
 		if(is_utf16_high_surrogate(chr)) {
-			if(it != end) {
-				unicode_char d = boost::uint8_t(*it++);
-				if(it == end) {
-					warn = true;
-					utf8_write(to, replacement_char);
-					break;
-				}
-				d |= unicode_char(boost::uint8_t(*it++)) << 8;
-				if(is_utf16_low_surrogate(d)) {
-					chr = ((chr - 0xd800) << 10) + (d - 0xdc00) + 0x0010000;
-				} else {
-					warn = true;
-					utf8_write(to, replacement_char);
-					continue;
-				}
+			if(it == end) {
+				warn = true;
+				utf8_write(to, replacement_char);
+				break;
+			}
+			unicode_char d = boost::uint8_t(*it++);
+			if(it == end) {
+				warn = true;
+				utf8_write(to, replacement_char);
+				break;
+			}
+			d |= unicode_char(boost::uint8_t(*it++)) << 8;
+			if(is_utf16_low_surrogate(d)) {
+				chr = ((chr - 0xd800) << 10) + (d - 0xdc00) + 0x0010000;
 			} else {
 				warn = true;
-				// Invalid second element
 				utf8_write(to, replacement_char);
 				continue;
 			}
@@ -282,7 +280,7 @@ static void windows1252_to_utf8(const std::string & from, std::string & to) {
 	
 	BOOST_FOREACH(char c, from) {
 		
-		// windows1252 maps almost directly to Unicode - yay!
+		// Windows-1252 maps almost directly to Unicode - yay!
 		unicode_char chr = boost::uint8_t(c);
 		if(chr >= 128 && chr < 160) {
 			chr = replacements[chr - 128];
@@ -541,7 +539,7 @@ static bool to_utf8_win32(const std::string & from, std::string & to, codepage_i
 		utf16 = &buffer.front();
 	}
 	
-	// Convert from UTF-16-LE to UTF-8
+	// Convert from UTF-16LE to UTF-8
 	int utf8_size = WideCharToMultiByte(CP_UTF8, 0, utf16, utf16_size, NULL, 0,  NULL, NULL);
 	if(utf8_size > 0) {
 		to.resize(size_t(utf8_size));
