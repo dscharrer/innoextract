@@ -24,8 +24,8 @@
  * Wrapper to read and decompress a chunk from a \ref stream::slice_reader.
  *
  * A chunk consists of one compression stream (one of \ref stream::compression_method) and
- * contains one or more \ref file "files". Files may also have additional filters managed by
- * \ref stream::file_reader.
+ * contains one or more \ref stream::file "files".
+ * Files may also have additional filters managed by \ref stream::file_reader.
  */
 #ifndef INNOEXTRACT_STREAM_CHUNK_HPP
 #define INNOEXTRACT_STREAM_CHUNK_HPP
