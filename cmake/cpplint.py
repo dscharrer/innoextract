@@ -2345,7 +2345,9 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, class_state,
       # It's ok to have many commands in a switch case that fits in 1 line
       not ((cleansed_line.find('case ') != -1 or
             cleansed_line.find('default:') != -1) and
-           cleansed_line.find('break;') != -1)):
+           (cleansed_line.find('break;') != -1 or
+            cleansed_line.find('return;') or
+            cleansed_line.find('return ')))):
     error(filename, linenum, 'whitespace/newline', 4,
           'More than one command on the same line')
 
