@@ -124,7 +124,7 @@ static void to_utf8_fallback(const std::string & from, std::string & to, codepag
 			unicode |= unicode_char(boost::uint8_t(*it++)) << (i * 8);
 		}
 		
-		char ascii = (unicode >> shift) & 0x7f;
+		char ascii = char((unicode >> shift) & 0x7f);
 		
 		// replace non-ASCII characters with underscores
 		if((unicode_char(ascii) << shift) != unicode) {
