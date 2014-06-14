@@ -21,7 +21,7 @@
 /*!
  * \file
  *
- * Compatibility functions for older \ref boost::filesystem versions.
+ * Compatibility functions for older Boost.Filesystem versions.
  */
 #ifndef INNOEXTRACT_UTIL_BOOSTFS_COMPAT_HPP
 #define INNOEXTRACT_UTIL_BOOSTFS_COMPAT_HPP
