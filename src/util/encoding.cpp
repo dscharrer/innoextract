@@ -135,8 +135,8 @@ static void to_utf8_fallback(const std::string & from, std::string & to, codepag
 		to.push_back(ascii);
 	}
 	
-	static bool warned = false;
 	if(warn) {
+		static bool warned = false;
 		log_warning << "unknown data while converting from CP" << cp << " to UTF-8";
 		if(!warned && (cp == cp_windows1252 || cp == cp_utf16le)) {
 			#if INNOEXTRACT_HAVE_ICONV
