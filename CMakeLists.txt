@@ -223,8 +223,11 @@ endif()
 
 # All sources:
 
+set(DOCUMENTATION 0) # never build these
+
 set(INNOEXTRACT_SOURCES
 	
+	src/index.hpp if DOCUMENTATION
 	src/release.hpp
 	
 	src/cli/debug.hpp
