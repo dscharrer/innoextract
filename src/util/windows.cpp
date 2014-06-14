@@ -274,6 +274,7 @@ static void cleanup_console(std::ostream & os, console_buffer_info & info) {
 	if(info.buf) {
 		os.flush();
 		os.rdbuf(info.orig_buf);
+		delete info.buf;
 		info.buf = NULL, info.handle = NULL;
 	}
 }
@@ -312,6 +313,18 @@ static void init_console() {
 		SetConsoleCtrlHandler(cleanup_console_handler, TRUE);
 	}
 }
+
+struct console_wrapper {
+	
+	console_wrapper() {
+		init_console();
+	}
+	
+	~console_wrapper() {
+		cleanup_console();
+	}
+	
+};
 
 int isatty(int fd) {
 	switch(fd) {
@@ -370,11 +383,7 @@ int main() {
 	boost::filesystem::path::imbue(std::locale(std::locale(), &util::codecvt));
 	
 	// Enable UTF-8 output and ANSI escape sequences
-	util::init_console();
+	util::console_wrapper wrapped;
 	
-	int ret = utf8_main(argc, argv);
-	
-	util::cleanup_console();
-	
-	return ret;
+	return utf8_main(argc, argv);
 }
