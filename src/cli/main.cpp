@@ -512,6 +512,7 @@ int main(int argc, char * argv[]) {
 		          options);
 		po::notify(options);
 	} catch(po::error & e) {
+		color::init(color::disable, color::disable); // Be conservative
 		std::cerr << "Error parsing command-line: " << e.what() << "\n\n";
 		print_help(get_command(argv[0]), visible);
 		return ExitUserError;
