@@ -154,7 +154,7 @@ static int query_screen_width() {
 	
 	#if defined(_WIN32)
 	
-	int width = console_width();
+	int width = util::console_width();
 	if(width) {
 		return width;
 	}

@@ -53,6 +53,8 @@ namespace { typedef boost::filesystem::detail::utf8_codecvt_facet utf8_codecvt; 
 
 #include "util/ansi.hpp"
 
+namespace util {
+
 class windows_console_sink : public util::ansi_console_parser<windows_console_sink> {
 	
 	friend class util::ansi_console_parser<windows_console_sink>;
@@ -334,6 +336,8 @@ int console_width() {
 	return int(info.dwSize.X);
 }
 
+} // namespace util
+
 // We really want main here, not utf8_main.
 #undef main
 int main() {
@@ -363,14 +367,14 @@ int main() {
 	}
 	
 	// Tell boost::filesystem to interpret our path strings as UTF-8
-	boost::filesystem::path::imbue(std::locale(std::locale(), &codecvt));
+	boost::filesystem::path::imbue(std::locale(std::locale(), &util::codecvt));
 	
 	// Enable UTF-8 output and ANSI escape sequences
-	init_console();
+	util::init_console();
 	
 	int ret = utf8_main(argc, argv);
 	
-	cleanup_console();
+	util::cleanup_console();
 	
 	return ret;
 }

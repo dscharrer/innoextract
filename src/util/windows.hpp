@@ -43,11 +43,17 @@ int utf8_main(int argc, char * argv[]);
 //! We define our own wrapper main(), so rename the real one
 #define main utf8_main
 
+namespace util {
+
 //! isatty() replacement (only works for fd 0, 1 and 2)
 int isatty(int fd);
 
 //! Determine the buffer width of the current console - replacement for ioctl(TIOCGWINSZ)
 int console_width();
+
+} // namespace util
+
+using util::isatty;
 
 #endif // defined(_WIN32)
 
