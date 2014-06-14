@@ -84,7 +84,7 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 				default: {
 					#ifdef DEBUG
 					std::ostringstream oss;
-					oss << "(unsupported ED code: " << code << ")";
+					oss << "(unsupported EL code: " << code << ")";
 					error(oss.str());
 					#endif
 				}
