@@ -476,7 +476,7 @@ int main(int argc, char * argv[]) {
 		("lowercase,L", "Convert extracted filenames to lower-case")
 		("language", po::value<std::string>(), "Extract files for the given language")
 		("timestamps,T", po::value<std::string>(), "Timezone for file times or \"local\" or \"none\"")
-		("output-dir,d", po::value<fs::path>(), "Extract files into the given directory")
+		("output-dir,d", po::value<std::string>(), "Extract files into the given directory")
 	;
 	
 	po::options_description io("Display options");
@@ -623,9 +623,16 @@ int main(int argc, char * argv[]) {
 	{
 		po::variables_map::const_iterator i = options.find("output-dir");
 		if(i != options.end()) {
-			o.output_dir = i->second.as<fs::path>();
+			/*
+			 * We can't use fs::path directly with boost::program_options as fs::path's
+			 * operator>> expects paths to be quoted if they contain spaces, breaking
+			 * lexical casts.
+			 * Instead, do the conversion in the assignment operator.
+			 * See https://svn.boost.org/trac/boost/ticket/8535
+			 */
+			o.output_dir = i->second.as<std::string>();
 			try {
-				if(!fs::exists(o.output_dir)) {
+				if(!o.output_dir.empty() && !fs::exists(o.output_dir)) {
 					fs::create_directory(o.output_dir);
 				}
 			} catch(...) {
