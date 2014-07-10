@@ -335,7 +335,7 @@ version_constant version::next() {
 	const known_legacy_version * legacy_version;
 	legacy_version = std::upper_bound(legacy_versions, legacy_end, value);
 	if(legacy_version != legacy_end) {
-		return value = legacy_version->version;
+		return legacy_version->version;
 	}
 	
 	const known_version * end = versions + boost::size(versions);
