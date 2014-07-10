@@ -31,7 +31,7 @@ namespace io = boost::iostreams;
 
 namespace stream {
 
-bool file::operator<(const stream::file& o) const {
+bool file::operator<(const stream::file & o) const {
 	
 	if(offset != o.offset) {
 		return (offset < o.offset);
@@ -62,9 +62,9 @@ file_reader::pointer file_reader::get(base_type & base, const file & file,
 	
 	switch(file.filter) {
 		case NoFilter: break;
-		case InstructionFilter4108: result->push(inno_exe_decoder_4108(), 8192); break;
-		case InstructionFilter5200: result->push(inno_exe_decoder_5200(false), 8192); break;
-		case InstructionFilter5309: result->push(inno_exe_decoder_5200(true), 8192); break;
+		case InstructionFilter4108: result->push(stream::inno_exe_decoder_4108(), 8192); break;
+		case InstructionFilter5200: result->push(stream::inno_exe_decoder_5200(false), 8192); break;
+		case InstructionFilter5309: result->push(stream::inno_exe_decoder_5200(true), 8192); break;
 	}
 	
 	result->push(restrict(base, file.size));

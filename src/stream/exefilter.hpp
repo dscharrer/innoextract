@@ -37,6 +37,8 @@
 #include <boost/iostreams/get.hpp>
 #include <boost/iostreams/read.hpp>
 
+namespace stream {
+
 /*!
  * Filter to decode executable files stored by Inno Setup versions before 5.2.0.
  *
@@ -265,5 +267,7 @@ std::streamsize inno_exe_decoder_5200::read(Source & src, char * dest, std::stre
 #undef total_read
 	
 }
+
+} // namespace stream
 
 #endif // INNOEXTRACT_STREAM_EXEFILTER_HPP
