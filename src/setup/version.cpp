@@ -28,6 +28,8 @@
 #include <boost/version.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/range/begin.hpp>
+#include <boost/range/end.hpp>
 #include <boost/range/size.hpp>
 
 #include "util/load.hpp"
@@ -331,15 +333,15 @@ bool version::is_ambiguous() const {
 
 version_constant version::next() {
 	
-	const known_legacy_version * legacy_end = legacy_versions + boost::size(legacy_versions);
+	const known_legacy_version * legacy_end = boost::end(legacy_versions);
 	const known_legacy_version * legacy_version;
-	legacy_version = std::upper_bound(legacy_versions, legacy_end, value);
+	legacy_version = std::upper_bound(boost::begin(legacy_versions), legacy_end, value);
 	if(legacy_version != legacy_end) {
 		return legacy_version->version;
 	}
 	
-	const known_version * end = versions + boost::size(versions);
-	const known_version * version = std::upper_bound(versions, end, value);
+	const known_version * end = boost::end(versions);
+	const known_version * version = std::upper_bound(boost::begin(versions), end, value);
 	if(version != end) {
 		return version->version;
 	}
