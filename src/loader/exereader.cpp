@@ -125,7 +125,7 @@ exe_reader::resource ne_reader::find_resource(std::istream & is, boost::uint32_t
 	is.seekg(std::streamoff(resources_offset) - 0x28, std::ios_base::cur);
 	
 	boost::uint16_t shift = util::load<boost::uint16_t>(is);
-	if(is.fail() || shift > 32) {
+	if(is.fail() || shift >= 32) {
 		return result;
 	}
 	
