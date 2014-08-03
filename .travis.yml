@@ -4,7 +4,7 @@ compiler:
 before_install:
  - travis_retry sudo apt-get update
  - travis_retry sudo apt-get install build-essential cmake libboost-all-dev liblzma-dev
-script: mkdir build && cd build && cmake .. && make
+script: mkdir build && cd build && cmake --version && cmake .. && make -j1
 branches:
   only:
     - master
