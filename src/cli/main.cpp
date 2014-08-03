@@ -209,8 +209,6 @@ static void process_file(const fs::path & file, const options & o) {
 	loader::offsets offsets;
 	offsets.load(ifs);
 	
-	std::cout << std::boolalpha;
-	
 #ifdef DEBUG
 	if(logger::debug) {
 		print_offsets(offsets);

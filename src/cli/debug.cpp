@@ -581,6 +581,9 @@ static void print_aux(const setup::info & info) {
 
 void print_info(const setup::info & info) {
 	
+	std::ios_base::fmtflags old = std::cout.flags();
+	std::cout << std::boolalpha;
+	
 	print_header(info.header);
 	
 	print_entries(info, info.languages, "Languages");
@@ -601,4 +604,6 @@ void print_info(const setup::info & info) {
 	print_entries(info, info.data_entries, "Data entries");
 	
 	print_aux(info);
+	
+	std::cout.setf(old, std::ios_base::boolalpha);
 }
