@@ -345,8 +345,13 @@ bool progress::update(boost::uint64_t delta, bool force) {
 		}
 	}
 	
-	boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
-	boost::uint64_t time = boost::uint64_t((now - start_time).total_microseconds());
+	boost::uint64_t time = last_time;
+	try {
+		boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
+		time = boost::uint64_t((now - start_time).total_microseconds());
+	} catch(...) {
+		// this shouldn't happen, assume no time has passed
+	}
 	
 	#if defined(_WIN32)
 	const boost::uint64_t update_interval = 100000;

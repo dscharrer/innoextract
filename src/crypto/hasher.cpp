@@ -34,9 +34,7 @@ hasher::hasher(const hasher & o) {
 	};
 }
 
-void hasher::init(checksum_type newType) {
-	
-	type = newType;
+hasher::hasher(checksum_type type) : type(type) {
 	
 	switch(type) {
 		case crypto::Adler32: adler32.init(); break;

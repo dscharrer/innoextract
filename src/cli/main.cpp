@@ -209,8 +209,6 @@ static void process_file(const fs::path & file, const options & o) {
 	loader::offsets offsets;
 	offsets.load(ifs);
 	
-	std::cout << std::boolalpha;
-	
 #ifdef DEBUG
 	if(logger::debug) {
 		print_offsets(offsets);
@@ -400,7 +398,12 @@ static void process_file(const fs::path & file, const options & o) {
 			if(!o.test) {
 				output.reserve(output_names.size());
 				BOOST_FOREACH(const file_t & path, output_names) {
-					output.push_back(new file_output(o.output_dir / path.first));
+					try {
+						output.push_back(new file_output(o.output_dir / path.first));
+					} catch(boost::bad_pointer &) {
+						// should never happen
+						std::terminate();
+					}
 				}
 			}
 			
