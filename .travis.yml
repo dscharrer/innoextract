@@ -4,13 +4,30 @@ compiler:
 before_install:
  - travis_retry sudo apt-get update
  - travis_retry sudo apt-get install build-essential cmake libboost-all-dev liblzma-dev
-script: mkdir build && cd build && cmake --version && cmake .. && make -j1
+script: if [[ ${COVERITY_SCAN_BRANCH} != 1 ]]; then mkdir build && cd build && cmake --version && cmake .. && make -j1 ; fi
 branches:
   only:
     - master
+    - coverity_scan
 notifications:
   email:
     recipients:
       - daniel@constexpr.org
     on_success: change
     on_failure: always
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "ikq95FsEOJkWOkJ8xDL4JPO3fcnG4g4TDiC85iNVt3u6ZmLd6voXG5LXF6TYJN+1LyqlmuAcENhlXwWmOS7Vh/dU53h07rGWKCqS9IXWxRIQSKthIzUhPIvcpUh5h/4kstbFgjacZaljO1woc0A5TIStUX5ULtFty1AisQJm/M8="
+
+addons:
+  coverity_scan:
+    project:
+      name: "dscharrer/innoextract"
+      description: "innoextract coverity scan"
+    notification_email: daniel@constexpr.org
+    build_command_prepend: "mkdir build && cd build && cmake .."
+    build_command: "make -j1"
+    branch_pattern: coverity_scan
