@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * MD5 hashing routines.
+ */
 #ifndef INNOEXTRACT_CRYPTO_MD5_HPP
 #define INNOEXTRACT_CRYPTO_MD5_HPP
 

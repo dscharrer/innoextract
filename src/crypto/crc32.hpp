@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * CRC32 checksum routines.
+ */
 #ifndef INNOEXTRACT_CRYPTO_CRC32_HPP
 #define INNOEXTRACT_CRYPTO_CRC32_HPP
 

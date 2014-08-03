@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Checksum structures and utilities.
+ */
 #ifndef INNOEXTRACT_CRYPTO_CHECKSUM_HPP
 #define INNOEXTRACT_CRYPTO_CHECKSUM_HPP
 

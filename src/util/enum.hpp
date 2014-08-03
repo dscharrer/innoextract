@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Utilities to associate strings with enum values.
+ */
 #ifndef INNOEXTRACT_UTIL_ENUM_HPP
 #define INNOEXTRACT_UTIL_ENUM_HPP
 

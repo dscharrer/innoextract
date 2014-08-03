@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Debug output functions.
+ */
 #ifndef INNOEXTRACT_CLI_DEBUG_HPP
 #define INNOEXTRACT_CLI_DEBUG_HPP
 

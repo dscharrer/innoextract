@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Adler-32 checksum routines.
+ */
 #ifndef INNOEXTRACT_CRYPTO_ADLER32_HPP
 #define INNOEXTRACT_CRYPTO_ADLER32_HPP
 
@@ -29,7 +34,7 @@
 
 namespace crypto {
 
-//! ADLER-32 checksum calculations
+//! Adler-32 checksum calculations
 struct adler32 : public checksum_base<adler32> {
 	
 	void init() { s1 = 1, s2 = 0; }

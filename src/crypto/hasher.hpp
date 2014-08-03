@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Utility to hash data with a configurable hash function.
+ */
 #ifndef INNOEXTRACT_CRYPTO_HASHER_HPP
 #define INNOEXTRACT_CRYPTO_HASHER_HPP
 

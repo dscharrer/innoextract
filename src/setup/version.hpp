@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Inno Setup version number utilities.
+ */
 #ifndef INNOEXTRACT_SETUP_VERSION_HPP
 #define INNOEXTRACT_SETUP_VERSION_HPP
 

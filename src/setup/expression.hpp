@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Functions to evaluation Inno Setup boolean expressions.
+ */
 #ifndef INNOEXTRACT_SETUP_EXPRESSION_HPP
 #define INNOEXTRACT_SETUP_EXPRESSION_HPP
 

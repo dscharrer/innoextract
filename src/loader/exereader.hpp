@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Functions to find resources in Windows executables.
+ */
 #ifndef INNOEXTRACT_LOADER_EXEREADER_HPP
 #define INNOEXTRACT_LOADER_EXEREADER_HPP
 

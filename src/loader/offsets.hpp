@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Functions to find Inno Setup data inside an executable.
+ */
 #ifndef INNOEXTRACT_LOADER_OFFSETS_HPP
 #define INNOEXTRACT_LOADER_OFFSETS_HPP
 

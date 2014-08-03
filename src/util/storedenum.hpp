@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Utilities for decoding stored enum values into run-time values.
+ */
 #ifndef INNOEXTRACT_UTIL_STOREDENUM_HPP
 #define INNOEXTRACT_UTIL_STOREDENUM_HPP
 

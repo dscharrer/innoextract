@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Strings describing the innoextract version.
+ */
 #ifndef INNOEXTRACT_RELEASE_HPP
 #define INNOEXTRACT_RELEASE_HPP
 

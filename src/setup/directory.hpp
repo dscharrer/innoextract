@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * Structures for directory entries stored in Inno Setup files.
+ */
 #ifndef INNOEXTRACT_SETUP_DIRECTORY_HPP
 #define INNOEXTRACT_SETUP_DIRECTORY_HPP
 

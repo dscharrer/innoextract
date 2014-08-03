@@ -18,6 +18,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*!
+ * \file
+ *
+ * SHA-1 hashing routines.
+ */
 #ifndef INNOEXTRACT_CRYPTO_SHA1_HPP
 #define INNOEXTRACT_CRYPTO_SHA1_HPP
 
