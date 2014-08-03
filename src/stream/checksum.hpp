@@ -56,9 +56,9 @@ public:
 	 * \param type   The type of checksum to calculate.
 	 */
 	checksum_filter(crypto::checksum * output, crypto::checksum_type type)
-		: output(output) {
-		hasher.init(type);
-	}
+		: hasher(type)
+		, output(output)
+	{ }
 	checksum_filter(const checksum_filter & o) : hasher(o.hasher), output(o.output) { }
 	
 	template <typename Source>
