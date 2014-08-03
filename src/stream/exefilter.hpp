@@ -67,6 +67,8 @@ public:
 		addr_bytes_left = 0, addr_offset = 5;
 	}
 	
+private:
+	
 	boost::uint32_t addr;
 	size_t addr_bytes_left;
 	boost::uint32_t addr_offset;
