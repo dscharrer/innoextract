@@ -121,33 +121,41 @@ endforeach()
 unset(GIT_COMMIT)
 if(EXISTS "${GIT_DIR}")
 	
-	file(READ "${GIT_DIR}/HEAD" git_head)
-	string(STRIP "${git_head}" git_head)
+	unset(git_head)
 	
-	if("${git_head}" MATCHES "^ref\\:")
+	if(EXISTS "${GIT_DIR}/HEAD")
 		
-		# Remove the first for characters from git_head to get git_ref.
-		# We can't use a length of -1 for string(SUBSTRING) as cmake < 2.8.5 doesn't support it.
-		string(LENGTH "${git_head}" git_head_length)
-		math(EXPR git_ref_length "${git_head_length} - 4")
-		string(SUBSTRING "${git_head}" 4 ${git_ref_length} git_ref)
+		file(READ "${GIT_DIR}/HEAD" git_head)
 		
-		string(STRIP "${git_ref}" git_ref)
+		if("${git_head}" MATCHES "^[ \t\r\n]*ref\\:(.*)$")
+			
+			# Remove the first for characters from git_head to get git_ref.
+			# We can't use a length of -1 for string(SUBSTRING) as cmake < 2.8.5 doesn't support it.
+			string(LENGTH "${git_head}" git_head_length)
+			math(EXPR git_ref_length "${git_head_length} - 4")
+			string(SUBSTRING "${git_head}" 4 ${git_ref_length} git_ref)
+			string(STRIP "${git_ref}" git_ref)
+			
+			unset(git_head)
+			if(EXISTS "${GIT_DIR}/${git_ref}")
+				file(READ "${GIT_DIR}/${git_ref}" git_head)
+			endif()
+			
+		endif()
 		
-		file(READ "${GIT_DIR}/${git_ref}" git_head)
-		string(STRIP "${git_head}" git_head)
 	endif()
 	
-	string(REGEX MATCH "[0-9A-Za-z]+" GIT_COMMIT "${git_head}")
-	
 	# Create variables for all prefixes of the git comit ID.
-	if(GIT_COMMIT)
-		string(TOLOWER "${GIT_COMMIT}" GIT_COMMIT)
-		string(LENGTH "${GIT_COMMIT}" git_commit_length)
-		foreach(i RANGE ${git_commit_length})
+	string(REGEX MATCH "[0-9A-Za-z]+" git_commit "${git_head}")
+	string(LENGTH "${git_commit}" git_commit_length)
+	if(NOT ${git_commit_length} LESS 40)
+		string(TOLOWER "${git_commit}" GIT_COMMIT)
+		foreach(i RANGE 20)
 			string(SUBSTRING "${GIT_COMMIT}" 0 ${i} GIT_COMMIT_PREFIX_${i})
 			set(GIT_SUFFIX_${i} " + ${GIT_COMMIT_PREFIX_${i}}")
 		endforeach()
+	else()
+		message(WARNING "Git repository detected, but could not determine HEAD")
 	endif()
 	
 endif()
