@@ -123,7 +123,18 @@ if(EXISTS "${GIT_DIR}")
 	
 	unset(git_head)
 	
-	if(EXISTS "${GIT_DIR}/HEAD")
+	if(GIT_COMMAND)
+		execute_process(
+			COMMAND "${GIT_COMMAND}" "--git-dir=${GIT_DIR}" "rev-parse" "HEAD"
+			RESULT_VARIABLE result
+			OUTPUT_VARIABLE git_head
+		)
+		if(NOT "${result}" EQUAL 0)
+			unset(git_head)
+		endif()
+	endif()
+	
+	if(NOT git_head AND EXISTS "${GIT_DIR}/HEAD")
 		
 		file(READ "${GIT_DIR}/HEAD" git_head)
 		
