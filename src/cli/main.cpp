@@ -41,6 +41,7 @@
 #include "release.hpp"
 
 #include "cli/debug.hpp"
+#include "cli/gog.hpp"
 
 #include "loader/offsets.hpp"
 
@@ -108,8 +109,9 @@ struct options {
 	bool silent;
 	
 	bool list; // The --list action has been explicitely specified
-	bool test; // The --test action has been explicit specified
+	bool test; // The --test action has been explicitely specified
 	bool extract; // The --extract action has been specified or automatically enabled
+	bool gog_game_id; // The --gog-game-id action has been explicitely specified
 	
 	bool preserve_file_times;
 	bool local_timestamps;
@@ -217,6 +219,9 @@ static void process_file(const fs::path & file, const options & o) {
 #endif
 	
 	setup::info::entry_types entries = setup::info::DataEntries | setup::info::Files;
+	if(o.gog_game_id) {
+		entries |= setup::info::RegistryEntries;
+	}
 #ifdef DEBUG
 	if(logger::debug) {
 		entries = setup::info::entry_types::all();
@@ -230,8 +235,15 @@ static void process_file(const fs::path & file, const options & o) {
 	if(!o.quiet) {
 		const std::string & name = info.header.app_versioned_name.empty()
 		                           ? info.header.app_name : info.header.app_versioned_name;
-		std::cout << (o.extract ? "Extracting" : o.test ? "Testing" : "Listing")
-		          << " \"" << color::green << name << color::reset
+		const char * verb = "Inspecting";
+		if(o.extract) {
+			verb = "Extracting";
+		} else if(o.test) {
+			verb = "Testing";
+		} else if(o.list) {
+			verb = "Listing";
+		}
+		std::cout << verb << " \"" << color::green << name << color::reset
 		          << "\" - setup data version " << color::white << info.version << color::reset
 		          << std::endl;
 	}
@@ -243,6 +255,26 @@ static void process_file(const fs::path & file, const options & o) {
 		std::cout << '\n';
 	}
 #endif
+	
+	if(o.gog_game_id) {
+		std::string id = gog::get_game_id(info);
+		if(id.empty()) {
+			if(!o.quiet) {
+				std::cout << "No GOG.com game ID found!\n";
+			}
+		} else if(!o.silent) {
+			std::cout << "GOG.com game ID is " << color::cyan << id << color::reset << '\n';
+		} else {
+			std::cout << id;
+		}
+		if(o.silent && o.list) {
+			std::cout << '\n';
+		}
+	}
+	
+	if(!o.list && !o.test && !o.extract) {
+		return;
+	}
 	
 	boost::uint64_t total_size = 0;
 	
@@ -471,6 +503,7 @@ int main(int argc, char * argv[]) {
 		("test,t", "Only verify checksums, don't write anything")
 		("extract,e", "Extract files (default action)")
 		("list,l", "Only list files, don't write anything")
+		("gog-game-id", "Determine the GOG.com game ID for this installer")
 	;
 	
 	po::options_description filter("Modifiers");
@@ -564,7 +597,8 @@ int main(int argc, char * argv[]) {
 	o.list = (options.count("list") != 0);
 	o.extract = (options.count("extract") != 0);
 	o.test = (options.count("test") != 0);
-	bool explicit_action = o.list || o.test || o.extract;
+	o.gog_game_id = (options.count("gog-game-id") != 0);
+	bool explicit_action = o.list || o.test || o.extract || o.gog_game_id;
 	if(!explicit_action) {
 		o.extract = true;
 	}
@@ -575,7 +609,7 @@ int main(int argc, char * argv[]) {
 	if(!o.extract && !o.test) {
 		progress::set_enabled(false);
 	}
-	if(!o.silent) {
+	if(!o.silent && !o.gog_game_id) {
 		o.list = true;
 	}
 	

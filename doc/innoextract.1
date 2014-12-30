@@ -34,6 +34,7 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-t \-\-test               Only verify checksums, don't write anything
  \-e \-\-extract            Extract files (default action)
  \-l \-\-list               Only list files, don't write anything
+    \-\-gog\-game\-id        Determine the GOG.com game ID for this installer
 .fi
 .TP
 .B Modifiers:
@@ -65,6 +66,18 @@ Don't convert Windows paths to UNIX paths and don't substitute variables in path
 \fB\-e\fP, \fB\-\-extract\fP
 Extract all files to the current directory. This action is enabled by default, unless either \fB\-\-list\fP or \fB\-\-extract\fP is specified. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
 .TP
+\fB\-\-gog\-game\-id\fP
+Determine the ID used by GOG.com for the game contained in this installer. This will only work with Galaxy-ready GOG.com installers.
+
+This option can be combined with \fB\-\-silent\fP to print only the game ID without additional syntax that would make consumption by other scripts harder.
+
+The \fB\-\-gog\-game\-id\fP action can be combined with \fB\-\-list\fP, \fB\-\-test\fP and/or \fB\-\-extract\fP. If \fB\-\-gog\-game\-id\fP, \fB\-\-list\fP and \fB\-\-silent\fP are combined, the game ID (or an empty line) will be printed on it's own line before the file list.
+
+For some newer multi-part GOG.com installers the \fI.bin\fP files are not part of the Inno Setup installer but instead are encrypted RAR archives. The password can be calculated as the MD5 checksum of the game ID:
+
+  \fBinnoextract \-\-gog\-game\-id --silent\fP \fIsetup_....exe\fP | \fBmd5sum\fP | \fBcut \-d\fP ' ' \fB\-f\fP 1
+
+.TP
 \fB\-h\fP, \fB\-\-help\fP
 Show a list of the supported options.
 .TP
@@ -79,7 +92,7 @@ List files contained in the installer but don't extract anything.
 
 This option can be combined with \fB\-\-silent\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
 
-The \fB\-\-list\fP option can be combined with \fB\-\-test\fP or \fB\-\-extract\fP to display the names of the files as they are extracted even with \fB\-\-silent\fP.
+The \fB\-\-list\fP action can be combined with \fB\-\-test\fP, \fB\-\-extract\fP and/or \fB\-\-gog\-game\-id\fP to display the names of the files as they are extracted even with \fB\-\-silent\fP.
 .TP
 \fB\-L\fP, \fB\-\-lowercase\fP
 Convert filenames stored in the installer to lower-case before extracting.

@@ -232,6 +232,8 @@ set(INNOEXTRACT_SOURCES
 	
 	src/cli/debug.hpp
 	src/cli/debug.cpp if DEBUG
+	src/cli/gog.hpp
+	src/cli/gog.cpp
 	src/cli/main.cpp
 	
 	src/crypto/adler32.hpp
