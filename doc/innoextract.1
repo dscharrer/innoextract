@@ -50,6 +50,7 @@ Here is a short summary of the options available in innoextract. Please refer to
 .nf
  \-q \-\-quiet              Output less information
  \-s \-\-silent             Output only error/warning information
+ \-\-no\-warn\-unused        Don't warn on unused \fI.bin\fP files
  \-c \-\-color[=\fIENABLE\fP]     Enable/disable color output
  \-p \-\-progress[=\fIENABLE\fP]  Enable/disable the progress bar
 .fi
@@ -135,6 +136,9 @@ The default value for this option is \fBUTC\fP, causing innoextract to not adjus
 Print the \fBinnoextract\fP version number and supported Inno Setup versions.
 
 If combined with the \fB\-\-silent\fP option, only the version \fInumber\fP is printed. Otherwise, the output will contain the name (innoextract) followed by the version number on the first line, and, unless the \fB\-\-quiet\fP options is specified, the range of suuported Inno Setup installer versions on the second line.
+.TP
+\fB\-\-no\-warn\-unused\fP
+By default, innoextract will print a warning if it encounters \fI.bin\fP files that look like they could be part of the setup but are not used. This option disables that warning.
 .SH EXIT VALUES
 .PP
 .IP \fB0\fP

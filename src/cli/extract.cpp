@@ -76,6 +76,27 @@ struct file_output {
 	
 };
 
+static bool probe_bin_file(const fs::path & file) {
+	try {
+		if(!fs::is_regular_file(file)) {
+			return false;
+		}
+	} catch(...) {
+		return false;
+	}
+	log_warning << file << " is not part of the installer!";
+	return true;
+}
+
+static void probe_bin_files(const fs::path & dir, const std::string & basename,
+                            size_t start, size_t format) {
+	for(size_t i = start;; i++) {
+		if(!probe_bin_file(dir / stream::slice_reader::slice_filename(basename, i, format))) {
+			break;
+		}
+	}
+}
+
 void process_file(const fs::path & file, const extract_options & o) {
 	
 	bool is_directory;
@@ -172,6 +193,8 @@ void process_file(const fs::path & file, const extract_options & o) {
 		}
 	}
 	
+	size_t max_slice = 0;
+	
 	typedef std::map<stream::file, size_t> Files;
 	typedef std::map<stream::chunk, Files> Chunks;
 	Chunks chunks;
@@ -182,15 +205,21 @@ void process_file(const fs::path & file, const extract_options & o) {
 		}
 		chunks[location.chunk][location.file] = i;
 		total_size += location.file.size;
+		if(!offsets.data_offset) {
+			max_slice = std::max(max_slice, location.chunk.first_slice);
+			max_slice = std::max(max_slice, location.chunk.last_slice);
+		}
 	}
+	
+	fs::path dir = file.parent_path();
+	std::string basename = util::as_string(file.stem());
 	
 	boost::scoped_ptr<stream::slice_reader> slice_reader;
 	if(o.extract || o.test) {
 		if(offsets.data_offset) {
 			slice_reader.reset(new stream::slice_reader(&ifs, offsets.data_offset));
 		} else {
-			slice_reader.reset(new stream::slice_reader(file.parent_path(), file.stem(),
-			                                            info.header.slices_per_disk));
+			slice_reader.reset(new stream::slice_reader(dir, basename, info.header.slices_per_disk));
 		}
 	}
 	
@@ -370,4 +399,23 @@ void process_file(const fs::path & file, const extract_options & o) {
 	}
 	
 	extract_progress.clear();
+	
+	if(o.warn_unused) {
+		probe_bin_file(dir / (basename + ".bin"));
+		probe_bin_file(dir / (basename + "-0" + ".bin"));
+		size_t slice =  0;
+		size_t format = 1;
+		if(!offsets.data_offset && info.header.slices_per_disk == 1) {
+			slice = max_slice + 1;
+		}
+		probe_bin_files(dir, basename, slice, format);
+		slice = 0;
+		format = 2;
+		if(!offsets.data_offset && info.header.slices_per_disk != 1) {
+			slice = max_slice + 1;
+			format = info.header.slices_per_disk;
+		}
+		probe_bin_files(dir, basename, slice, format);
+	}
+	
 }

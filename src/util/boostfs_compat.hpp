@@ -26,6 +26,8 @@
 #ifndef INNOEXTRACT_UTIL_BOOSTFS_COMPAT_HPP
 #define INNOEXTRACT_UTIL_BOOSTFS_COMPAT_HPP
 
+#include <string>
+
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
@@ -52,5 +54,17 @@ inline bool create_directories(const path & p) {
 } } // namespace boost::filesystem
 
 #endif
+
+namespace util {
+
+inline const std::string & as_string(const std::string & path) {
+	return path;
+}
+
+inline const std::string as_string(const boost::filesystem::path & path) {
+	return path.string();
+}
+
+} // namespace utl
 
 #endif // INNOEXTRACT_UTIL_BOOSTFS_COMPAT_HPP

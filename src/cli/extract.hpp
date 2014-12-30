@@ -37,6 +37,8 @@ struct extract_options {
 	bool quiet;
 	bool silent;
 	
+	bool warn_unused;
+	
 	bool list; // The --list action has been explicitely specified
 	bool test; // The --test action has been explicitely specified
 	bool extract; // The --extract action has been specified or automatically enabled

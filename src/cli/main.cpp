@@ -148,6 +148,7 @@ int main(int argc, char * argv[]) {
 	io.add_options()
 		("quiet,q", "Output less information")
 		("silent,s", "Output only error/warning information")
+		("no-warn-unused", "Don't warn on unused .bin files")
 		("color,c", po::value<bool>()->implicit_value(true), "Enable/disable color output")
 		("progress,p", po::value<bool>()->implicit_value(true), "Enable/disable the progress bar")
 		#ifdef DEBUG
@@ -194,6 +195,8 @@ int main(int argc, char * argv[]) {
 		logger::debug = true;
 	}
 #endif
+	
+	o.warn_unused = (options.count("no-warn-unused") == 0);
 	
 	// Color / progress bar settings.
 	color::is_enabled color_e;
