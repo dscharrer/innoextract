@@ -54,6 +54,8 @@ struct extract_options {
 	bool preserve_file_times; //!< Set timestamps of extracted files
 	bool local_timestamps; //!< Use local timezone for setting timestamps
 	
+	bool gog; //!< Try to extract additional archives used in GOG.com installers
+	
 	bool extract_temp; //!< Extract temporary files
 	bool default_language; //!< Extract files not associated with any language
 	std::string language; //!< Extract only files for this language

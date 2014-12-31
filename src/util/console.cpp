@@ -396,3 +396,8 @@ bool progress::update(boost::uint64_t delta, bool force) {
 void progress::set_enabled(bool enable) {
 	show_progress = enable;
 }
+
+bool progress::is_enabled() {
+	return show_progress;
+}
+

@@ -44,6 +44,7 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-L \-\-lowercase          Convert extracted filenames to lower-case
  \-T \-\-timestamps \fITZ\fP      Timezone for file times or "local" or "none"
  \-d \-\-output\-dir \fIDIR\fP     Extract files into the given directory
+ \-g \-\-gog                Process additional archives from GOG.com installers
 .fi
 .TP
 .B Filters:
@@ -83,6 +84,15 @@ This option takes precedence over \fB\-\-include\fP and \fB\-\-language\fP: temp
 \fB\-e\fP, \fB\-\-extract\fP
 Extract all files to the current directory. This action is enabled by default, unless either \fB\-\-list\fP or \fB\-\-extract\fP is specified. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
 .TP
+\fB\-g\fP, \fB\-\-gog\fP
+Try to process additional .bin files that have the same basename as the setup but are not actually part of the Inno Setup installer. This is the case for newer multi-part GOG.com installers where these .bin files are RAR archives, potential encrypted with the MD5 checksum of the game ID (see the \fB\-\-gog\-game\-id\fP option).
+
+Extracting these RAR archives requires rar, unrar or lsar/unar command-line utilities to be in the PATH.
+
+The \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-extract\fP and \fB\-\-output\-dir\fP options are passed along to unrar/unar, but other options may be ignored for the RAR files. For multi-part RAR archives, the \fB\-\-test\fP requires a writable output directory for temporary files.
+
+Note that is option is geared towards GOG.com installers. Other installers may come be bundled with different extraneous \fI.bin\fP which this option might not be able to handle.
+.TP
 \fB\-\-gog\-game\-id\fP
 Determine the ID used by GOG.com for the game contained in this installer. This will only work with Galaxy-ready GOG.com installers.
 
@@ -93,7 +103,6 @@ The \fB\-\-gog\-game\-id\fP action can be combined with \fB\-\-list\fP, \fB\-\-t
 For newer multi-part GOG.com installers the \fI.bin\fP files are not part of the Inno Setup installer but instead are RAR archives. Some of these RAR files are encrypted, with the password being the MD5 checksum of the game ID:
 
   \fBinnoextract \-\-gog\-game\-id --silent\fP \fIsetup_....exe\fP | \fBmd5sum\fP | \fBcut \-d\fP ' ' \fB\-f\fP 1
-
 .TP
 \fB\-h\fP, \fB\-\-help\fP
 Show a list of the supported options.
@@ -199,7 +208,7 @@ Names for data slice/disk files in multi-file installers must follow the standar
 
 Encrypted installers are not supported.
 .SH SEE ALSO
-\fBcabextract\fP(1), \fBunshield\fP(1), \fBtzset\fP(3)
+\fBcabextract\fP(1), \fBunar\fP(1), \fBunrar\fP(1), \fBunshield\fP(1), \fBtzset\fP(3)
 .SH BUGS
 .PP
 No known bugs.

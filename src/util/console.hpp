@@ -157,6 +157,8 @@ public:
 	//! Enable or disable the progress bar.
 	static void set_enabled(bool enable);
 	
+	static bool is_enabled();
+	
 };
 
 #endif // INNOEXTRACT_UTIL_CONSOLE_HPP

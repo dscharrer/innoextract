@@ -64,6 +64,51 @@ namespace fs = boost::filesystem;
 
 namespace {
 
+static size_t probe_bin_files(const extract_options & o, const setup::info & info,
+                              const fs::path & dir, const std::string & basename,
+                              size_t format = 0, size_t start = 0) {
+	
+	size_t count = 0;
+	
+	std::vector<fs::path> files;
+	
+	for(size_t i = start;; i++) {
+		
+		fs::path file;
+		if(format == 0) {
+			file = dir / basename;
+		} else {
+			file = dir / stream::slice_reader::slice_filename(basename, i, format);
+		}
+		
+		try {
+			if(!fs::is_regular_file(file)) {
+				break;
+			}
+		} catch(...) {
+			break;
+		}
+		
+		if(o.gog) {
+			files.push_back(file);
+		} else {
+			log_warning << file.filename() << " is not part of the installer!";
+			count++;
+		}
+		
+		if(format == 0) {
+			break;
+		}
+		
+	}
+	
+	if(!files.empty()) {
+		gog::process_bin_files(files, o, info);
+	}
+	
+	return count;
+}
+
 struct file_output {
 	
 	fs::path name;
@@ -77,27 +122,6 @@ struct file_output {
 	}
 	
 };
-
-static bool probe_bin_file(const fs::path & file) {
-	try {
-		if(!fs::is_regular_file(file)) {
-			return false;
-		}
-	} catch(...) {
-		return false;
-	}
-	log_warning << file << " is not part of the installer!";
-	return true;
-}
-
-static void probe_bin_files(const fs::path & dir, const std::string & basename,
-                            size_t start, size_t format) {
-	for(size_t i = start;; i++) {
-		if(!probe_bin_file(dir / stream::slice_reader::slice_filename(basename, i, format))) {
-			break;
-		}
-	}
-}
 
 template <typename Entry>
 class processed_item {
@@ -386,7 +410,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 	if(o.list_languages) {
 		entries |= setup::info::Languages;
 	}
-	if(o.gog_game_id) {
+	if(o.gog_game_id || o.gog) {
 		entries |= setup::info::RegistryEntries;
 	}
 #ifdef DEBUG
@@ -838,22 +862,35 @@ void process_file(const fs::path & file, const extract_options & o) {
 	
 	extract_progress.clear();
 	
-	if(o.warn_unused) {
-		probe_bin_file(dir / (basename + ".bin"));
-		probe_bin_file(dir / (basename + "-0" + ".bin"));
+	if(o.warn_unused || o.gog) {
+		size_t bin_count = 0;
+		bin_count += size_t(probe_bin_files(o, info, dir, basename + ".bin"));
+		bin_count += size_t(probe_bin_files(o, info, dir, basename + "-0" + ".bin"));
 		size_t slice =  0;
 		size_t format = 1;
 		if(!offsets.data_offset && info.header.slices_per_disk == 1) {
 			slice = max_slice + 1;
 		}
-		probe_bin_files(dir, basename, slice, format);
+		bin_count += probe_bin_files(o, info, dir, basename, format, slice);
 		slice = 0;
 		format = 2;
 		if(!offsets.data_offset && info.header.slices_per_disk != 1) {
 			slice = max_slice + 1;
 			format = info.header.slices_per_disk;
 		}
-		probe_bin_files(dir, basename, slice, format);
+		bin_count += probe_bin_files(o, info, dir, basename, format, slice);
+		if(bin_count) {
+			const char * verb = "inspecting";
+			if(o.extract) {
+				verb = "extracting";
+			} else if(o.test) {
+				verb = "testing";
+			} else if(o.list) {
+				verb = "listing the contents of";
+			}
+			std::cerr << color::yellow << "Use the --gog option to try " << verb << " "
+			          << (bin_count > 1 ? "these files" : "this file") << ".\n" << color::reset;
+		}
 	}
 	
 }

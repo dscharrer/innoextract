@@ -63,6 +63,9 @@ public:
 	//! Set if paths should be converted to lower-case.
 	void set_lowercase(bool enable) { lowercase = enable; }
 	
+	//! Set if paths should be converted to lower-case.
+	bool is_lowercase() const { return lowercase; }
+	
 	//! Set if variables should be expanded and path separators converted.
 	void set_expand(bool enable) { expand = enable; }
 	
