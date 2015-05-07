@@ -50,6 +50,9 @@ else(MSVC)
 		add_cxxflag("-Wsign-conversion")
 		add_cxxflag("-Wmissing-declarations")
 		add_cxxflag("-Wredundant-decls")
+		if(NOT DEBUG_EXTRA)
+			add_cxxflag("-Wno-maybe-uninitialized")
+		endif()
 		
 		# clang
 		add_cxxflag("-Wliteral-conversion")
