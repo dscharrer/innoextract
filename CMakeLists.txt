@@ -399,6 +399,6 @@ print_configuration("File time precision" FIRST
 print_configuration("Charset conversion"
 	INNOEXTRACT_HAVE_ICONV        "iconv"
 	INNOEXTRACT_HAVE_WIN32_CONV   "Win32"
-	INNOEXTRACT_HAVE_BUILTIN_CONV "bultin"
+	INNOEXTRACT_HAVE_BUILTIN_CONV "builtin"
 )
 message("")
