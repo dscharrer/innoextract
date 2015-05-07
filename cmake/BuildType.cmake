@@ -62,8 +62,16 @@ else(MSVC)
 		add_cxxflag("-Wpessimizing-move")
 		
 		# icc
-		if(NOT DEBUG_EXTRA)
-			add_cxxflag("-wd1418") # 'external function definition with no prior declaration'
+		if(NOT DEBUG_EXTRA AND CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+			# 'external function definition with no prior declaration'
+			# This gets annoying fast with small inline/template functions.
+			add_cxxflag("-wd1418")
+		endif()
+		
+		# EKOPath
+		if(NOT DEBUG_EXTRA AND CMAKE_CXX_COMPILER_ID STREQUAL "PathScale")
+			# This triggers on every use of BOOST_STATIC_ASSERT
+			add_cxxflag("-Wno-unused-local-typedef")
 		endif()
 		
 	endif(SET_WARNING_FLAGS)
