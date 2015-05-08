@@ -50,8 +50,12 @@ else(MSVC)
 		add_cxxflag("-Wsign-conversion")
 		add_cxxflag("-Wmissing-declarations")
 		add_cxxflag("-Wredundant-decls")
-		if(NOT DEBUG_EXTRA)
-			add_cxxflag("-Wno-maybe-uninitialized")
+		if(NOT DEBUG_EXTRA AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+			# GCC is 'clever' and silently accepts -Wno-*  - check for the non-negated variant
+			check_compiler_flag(FLAG_FOUND "-Wmaybe-uninitialized")
+			if(FLAG_FOUND)
+				add_cxxflag("-Wno-maybe-uninitialized")
+			endif()
 		endif()
 		
 		# clang
