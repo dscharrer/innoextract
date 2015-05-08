@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Daniel Scharrer
+ * Copyright (C) 2014 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -21,50 +21,40 @@
 /*!
  * \file
  *
- * Compatibility functions for older Boost.Filesystem versions.
+ * Routines to extract/list files from an Inno Setup archive.
  */
-#ifndef INNOEXTRACT_UTIL_BOOSTFS_COMPAT_HPP
-#define INNOEXTRACT_UTIL_BOOSTFS_COMPAT_HPP
+#ifndef INNOEXTRACT_CLI_EXTRACT_HPP
+#define INNOEXTRACT_CLI_EXTRACT_HPP
 
 #include <string>
 
 #include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
 
-#if !defined(BOOST_FILESYSTEM_VERSION) || BOOST_FILESYSTEM_VERSION < 3
+#include "setup/filename.hpp"
 
-namespace boost { namespace filesystem {
-
-inline bool create_directories(const path & p) {
+struct extract_options {
 	
-	if(p.empty()) {
-		return true;
-	}
+	bool quiet;
+	bool silent;
 	
-	path parent = p.parent_path();
-	if(!exists(parent)) {
-		if(!create_directories(parent)) {
-			return false;
-		}
-	}
+	bool warn_unused;
 	
-	return create_directory(p);
-}
+	bool list; // The --list action has been explicitely specified
+	bool test; // The --test action has been explicitely specified
+	bool extract; // The --extract action has been specified or automatically enabled
+	bool gog_game_id; // The --gog-game-id action has been explicitely specified
+	
+	bool preserve_file_times;
+	bool local_timestamps;
+	
+	std::string language;
+	
+	setup::filename_map filenames;
+	
+	boost::filesystem::path output_dir;
+	
+};
 
-} } // namespace boost::filesystem
+void process_file(const boost::filesystem::path & file, const extract_options & o);
 
-#endif
-
-namespace util {
-
-inline const std::string & as_string(const std::string & path) {
-	return path;
-}
-
-inline const std::string as_string(const boost::filesystem::path & path) {
-	return path.string();
-}
-
-} // namespace utl
-
-#endif // INNOEXTRACT_UTIL_BOOSTFS_COMPAT_HPP
+#endif // INNOEXTRACT_CLI_EXTRACT_HPP

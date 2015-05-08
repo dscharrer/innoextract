@@ -27,6 +27,7 @@
 #define INNOEXTRACT_STREAM_SLICE_HPP
 
 #include <ios>
+#include <string>
 
 #include <boost/iostreams/concepts.hpp>
 #include <boost/filesystem/path.hpp>
@@ -63,7 +64,7 @@ class slice_reader : public boost::iostreams::source {
 	// Information for eading external setup data
 	path_type    dir;             //!< Slice directory specified at construction.
 	path_type    last_dir;        //!< Directory containing the current slice.
-	path_type    base_file;       //!< Base file name for slices.
+	std::string  base_file;       //!< Base file name for slices.
 	const size_t slices_per_disk; //!< Number of slices grouped into each disk (for names).
 	
 	// Information about the current slice
@@ -80,6 +81,9 @@ class slice_reader : public boost::iostreams::source {
 	void open(size_t slice);
 	
 public:
+	
+	static std::string slice_filename(const std::string & basename, size_t slice,
+	                                  size_t slices_per_disk = 1);
 	
 	/*!
 	 * Construct a \ref slice_reader to read from data inside the setup file.
@@ -109,7 +113,7 @@ public:
 	 * \param basename        The base name for slice files.
 	 * \param slices_per_disk How many slices are grouped into one disk. Must not be \c 0.
 	 */
-	slice_reader(const path_type & dir, const path_type & basename, size_t slices_per_disk);
+	slice_reader(const path_type & dir, const std::string & basename, size_t slices_per_disk);
 	
 	/*!
 	 * Attempt to seek to an offset within a slice.

@@ -232,6 +232,10 @@ set(INNOEXTRACT_SOURCES
 	
 	src/cli/debug.hpp
 	src/cli/debug.cpp if DEBUG
+	src/cli/extract.hpp
+	src/cli/extract.cpp
+	src/cli/gog.hpp
+	src/cli/gog.cpp
 	src/cli/main.cpp
 	
 	src/crypto/adler32.hpp
@@ -395,6 +399,6 @@ print_configuration("File time precision" FIRST
 print_configuration("Charset conversion"
 	INNOEXTRACT_HAVE_ICONV        "iconv"
 	INNOEXTRACT_HAVE_WIN32_CONV   "Win32"
-	INNOEXTRACT_HAVE_BUILTIN_CONV "bultin"
+	INNOEXTRACT_HAVE_BUILTIN_CONV "builtin"
 )
 message("")

@@ -72,12 +72,20 @@ function(version_file SRC DST VERSION_SOURCES GIT_DIR)
 		set(defines ${ARGV4})
 	endif()
 	
-	if(EXISTS "${abs_git_dir}/HEAD")
-		list(APPEND dependencies "${abs_git_dir}/HEAD")
-	endif()
-	
-	if(EXISTS "${abs_git_dir}/logs/HEAD")
-		list(APPEND dependencies "${abs_git_dir}/logs/HEAD")
+	if(EXISTS "${abs_git_dir}")
+		find_program(GIT_COMMAND git)
+		if(GIT_COMMAND)
+			list(APPEND dependencies "${GIT_COMMAND}")
+		endif()
+		if(EXISTS "${abs_git_dir}/HEAD")
+			list(APPEND dependencies "${abs_git_dir}/HEAD")
+		endif()
+		if(EXISTS "${abs_git_dir}/packed-refs")
+			list(APPEND dependencies "${abs_git_dir}/packed-refs")
+		endif()
+		if(EXISTS "${abs_git_dir}/logs/HEAD")
+			list(APPEND dependencies "${abs_git_dir}/logs/HEAD")
+		endif()
 	endif()
 	
 	add_custom_command(
@@ -89,6 +97,7 @@ function(version_file SRC DST VERSION_SOURCES GIT_DIR)
 			"-DOUTPUT=${abs_dst}"
 			"-DVERSION_SOURCES=${args}"
 			"-DGIT_DIR=${abs_git_dir}"
+			"-DGIT_COMMAND=${GIT_COMMAND}"
 			${defines}
 			-P "${CMAKE_MODULE_PATH}/VersionScript.cmake"
 		MAIN_DEPENDENCY

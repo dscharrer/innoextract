@@ -50,16 +50,26 @@ else(MSVC)
 		add_cxxflag("-Wsign-conversion")
 		add_cxxflag("-Wmissing-declarations")
 		add_cxxflag("-Wredundant-decls")
+		if(NOT DEBUG_EXTRA AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+			# GCC is 'clever' and silently accepts -Wno-*  - check for the non-negated variant
+			check_compiler_flag(FLAG_FOUND "-Wmaybe-uninitialized")
+			if(FLAG_FOUND)
+				add_cxxflag("-Wno-maybe-uninitialized")
+			endif()
+		endif()
 		
 		# clang
 		add_cxxflag("-Wliteral-conversion")
 		add_cxxflag("-Wshift-overflow")
 		add_cxxflag("-Wbool-conversions")
 		add_cxxflag("-Wheader-guard")
+		add_cxxflag("-Wpessimizing-move")
 		
 		# icc
-		if(NOT DEBUG_EXTRA)
-			add_cxxflag("-wd1418") # 'external function definition with no prior declaration'
+		if(NOT DEBUG_EXTRA AND CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+			# 'external function definition with no prior declaration'
+			# This gets annoying fast with small inline/template functions.
+			add_cxxflag("-wd1418")
 		endif()
 		
 	endif(SET_WARNING_FLAGS)

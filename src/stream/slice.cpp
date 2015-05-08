@@ -58,7 +58,7 @@ slice_reader::slice_reader(std::istream * istream, boost::uint32_t data_offset)
 	}
 }
 
-slice_reader::slice_reader(const path_type & dir, const path_type & base_file,
+slice_reader::slice_reader(const path_type & dir, const std::string & base_file,
                            size_t slices_per_disk)
 	: data_offset(0),
 	  dir(dir), last_dir(dir), base_file(base_file), slices_per_disk(slices_per_disk),
@@ -133,30 +133,36 @@ bool slice_reader::open_file(const path_type & file) {
 	return true;
 }
 
+std::string slice_reader::slice_filename(const std::string & basename, size_t slice,
+                                         size_t slices_per_disk) {
+	
+	std::ostringstream oss;
+	oss << basename << '-';
+	
+	if(slices_per_disk == 0) {
+		throw slice_error("slices per disk must not be zero");
+	}
+	
+	if(slices_per_disk == 1) {
+		oss << (slice + 1);
+	} else {
+		size_t major = (slice / slices_per_disk) + 1;
+		size_t minor = slice % slices_per_disk;
+		oss << major << char(boost::uint8_t('a') + minor);
+	}
+	
+	oss << ".bin";
+	
+	return oss.str();
+}
+
 void slice_reader::open(size_t slice) {
 	
 	current_slice = slice;
 	is = &ifs;
 	ifs.close();
 	
-	if(slices_per_disk == 0) {
-		throw slice_error("slices per disk must not be zero");
-	}
-	
-	path_type slice_file;
-	{
-		std::ostringstream oss;
-		oss << base_file.string() << '-';
-		if(slices_per_disk == 1) {
-			oss << (slice + 1);
-		} else {
-			size_t major = (slice / slices_per_disk) + 1;
-			size_t minor = slice % slices_per_disk;
-			oss << major << char(boost::uint8_t('a') + minor);
-		}
-		oss << ".bin";
-		slice_file = oss.str();
-	}
+	path_type slice_file = slice_filename(base_file, slice, slices_per_disk);
 	
 	if(open_file(last_dir / slice_file)) {
 		return;

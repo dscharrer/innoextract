@@ -107,7 +107,6 @@ time parse_time(std::tm tm) {
 	SYSTEMTIME st;
 	st.wYear         = WORD(tm.tm_year + 1900);
 	st.wMonth        = WORD(tm.tm_mon + 1);
-	st.wDayOfWeek    = WORD(tm.tm_wday);
 	st.wDay          = WORD(tm.tm_mday);
 	st.wHour         = WORD(tm.tm_hour);
 	st.wMinute       = WORD(tm.tm_min);
