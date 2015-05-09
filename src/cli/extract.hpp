@@ -27,6 +27,7 @@
 #define INNOEXTRACT_CLI_EXTRACT_HPP
 
 #include <string>
+#include <vector>
 
 #include <boost/filesystem/path.hpp>
 
@@ -48,6 +49,7 @@ struct extract_options {
 	bool local_timestamps;
 	
 	std::string language;
+	std::vector<std::string> include; // paths to match in desired filename
 	
 	setup::filename_map filenames;
 	

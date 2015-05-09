@@ -142,6 +142,7 @@ int main(int argc, char * argv[]) {
 		("language", po::value<std::string>(), "Extract files for the given language")
 		("timestamps,T", po::value<std::string>(), "Timezone for file times or \"local\" or \"none\"")
 		("output-dir,d", po::value<std::string>(), "Extract files into the given directory")
+		("include", po::value< std::vector<std::string> >(), "Extract only files that match this path")
 	;
 	
 	po::options_description io("Display options");
@@ -280,6 +281,13 @@ int main(int argc, char * argv[]) {
 		po::variables_map::const_iterator i = options.find("language");
 		if(i != options.end()) {
 			o.language = i->second.as<std::string>();
+		}
+	}
+
+	{
+		po::variables_map::const_iterator i = options.find("include");
+		if(i != options.end()) {
+			o.include = options["include"].as<std::vector <std::string> >();
 		}
 	}
 	

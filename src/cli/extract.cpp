@@ -54,6 +54,12 @@
 #include "util/output.hpp"
 #include "util/time.hpp"
 
+#if defined(_WIN32)
+static const std::string path_sep = "\\";
+#else
+static const std::string path_sep = "/";
+#endif
+
 namespace fs = boost::filesystem;
 
 struct file_output {
@@ -224,6 +230,16 @@ void process_file(const fs::path & file, const extract_options & o) {
 	}
 	
 	progress extract_progress(total_size);
+
+	typedef std::pair<bool, std::string> Filter;
+	std::vector<Filter> includes;
+	BOOST_FOREACH(const std::string & include, o.include) {
+		if(include.substr(0,1) == path_sep) {
+			includes.push_back(std::make_pair(true, include + path_sep));
+		} else {
+			includes.push_back(std::make_pair(false, path_sep + include + path_sep));
+		}
+	}
 	
 	BOOST_FOREACH(const Chunks::value_type & chunk, chunks) {
 		
@@ -260,7 +276,25 @@ void process_file(const fs::path & file, const extract_options & o) {
 				if(!info.files[file_i].destination.empty()) {
 					std::string path = o.filenames.convert(info.files[file_i].destination);
 					if(!path.empty()) {
-						output_names.push_back(std::make_pair(path, file_i));
+						bool filtered = false;
+						bool tokeep = false;
+						BOOST_FOREACH(const Filter & i, includes) {
+							filtered = true;
+							if(i.first) {
+								if (!i.second.compare(1, i.second.size()-1, path + path_sep, 0, i.second.size()-1)) {
+									tokeep = true;
+									break;
+								}
+							} else {
+								if ((path_sep + path + path_sep).find(i.second) != std::string::npos) {
+									tokeep = true;
+									break;
+								}
+							}
+						}
+						if (not filtered or tokeep) {
+							output_names.push_back(std::make_pair(path, file_i));
+						}
 					}
 				}
 			}
