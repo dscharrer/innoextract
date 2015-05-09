@@ -50,7 +50,9 @@ inline boost::int8_t byteswap(boost::int8_t value) {
 }
 
 inline boost::uint16_t byteswap(boost::uint16_t value) {
-#if defined(_MSC_VER) && _MSC_VER >= 1300
+#if INNOEXTRACT_HAVE_BUILTIN_BSWAP16
+	return __builtin_bswap16(value);
+#elif defined(_MSC_VER) && _MSC_VER >= 1300
 	return _byteswap_ushort(value);
 #elif INNOEXTRACT_HAVE_BSWAP_16 \
 	&& (!defined(__GLIBC__) || !defined(__GLIBC_MINOR__) \
@@ -68,8 +70,7 @@ inline boost::int16_t byteswap(boost::int16_t value) {
 }
 
 inline boost::uint32_t byteswap(boost::uint32_t value) {
-#if defined(__GNUC__) && !defined(__PATHCC__) \
-    && __GNUC__ >= 4 && (__GNUC__ > 4 || __GNUC_MINOR__ >= 3)
+#if INNOEXTRACT_HAVE_BUILTIN_BSWAP32
 	return __builtin_bswap32(value);
 #elif defined(_MSC_VER) && (_MSC_VER >= 1400 || (_MSC_VER >= 1300 && !defined(_DLL)))
 	return _byteswap_ulong(value);
@@ -86,8 +87,7 @@ inline boost::int32_t byteswap(boost::int32_t value) {
 }
 
 inline boost::uint64_t byteswap(boost::uint64_t value) {
-#if defined(__GNUC__) && !defined(__PATHCC__) \
-    && __GNUC__ >= 4 && (__GNUC__ > 4 || __GNUC_MINOR__ >= 3)
+#if INNOEXTRACT_HAVE_BUILTIN_BSWAP64
 	return __builtin_bswap64(value);
 #elif defined(_MSC_VER) && _MSC_VER >= 1300
 	return _byteswap_uint64(value);
