@@ -123,7 +123,8 @@ list(APPEND LIBRARIES ${Boost_LIBRARIES})
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
-if(Boost_USE_STATIC_LIBS)
+has_static_libs(Boost Boost_LIBRARIES)
+if(Boost_HAS_STATIC_LIBS)
 	
 	use_static_libs(ZLIB)
 	find_package(ZLIB REQUIRED)
