@@ -21,7 +21,7 @@ Author: [Daniel Scharrer](http://constexpr.org/)
 
 For Boost you will need the headers as well as the `iostreams`, `filesystem`, `date_time`, `system` and `program_options` libraries. Older Boost version may work but are not actively supported. The boost `iostreams` library needs to be build with zlib and bzip2 support.
 
-While the liblzma dependency is optional, it is highly recommended and you won't be able to extract most installers created by newer Inno Setup versions without it.
+While innoextract can be built without liblzma by manually setting `-DUSE_LZMA=OFF`, it is highly recommended and you won't be able to extract most installers created by newer Inno Setup versions without it.
 
 To build innoextract you will also need **[CMake](http://cmake.org/) 2.8** and a working C++ compiler, as well as the development headers for liblzma and boost.
 
@@ -42,7 +42,7 @@ Build options:
 
 | Option                   | Default   | Description |
 |:------------------------ |:---------:|:----------- |
-| `USE_LZMA`               | `ON`      | Use `liblzma` if available.
+| `USE_LZMA`               | `ON`      | Use `liblzma`.
 | `WITH_CONV`              | *not set* | The charset conversion library to use. Valid values are `iconv`, `win32` and `builtin`^1. If not set, a library appropriate for the target platform will be chosen.
 | `ENABLE_BUILTIN_CONV`    | `ON`      | Build internal Windows-1252 and UTF-16LE to UTF-18 charset conversion routines. These might be used even if `WITH_CONV` is not set to `builtin`.
 | `CMAKE_BUILD_TYPE`       | `Release` | Set to `Debug` to enable debug output.
