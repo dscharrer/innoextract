@@ -328,6 +328,7 @@ int main(int argc, char * argv[]) {
 	const std::vector<std::string> & files = options["setup-files"]
 	                                         .as< std::vector<std::string> >();
 	
+	bool suggest_bug_report = false;
 	try {
 		BOOST_FOREACH(const std::string & file, files) {
 			process_file(file, o);
@@ -335,12 +336,20 @@ int main(int argc, char * argv[]) {
 	} catch(const std::ios_base::failure & e) {
 		log_error << "Stream error while extracting files!\n"
 		          << " └─ error reason was " << e.what();
+		suggest_bug_report = true;
 	} catch(const format_error & e) {
 		log_error << e.what();
+		suggest_bug_report = true;
 	} catch(const std::runtime_error & e) {
 		log_error << e.what();
 	} catch(const setup::version_error &) {
 		log_error << "Not a supported Inno Setup installer!";
+	}
+	
+	if(suggest_bug_report) {
+		std::cerr << color::blue << "If you are sure the setup file is not corrupted,"
+		          << " consider \nfiling a bug report at "
+		          << color::dim_cyan << innoextract_bugs << color::reset << '\n';
 	}
 	
 	if(!logger::quiet || logger::total_errors || logger::total_warnings) {

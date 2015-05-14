@@ -1,2 +1,7 @@
 innoextract 1.4-git
+
+Known working Inno Setup versions:
 Inno Setup 1.2.10 to 5.5.5
+
+Bug tracker:
+http://innoextract.constexpr.org/issues

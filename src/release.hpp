@@ -35,6 +35,9 @@ extern const char innoextract_version[];
 //! Range of supported Inno Setup versions
 extern const char innosetup_versions[];
 
+//! Bug tracker URL
+extern const char innoextract_bugs[];
+
 //! Copyright line for the current program
 extern const char innoextract_copyright[];
 
