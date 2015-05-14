@@ -135,13 +135,17 @@ int main(int argc, char * argv[]) {
 		("gog-game-id", "Determine the GOG.com game ID for this installer")
 	;
 	
-	po::options_description filter("Modifiers");
-	filter.add_options()
+	po::options_description modifiers("Modifiers");
+	modifiers.add_options()
 		("dump", "Dump contents without converting filenames")
 		("lowercase,L", "Convert extracted filenames to lower-case")
-		("language", po::value<std::string>(), "Extract files for the given language")
 		("timestamps,T", po::value<std::string>(), "Timezone for file times or \"local\" or \"none\"")
 		("output-dir,d", po::value<std::string>(), "Extract files into the given directory")
+	;
+	
+	po::options_description filter("Filters");
+	filter.add_options()
+		("language", po::value<std::string>(), "Extract only files for the given language")
 		("include", po::value< std::vector<std::string> >(), "Extract only files that match this path")
 	;
 	
@@ -163,10 +167,10 @@ int main(int argc, char * argv[]) {
 		/**/;
 	
 	po::options_description options_desc;
-	options_desc.add(generic).add(action).add(filter).add(io).add(hidden);
+	options_desc.add(generic).add(action).add(modifiers).add(filter).add(io).add(hidden);
 	
 	po::options_description visible;
-	visible.add(generic).add(action).add(filter).add(io);
+	visible.add(generic).add(action).add(modifiers).add(filter).add(io);
 	
 	po::positional_options_description p;
 	p.add("setup-files", -1);
