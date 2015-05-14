@@ -112,7 +112,10 @@ struct header {
 		DetectLanguageUsingLocale,
 		DisableDirExistsWarning,
 		BackSolid,
-		OverwriteUninstRegEntries
+		OverwriteUninstRegEntries,
+		
+		UnknownFlag
+		
 	);
 	
 	FLAGS(architecture_types,
