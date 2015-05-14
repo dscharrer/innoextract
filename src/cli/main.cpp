@@ -287,7 +287,7 @@ int main(int argc, char * argv[]) {
 	{
 		po::variables_map::const_iterator i = options.find("include");
 		if(i != options.end()) {
-			o.include = options["include"].as<std::vector <std::string> >();
+			o.include = i->second.as<std::vector <std::string> >();
 		}
 	}
 	
