@@ -146,7 +146,7 @@ int main(int argc, char * argv[]) {
 	po::options_description filter("Filters");
 	filter.add_options()
 		("language", po::value<std::string>(), "Extract only files for the given language")
-		("include", po::value< std::vector<std::string> >(), "Extract only files that match this path")
+		("include,I", po::value< std::vector<std::string> >(), "Extract only files that match this path")
 	;
 	
 	po::options_description io("Display options");
