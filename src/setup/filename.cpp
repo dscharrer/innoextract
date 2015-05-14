@@ -28,13 +28,6 @@ namespace setup {
 
 namespace {
 
-//! Separator to use for output paths.
-#if defined(_WIN32)
-static const char path_sep = '\\';
-#else
-static const char path_sep = '/';
-#endif
-
 //! Check for separators in input paths.
 struct is_path_separator {
 	bool operator()(char c) {

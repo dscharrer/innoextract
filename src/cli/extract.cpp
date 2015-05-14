@@ -54,12 +54,6 @@
 #include "util/output.hpp"
 #include "util/time.hpp"
 
-#if defined(_WIN32)
-static const std::string path_sep = "\\";
-#else
-static const std::string path_sep = "/";
-#endif
-
 namespace fs = boost::filesystem;
 
 struct file_output {
@@ -234,10 +228,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 	typedef std::pair<bool, std::string> Filter;
 	std::vector<Filter> includes;
 	BOOST_FOREACH(const std::string & include, o.include) {
-		if(include.substr(0, 1) == path_sep) {
-			includes.push_back(std::make_pair(true, include + path_sep));
+		if(!include.empty() && include[0] == setup::path_sep) {
+			includes.push_back(std::make_pair(true, include + setup::path_sep));
 		} else {
-			includes.push_back(std::make_pair(false, path_sep + include + path_sep));
+			includes.push_back(std::make_pair(false, setup::path_sep + include + setup::path_sep));
 		}
 	}
 	
@@ -281,12 +275,13 @@ void process_file(const fs::path & file, const extract_options & o) {
 						BOOST_FOREACH(const Filter & i, includes) {
 							filtered = true;
 							if(i.first) {
-								if(!i.second.compare(1, i.second.size() - 1, path + path_sep, 0, i.second.size() - 1)) {
+								if(!i.second.compare(1, i.second.size() - 1,
+								                     path + setup::path_sep, 0, i.second.size() - 1)) {
 									tokeep = true;
 									break;
 								}
 							} else {
-								if((path_sep + path + path_sep).find(i.second) != std::string::npos) {
+								if((setup::path_sep + path + setup::path_sep).find(i.second) != std::string::npos) {
 									tokeep = true;
 									break;
 								}

@@ -31,6 +31,13 @@
 
 namespace setup {
 
+//! Separator to use for output paths.
+#if defined(_WIN32)
+static const char path_sep = '\\';
+#else
+static const char path_sep = '/';
+#endif
+
 /*!
  * Map to convert between raw windows file paths stored in the setup file (which can
  * contain variables) and output filenames.
