@@ -154,7 +154,7 @@ bool expression_match(const std::string & test, const std::string & expr) {
 	try {
 		return evaluator(expr, test).eval();
 	} catch(const std::runtime_error & error) {
-		log_warning << "error evaluating \"" << expr << "\": " << error.what();
+		log_warning << "Error evaluating \"" << expr << "\": " << error.what();
 		return true;
 	}
 }

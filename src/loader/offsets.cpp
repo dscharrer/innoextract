@@ -171,7 +171,7 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 			return false;
 		}
 		if(checksum.finalize() != expected) {
-			log_error << "[loader] CRC32 mismatch";
+			log_error << "Loader checksum mismatch!";
 			return false;
 		}
 	}

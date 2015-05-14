@@ -195,9 +195,11 @@ void info::load(std::istream & is, entry_types entries) {
 	version.load(is);
 	
 	if(!version.known) {
-		log_warning << "unexpected setup data version: "
+		log_warning << "Unexpected setup data version: "
 		            << color::white << version << color::reset;
 	}
+	
+	version_constant listed_version = version.value;
 	
 	// Some setup versions didn't increment the data version number when they should have.
 	// To work around this, we try to parse the headers for both data versions.
@@ -214,6 +216,7 @@ void info::load(std::istream & is, entry_types entries) {
 		} catch(...) {
 			version.value = version.next();
 			if(!version) {
+				version.value = listed_version;
 				throw;
 			}
 			is.clear();
@@ -221,7 +224,12 @@ void info::load(std::istream & is, entry_types entries) {
 		}
 	}
 	
-	load(is, entries, version);
+	try {
+		load(is, entries, version);
+	} catch(...) {
+		version.value = listed_version;
+		throw;
+	}
 }
 
 info::info() { }

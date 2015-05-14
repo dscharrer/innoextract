@@ -149,7 +149,7 @@ static Time to_time_t(time t, const char * file = "conversion") {
 	Time ret = Time(t);
 	
 	if(time(ret) != t) {
-		log_warning << "truncating timestamp " << t << " to " << ret << " for " << file;
+		log_warning << "Truncating timestamp " << t << " to " << ret << " for " << file;
 	}
 	
 	return ret;

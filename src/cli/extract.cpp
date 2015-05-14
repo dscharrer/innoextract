@@ -24,6 +24,7 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <sstream>
 #include <vector>
 
 #include <boost/foreach.hpp>
@@ -65,12 +66,12 @@ struct file_output {
 		try {
 			fs::create_directories(name.parent_path());
 		} catch(...) {
-			throw std::runtime_error("error creating directories for \""
+			throw std::runtime_error("Could not create directories for \""
 			                         + name.string() + '"');
 		}
 		stream.open(name, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 		if(!stream.is_open()) {
-			throw std::runtime_error("error opening output file \"" + name.string() + '"');
+			throw std::runtime_error("Coul not open output file \"" + name.string() + '"');
 		}
 	}
 	
@@ -103,16 +104,16 @@ void process_file(const fs::path & file, const extract_options & o) {
 	try {
 		is_directory = fs::is_directory(file);
 	} catch(...) {
-		throw std::runtime_error("error opening file \"" + file.string()
+		throw std::runtime_error("Could not open file \"" + file.string()
 		                         + "\": access denied");
 	}
 	if(is_directory) {
-		throw std::runtime_error("input file \"" + file.string() + "\" is a directory");
+		throw std::runtime_error("Input file \"" + file.string() + "\" is a directory!");
 	}
 	
 	util::ifstream ifs(file, std::ios_base::in | std::ios_base::binary);
 	if(!ifs.is_open()) {
-		throw std::runtime_error("error opening file \"" + file.string() + '"');
+		throw std::runtime_error("Could not open file \"" + file.string() + '"');
 	}
 	
 	loader::offsets offsets;
@@ -137,7 +138,15 @@ void process_file(const fs::path & file, const extract_options & o) {
 	
 	ifs.seekg(offsets.header_offset);
 	setup::info info;
-	info.load(ifs, entries);
+	try {
+		info.load(ifs, entries);
+	} catch(const std::ios_base::failure & e) {
+		std::ostringstream oss;
+		oss << "Stream error while parsing setup headers!\n";
+		oss << " ├─ detected setup version was " << info.version << '\n';
+		oss << " └─ error reason was " << e.what();
+		throw format_error(oss.str());
+	}
 	
 	if(!o.quiet) {
 		const std::string & name = info.header.app_versioned_name.empty()
@@ -242,7 +251,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 		      << ']');
 		
 		if(chunk.first.encrypted) {
-			log_warning << "skipping encrypted chunk (unsupported)";
+			log_warning << "Skipping encrypted chunk (unsupported)";
 		}
 		
 		stream::chunk_reader::pointer chunk_source;
@@ -354,8 +363,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 			
 			// Seek to the correct position within the chunk
 			if(file.offset < offset) {
-				log_error << "bad offset";
-				throw std::runtime_error("unexpected error");
+				std::ostringstream oss;
+				oss << "Bad offset while extracting files: file start (" << file.offset
+				    << ") is before end of previous file (" << offset << ")!";
+				throw format_error(oss.str());
 			}
 			if(file.offset > offset) {
 				debug("discarding " << print_bytes(file.offset - offset));
@@ -392,7 +403,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 					BOOST_FOREACH(file_output & out, output) {
 						out.stream.write(buffer, n);
 						if(out.stream.fail()) {
-							throw std::runtime_error("error writing file \""
+							throw std::runtime_error("Error writing file \""
 							                         + out.name.string() + '"');
 						}
 					}
@@ -410,18 +421,18 @@ void process_file(const fs::path & file, const extract_options & o) {
 				BOOST_FOREACH(file_output & out, output) {
 					out.stream.close();
 					if(!util::set_file_time(out.name, filetime, data.timestamp_nsec)) {
-						log_warning << "error setting timestamp on file " << out.name;
+						log_warning << "Error setting timestamp on file " << out.name;
 					}
 				}
 			}
 			
 			// Verify checksums
 			if(checksum != file.checksum) {
-				log_warning << "checksum mismatch:\n"
-				            << "actual:   " << checksum << '\n'
-				            << "expected: " << file.checksum;
+				log_warning << "Checksum mismatch:\n"
+				            << " ├─ actual:   " << checksum << '\n'
+				            << " └─ expected: " << file.checksum;
 				if(o.test) {
-					throw std::runtime_error("integrity test failed");
+					throw std::runtime_error("Integrity test failed!");
 				}
 			}
 		}

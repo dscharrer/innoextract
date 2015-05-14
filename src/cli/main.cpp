@@ -242,7 +242,7 @@ int main(int argc, char * argv[]) {
 		o.extract = true;
 	}
 	if(o.extract && o.test) {
-		log_error << "cannot specify multiple actions";
+		log_error << "Combining --extract and --test is not allowed!";
 		return ExitUserError;
 	}
 	if(!o.extract && !o.test) {
@@ -319,7 +319,7 @@ int main(int argc, char * argv[]) {
 					fs::create_directory(o.output_dir);
 				}
 			} catch(...) {
-				log_error << "could not create output directory " << o.output_dir;
+				log_error << "Could not create output directory " << o.output_dir;
 				return ExitDataError;
 			}
 		}
@@ -333,11 +333,14 @@ int main(int argc, char * argv[]) {
 			process_file(file, o);
 		}
 	} catch(const std::ios_base::failure & e) {
-		log_error << "stream error: " << e.what();
+		log_error << "Stream error while extracting files!\n"
+		          << " └─ error reason was " << e.what();
+	} catch(const format_error & e) {
+		log_error << e.what();
 	} catch(const std::runtime_error & e) {
 		log_error << e.what();
 	} catch(const setup::version_error &) {
-		log_error << "not a supported Inno Setup installer";
+		log_error << "Not a supported Inno Setup installer!";
 	}
 	
 	if(!logger::quiet || logger::total_errors || logger::total_warnings) {

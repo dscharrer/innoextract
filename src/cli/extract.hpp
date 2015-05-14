@@ -26,12 +26,17 @@
 #ifndef INNOEXTRACT_CLI_EXTRACT_HPP
 #define INNOEXTRACT_CLI_EXTRACT_HPP
 
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include <boost/filesystem/path.hpp>
 
 #include "setup/filename.hpp"
+
+struct format_error : public std::runtime_error {
+	explicit format_error(const std::string & reason) : std::runtime_error(reason) { }
+};
 
 struct extract_options {
 	

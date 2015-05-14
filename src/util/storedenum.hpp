@@ -85,7 +85,7 @@ public:
 			return Mapping::values[value];
 		}
 		
-		log_warning << "unexpected " << enum_names<enum_type>::name << " value: " << value;
+		log_warning << "Unexpected " << enum_names<enum_type>::name << " value: " << value;
 		
 		return Mapping::default_value;
 	}
@@ -178,7 +178,7 @@ public:
 		}
 		
 		if(bits) {
-			log_warning << "unexpected " << enum_names<enum_type>::name << " flags: "
+			log_warning << "Unexpected " << enum_names<enum_type>::name << " flags: "
 			            << std::hex << bits << std::dec;
 		}
 		
