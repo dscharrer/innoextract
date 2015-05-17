@@ -51,6 +51,7 @@ Build options:
 | `SET_WARNING_FLAGS`      | `ON`      | Adjust compiler warning flags. This should not affect the produced binaries but is useful to catch potential problems.
 | `SET_OPTIMIZATION_FLAGS` | `ON`      | Adjust compiler optimization flags. For non-debug builds the only thing this does is instruct the linker to only link against libraries that are actually needed.
 | `USE_CXX11`              | `ON`      | Try to compile in C++11 mode if available.
+| `USE_DYNAMIC_UTIMENSAT`  | `OFF`     | Dynamically load utimensat(2) if not available at compile time
 | `USE_STATIC_LIBS`        | `OFF`^3   | Turns on static linking for all libraries, including `-static-libgcc` and `-static-libstdc++`. You can also use the individual options below:
 | `LZMA_USE_STATIC_LIBS`   | `OFF`^4   | Statically link `liblzma`.
 | `Boost_USE_STATIC_LIBS`  | `OFF`^4   | Statically link Boost. See also `FindBoost.cmake`

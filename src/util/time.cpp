@@ -32,9 +32,16 @@
 #include <windows.h>
 #endif
 
+#if INNOEXTRACT_HAVE_DLSYM
+#include <dlfcn.h>
+#endif
+
+#if INNOEXTRACT_HAVE_AT_FDCWD
+#include <fcntl.h>
+#endif
+
 #if INNOEXTRACT_HAVE_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
 #include <sys/stat.h>
-#include <fcntl.h>
 #elif !defined(_WIN32) && INNOEXTRACT_HAVE_UTIMES
 #include <sys/time.h>
 #elif !defined(_WIN32)
@@ -246,18 +253,37 @@ static HANDLE open_file(LPCWSTR name) {
 
 #endif
 
+#if INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT
+extern "C" typedef int (*utimensat_proc)
+	(int fd, const char *path, const struct timespec times[2], int flag);
+#endif
+
 bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t nsec) {
 	
-#if INNOEXTRACT_HAVE_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
+#if (INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT || INNOEXTRACT_HAVE_UTIMENSAT) \
+    && INNOEXTRACT_HAVE_AT_FDCWD
 	
 	// nanosecond precision, for Linux and POSIX.1-2008+ systems
 	
-	struct timespec times[2];
-	times[0].tv_sec = to_time_t<time_t>(t, path.string().c_str());
-	times[0].tv_nsec = boost::int32_t(nsec);
-	times[1] = times[0];
+	struct timespec timens[2];
+	timens[0].tv_sec = to_time_t<time_t>(t, path.string().c_str());
+	timens[0].tv_nsec = boost::int32_t(nsec);
+	timens[1] = timens[0];
 	
-	return (utimensat(AT_FDCWD, path.string().c_str(), times, 0) == 0);
+#endif
+	
+#if INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
+	
+	static utimensat_proc utimensat_func = (utimensat_proc)dlsym(RTLD_DEFAULT, "utimensat");
+	if(utimensat_func) {
+		return (utimensat_func(AT_FDCWD, path.string().c_str(), timens, 0) == 0);
+	}
+	
+#endif
+	
+#if INNOEXTRACT_HAVE_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
+	
+	return (utimensat(AT_FDCWD, path.string().c_str(), timens, 0) == 0);
 	
 #elif defined(_WIN32)
 	

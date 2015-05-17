@@ -12,6 +12,7 @@ option(DEBUG_EXTRA "Expensive debug options" OFF)
 option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
 option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
 option(USE_CXX11 "Try to use C++11 if available" ON)
+option(USE_DYNAMIC_UTIMENSAT "Dynamically load utimensat if not available at compile time" OFF)
 if(NOT DEFINED DEBUG AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(DEBUG 1)
 endif()
@@ -210,11 +211,25 @@ if(NOT WIN32)
 	check_symbol_exists(ioctl "sys/ioctl.h" INNOEXTRACT_HAVE_IOCTL)
 	check_symbol_exists(timegm "time.h" INNOEXTRACT_HAVE_TIMEGM)
 	check_symbol_exists(gmtime_r "time.h" INNOEXTRACT_HAVE_GMTIME_R)
-	check_symbol_exists(utimensat "sys/stat.h" INNOEXTRACT_HAVE_UTIMENSAT)
 	check_symbol_exists(AT_FDCWD "fcntl.h" INNOEXTRACT_HAVE_AT_FDCWD)
+	if(INNOEXTRACT_HAVE_AT_FDCWD)
+		check_symbol_exists(utimensat "sys/stat.h" INNOEXTRACT_HAVE_UTIMENSAT)
+	endif()
 	if(INNOEXTRACT_HAVE_UTIMENSAT AND INNOEXTRACT_HAVE_AT_FDCWD)
 		set(INNOEXTRACT_HAVE_UTIMENSAT_d 1)
 	else()
+		if(USE_DYNAMIC_UTIMENSAT AND INNOEXTRACT_HAVE_AT_FDCWD)
+			set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_DL_LIBS})
+			check_symbol_exists(dlsym "dlfcn.h" INNOEXTRACT_HAVE_DLSYM)
+			check_symbol_exists(RTLD_DEFAULT "dlfcn.h" INNOEXTRACT_HAVE_RTLD_DEFAULT)
+			unset(CMAKE_REQUIRED_LIBRARIES)
+			if(INNOEXTRACT_HAVE_DLSYM AND INNOEXTRACT_HAVE_RTLD_DEFAULT)
+				set(INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT 1)
+				if(CMAKE_DL_LIBS)
+					list(APPEND LIBRARIES ${CMAKE_DL_LIBS})
+				endif()
+			endif()
+		endif()
 		check_symbol_exists(utimes "sys/time.h" INNOEXTRACT_HAVE_UTIMES)
 	endif()
 	
@@ -407,11 +422,15 @@ print_configuration("LZMA decompression" FIRST
 	INNOEXTRACT_HAVE_LZMA "enabled"
 	1                     "disabled"
 )
+if(INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT)
+	set(time_prefix "nanoseconds if supported, ")
+	set(time_suffix " otherwise")
+endif()
 print_configuration("File time precision" FIRST
 	INNOEXTRACT_HAVE_UTIMENSAT_d "nanoseconds"
 	WIN32                        "100-nanoseconds"
-	INNOEXTRACT_HAVE_UTIMES      "microseconds"
-	1                            "seconds"
+	INNOEXTRACT_HAVE_UTIMES      "${time_prefix}microseconds${time_suffix}"
+	1                            "${time_prefix}seconds${time_suffix}"
 )
 print_configuration("Charset conversion"
 	INNOEXTRACT_HAVE_ICONV        "iconv"

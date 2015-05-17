@@ -12,8 +12,12 @@
 
 // File functions
 #cmakedefine01 INNOEXTRACT_HAVE_UTIMENSAT
+#cmakedefine01 INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT
 #cmakedefine01 INNOEXTRACT_HAVE_AT_FDCWD
 #cmakedefine01 INNOEXTRACT_HAVE_UTIMES
+
+// Shared functions
+#cmakedefine01 INNOEXTRACT_HAVE_DLSYM
 
 // Endianness
 #cmakedefine01 INNOEXTRACT_HAVE_BUILTIN_BSWAP16
