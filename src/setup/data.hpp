@@ -63,7 +63,7 @@ struct data_entry {
 	
 	stream::file file;
 	
-	boost::int64_t timestamp; // TODO merge into version struct
+	boost::int64_t timestamp;
 	boost::uint32_t timestamp_nsec;
 	
 	boost::uint64_t file_version;
