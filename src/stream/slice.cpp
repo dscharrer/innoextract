@@ -80,7 +80,7 @@ void slice_reader::seek(size_t slice) {
 
 bool slice_reader::open_file(const path_type & file) {
 	
-	log_info << "opening \"" << color::cyan << file.string() << color::reset << '"';
+	log_info << "Opening \"" << color::cyan << file.string() << color::reset << '"';
 	
 	ifs.close();
 	ifs.clear();

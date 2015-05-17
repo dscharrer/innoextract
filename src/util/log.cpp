@@ -39,7 +39,7 @@ logger::~logger() {
 		case Debug:   std::cout << color::cyan   << buffer.str() << previous << "\n"; break;
 		case Info:    std::cout << color::white  << buffer.str() << previous << "\n"; break;
 		case Warning: {
-			std::cerr << color::yellow << "warning: " << buffer.str() << previous << "\n";
+			std::cerr << color::yellow << "Warning: " << buffer.str() << previous << "\n";
 			total_warnings++;
 			break;
 		}
