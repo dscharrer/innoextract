@@ -660,7 +660,6 @@ NAMES(setup::header::flags, "Setup Option",
 	"disable dir exists warning",
 	"back solid",
 	"overwrite uninst reg entries",
-	"unknown flags",
 )
 
 NAMES(setup::header::architecture_types, "Architecture",

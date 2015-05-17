@@ -112,9 +112,7 @@ struct header {
 		DetectLanguageUsingLocale,
 		DisableDirExistsWarning,
 		BackSolid,
-		OverwriteUninstRegEntries,
-		
-		UnknownFlag
+		OverwriteUninstRegEntries
 		
 	);
 	
