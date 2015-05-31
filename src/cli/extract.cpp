@@ -143,8 +143,8 @@ void process_file(const fs::path & file, const extract_options & o) {
 	} catch(const std::ios_base::failure & e) {
 		std::ostringstream oss;
 		oss << "Stream error while parsing setup headers!\n";
-		oss << " ├─ detected setup version was " << info.version << '\n';
-		oss << " └─ error reason was " << e.what();
+		oss << " ├─ detected setup version: " << info.version << '\n';
+		oss << " └─ error reason: " << e.what();
 		throw format_error(oss.str());
 	}
 	

@@ -335,7 +335,7 @@ int main(int argc, char * argv[]) {
 		}
 	} catch(const std::ios_base::failure & e) {
 		log_error << "Stream error while extracting files!\n"
-		          << " └─ error reason was " << e.what();
+		          << " └─ error reason: " << e.what();
 		suggest_bug_report = true;
 	} catch(const format_error & e) {
 		log_error << e.what();
