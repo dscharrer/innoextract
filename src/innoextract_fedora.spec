@@ -4,7 +4,7 @@ Release:        4%{?dist}
 License:        zlib
 Summary:        Inno Setup installers extractor
 Url:            http://constexpr.org/innoextract/
-Source:         %{name}-%{version}.tar.gz
+Source:         http://constexpr.org/innoextract/files/%{name}-{version}/%{name}-{version}.tar.gz
 BuildRequires:  cmake
 BuildRequires:  boost-devel
 BuildRequires:  xz-devel
@@ -31,6 +31,10 @@ make %{?_smp_mflags}
 %{_bindir}/innoextract
 
 %changelog
+* Sun Jul 5 2015 Mosaab Alzoubi <moceap@hotmail.com> - 1.4-5
+- Porting to Fedora #2 try
+- Rewrite the spec to be compatible with Fedora packaging guidlines #2
+
 * Sat Jul 4 2015 Mosaab Alzoubi <moceap@hotmail.com> - 1.4-4
 - Porting to Fedora #1 try
 - Rewrite the spec to be compatible with Fedora packaging guidlines #1
