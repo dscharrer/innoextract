@@ -4,7 +4,7 @@ Release:        4%{?dist}
 License:        zlib
 Summary:        Inno Setup installers extractor
 Url:            http://constexpr.org/innoextract/
-Source:         http://constexpr.org/innoextract/files/%{name}-{version}/%{name}-{version}.tar.gz
+Source:         http://constexpr.org/innoextract/files/%{name}-%{version}/%{name}-%{version}.tar.gz
 BuildRequires:  cmake
 BuildRequires:  boost-devel
 BuildRequires:  xz-devel
