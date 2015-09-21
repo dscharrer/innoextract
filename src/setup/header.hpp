@@ -151,6 +151,7 @@ struct header {
 	std::string create_uninstall_registry_key;
 	std::string uninstallable;
 	std::string close_applications_filter;
+	std::string setup_mutex;
 	std::string license_text;
 	std::string info_before;
 	std::string info_after;

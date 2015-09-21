@@ -217,6 +217,11 @@ void header::load(std::istream & is, const version & version) {
 	} else {
 		close_applications_filter.clear();
 	}
+	if(version >= INNO_VERSION(5, 5, 6)) {
+		is >> util::encoded_string(setup_mutex, version.codepage());
+	} else {
+		setup_mutex.clear();
+	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
