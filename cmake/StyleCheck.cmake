@@ -52,6 +52,9 @@ set(STYLE_FILTER ${STYLE_FILTER},-readability/todo)
 # Annoyting to use with boost::program_options
 set(STYLE_FILTER ${STYLE_FILTER},-whitespace/semicolon)
 
+get_filename_component(STYLE_CHECK_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(STYLE_CHECK_SCRIPT "${STYLE_CHECK_DIR}/cpplint.py")
+
 # Add a target that runs cpplint.py
 #
 # Parameters:
@@ -70,11 +73,11 @@ function(add_style_check_target TARGET_NAME SOURCES_LIST PROJECT)
 		COMMAND "${CMAKE_COMMAND}" -E chdir
 			"${CMAKE_SOURCE_DIR}"
 			"${PYTHON_EXECUTABLE}"
-			"${CMAKE_MODULE_PATH}/cpplint.py"
+			"${STYLE_CHECK_SCRIPT}"
 			"--filter=${STYLE_FILTER}"
 			"--project=${PROJECT}"
 			${SOURCES_LIST}
-		DEPENDS ${SOURCES_LIST}
+		DEPENDS ${SOURCES_LIST} ${STYLE_CHECK_SCRIPT}
 		COMMENT "Checking code style."
 		VERBATIM
 	)
