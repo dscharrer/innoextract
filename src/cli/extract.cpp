@@ -31,10 +31,14 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
-#include <boost/container/flat_map.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/range/size.hpp>
+
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 104800
+#include <boost/container/flat_map.hpp>
+#endif
 
 #include "cli/debug.hpp"
 #include "cli/gog.hpp"
@@ -318,7 +322,11 @@ static const char * handle_collision(const setup::file_entry & oldfile,
 }
 
 typedef boost::unordered_map<std::string, processed_file> FilesMap;
+#if BOOST_VERSION >= 104800
 typedef boost::container::flat_map<std::string, processed_directory> DirectoriesMap;
+#else
+typedef std::map<std::string, processed_directory> DirectoriesMap;
+#endif
 typedef boost::unordered_map<std::string, std::vector<processed_file> > CollisionMap;
 
 static std::string parent_dir(const std::string & path) {
@@ -571,11 +579,15 @@ void process_file(const fs::path & file, const extract_options & o) {
 	}
 	
 	FilesMap processed_files;
+	#if BOOST_VERSION >= 105000
 	processed_files.reserve(info.files.size());
+	#endif
 	
 	DirectoriesMap processed_directories;
+	#if BOOST_VERSION >= 104800
 	processed_directories.reserve(info.directories.size()
 	                              + size_t(1.5 * std::log2(double(info.files.size()))));
+	#endif
 	
 	CollisionMap collisions;
 	
