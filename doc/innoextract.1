@@ -41,6 +41,7 @@ Here is a short summary of the options available in innoextract. Please refer to
 .B Modifiers:
 .nf
     \-\-collisions \fIACTION\fP  How to handle filename collisions
+    \-\-default-language   Default language for renaming
     \-\-dump               Dump contents without converting filenames
  \-L \-\-lowercase          Convert extracted filenames to lower-case
  \-T \-\-timestamps \fITZ\fP      Timezone for file times or "local" or "none"
@@ -74,9 +75,12 @@ Inno Setup installers can contain multiple files with the same name. This option
 
   "\fBoverwrite\fP"  Extract only one of the colliding files. The choice is done similar to how Inno Setup overwrites files during installation. This is the default.
 
-  "\fBrename\fP"     Rename files in the collision set by appending "#\fIcomponent\fP", "@\fIlanguage\fP" and/or "$\fIid\fP" where \fIcomponent\fP and \fIlanguage\fP are the file's \fIunique\fP component and language and \fIid\fP is the lowest number to make the filename unique.
+  "\fBrename\fP"     Rename files in the collision set by appending "#\fIcomponent\fP", "@\fIlanguage\fP" and/or "$\fIid\fP" where \fIcomponent\fP and \fIlanguage\fP are the file's \fIunique\fP component and language and \fIid\fP is the lowest number to make the filename unique. If the \fB\-\-default-language\fP is specified, the "@\fIlanguage\fP" component is omitted if it matches the default language.
 
   "\fBerror\fP"      Exit when a collision is detected.
+.TP
+\fB\-\-default-language\fP
+Set a language as the default. Currently this only has an effect in combination with the \fB\-\-collisions\=rename\fP option.
 .TP
 \fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
 By default

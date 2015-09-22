@@ -63,12 +63,13 @@ struct extract_options {
 	bool gog; //!< Try to extract additional archives used in GOG.com installers
 	
 	bool extract_temp; //!< Extract temporary files
-	bool default_language; //!< Extract files not associated with any language
+	bool language_only; //!< Extract files not associated with any language
 	std::string language; //!< Extract only files for this language
 	std::vector<std::string> include; //!< Extract only files matching these patterns
 	
 	setup::filename_map filenames;
 	CollisionAction collisions;
+	std::string default_language;
 	
 	boost::filesystem::path output_dir;
 	

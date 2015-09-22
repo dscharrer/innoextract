@@ -372,7 +372,7 @@ static bool insert_dirs(DirectoriesMap & processed_directories, const path_filte
 	return false;
 }
 
-static void rename_collision(FilesMap & processed_files,
+static void rename_collision(const extract_options & o, FilesMap & processed_files,
                              const std::string & path, const processed_file & other,
                              bool common_component, bool common_language) {
 	
@@ -385,7 +385,7 @@ static void rename_collision(FilesMap & processed_files,
 			oss << '#' << file.components;
 		}
 	}
-	if(!common_language && !file.languages.empty()) {
+	if(!common_language && !file.languages.empty() && file.languages != o.default_language) {
 		if(setup::is_simple_expression(file.languages)) {
 			oss << '@' << file.languages;
 		}
@@ -393,7 +393,7 @@ static void rename_collision(FilesMap & processed_files,
 	
 	size_t i = 0;
 	std::string suffix = oss.str();
-	if(suffix.empty()) {
+	if(suffix.empty() && file.languages != o.default_language) {
 		oss << '$' << i++;
 	}
 	while(processed_files.find(path + oss.str()) != processed_files.end()) {
@@ -406,7 +406,7 @@ static void rename_collision(FilesMap & processed_files,
 	
 }
 
-static void rename_collisions(FilesMap & processed_files,
+static void rename_collisions(const extract_options & o, FilesMap & processed_files,
                               const CollisionMap & collisions) {
 	
 	BOOST_FOREACH(const CollisionMap::value_type & collision, collisions) {
@@ -423,11 +423,13 @@ static void rename_collisions(FilesMap & processed_files,
 			common_language = common_language && other.entry().languages == file.languages;
 		}
 		
-		rename_collision(processed_files, path, base, common_component, common_language);
-		processed_files.erase(path);
+		if(common_component && !common_language && file.languages != o.default_language) {
+			rename_collision(o, processed_files, path, base, common_component, common_language);
+			processed_files.erase(path);
+		}
 		
 		BOOST_FOREACH(const processed_file & other, collision.second) {
-			rename_collision(processed_files, path, other, common_component, common_language);
+			rename_collision(o, processed_files, path, other, common_component, common_language);
 		}
 		
 	}
@@ -590,7 +592,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 			if(!o.language.empty() && !setup::expression_match(o.language, directory.languages)) {
 				continue; // Ignore other languages
 			}
-		} else if(!o.default_language) {
+		} else if(o.language_only) {
 			continue; // Ignore language-agnostic dirs
 		}
 		
@@ -635,7 +637,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 			if(!o.language.empty() && !setup::expression_match(o.language, file.languages)) {
 				continue; // Ignore other languages
 			}
-		} else if(!o.default_language) {
+		} else if(o.language_only) {
 			continue; // Ignore language-agnostic files
 		}
 		
@@ -697,7 +699,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 	}
 	
 	if(o.collisions == RenameCollisions) {
-		rename_collisions(processed_files, collisions);
+		rename_collisions(o, processed_files, collisions);
 		collisions.clear();
 	}
 	

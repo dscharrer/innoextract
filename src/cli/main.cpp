@@ -306,6 +306,12 @@ int main(int argc, char * argv[]) {
 			}
 		}
 	}
+	{
+		po::variables_map::const_iterator i = options.find("default-language");
+		if(i != options.end()) {
+			o.default_language = i->second.as<std::string>();
+		}
+	}
 	
 	o.extract_temp = (options.count("exclude-temp") == 0);
 	{
@@ -313,7 +319,7 @@ int main(int argc, char * argv[]) {
 		if(i != options.end()) {
 			o.language = i->second.as<std::string>();
 		}
-		o.default_language = (options.count("language-only") == 0);
+		o.language_only = (options.count("language-only") != 0);
 	}
 	{
 		po::variables_map::const_iterator i = options.find("include");
