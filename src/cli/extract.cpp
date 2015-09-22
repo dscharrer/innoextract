@@ -127,7 +127,11 @@ void process_file(const fs::path & file, const extract_options & o) {
 	}
 #endif
 	
-	setup::info::entry_types entries = setup::info::DataEntries | setup::info::Files;
+	setup::info::entry_types entries = 0;
+	if(o.list || o.test || o.extract) {
+		entries |= setup::info::Files;
+		entries |= setup::info::DataEntries;
+	}
 	if(o.list_languages) {
 		entries |= setup::info::Languages;
 	}
