@@ -138,6 +138,8 @@ int main(int argc, char * argv[]) {
 	
 	po::options_description modifiers("Modifiers");
 	modifiers.add_options()
+		("collisions", po::value<std::string>(), "How to handle filename collisions")
+		("default-language", po::value<std::string>(), "Default language for renaming")
 		("dump", "Dump contents without converting filenames")
 		("lowercase,L", "Convert extracted filenames to lower-case")
 		("timestamps,T", po::value<std::string>(), "Timezone for file times or \"local\" or \"none\"")
@@ -284,6 +286,24 @@ int main(int argc, char * argv[]) {
 		print_version(o);
 		if(!explicit_action) {
 			return ExitSuccess;
+		}
+	}
+	
+	{
+		o.collisions = OverwriteCollisions;
+		po::variables_map::const_iterator i = options.find("collisions");
+		if(i != options.end()) {
+			std::string collisions = i->second.as<std::string>();
+			if(collisions == "overwrite")  {
+				o.collisions = OverwriteCollisions;
+			} else if(collisions == "rename") {
+				o.collisions = RenameCollisions;
+			} else if(collisions == "error") {
+				o.collisions = ErrorOnCollisions;
+			} else {
+				log_error << "Unsupported --collisions value: " << collisions;
+				return ExitUserError;
+			}
 		}
 	}
 	

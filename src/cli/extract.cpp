@@ -319,6 +319,7 @@ static const char * handle_collision(const setup::file_entry & oldfile,
 
 typedef boost::unordered_map<std::string, processed_file> FilesMap;
 typedef boost::container::flat_map<std::string, processed_directory> DirectoriesMap;
+typedef boost::unordered_map<std::string, std::vector<processed_file> > CollisionMap;
 
 static std::string parent_dir(const std::string & path) {
 	
@@ -369,6 +370,67 @@ static bool insert_dirs(DirectoriesMap & processed_directories, const path_filte
 	}
 	
 	return false;
+}
+
+static void rename_collision(FilesMap & processed_files,
+                             const std::string & path, const processed_file & other,
+                             bool common_component, bool common_language) {
+	
+	const setup::file_entry & file = other.entry();
+	
+	std::ostringstream oss;
+	
+	if(!common_component && !file.components.empty()) {
+		if(setup::is_simple_expression(file.components)) {
+			oss << '#' << file.components;
+		}
+	}
+	if(!common_language && !file.languages.empty()) {
+		if(setup::is_simple_expression(file.languages)) {
+			oss << '@' << file.languages;
+		}
+	}
+	
+	size_t i = 0;
+	std::string suffix = oss.str();
+	if(suffix.empty()) {
+		oss << '$' << i++;
+	}
+	while(processed_files.find(path + oss.str()) != processed_files.end()) {
+		oss.str(suffix);
+		oss << '$' << i++;
+	}
+	processed_files.insert(std::make_pair(
+		path + oss.str(), processed_file(&file, other.path() + oss.str())
+	));
+	
+}
+
+static void rename_collisions(FilesMap & processed_files,
+                              const CollisionMap & collisions) {
+	
+	BOOST_FOREACH(const CollisionMap::value_type & collision, collisions) {
+		
+		const std::string & path = collision.first;
+		
+		const processed_file & base = processed_files[path];
+		const setup::file_entry & file = base.entry();
+		
+		bool common_component = true;
+		bool common_language = true;
+		BOOST_FOREACH(const processed_file & other, collision.second) {
+			common_component = common_component && other.entry().components == file.components;
+			common_language = common_language && other.entry().languages == file.languages;
+		}
+		
+		rename_collision(processed_files, path, base, common_component, common_language);
+		processed_files.erase(path);
+		
+		BOOST_FOREACH(const processed_file & other, collision.second) {
+			rename_collision(processed_files, path, other, common_component, common_language);
+		}
+		
+	}
 }
 
 } // anonymous namespace
@@ -513,6 +575,8 @@ void process_file(const fs::path & file, const extract_options & o) {
 	processed_directories.reserve(info.directories.size()
 	                              + size_t(1.5 * std::log2(double(info.files.size()))));
 	
+	CollisionMap collisions;
+	
 	path_filter includes(o);
 	
 	// Filter the directories to be created
@@ -590,38 +654,51 @@ void process_file(const fs::path & file, const extract_options & o) {
 		}
 		
 		std::pair<FilesMap::iterator, bool> insertion = processed_files.insert(std::make_pair(
-			std::move(internal_path), processed_file(&file, path)
+			internal_path, processed_file(&file, path)
 		));
 		
 		if(!insertion.second) {
 			// Collision!
 			processed_file & existing = insertion.first->second;
 			
-			const setup::data_entry & newdata = info.data_entries[file.location];
-			const setup::data_entry & olddata = info.data_entries[existing.entry().location];
-			const char * skip = handle_collision(existing.entry(), olddata, file, newdata);
-			
-			if(!o.silent) {
-				std::cout << " - ";
-				const std::string & clobberedpath = skip ? path : existing.path();
-				std::cout << '"' << color::dim_yellow << clobberedpath << color::reset << '"';
-				print_filter_info(skip ? file : existing.entry());
-				if(!o.quiet) {
-					print_size_info(skip ? newdata.file : olddata.file);
+			if(o.collisions == ErrorOnCollisions) {
+				throw std::runtime_error("Collision: " + path);
+			} else if(o.collisions == RenameCollisions) {
+				collisions[internal_path].push_back(processed_file(&file, path));
+			} else {
+				
+				const setup::data_entry & newdata = info.data_entries[file.location];
+				const setup::data_entry & olddata = info.data_entries[existing.entry().location];
+				const char * skip = handle_collision(existing.entry(), olddata, file, newdata);
+				
+				if(!o.silent) {
+					std::cout << " - ";
+					const std::string & clobberedpath = skip ? path : existing.path();
+					std::cout << '"' << color::dim_yellow << clobberedpath << color::reset << '"';
+					print_filter_info(skip ? file : existing.entry());
+					if(!o.quiet) {
+						print_size_info(skip ? newdata.file : olddata.file);
+					}
+					std::cout << " - " << (skip ? skip : "overwritten") << '\n';
 				}
-				std::cout << " - " << (skip ? skip : "overwritten") << '\n';
-			}
-			
-			if(!skip) {
-				existing.set_entry(&file);
-				if(file.type != setup::file_entry::UninstExe) {
-					// Old file is "deleted" first → use case from new file
-					existing.set_path(path);
+				
+				if(!skip) {
+					existing.set_entry(&file);
+					if(file.type != setup::file_entry::UninstExe) {
+						// Old file is "deleted" first → use case from new file
+						existing.set_path(path);
+					}
 				}
+				
 			}
 			
 		}
 		
+	}
+	
+	if(o.collisions == RenameCollisions) {
+		rename_collisions(processed_files, collisions);
+		collisions.clear();
 	}
 	
 	

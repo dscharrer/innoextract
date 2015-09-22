@@ -32,6 +32,8 @@ namespace setup {
 
 bool expression_match(const std::string & test, const std::string & expression);
 
+bool is_simple_expression(const std::string & expression);
+
 } // namespace setup
 
 #endif // INNOEXTRACT_SETUP_EXPRESSION_HPP

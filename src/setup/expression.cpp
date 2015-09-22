@@ -159,4 +159,21 @@ bool expression_match(const std::string & test, const std::string & expr) {
 	}
 }
 
+bool is_simple_expression(const std::string & expression) {
+	if(expression.empty()) {
+		return true;
+	}
+	const char * c = expression.c_str();
+	if(!is_identifier_start(*c)) {
+		return false;
+	}
+	while(*c) {
+		if(!is_identifier(*c)) {
+			return false;
+		}
+		c++;
+	}
+	return true;
+}
+
 } // namespace setup

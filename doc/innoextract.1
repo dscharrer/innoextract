@@ -40,6 +40,7 @@ Here is a short summary of the options available in innoextract. Please refer to
 .TP
 .B Modifiers:
 .nf
+    \-\-collisions \fIACTION\fP  How to handle filename collisions
     \-\-dump               Dump contents without converting filenames
  \-L \-\-lowercase          Convert extracted filenames to lower-case
  \-T \-\-timestamps \fITZ\fP      Timezone for file times or "local" or "none"
@@ -67,6 +68,15 @@ Here is a short summary of the options available in innoextract. Please refer to
 .TP
 \fB--\fP
 Treat all arguments after this one as files, even if they begin with a dash.
+.TP
+\fB\-\-collisions\fP \fIACTION\fP
+Inno Setup installers can contain multiple files with the same name. This option tells innoextract what to do when such a collisions is encountered. Valid actions are:
+
+  "\fBoverwrite\fP"  Extract only one of the colliding files. The choice is done similar to how Inno Setup overwrites files during installation. This is the default.
+
+  "\fBrename\fP"     Rename files in the collision set by appending "#\fIcomponent\fP", "@\fIlanguage\fP" and/or "$\fIid\fP" where \fIcomponent\fP and \fIlanguage\fP are the file's \fIunique\fP component and language and \fIid\fP is the lowest number to make the filename unique.
+
+  "\fBerror\fP"      Exit when a collision is detected.
 .TP
 \fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
 By default

@@ -38,6 +38,12 @@ struct format_error : public std::runtime_error {
 	explicit format_error(const std::string & reason) : std::runtime_error(reason) { }
 };
 
+enum CollisionAction {
+	OverwriteCollisions,
+	RenameCollisions,
+	ErrorOnCollisions
+};
+
 struct extract_options {
 	
 	bool quiet;
@@ -62,6 +68,7 @@ struct extract_options {
 	std::vector<std::string> include; //!< Extract only files matching these patterns
 	
 	setup::filename_map filenames;
+	CollisionAction collisions;
 	
 	boost::filesystem::path output_dir;
 	
