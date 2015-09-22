@@ -43,19 +43,19 @@ struct extract_options {
 	bool quiet;
 	bool silent;
 	
-	bool warn_unused;
+	bool warn_unused; //!< Warn if there are unused files
 	
-	bool list; // The --list action has been explicitely specified
-	bool test; // The --test action has been explicitely specified
-	bool extract; // The --extract action has been specified or automatically enabled
+	bool list; //!< List files
+	bool test; //!< Test files (but don't extract)
+	bool extract; //!< Extract files
 	bool list_languages; //!< List available languages
-	bool gog_game_id; // The --gog-game-id action has been explicitely specified
+	bool gog_game_id; //!< Show the GOG.com game id
 	
-	bool preserve_file_times;
-	bool local_timestamps;
+	bool preserve_file_times; //!< Set timestamps of extracted files
+	bool local_timestamps; //!< Use local timezone for setting timestamps
 	
-	std::string language;
-	std::vector<std::string> include; // paths to match in desired filename
+	std::string language; //!< Extract only files for this language
+	std::vector<std::string> include; //!< Extract only files matching these patterns
 	
 	setup::filename_map filenames;
 	
