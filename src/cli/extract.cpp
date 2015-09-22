@@ -31,6 +31,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/container/flat_map.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/range/size.hpp>
@@ -41,6 +42,7 @@
 #include "loader/offsets.hpp"
 
 #include "setup/data.hpp"
+#include "setup/directory.hpp"
 #include "setup/expression.hpp"
 #include "setup/file.hpp"
 #include "setup/info.hpp"
@@ -68,12 +70,6 @@ struct file_output {
 	util::ofstream stream;
 	
 	explicit file_output(const fs::path & file) : name(file) {
-		try {
-			fs::create_directories(name.parent_path());
-		} catch(...) {
-			throw std::runtime_error("Could not create directories for \""
-			                         + name.string() + '"');
-		}
 		stream.open(name, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 		if(!stream.is_open()) {
 			throw std::runtime_error("Coul not open output file \"" + name.string() + '"');
@@ -135,6 +131,7 @@ public:
 };
 
 typedef processed_item<setup::file_entry> processed_file;
+typedef processed_item<setup::directory_entry> processed_directory;
 
 class path_filter {
 	
@@ -205,6 +202,11 @@ static void print_filter_info(const setup::item & item, bool temp) {
 static void print_filter_info(const setup::file_entry & file) {
 	bool is_temp = (file.options & setup::file_entry::DeleteAfterInstall);
 	print_filter_info(file, is_temp);
+}
+
+static void print_filter_info(const setup::directory_entry & dir) {
+	bool is_temp = (dir.options & setup::directory_entry::DeleteAfterInstall);
+	print_filter_info(dir, is_temp);
 }
 
 static void print_size_info(const stream::file & file) {
@@ -292,6 +294,58 @@ static const char * handle_collision(const setup::file_entry & oldfile,
 }
 
 typedef boost::unordered_map<std::string, processed_file> FilesMap;
+typedef boost::container::flat_map<std::string, processed_directory> DirectoriesMap;
+
+static std::string parent_dir(const std::string & path) {
+	
+	size_t pos = path.find_last_of(setup::path_sep);
+	if(pos == std::string::npos) {
+		return std::string();
+	}
+	
+	return path.substr(0, pos);
+}
+
+static bool insert_dirs(DirectoriesMap & processed_directories, const path_filter & includes,
+                        const std::string & internal_path, std::string & path, bool implied) {
+	
+	std::string dir = parent_dir(path);
+	std::string internal_dir = parent_dir(internal_path);
+	
+	if(internal_dir.empty()) {
+		return false;
+	}
+	
+	if(implied || includes.match(internal_dir)) {
+		
+		std::pair<DirectoriesMap::iterator, bool> existing = processed_directories.insert(
+			std::make_pair(internal_dir, processed_directory(dir))
+		);
+		
+		if(implied) {
+			existing.first->second.set_implied(true);
+		}
+		
+		if(!existing.second) {
+			if(existing.first->second.path() != dir) {
+				// Existing dir case differs, fix path
+				path.replace(0, dir.length(), existing.first->second.path());
+				return true;
+			} else {
+				return false;
+			}
+		}
+		
+		implied = true;
+	}
+	
+	if(insert_dirs(processed_directories, includes, internal_dir, dir, implied)) {
+		path.replace(0, dir.length(), dir);
+		return true;
+	}
+	
+	return false;
+}
 
 } // anonymous namespace
 
@@ -326,6 +380,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 	setup::info::entry_types entries = 0;
 	if(o.list || o.test || o.extract) {
 		entries |= setup::info::Files;
+		entries |= setup::info::Directories;
 		entries |= setup::info::DataEntries;
 	}
 	if(o.list_languages) {
@@ -430,7 +485,52 @@ void process_file(const fs::path & file, const extract_options & o) {
 	FilesMap processed_files;
 	processed_files.reserve(info.files.size());
 	
+	DirectoriesMap processed_directories;
+	processed_directories.reserve(info.directories.size()
+	                              + size_t(1.5 * std::log2(double(info.files.size()))));
+	
 	path_filter includes(o);
+	
+	// Filter the directories to be created
+	BOOST_FOREACH(const setup::directory_entry & directory, info.directories) {
+		
+		if(!o.extract_temp && (directory.options & setup::directory_entry::DeleteAfterInstall)) {
+			continue; // Ignore temporary dirs
+		}
+		
+		if(!directory.languages.empty()) {
+			if(!o.language.empty() && !setup::expression_match(o.language, directory.languages)) {
+				continue; // Ignore other languages
+			}
+		} else if(!o.default_language) {
+			continue; // Ignore language-agnostic dirs
+		}
+		
+		std::string path = o.filenames.convert(directory.name);
+		if(path.empty()) {
+			continue; // Don't know what to do with this
+		}
+		std::string internal_path = boost::algorithm::to_lower_copy(path);
+		
+		bool path_included = includes.match(internal_path);
+		
+		insert_dirs(processed_directories, includes, internal_path, path, path_included);
+		
+		DirectoriesMap::iterator it;
+		if(path_included) {
+			std::pair<DirectoriesMap::iterator, bool> existing = processed_directories.insert(
+				std::make_pair(internal_path, processed_directory(path))
+			);
+			it = existing.first;
+		} else {
+			it = processed_directories.find(internal_path);
+			if(it == processed_directories.end()) {
+				continue;
+			}
+		}
+		
+		it->second.set_entry(&directory);
+	}
 	
 	// Filter the files to be extracted
 	BOOST_FOREACH(const setup::file_entry & file, info.files) {
@@ -457,7 +557,11 @@ void process_file(const fs::path & file, const extract_options & o) {
 		}
 		std::string internal_path = boost::algorithm::to_lower_copy(path);
 		
-		if(!includes.match(internal_path)) {
+		bool path_included = includes.match(internal_path);
+		
+		insert_dirs(processed_directories, includes, internal_path, path, path_included);
+		
+		if(!path_included) {
 			continue; // Ignore excluded file
 		}
 		
@@ -489,6 +593,42 @@ void process_file(const fs::path & file, const extract_options & o) {
 				if(file.type != setup::file_entry::UninstExe) {
 					// Old file is "deleted" first → use case from new file
 					existing.set_path(path);
+				}
+			}
+			
+		}
+		
+	}
+	
+	
+	if(o.list || o.extract) {
+		
+		BOOST_FOREACH(const DirectoriesMap::value_type & i, processed_directories) {
+			
+			const std::string & path = i.second.path();
+			
+			if(o.list && !i.second.implied()) {
+				
+				if(!o.silent) {
+					
+					std::cout << " - ";
+					std::cout << '"' << color::dim_white << path << setup::path_sep << color::reset << '"';
+					if(i.second.has_entry()) {
+						print_filter_info(i.second.entry());
+					}
+					std::cout << '\n';
+					
+				} else {
+					std::cout << color::dim_white << path << setup::path_sep << color::reset << '\n';
+				}
+				
+			}
+			
+			if(o.extract) {
+				try {
+					fs::create_directory(path);
+				} catch(...) {
+					throw std::runtime_error("Could not create directory \"" + path + '"');
 				}
 			}
 			
