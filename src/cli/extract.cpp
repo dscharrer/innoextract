@@ -191,12 +191,10 @@ public:
 				if(!i.second.compare(1, i.second.size() - 1,
 				                     path + setup::path_sep, 0, i.second.size() - 1)) {
 					return true;
-					break;
 				}
 			} else {
 				if((setup::path_sep + path + setup::path_sep).find(i.second) != std::string::npos) {
 					return true;
-					break;
 				}
 			}
 		}
