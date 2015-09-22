@@ -817,7 +817,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 			if(file.offset > offset) {
 				debug("discarding " << print_bytes(file.offset - offset)
 				      << " @ " << print_hex(offset));
-				if(chunk_source) {
+				if(chunk_source.get()) {
 					util::discard(*chunk_source, file.offset - offset);
 				}
 			}
@@ -868,7 +868,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 			}
 			
 			// Seek to the correct position within the chunk
-			if(chunk_source && file.offset < offset) {
+			if(chunk_source.get() && file.offset < offset) {
 				std::ostringstream oss;
 				oss << "Bad offset while extracting files: file start (" << file.offset
 				    << ") is before end of previous file (" << offset << ")!";
@@ -876,7 +876,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 			}
 			offset = file.offset + file.size;
 			
-			if(!chunk_source) {
+			if(!chunk_source.get()) {
 				continue; // Not extracting/testing this file
 			}
 			
