@@ -313,15 +313,18 @@ void process_file(const fs::path & file, const extract_options & o) {
 	Chunks chunks;
 	for(size_t i = 0; i < info.data_entries.size(); i++) {
 		setup::data_entry & location = info.data_entries[i];
+		if(!offsets.data_offset) {
+			max_slice = std::max(max_slice, location.chunk.first_slice);
+			max_slice = std::max(max_slice, location.chunk.last_slice);
+		}
+		if(files_for_location[i].empty()) {
+			continue;
+		}
 		if(location.chunk.compression == stream::UnknownCompression) {
 			location.chunk.compression = info.header.compression;
 		}
 		chunks[location.chunk][location.file] = i;
 		total_size += location.file.size;
-		if(!offsets.data_offset) {
-			max_slice = std::max(max_slice, location.chunk.first_slice);
-			max_slice = std::max(max_slice, location.chunk.last_slice);
-		}
 	}
 	
 	fs::path dir = file.parent_path();
