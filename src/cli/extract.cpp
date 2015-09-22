@@ -144,12 +144,31 @@ public:
 	
 };
 
-static void print_filter_info(const setup::item & item) {
+static void print_filter_info(const setup::item & item, bool temp) {
+	
+	bool first = true;
 	
 	if(!item.languages.empty()) {
-		std::cout << " [" << color::green << item.languages << color::reset << "]";
+		std::cout << (first ? " [" : ", ");
+		first = false;
+		std::cout << color::green << item.languages << color::reset;
 	}
 	
+	if(temp) {
+		std::cout << (first ? " [" : ", ");
+		first = false;
+		std::cout << color::cyan << "temp" << color::reset;
+		
+	}
+	
+	if(!first) {
+		std::cout << "]";
+	}
+}
+
+static void print_filter_info(const setup::file_entry & file) {
+	bool is_temp = (file.options & setup::file_entry::DeleteAfterInstall);
+	print_filter_info(file, is_temp);
 }
 
 static void print_size_info(const stream::file & file) {
