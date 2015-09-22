@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -34,6 +34,9 @@ extern const char innoextract_version[];
 
 //! Range of supported Inno Setup versions
 extern const char innosetup_versions[];
+
+//! Bug tracker URL
+extern const char innoextract_bugs[];
 
 //! Copyright line for the current program
 extern const char innoextract_copyright[];

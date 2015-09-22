@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -137,12 +137,12 @@ static void to_utf8_fallback(const std::string & from, std::string & to, codepag
 	
 	if(warn) {
 		static bool warned = false;
-		log_warning << "unknown data while converting from CP" << cp << " to UTF-8";
+		log_warning << "Unknown data while converting from CP" << cp << " to UTF-8.";
 		if(!warned && (cp == cp_windows1252 || cp == cp_utf16le)) {
 			#if INNOEXTRACT_HAVE_ICONV
-			log_warning << "make sure your iconv installation supports Windows-1252 and UTF-16LE";
+			log_warning << " └─ make sure your iconv installation supports Windows-1252 and UTF-16LE";
 			#elif !INNOEXTRACT_HAVE_BUILTIN_CONV && !INNOEXTRACT_HAVE_WIN32_CONV
-			log_warning << "build innoextract with charset conversion routines enabled!";
+			log_warning << " └─ build innoextract with charset conversion routines enabled!";
 			#endif
 			warned = true;
 		}
@@ -202,7 +202,7 @@ static bool is_utf16_low_surrogate(unicode_char chr) {
 static void utf16le_to_utf8(const std::string & from, std::string & to) {
 	
 	if(from.size() % 2 != 0) {
-		log_warning << "unexpected trailing byte in UTF-16 string";
+		log_warning << "Unexpected trailing byte in UTF-16 string.";
 	}
 	
 	to.clear();
@@ -257,7 +257,7 @@ static void utf16le_to_utf8(const std::string & from, std::string & to) {
 	}
 	
 	if(warn) {
-		log_warning << "unexpected data while converting from UTF-16LE to UTF-8";
+		log_warning << "Unexpected data while converting from UTF-16LE to UTF-8.";
 	}
 	
 }
@@ -291,7 +291,7 @@ static void windows1252_to_utf8(const std::string & from, std::string & to) {
 	}
 	
 	if(warn) {
-		log_warning << "unexpected data while converting from Windows-1252 to UTF-8";
+		log_warning << "Unexpected data while converting from Windows-1252 to UTF-8.";
 	}
 	
 }
@@ -416,7 +416,7 @@ static iconv_t get_converter(codepage_id codepage) {
 	}
 	
 	if(handle == iconv_t(-1)) {
-		log_warning << "could not get codepage " << codepage << " -> UTF-8 converter";
+		log_warning << "Could not get codepage " << codepage << " -> UTF-8 converter.";
 	}
 	
 	return converters[codepage] = handle;
@@ -484,7 +484,7 @@ static bool to_utf8_iconv(const std::string & from, std::string & to, codepage_i
 	}
 	
 	if(warn) {
-		log_warning << "unexpected data while converting from CP" << cp << " to UTF-8";
+		log_warning << "Unexpected data while converting from CP" << cp << " to UTF-8.";
 	}
 	
 	to.resize(outbase);
@@ -532,7 +532,7 @@ static bool to_utf8_win32(const std::string & from, std::string & to, codepage_i
 			                          &buffer.front(), utf16_size);
 		}
 		if(utf16_size <= 0 || ret <= 0) {
-			log_warning << "error while converting from CP" << cp << " to UTF-16: "
+			log_warning << "Error while converting from CP" << cp << " to UTF-16: "
 			            << windows_error_string(GetLastError());
 			return false;
 		}
@@ -547,7 +547,7 @@ static bool to_utf8_win32(const std::string & from, std::string & to, codepage_i
 		                          &to[0], utf8_size, NULL, NULL);
 	}
 	if(utf8_size <= 0 || ret <= 0) {
-		log_warning << "error while converting from UTF-16 to UTF-8: "
+		log_warning << "Error while converting from UTF-16 to UTF-8: "
 		            << windows_error_string(GetLastError());
 		return false;
 	}

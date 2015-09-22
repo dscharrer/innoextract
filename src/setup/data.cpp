@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -35,8 +35,8 @@ void data_entry::load(std::istream & is, const version & version) {
 	chunk.last_slice = util::load<boost::uint32_t>(is, version.bits);
 	if(version < INNO_VERSION(4, 0, 0)) {
 		if(chunk.first_slice < 1 || chunk.last_slice < 1) {
-			log_warning << "[file location] unexpected disk number: " << chunk.first_slice
-			            << " / " << chunk.last_slice;
+			log_warning << "Unexpected slice number: " << chunk.first_slice
+			            << " to " << chunk.last_slice;
 		} else {
 			chunk.first_slice--, chunk.last_slice--;
 		}
@@ -98,7 +98,7 @@ void data_entry::load(std::istream & is, const version & version) {
 		
 		static const boost::int64_t FiletimeOffset = 0x19DB1DED53E8000ll;
 		if(filetime < FiletimeOffset) {
-			log_warning << "[file location] unexpected filetime: " << filetime;
+			log_warning << "Unexpected filetime: " << filetime;
 		}
 		filetime -= FiletimeOffset;
 		

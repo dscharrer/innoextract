@@ -17,11 +17,11 @@ Author: [Daniel Scharrer](http://constexpr.org/)
 
 * **[Boost](http://www.boost.org/) 1.37** or newer
 * **liblzma** from [xz-utils](http://tukaani.org/xz/) *(optional)*
-* **iconv** (either as part of the system libc, as is the case with [glibc](http://www.gnu.org/software/libc/) and [uClibc](http://www.uclibc.org/), or as a separate [libiconv](http://www.gnu.org/software/libiconv/))
+* **iconv** (*optional*, either as part of the system libc, as is the case with [glibc](http://www.gnu.org/software/libc/) and [uClibc](http://www.uclibc.org/), or as a separate [libiconv](http://www.gnu.org/software/libiconv/))
 
 For Boost you will need the headers as well as the `iostreams`, `filesystem`, `date_time`, `system` and `program_options` libraries. Older Boost version may work but are not actively supported. The boost `iostreams` library needs to be build with zlib and bzip2 support.
 
-While the liblzma dependency is optional, it is highly recommended and you won't be able to extract most installers created by newer Inno Setup versions without it.
+While innoextract can be built without liblzma by manually setting `-DUSE_LZMA=OFF`, it is highly recommended and you won't be able to extract most installers created by newer Inno Setup versions without it.
 
 To build innoextract you will also need **[CMake](http://cmake.org/) 2.8** and a working C++ compiler, as well as the development headers for liblzma and boost.
 
@@ -42,7 +42,7 @@ Build options:
 
 | Option                   | Default   | Description |
 |:------------------------ |:---------:|:----------- |
-| `USE_LZMA`               | `ON`      | Use `liblzma` if available.
+| `USE_LZMA`               | `ON`      | Use `liblzma`.
 | `WITH_CONV`              | *not set* | The charset conversion library to use. Valid values are `iconv`, `win32` and `builtin`^1. If not set, a library appropriate for the target platform will be chosen.
 | `ENABLE_BUILTIN_CONV`    | `ON`      | Build internal Windows-1252 and UTF-16LE to UTF-18 charset conversion routines. These might be used even if `WITH_CONV` is not set to `builtin`.
 | `CMAKE_BUILD_TYPE`       | `Release` | Set to `Debug` to enable debug output.
@@ -51,6 +51,7 @@ Build options:
 | `SET_WARNING_FLAGS`      | `ON`      | Adjust compiler warning flags. This should not affect the produced binaries but is useful to catch potential problems.
 | `SET_OPTIMIZATION_FLAGS` | `ON`      | Adjust compiler optimization flags. For non-debug builds the only thing this does is instruct the linker to only link against libraries that are actually needed.
 | `USE_CXX11`              | `ON`      | Try to compile in C++11 mode if available.
+| `USE_DYNAMIC_UTIMENSAT`  | `OFF`     | Dynamically load utimensat(2) if not available at compile time
 | `USE_STATIC_LIBS`        | `OFF`^3   | Turns on static linking for all libraries, including `-static-libgcc` and `-static-libstdc++`. You can also use the individual options below:
 | `LZMA_USE_STATIC_LIBS`   | `OFF`^4   | Statically link `liblzma`.
 | `Boost_USE_STATIC_LIBS`  | `OFF`^4   | Statically link Boost. See also `FindBoost.cmake`
@@ -89,13 +90,11 @@ Documentation is also available as a man page:
 
 ## Limitations
 
-* innoextract currently only supports extracting all the data. There is no support for extracting individual files or components and limited support for extracting language-specific files.
+* There is no support for extracting individual components and limited support for filtering by name.
 
 * Included scripts and checks are not executed.
 
 * The mapping from Inno Setup variables like the application directory to subdirectories is hard-coded.
-
-* innoextract does not check if an installer includes multiple files with the same name and will continually overwrite the destination file when extracting.
 
 * Names for data slice/disk files in multi-file installers must follow the standard naming scheme.
 

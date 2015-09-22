@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Daniel Scharrer
+ * Copyright (C) 2012-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -31,6 +31,8 @@
 namespace setup {
 
 bool expression_match(const std::string & test, const std::string & expression);
+
+bool is_simple_expression(const std::string & expression);
 
 } // namespace setup
 

@@ -12,6 +12,7 @@ option(DEBUG_EXTRA "Expensive debug options" OFF)
 option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
 option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
 option(USE_CXX11 "Try to use C++11 if available" ON)
+option(USE_DYNAMIC_UTIMENSAT "Dynamically load utimensat if not available at compile time" OFF)
 if(NOT DEFINED DEBUG AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(DEBUG 1)
 endif()
@@ -123,7 +124,8 @@ list(APPEND LIBRARIES ${Boost_LIBRARIES})
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
-if(Boost_USE_STATIC_LIBS)
+has_static_libs(Boost Boost_LIBRARIES)
+if(Boost_HAS_STATIC_LIBS)
 	
 	use_static_libs(ZLIB)
 	find_package(ZLIB REQUIRED)
@@ -204,20 +206,58 @@ endif()
 # Check for optional functionality and system configuration
 
 if(NOT WIN32)
+	
 	check_symbol_exists(isatty "unistd.h" INNOEXTRACT_HAVE_ISATTY)
 	check_symbol_exists(ioctl "sys/ioctl.h" INNOEXTRACT_HAVE_IOCTL)
 	check_symbol_exists(timegm "time.h" INNOEXTRACT_HAVE_TIMEGM)
 	check_symbol_exists(gmtime_r "time.h" INNOEXTRACT_HAVE_GMTIME_R)
-	check_symbol_exists(utimensat "sys/stat.h" INNOEXTRACT_HAVE_UTIMENSAT)
 	check_symbol_exists(AT_FDCWD "fcntl.h" INNOEXTRACT_HAVE_AT_FDCWD)
+	if(INNOEXTRACT_HAVE_AT_FDCWD)
+		check_symbol_exists(utimensat "sys/stat.h" INNOEXTRACT_HAVE_UTIMENSAT)
+	endif()
 	if(INNOEXTRACT_HAVE_UTIMENSAT AND INNOEXTRACT_HAVE_AT_FDCWD)
 		set(INNOEXTRACT_HAVE_UTIMENSAT_d 1)
 	else()
+		if(USE_DYNAMIC_UTIMENSAT AND INNOEXTRACT_HAVE_AT_FDCWD)
+			set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_DL_LIBS})
+			check_symbol_exists(dlsym "dlfcn.h" INNOEXTRACT_HAVE_DLSYM)
+			check_symbol_exists(RTLD_DEFAULT "dlfcn.h" INNOEXTRACT_HAVE_RTLD_DEFAULT)
+			unset(CMAKE_REQUIRED_LIBRARIES)
+			if(INNOEXTRACT_HAVE_DLSYM AND INNOEXTRACT_HAVE_RTLD_DEFAULT)
+				set(INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT 1)
+				if(CMAKE_DL_LIBS)
+					list(APPEND LIBRARIES ${CMAKE_DL_LIBS})
+				endif()
+			endif()
+		endif()
 		check_symbol_exists(utimes "sys/time.h" INNOEXTRACT_HAVE_UTIMES)
 	endif()
-	check_symbol_exists(bswap_16 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_16)
-	check_symbol_exists(bswap_32 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_32)
-	check_symbol_exists(bswap_64 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_64)
+	check_symbol_exists(posix_spawnp "spawn.h" INNOEXTRACT_HAVE_POSIX_SPAWNP)
+	if(NOT INNOEXTRACT_HAVE_POSIX_SPAWNP)
+		check_symbol_exists(fork "unistd.h" INNOEXTRACT_HAVE_FORK)
+		check_symbol_exists(execvp "unistd.h" INNOEXTRACT_HAVE_EXECVP)
+	endif()
+	if(INNOEXTRACT_HAVE_POSIX_SPAWNP OR (INNOEXTRACT_HAVE_FORK AND INNOEXTRACT_HAVE_EXECVP))
+		check_symbol_exists(waitpid "sys/wait.h" INNOEXTRACT_HAVE_WAITPID)
+	endif()
+	
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "PathScale")
+		# EKOPath recognizes these but then fails to link
+	else()
+		check_builtin(INNOEXTRACT_HAVE_BUILTIN_BSWAP16 "__builtin_bswap16(0)")
+		check_builtin(INNOEXTRACT_HAVE_BUILTIN_BSWAP32 "__builtin_bswap32(0)")
+		check_builtin(INNOEXTRACT_HAVE_BUILTIN_BSWAP64 "__builtin_bswap64(0)")
+	endif()
+	if(NOT INNOEXTRACT_HAVE_BUILTIN_BSWAP16)
+		check_symbol_exists(bswap_16 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_16)
+	endif()
+	if(NOT INNOEXTRACT_HAVE_BUILTIN_BSWAP32)
+		check_symbol_exists(bswap_32 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_32)
+	endif()
+	if(NOT INNOEXTRACT_HAVE_BUILTIN_BSWAP64)
+		check_symbol_exists(bswap_64 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_64)
+	endif()
+	
 endif()
 
 
@@ -331,6 +371,8 @@ set(INNOEXTRACT_SOURCES
 	src/util/log.cpp
 	src/util/math.hpp
 	src/util/output.hpp
+	src/util/process.hpp
+	src/util/process.cpp
 	src/util/storedenum.hpp
 	src/util/time.hpp
 	src/util/time.cpp
@@ -390,11 +432,15 @@ print_configuration("LZMA decompression" FIRST
 	INNOEXTRACT_HAVE_LZMA "enabled"
 	1                     "disabled"
 )
+if(INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT)
+	set(time_prefix "nanoseconds if supported, ")
+	set(time_suffix " otherwise")
+endif()
 print_configuration("File time precision" FIRST
 	INNOEXTRACT_HAVE_UTIMENSAT_d "nanoseconds"
 	WIN32                        "100-nanoseconds"
-	INNOEXTRACT_HAVE_UTIMES      "microseconds"
-	1                            "seconds"
+	INNOEXTRACT_HAVE_UTIMES      "${time_prefix}microseconds${time_suffix}"
+	1                            "${time_prefix}seconds${time_suffix}"
 )
 print_configuration("Charset conversion"
 	INNOEXTRACT_HAVE_ICONV        "iconv"

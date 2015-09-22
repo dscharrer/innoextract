@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Daniel Scharrer
+ * Copyright (C) 2014-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -27,13 +27,21 @@
 #define INNOEXTRACT_CLI_GOG_HPP
 
 #include <string>
+#include <vector>
+
+#include <boost/filesystem/path.hpp>
 
 namespace setup { struct info; }
+
+struct extract_options;
 
 namespace gog {
 
 //! \return the GOG.com game ID for this installer or an empty string
 std::string get_game_id(const setup::info & info);
+
+void process_bin_files(const std::vector<boost::filesystem::path> & files,
+                       const extract_options & o, const setup::info & info);
 
 } // namespace gog
 

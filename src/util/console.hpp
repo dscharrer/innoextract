@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -156,6 +156,8 @@ public:
 	
 	//! Enable or disable the progress bar.
 	static void set_enabled(bool enable);
+	
+	static bool is_enabled();
 	
 };
 

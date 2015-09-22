@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2013-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -18,38 +18,25 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+#ifndef INNOEXTRACT_UTIL_PROCESS_HPP
+#define INNOEXTRACT_UTIL_PROCESS_HPP
+
+#include <string>
+
+namespace util {
+
 /*!
- * \file
+ * \brief Start a program and wait for it to finish
  *
- * MD5 hashing routines.
+ * The executable's standard output/error is discarded.
+ *
+ * \param args program arguments. The first argument is the program name/path and
+ *             the last argument must be NULL.
+ *
+ * \return the programs exit code or a negative value on error.
  */
-#ifndef INNOEXTRACT_CRYPTO_MD5_HPP
-#define INNOEXTRACT_CRYPTO_MD5_HPP
+int run(const char * const args[]);
 
-#include <boost/cstdint.hpp>
+} // namespace util
 
-#include "crypto/iteratedhash.hpp"
-#include "util/endian.hpp"
-
-namespace crypto {
-
-class md5_transform {
-	
-public:
-	
-	typedef boost::uint32_t hash_word;
-	typedef util::little_endian byte_order;
-	static const size_t offset = 0;
-	static const size_t block_size = 64;
-	static const size_t hash_size = 16;
-	
-	static void init(hash_word * state);
-	
-	static void transform(hash_word * digest, const hash_word * data);
-};
-
-typedef iterated_hash<md5_transform> md5;
-
-} // namespace crypto
-
-#endif // INNOEXTRACT_CRYPTO_MD5_HPP
+#endif // INNOEXTRACT_UTIL_PROCESS_HPP

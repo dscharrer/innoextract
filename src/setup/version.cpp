@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -146,6 +146,9 @@ static const known_version versions[] = {
 	{ "Inno Setup Setup Data (5.4.2) (u)",  INNO_VERSION_EXT(5, 4,  2, 0), true  },
 	{ "Inno Setup Setup Data (5.5.0)",      INNO_VERSION_EXT(5, 5,  0, 0), false },
 	{ "Inno Setup Setup Data (5.5.0) (u)",  INNO_VERSION_EXT(5, 5,  0, 0), true  },
+	{ "!!! BlackBox v2?, marked as 5.5.0",  INNO_VERSION_EXT(5, 5,  0, 1), true  },
+	{ "Inno Setup Setup Data (5.5.6)",      INNO_VERSION_EXT(5, 5,  6, 0), false },
+	{ "Inno Setup Setup Data (5.5.6) (u)",  INNO_VERSION_EXT(5, 5,  6, 0), true  },
 };
 
 } // anonymous namespace
@@ -325,6 +328,11 @@ bool version::is_ambiguous() const {
 	
 	if(value == INNO_VERSION(4, 2, 3)) {
 		// might be either 4.2.3 or 4.2.4
+		return true;
+	}
+	
+	if(value == INNO_VERSION(5, 5, 0)) {
+		// might be either 5.5.0 or 5.5.0.1
 		return true;
 	}
 	

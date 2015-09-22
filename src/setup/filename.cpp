@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Daniel Scharrer
+ * Copyright (C) 2012-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -27,13 +27,6 @@
 namespace setup {
 
 namespace {
-
-//! Separator to use for output paths.
-#if defined(_WIN32)
-static const char path_sep = '\\';
-#else
-static const char path_sep = '/';
-#endif
 
 //! Check for separators in input paths.
 struct is_path_separator {

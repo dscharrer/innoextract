@@ -1,5 +1,5 @@
 
-# Copyright (C) 2013 Daniel Scharrer
+# Copyright (C) 2013-2015 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -21,6 +21,7 @@ include(CheckCXXSourceCompiles)
 include(CompileCheck)
 
 set(_HAS_CXX11 0)
+get_filename_component(CXX11_CHECK_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
 function(enable_cxx11)
 	if(MSVC)
@@ -49,7 +50,7 @@ function(check_cxx11 CHECK RESULTVAR)
 			endif()
 		else()
 			string(REGEX REPLACE "[^a-zA-Z0-9_][^a-zA-Z0-9_]*" "-" check "${CHECK}")
-			set(file "${CMAKE_MODULE_PATH}/check-cxx11-${check}.cpp")
+			set(file "${CXX11_CHECK_DIR}/check-cxx11-${check}.cpp")
 			check_compile(result "${file}" "${CHECK}" "C++11 feature")
 		endif()
 		if("${result}" STREQUAL "")

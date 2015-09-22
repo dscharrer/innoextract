@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Daniel Scharrer
+ * Copyright (C) 2012-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -154,9 +154,26 @@ bool expression_match(const std::string & test, const std::string & expr) {
 	try {
 		return evaluator(expr, test).eval();
 	} catch(const std::runtime_error & error) {
-		log_warning << "error evaluating \"" << expr << "\": " << error.what();
+		log_warning << "Error evaluating \"" << expr << "\": " << error.what();
 		return true;
 	}
+}
+
+bool is_simple_expression(const std::string & expression) {
+	if(expression.empty()) {
+		return true;
+	}
+	const char * c = expression.c_str();
+	if(!is_identifier_start(*c)) {
+		return false;
+	}
+	while(*c) {
+		if(!is_identifier(*c)) {
+			return false;
+		}
+		c++;
+	}
+	return true;
 }
 
 } // namespace setup

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Daniel Scharrer
+ * Copyright (C) 2012-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -31,6 +31,13 @@
 
 namespace setup {
 
+//! Separator to use for output paths.
+#if defined(_WIN32)
+static const char path_sep = '\\';
+#else
+static const char path_sep = '/';
+#endif
+
 /*!
  * Map to convert between raw windows file paths stored in the setup file (which can
  * contain variables) and output filenames.
@@ -55,6 +62,9 @@ public:
 	
 	//! Set if paths should be converted to lower-case.
 	void set_lowercase(bool enable) { lowercase = enable; }
+	
+	//! Set if paths should be converted to lower-case.
+	bool is_lowercase() const { return lowercase; }
 	
 	//! Set if variables should be expanded and path separators converted.
 	void set_expand(bool enable) { expand = enable; }

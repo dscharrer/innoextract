@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -80,7 +80,7 @@ void slice_reader::seek(size_t slice) {
 
 bool slice_reader::open_file(const path_type & file) {
 	
-	log_info << "opening \"" << color::cyan << file.string() << color::reset << '"';
+	log_info << "Opening \"" << color::cyan << file.string() << color::reset << '"';
 	
 	ifs.close();
 	ifs.clear();
@@ -96,7 +96,7 @@ bool slice_reader::open_file(const path_type & file) {
 	char magic[8];
 	if(ifs.read(magic, 8).fail()) {
 		ifs.close();
-		throw slice_error("could not read slice magic number");
+		throw slice_error("could not read slice magic number in \"" + file.string() + "\"");
 	}
 	bool found = false;
 	for(size_t i = 0; boost::size(slice_ids); i++) {
@@ -107,22 +107,22 @@ bool slice_reader::open_file(const path_type & file) {
 	}
 	if(!found) {
 		ifs.close();
-		throw slice_error("bad slice magic number");
+		throw slice_error("bad slice magic number in \"" + file.string() + "\"");
 	}
 	
 	slice_size = util::load<boost::uint32_t>(ifs);
 	if(ifs.fail()) {
 		ifs.close();
-		throw slice_error("could not read slice size");
+		throw slice_error("could not read slice size in \"" + file.string() + "\"");
 	} else if(std::streampos(slice_size) > file_size) {
 		ifs.close();
 		std::ostringstream oss;
-		oss << "bad slice size: " << slice_size << " > " << file_size;
+		oss << "bad slice size in " << file << ": " << slice_size << " > " << file_size;
 		throw slice_error(oss.str());
 	} else if(std::streampos(slice_size) < ifs.tellg()) {
 		ifs.close();
 		std::ostringstream oss;
-		oss << "bad slice size: " << slice_size << " < " << ifs.tellg();
+		oss << "bad slice size in " << file << ": " << slice_size << " < " << ifs.tellg();
 		throw slice_error(oss.str());
 	}
 	

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -113,6 +113,7 @@ struct header {
 		DisableDirExistsWarning,
 		BackSolid,
 		OverwriteUninstRegEntries
+		
 	);
 	
 	FLAGS(architecture_types,
@@ -150,6 +151,7 @@ struct header {
 	std::string create_uninstall_registry_key;
 	std::string uninstallable;
 	std::string close_applications_filter;
+	std::string setup_mutex;
 	std::string license_text;
 	std::string info_before;
 	std::string info_after;

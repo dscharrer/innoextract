@@ -1,5 +1,5 @@
 
-# Copyright (C) 2013 Daniel Scharrer
+# Copyright (C) 2013-2015 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -42,5 +42,20 @@ macro(use_static_libs_restore)
 	if(DEFINED _UseStaticLibs_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES)
 		set(CMAKE_FIND_LIBRARY_SUFFIXES ${_UseStaticLibs_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})
 		unset(_UseStaticLibs_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES)
+	endif()
+endmacro()
+
+macro(has_static_libs PREFIX LIBS)
+	if(WIN32)
+		# On Windows we can't really tell import libraries from proper static libraries.
+		set(${PREFIX}_HAS_STATIC_LIBS ${${PREFIX}_USE_STATIC_LIBS})
+	else()
+		set(${PREFIX}_HAS_STATIC_LIBS 0)
+		foreach(lib IN LISTS ${LIBS})
+			if(lib MATCHES "\\.a$")
+				set(${PREFIX}_HAS_STATIC_LIBS 1)
+				break()
+			endif()
+		endforeach()
 	endif()
 endmacro()

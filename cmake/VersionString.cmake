@@ -1,5 +1,5 @@
 
-# Copyright (C) 2011-2013 Daniel Scharrer
+# Copyright (C) 2011-2015 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -16,6 +16,9 @@
 # 2. Altered source versions must be plainly marked as such, and must not be
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
+
+get_filename_component(VERSION_STRING_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(VERSION_STRING_SCRIPT "${VERSION_STRING_DIR}/VersionScript.cmake")
 
 # Create a rule to generate a version string at compile time.
 #
@@ -47,7 +50,7 @@ function(version_file SRC DST VERSION_SOURCES GIT_DIR)
 	set(mode "variable")
 	
 	set(args)
-	set(dependencies "${CMAKE_MODULE_PATH}/VersionScript.cmake")
+	set(dependencies "${VERSION_STRING_SCRIPT}")
 	
 	foreach(arg IN LISTS VERSION_SOURCES)
 		
@@ -99,7 +102,7 @@ function(version_file SRC DST VERSION_SOURCES GIT_DIR)
 			"-DGIT_DIR=${abs_git_dir}"
 			"-DGIT_COMMAND=${GIT_COMMAND}"
 			${defines}
-			-P "${CMAKE_MODULE_PATH}/VersionScript.cmake"
+			-P "${VERSION_STRING_SCRIPT}"
 		MAIN_DEPENDENCY
 			"${abs_src}"
 		DEPENDS

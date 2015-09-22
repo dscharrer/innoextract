@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -85,7 +85,7 @@ public:
 			return Mapping::values[value];
 		}
 		
-		log_warning << "unexpected " << enum_names<enum_type>::name << " value: " << value;
+		log_warning << "Unexpected " << enum_names<enum_type>::name << " value: " << value;
 		
 		return Mapping::default_value;
 	}
@@ -178,7 +178,7 @@ public:
 		}
 		
 		if(bits) {
-			log_warning << "unexpected " << enum_names<enum_type>::name << " flags: "
+			log_warning << "Unexpected " << enum_names<enum_type>::name << " flags: "
 			            << std::hex << bits << std::dec;
 		}
 		

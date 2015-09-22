@@ -14,7 +14,7 @@
 #  - Allow #ifdef BOOST_PP_IS_ITERATING + #endif in place of header guards
 #  - C++ source files are named .cpp, not .cc
 #
-# Copyright (c) 2011-1013 Daniel Scharrer
+# Copyright (c) 2011-1015 Daniel Scharrer
 # Copyright (c) 2009 Google Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1621,10 +1621,7 @@ def CheckSpacingForFunctionCall(filename, line, linenum, error):
     if Search(r'[^)]\s+\)\s*[^{\s]', fncall):
       # If the closing parenthesis is preceded by only whitespaces,
       # try to give a more descriptive error message.
-      if Search(r'^\s+\)', fncall):
-        error(filename, linenum, 'whitespace/parens', 2,
-              'Closing ) should be moved to the previous line')
-      else:
+      if not Search(r'^\s+\)', fncall):
         error(filename, linenum, 'whitespace/parens', 2,
               'Extra space before )')
 

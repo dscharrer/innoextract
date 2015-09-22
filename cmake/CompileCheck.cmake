@@ -1,5 +1,5 @@
 
-# Copyright (C) 2011-2013 Daniel Scharrer
+# Copyright (C) 2011-2015 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -117,6 +117,14 @@ function(check_flag RESULT FLAG TYPE)
 	check_compile(result "${compile_test_file}" "${FLAG}" "${TYPE} flag")
 	set(${RESULT} "${result}" PARENT_SCOPE)
 endfunction(check_flag)
+
+function(check_builtin RESULT EXPR)
+	set(compile_test_file "${CMAKE_CURRENT_BINARY_DIR}/compile_expr_test.cpp")
+	string(REGEX MATCH "[a-zA-Z_][a-zA-Z_0-9]*" type "${EXPR}")
+	file(WRITE ${compile_test_file} "__attribute__((const)) int main(){ (void)(${EXPR}); return 0; }\n")
+	check_compile(result "${compile_test_file}" "${type}" "compiler builtin")
+	set(${RESULT} "${result}" PARENT_SCOPE)
+endfunction(check_builtin)
 
 function(check_compiler_flag RESULT FLAG)
 	check_flag(result "${FLAG}" compiler)

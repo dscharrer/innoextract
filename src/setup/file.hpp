@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -84,6 +84,10 @@ struct file_entry : public item {
 		UserFile,
 		UninstExe,
 		RegSvrExe,
+	};
+	
+	enum file_attributes {
+		ReadOnly = 0x1
 	};
 	
 	std::string source;

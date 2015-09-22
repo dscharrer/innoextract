@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2015 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -132,16 +132,27 @@ int main(int argc, char * argv[]) {
 		("test,t", "Only verify checksums, don't write anything")
 		("extract,e", "Extract files (default action)")
 		("list,l", "Only list files, don't write anything")
+		("list-languages", "List languages supported by the installer")
 		("gog-game-id", "Determine the GOG.com game ID for this installer")
 	;
 	
-	po::options_description filter("Modifiers");
-	filter.add_options()
+	po::options_description modifiers("Modifiers");
+	modifiers.add_options()
+		("collisions", po::value<std::string>(), "How to handle filename collisions")
+		("default-language", po::value<std::string>(), "Default language for renaming")
 		("dump", "Dump contents without converting filenames")
 		("lowercase,L", "Convert extracted filenames to lower-case")
-		("language", po::value<std::string>(), "Extract files for the given language")
 		("timestamps,T", po::value<std::string>(), "Timezone for file times or \"local\" or \"none\"")
 		("output-dir,d", po::value<std::string>(), "Extract files into the given directory")
+		("gog,g", "Extract additional archives from GOG.com installers")
+	;
+	
+	po::options_description filter("Filters");
+	filter.add_options()
+		("exclude-temp,m", "Don't extract temporary files")
+		("language", po::value<std::string>(), "Extract only files for this language")
+		("language-only", "Only extract language-specific files")
+		("include,I", po::value< std::vector<std::string> >(), "Extract only files that match this path")
 	;
 	
 	po::options_description io("Display options");
@@ -152,7 +163,7 @@ int main(int argc, char * argv[]) {
 		("color,c", po::value<bool>()->implicit_value(true), "Enable/disable color output")
 		("progress,p", po::value<bool>()->implicit_value(true), "Enable/disable the progress bar")
 		#ifdef DEBUG
-			("debug,g", "Output debug information")
+			("debug", "Output debug information")
 		#endif
 	;
 	
@@ -162,10 +173,10 @@ int main(int argc, char * argv[]) {
 		/**/;
 	
 	po::options_description options_desc;
-	options_desc.add(generic).add(action).add(filter).add(io).add(hidden);
+	options_desc.add(generic).add(action).add(modifiers).add(filter).add(io).add(hidden);
 	
 	po::options_description visible;
-	visible.add(generic).add(action).add(filter).add(io);
+	visible.add(generic).add(action).add(modifiers).add(filter).add(io);
 	
 	po::positional_options_description p;
 	p.add("setup-files", -1);
@@ -231,19 +242,21 @@ int main(int argc, char * argv[]) {
 	o.list = (options.count("list") != 0);
 	o.extract = (options.count("extract") != 0);
 	o.test = (options.count("test") != 0);
+	o.list_languages = (options.count("list-languages") != 0);
 	o.gog_game_id = (options.count("gog-game-id") != 0);
-	bool explicit_action = o.list || o.test || o.extract || o.gog_game_id;
+	bool explicit_action = o.list || o.test || o.extract
+	                       || o.list_languages || o.gog_game_id;
 	if(!explicit_action) {
 		o.extract = true;
 	}
 	if(o.extract && o.test) {
-		log_error << "cannot specify multiple actions";
+		log_error << "Combining --extract and --test is not allowed!";
 		return ExitUserError;
 	}
 	if(!o.extract && !o.test) {
 		progress::set_enabled(false);
 	}
-	if(!o.silent && !o.gog_game_id) {
+	if(!o.silent && (o.test || o.extract)) {
 		o.list = true;
 	}
 	
@@ -277,9 +290,41 @@ int main(int argc, char * argv[]) {
 	}
 	
 	{
+		o.collisions = OverwriteCollisions;
+		po::variables_map::const_iterator i = options.find("collisions");
+		if(i != options.end()) {
+			std::string collisions = i->second.as<std::string>();
+			if(collisions == "overwrite")  {
+				o.collisions = OverwriteCollisions;
+			} else if(collisions == "rename") {
+				o.collisions = RenameCollisions;
+			} else if(collisions == "error") {
+				o.collisions = ErrorOnCollisions;
+			} else {
+				log_error << "Unsupported --collisions value: " << collisions;
+				return ExitUserError;
+			}
+		}
+	}
+	{
+		po::variables_map::const_iterator i = options.find("default-language");
+		if(i != options.end()) {
+			o.default_language = i->second.as<std::string>();
+		}
+	}
+	
+	o.extract_temp = (options.count("exclude-temp") == 0);
+	{
 		po::variables_map::const_iterator i = options.find("language");
 		if(i != options.end()) {
 			o.language = i->second.as<std::string>();
+		}
+		o.language_only = (options.count("language-only") != 0);
+	}
+	{
+		po::variables_map::const_iterator i = options.find("include");
+		if(i != options.end()) {
+			o.include = i->second.as<std::vector <std::string> >();
 		}
 	}
 	
@@ -307,25 +352,39 @@ int main(int argc, char * argv[]) {
 					fs::create_directory(o.output_dir);
 				}
 			} catch(...) {
-				log_error << "could not create output directory " << o.output_dir;
+				log_error << "Could not create output directory " << o.output_dir;
 				return ExitDataError;
 			}
 		}
 	}
 	
+	o.gog = (options.count("gog") != 0);
+	
 	const std::vector<std::string> & files = options["setup-files"]
 	                                         .as< std::vector<std::string> >();
 	
+	bool suggest_bug_report = false;
 	try {
 		BOOST_FOREACH(const std::string & file, files) {
 			process_file(file, o);
 		}
 	} catch(const std::ios_base::failure & e) {
-		log_error << "stream error: " << e.what();
+		log_error << "Stream error while extracting files!\n"
+		          << " └─ error reason: " << e.what();
+		suggest_bug_report = true;
+	} catch(const format_error & e) {
+		log_error << e.what();
+		suggest_bug_report = true;
 	} catch(const std::runtime_error & e) {
 		log_error << e.what();
 	} catch(const setup::version_error &) {
-		log_error << "not a supported Inno Setup installer";
+		log_error << "Not a supported Inno Setup installer!";
+	}
+	
+	if(suggest_bug_report) {
+		std::cerr << color::blue << "If you are sure the setup file is not corrupted,"
+		          << " consider \nfiling a bug report at "
+		          << color::dim_cyan << innoextract_bugs << color::reset << '\n';
 	}
 	
 	if(!logger::quiet || logger::total_errors || logger::total_warnings) {
