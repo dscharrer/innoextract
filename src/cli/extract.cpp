@@ -270,7 +270,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 				
 				size_t file_i = files_for_location[location.second][i];
 				
-				if(!o.language.empty() && !info.files[file_i].languages.empty()) {
+				if(!o.language.empty() && !info.files[file_i].languages.empty() && o.language != "all") {
 					if(!setup::expression_match(o.language, info.files[file_i].languages)) {
 						continue;
 					}
@@ -279,6 +279,9 @@ void process_file(const fs::path & file, const extract_options & o) {
 				if(!info.files[file_i].destination.empty()) {
 					std::string path = o.filenames.convert(info.files[file_i].destination);
 					if(!path.empty()) {
+                                                if(o.language == "all" && !info.files[file_i].languages.empty() && info.files[file_i].languages != "english") {
+							path += ('_' + info.files[file_i].languages);
+						}
 						bool filtered = false;
 						bool tokeep = false;
 						BOOST_FOREACH(const Filter & i, includes) {
