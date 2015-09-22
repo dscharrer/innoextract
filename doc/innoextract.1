@@ -83,7 +83,7 @@ This option can be combined with \fB\-\-silent\fP to print only the game ID with
 
 The \fB\-\-gog\-game\-id\fP action can be combined with \fB\-\-list\fP, \fB\-\-test\fP and/or \fB\-\-extract\fP. If \fB\-\-gog\-game\-id\fP, \fB\-\-list\fP and \fB\-\-silent\fP are combined, the game ID (or an empty line) will be printed on it's own line before the file list.
 
-For some newer multi-part GOG.com installers the \fI.bin\fP files are not part of the Inno Setup installer but instead are encrypted RAR archives. The password can be calculated as the MD5 checksum of the game ID:
+For newer multi-part GOG.com installers the \fI.bin\fP files are not part of the Inno Setup installer but instead are RAR archives. Some of these RAR files are encrypted, with the password being the MD5 checksum of the game ID:
 
   \fBinnoextract \-\-gog\-game\-id --silent\fP \fIsetup_....exe\fP | \fBmd5sum\fP | \fBcut \-d\fP ' ' \fB\-f\fP 1
 
