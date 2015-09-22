@@ -7,11 +7,11 @@ innoextract - tool to extract installers created by Inno Setup
 .B innoextract
 .RB [ \-\-extract ]
 .RB [ \-\-lowercase ]
-[options] \fIinstallers\fP ...
+[options] [\fB\-\-\fP] \fIinstallers\fP ...
 
-\fBinnoextract \-\-list\fP [options] \fIinstallers\fP ...
+\fBinnoextract \-\-list\fP [options] [\fB\-\-\fP] \fIinstallers\fP ...
 
-\fBinnoextract \-\-test\fP [options] \fIinstallers\fP ...
+\fBinnoextract \-\-test\fP [options] [\fB\-\-\fP] \fIinstallers\fP ...
 .SH DESCRIPTION
 \fBinnoextract\fP is a tool that can extract installer executables created by Inno Setup.
 .PP
@@ -61,6 +61,9 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-p \-\-progress[=\fIENABLE\fP]  Enable/disable the progress bar
 .fi
 .SH OPTIONS
+.TP
+\fB--\fP
+Treat all arguments after this one as files, even if they begin with a dash.
 .TP
 \fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
 By default
