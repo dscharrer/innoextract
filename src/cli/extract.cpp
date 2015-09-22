@@ -439,6 +439,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 			continue; // Ignore external files (copy commands)
 		}
 		
+		if(!o.extract_temp && (file.options & setup::file_entry::DeleteAfterInstall)) {
+			continue; // Ignore temporary files
+		}
+		
 		if(!file.languages.empty()) {
 			if(!o.language.empty() && !setup::expression_match(o.language, file.languages)) {
 				continue; // Ignore other languages

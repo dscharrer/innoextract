@@ -48,6 +48,7 @@ Here is a short summary of the options available in innoextract. Please refer to
 .TP
 .B Filters:
 .nf
+ \-m \-\-exclude\-temp       Don't extract temporary files
     \-\-language \fILANG\fP      Extract only files for this language
  \-I \-\-include \fIEXPR\fP       Extract only files that match this path
 .fi
@@ -72,6 +73,11 @@ will try to detect if the terminal supports shell escape codes and enable or dis
 .TP
 \fB\-\-dump\fP
 Don't convert Windows paths to UNIX paths and don't substitute variables in paths.
+.TP
+\fB\-m\fP, \fB\-\-exclude\-temp\fP
+Don't extract files that would have been deleted at the end of the install process. Such files are marked with [temp] in the file listing.
+
+This option takes precedence over \fB\-\-include\fP and \fB\-\-language\fP: temporary files are never extracted when using the \fB\-\-exclude\-temp\fP, even if they match the selected language or include expressions.
 .TP
 \fB\-e\fP, \fB\-\-extract\fP
 Extract all files to the current directory. This action is enabled by default, unless either \fB\-\-list\fP or \fB\-\-extract\fP is specified. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
