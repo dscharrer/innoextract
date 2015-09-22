@@ -716,6 +716,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 	}
 	
 	
+	if(o.extract && !o.output_dir.empty()) {
+		fs::create_directories(o.output_dir);
+	}
+	
 	if(o.list || o.extract) {
 		
 		BOOST_FOREACH(const DirectoriesMap::value_type & i, processed_directories) {
@@ -740,10 +744,11 @@ void process_file(const fs::path & file, const extract_options & o) {
 			}
 			
 			if(o.extract) {
+				fs::path dir = o.output_dir / path;
 				try {
-					fs::create_directory(path);
+					fs::create_directory(dir);
 				} catch(...) {
-					throw std::runtime_error("Could not create directory \"" + path + '"');
+					throw std::runtime_error("Could not create directory \"" + dir.string() + '"');
 				}
 			}
 			
