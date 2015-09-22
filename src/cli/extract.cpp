@@ -387,6 +387,14 @@ void process_file(const fs::path & file, const extract_options & o) {
 				continue;
 			}
 			
+			if(file.offset > offset) {
+				debug("discarding " << print_bytes(file.offset - offset)
+				      << " @ " << print_hex(offset));
+				if(chunk_source) {
+					util::discard(*chunk_source, file.offset - offset);
+				}
+			}
+			
 			// Print filename and size
 			if(o.list) {
 				
@@ -432,22 +440,18 @@ void process_file(const fs::path & file, const extract_options & o) {
 				
 			}
 			
-			if((!o.extract && !o.test) || chunk.first.encrypted) {
-				continue;
-			}
-			
 			// Seek to the correct position within the chunk
-			if(file.offset < offset) {
+			if(chunk_source && file.offset < offset) {
 				std::ostringstream oss;
 				oss << "Bad offset while extracting files: file start (" << file.offset
 				    << ") is before end of previous file (" << offset << ")!";
 				throw format_error(oss.str());
 			}
-			if(file.offset > offset) {
-				debug("discarding " << print_bytes(file.offset - offset));
-				util::discard(*chunk_source, file.offset - offset);
-			}
 			offset = file.offset + file.size;
+			
+			if(!chunk_source) {
+				continue; // Not extracting/testing this file
+			}
 			
 			crypto::checksum checksum;
 			
@@ -511,6 +515,13 @@ void process_file(const fs::path & file, const extract_options & o) {
 				}
 			}
 		}
+		
+		#ifdef DEBUG
+		if(offset < chunk.first.size) {
+			debug("discarding " << print_bytes(chunk.first.size - offset)
+			      << " at end of chunk @ " << print_hex(offset));
+		}
+		#endif
 	}
 	
 	extract_progress.clear();
