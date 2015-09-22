@@ -58,6 +58,8 @@
 
 namespace fs = boost::filesystem;
 
+namespace {
+
 struct file_output {
 	
 	fs::path name;
@@ -98,6 +100,51 @@ static void probe_bin_files(const fs::path & dir, const std::string & basename,
 		}
 	}
 }
+
+class path_filter {
+	
+	typedef std::pair<bool, std::string> Filter;
+	std::vector<Filter> includes;
+	
+public:
+	
+	explicit path_filter(const extract_options & o) {
+		BOOST_FOREACH(const std::string & include, o.include) {
+			if(!include.empty() && include[0] == setup::path_sep) {
+				includes.push_back(Filter(true, include + setup::path_sep));
+			} else {
+				includes.push_back(Filter(false, setup::path_sep + include + setup::path_sep));
+			}
+		}
+	}
+	
+	bool match(const std::string & path) const {
+		
+		if(includes.empty()) {
+			return true;
+		}
+		
+		BOOST_FOREACH(const Filter & i, includes) {
+			if(i.first) {
+				if(!i.second.compare(1, i.second.size() - 1,
+				                     path + setup::path_sep, 0, i.second.size() - 1)) {
+					return true;
+					break;
+				}
+			} else {
+				if((setup::path_sep + path + setup::path_sep).find(i.second) != std::string::npos) {
+					return true;
+					break;
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+};
+
+} // anonymous namespace
 
 void process_file(const fs::path & file, const extract_options & o) {
 	
@@ -231,7 +278,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 		std::cout << "Files:\n";
 	}
 	
-	boost::uint64_t total_size = 0;
+	path_filter includes(o);
 	
 	std::vector< std::vector<size_t> > files_for_location;
 	files_for_location.resize(info.data_entries.size());
@@ -241,6 +288,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 		}
 	}
 	
+	boost::uint64_t total_size = 0;
 	size_t max_slice = 0;
 	
 	typedef std::map<stream::file, size_t> Files;
@@ -272,16 +320,6 @@ void process_file(const fs::path & file, const extract_options & o) {
 	}
 	
 	progress extract_progress(total_size);
-
-	typedef std::pair<bool, std::string> Filter;
-	std::vector<Filter> includes;
-	BOOST_FOREACH(const std::string & include, o.include) {
-		if(!include.empty() && include[0] == setup::path_sep) {
-			includes.push_back(std::make_pair(true, include + setup::path_sep));
-		} else {
-			includes.push_back(std::make_pair(false, setup::path_sep + include + setup::path_sep));
-		}
-	}
 	
 	BOOST_FOREACH(const Chunks::value_type & chunk, chunks) {
 		
@@ -317,29 +355,11 @@ void process_file(const fs::path & file, const extract_options & o) {
 				
 				if(!info.files[file_i].destination.empty()) {
 					std::string path = o.filenames.convert(info.files[file_i].destination);
-					if(!path.empty()) {
-						bool filtered = false;
-						bool tokeep = false;
-						BOOST_FOREACH(const Filter & i, includes) {
-							filtered = true;
-							if(i.first) {
-								if(!i.second.compare(1, i.second.size() - 1,
-								                     path + setup::path_sep, 0, i.second.size() - 1)) {
-									tokeep = true;
-									break;
-								}
-							} else {
-								if((setup::path_sep + path + setup::path_sep).find(i.second) != std::string::npos) {
-									tokeep = true;
-									break;
-								}
-							}
-						}
-						if(!filtered || tokeep) {
-							output_names.push_back(std::make_pair(path, file_i));
-						}
+					if(!path.empty() && includes.match(path)) {
+						output_names.push_back(std::make_pair(path, file_i));
 					}
 				}
+				
 			}
 			
 			if(output_names.empty()) {
