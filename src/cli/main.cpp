@@ -148,6 +148,7 @@ int main(int argc, char * argv[]) {
 	filter.add_options()
 		("exclude-temp,m", "Don't extract temporary files")
 		("language", po::value<std::string>(), "Extract only files for this language")
+		("language-only", "Only extract language-specific files")
 		("include,I", po::value< std::vector<std::string> >(), "Extract only files that match this path")
 	;
 	
@@ -291,8 +292,8 @@ int main(int argc, char * argv[]) {
 		if(i != options.end()) {
 			o.language = i->second.as<std::string>();
 		}
+		o.default_language = (options.count("language-only") == 0);
 	}
-
 	{
 		po::variables_map::const_iterator i = options.find("include");
 		if(i != options.end()) {

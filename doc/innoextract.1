@@ -50,6 +50,7 @@ Here is a short summary of the options available in innoextract. Please refer to
 .nf
  \-m \-\-exclude\-temp       Don't extract temporary files
     \-\-language \fILANG\fP      Extract only files for this language
+    \-\-language\-only      Only extract language-specific files
  \-I \-\-include \fIEXPR\fP       Extract only files that match this path
 .fi
 .TP
@@ -108,6 +109,13 @@ The \fB\-\-include\fP may be repeated in order allow files matching against one 
 .TP
 \fB\-\-language\fP \fILANG\fP
 Extract only language-independent files and files for the given language. By default all files are extracted.
+
+To also skip language-independent files, combine this option with \fB\-\-language\-only\fP.
+.TP
+\fB\-\-language\-only\fP
+Only extract files that are language-specific.
+
+This option can be combined with \fB\-\-language\fP to only extract the files of a specific language.
 .TP
 \fB\-\-license\fP
 Show license information.

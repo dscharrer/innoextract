@@ -447,6 +447,8 @@ void process_file(const fs::path & file, const extract_options & o) {
 			if(!o.language.empty() && !setup::expression_match(o.language, file.languages)) {
 				continue; // Ignore other languages
 			}
+		} else if(!o.default_language) {
+			continue; // Ignore language-agnostic files
 		}
 		
 		std::string path = o.filenames.convert(file.destination);

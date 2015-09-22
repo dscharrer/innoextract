@@ -55,6 +55,7 @@ struct extract_options {
 	bool local_timestamps; //!< Use local timezone for setting timestamps
 	
 	bool extract_temp; //!< Extract temporary files
+	bool default_language; //!< Extract files not associated with any language
 	std::string language; //!< Extract only files for this language
 	std::vector<std::string> include; //!< Extract only files matching these patterns
 	
