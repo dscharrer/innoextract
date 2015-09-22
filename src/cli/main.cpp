@@ -132,6 +132,7 @@ int main(int argc, char * argv[]) {
 		("test,t", "Only verify checksums, don't write anything")
 		("extract,e", "Extract files (default action)")
 		("list,l", "Only list files, don't write anything")
+		("list-languages", "List languages supported by the installer")
 		("gog-game-id", "Determine the GOG.com game ID for this installer")
 	;
 	
@@ -236,8 +237,10 @@ int main(int argc, char * argv[]) {
 	o.list = (options.count("list") != 0);
 	o.extract = (options.count("extract") != 0);
 	o.test = (options.count("test") != 0);
+	o.list_languages = (options.count("list-languages") != 0);
 	o.gog_game_id = (options.count("gog-game-id") != 0);
-	bool explicit_action = o.list || o.test || o.extract || o.gog_game_id;
+	bool explicit_action = o.list || o.test || o.extract
+	                       || o.list_languages || o.gog_game_id;
 	if(!explicit_action) {
 		o.extract = true;
 	}
@@ -248,7 +251,7 @@ int main(int argc, char * argv[]) {
 	if(!o.extract && !o.test) {
 		progress::set_enabled(false);
 	}
-	if(!o.silent && !o.gog_game_id) {
+	if(!o.silent && (o.test || o.extract)) {
 		o.list = true;
 	}
 	

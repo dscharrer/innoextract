@@ -42,6 +42,7 @@
 #include "setup/expression.hpp"
 #include "setup/file.hpp"
 #include "setup/info.hpp"
+#include "setup/language.hpp"
 
 #include "stream/chunk.hpp"
 #include "stream/file.hpp"
@@ -127,6 +128,9 @@ void process_file(const fs::path & file, const extract_options & o) {
 #endif
 	
 	setup::info::entry_types entries = setup::info::DataEntries | setup::info::Files;
+	if(o.list_languages) {
+		entries |= setup::info::Languages;
+	}
 	if(o.gog_game_id) {
 		entries |= setup::info::RegistryEntries;
 	}
@@ -172,6 +176,33 @@ void process_file(const fs::path & file, const extract_options & o) {
 	}
 #endif
 	
+	bool multiple_sections = (o.list_languages + o.gog_game_id + o.list > 1);
+	if(!o.quiet && multiple_sections) {
+		std::cout << '\n';
+	}
+	
+	if(o.list_languages) {
+		if(o.silent) {
+			BOOST_FOREACH(const setup::language_entry & language, info.languages) {
+				std::cout << language.name <<' ' << language.language_name << '\n';
+			}
+		} else {
+			if(multiple_sections) {
+				std::cout << "Languages:\n";
+			}
+			BOOST_FOREACH(const setup::language_entry & language, info.languages) {
+				std::cout << " - " << color::green << language.name << color::reset;
+				std::cout << ": " << color::white << language.language_name << color::reset << '\n';
+			}
+			if(info.languages.empty()) {
+				std::cout << " (none)\n";
+			}
+		}
+		if((o.silent || !o.quiet) && multiple_sections) {
+			std::cout << '\n';
+		}
+	}
+	
 	if(o.gog_game_id) {
 		std::string id = gog::get_game_id(info);
 		if(id.empty()) {
@@ -183,13 +214,17 @@ void process_file(const fs::path & file, const extract_options & o) {
 		} else {
 			std::cout << id;
 		}
-		if(o.silent && o.list) {
+		if((o.silent || !o.quiet) && multiple_sections) {
 			std::cout << '\n';
 		}
 	}
 	
 	if(!o.list && !o.test && !o.extract) {
 		return;
+	}
+	
+	if(!o.silent && multiple_sections) {
+		std::cout << "Files:\n";
 	}
 	
 	boost::uint64_t total_size = 0;

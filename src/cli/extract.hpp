@@ -48,6 +48,7 @@ struct extract_options {
 	bool list; // The --list action has been explicitely specified
 	bool test; // The --test action has been explicitely specified
 	bool extract; // The --extract action has been specified or automatically enabled
+	bool list_languages; //!< List available languages
 	bool gog_game_id; // The --gog-game-id action has been explicitely specified
 	
 	bool preserve_file_times;
