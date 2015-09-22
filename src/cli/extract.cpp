@@ -144,6 +144,23 @@ public:
 	
 };
 
+static void print_filter_info(const setup::item & item) {
+	
+	if(!item.languages.empty()) {
+		std::cout << " [" << color::green << item.languages << color::reset << "]";
+	}
+	
+}
+
+static void print_size_info(const stream::file & file) {
+	
+	if(logger::debug) {
+		std::cout << " @ " << print_hex(file.offset);
+	}
+	
+	std::cout << " (" << color::dim_cyan << print_bytes(file.size) << color::reset << ")";
+}
+
 } // anonymous namespace
 
 void process_file(const fs::path & file, const extract_options & o) {
@@ -381,25 +398,21 @@ void process_file(const fs::path & file, const extract_options & o) {
 							std::cout << ", ";
 						}
 						if(chunk.first.encrypted) {
-							std::cout << '"' << color::dim_yellow << path.first << color::reset << '"' << " skipped";
+							std::cout << '"' << color::dim_yellow << path.first << color::reset << '"';
 						} else {
 							std::cout << '"' << color::white << path.first << color::reset << '"';
 						}
-						if(!info.files[path.second].languages.empty()) {
-							std::cout << " [" << color::green << info.files[path.second].languages
-							          << color::reset << "]";
-						}
+						print_filter_info(info.files[path.second]);
 						named = true;
 					}
 					if(!named) {
 						std::cout << color::white << "unnamed file" << color::reset;
 					}
 					if(!o.quiet) {
-						if(logger::debug) {
-							std::cout << " @ " << print_hex(file.offset);
-						}
-						std::cout << " (" << color::dim_cyan << print_bytes(file.size)
-						          << color::reset << ")";
+						print_size_info(file);
+					}
+					if(chunk.first.encrypted) {
+						std::cout << " - encrypted";
 					}
 					std::cout << '\n';
 					
