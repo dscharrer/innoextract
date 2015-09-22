@@ -26,6 +26,7 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include <cmath>
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -586,7 +587,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 	DirectoriesMap processed_directories;
 	#if BOOST_VERSION >= 104800
 	processed_directories.reserve(info.directories.size()
-	                              + size_t(1.5 * std::log2(double(info.files.size()))));
+	                              + size_t(std::log(double(info.files.size()))));
 	#endif
 	
 	CollisionMap collisions;
