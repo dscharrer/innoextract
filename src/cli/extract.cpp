@@ -229,12 +229,12 @@ static void print_filter_info(const setup::item & item, bool temp) {
 }
 
 static void print_filter_info(const setup::file_entry & file) {
-	bool is_temp = (file.options & setup::file_entry::DeleteAfterInstall);
+	bool is_temp = !!(file.options & setup::file_entry::DeleteAfterInstall);
 	print_filter_info(file, is_temp);
 }
 
 static void print_filter_info(const setup::directory_entry & dir) {
-	bool is_temp = (dir.options & setup::directory_entry::DeleteAfterInstall);
+	bool is_temp = !!(dir.options & setup::directory_entry::DeleteAfterInstall);
 	print_filter_info(dir, is_temp);
 }
 
@@ -260,7 +260,7 @@ static const char * handle_collision(const setup::file_entry & oldfile,
 	
 	if(!(newfile.options & setup::file_entry::IgnoreVersion)) {
 		
-		bool version_info_valid = (newdata.options & setup::data_entry::VersionInfoValid);
+		bool version_info_valid = !!(newdata.options & setup::data_entry::VersionInfoValid);
 		
 		if(olddata.options & setup::data_entry::VersionInfoValid) {
 			allow_timestamp = false;
