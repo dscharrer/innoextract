@@ -265,7 +265,7 @@ public:
 			} while(fs::exists(path));
 			fs::create_directories(path);
 		} catch(...) {
-			path.clear();
+			path = fs::path();
 			throw std::runtime_error("Could not create temporary directory!");
 		}
 	}
