@@ -146,9 +146,10 @@ public:
 	explicit path_filter(const extract_options & o) {
 		BOOST_FOREACH(const std::string & include, o.include) {
 			if(!include.empty() && include[0] == setup::path_sep) {
-				includes.push_back(Filter(true, include + setup::path_sep));
+				includes.push_back(Filter(true, boost::to_lower_copy(include) + setup::path_sep));
 			} else {
-				includes.push_back(Filter(false, setup::path_sep + include + setup::path_sep));
+				includes.push_back(Filter(false, setup::path_sep + boost::to_lower_copy(include)
+				                                 + setup::path_sep));
 			}
 		}
 	}
@@ -448,12 +449,12 @@ void process_file(const fs::path & file, const extract_options & o) {
 		if(path.empty()) {
 			continue; // Internal file, not extracted
 		}
+		std::string internal_path = boost::algorithm::to_lower_copy(path);
 		
-		if(!includes.match(path)) {
+		if(!includes.match(internal_path)) {
 			continue; // Ignore excluded file
 		}
 		
-		std::string internal_path = boost::algorithm::to_lower_copy(path);
 		std::pair<FilesMap::iterator, bool> insertion = processed_files.insert(std::make_pair(
 			std::move(internal_path), processed_file(&file, path)
 		));

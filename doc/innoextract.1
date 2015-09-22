@@ -94,7 +94,7 @@ Show a list of the supported options.
 \fB-I\fP, \fB\-\-include\fP \fIEXPR\fP
 If this option is specified, innoextract will only process files whose path matches \fIEXPR\fP. The expression can be either a single path component (a file or directory name) or a series of successive path components joined by the OS path separator (\\ on Windows, / elsewhere).
 
-The expression is always matched against one or more full path components. Filtering by parts of filenames is currently not supported.
+The expression is always matched against one or more full path components. Filtering by parts of filenames is currently not supported. Matching is done case-insensitively.
 
 \fIEXPR\fP may contain one leading path separator, in which case the rest of the expression is matched against the start of the path. Otherwise, the expression is matched against any part of the path.
 
