@@ -86,6 +86,10 @@ struct file_entry : public item {
 		RegSvrExe,
 	};
 	
+	enum file_attributes {
+		ReadOnly = 0x1
+	};
+	
 	std::string source;
 	std::string destination;
 	std::string install_font_name;

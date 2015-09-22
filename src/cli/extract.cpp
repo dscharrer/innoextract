@@ -29,6 +29,8 @@
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/range/size.hpp>
@@ -100,6 +102,39 @@ static void probe_bin_files(const fs::path & dir, const std::string & basename,
 		}
 	}
 }
+
+template <typename Entry>
+class processed_item {
+	
+	std::string path_;
+	const Entry * entry_;
+	bool implied_;
+	
+public:
+	
+	processed_item() : entry_(NULL), implied_(false) { }
+	
+	processed_item(const Entry * entry, const std::string & path, bool implied = false)
+		: path_(path), entry_(entry), implied_(implied) { }
+	
+	processed_item(const std::string & path, bool implied = false)
+		: path_(path), entry_(NULL), implied_(implied) { }
+		
+	processed_item(const processed_item & o)
+		: path_(o.path_), entry_(o.entry_), implied_(o.implied_) { }
+	
+	bool has_entry() const { return entry_ != NULL; }
+	const Entry & entry() const { return *entry_; }
+	const std::string & path() const { return path_; }
+	bool implied() const { return implied_; }
+	
+	void set_entry(const Entry * entry) { entry_ = entry; }
+	void set_path(const std::string & path) { path_ = path; }
+	void set_implied(bool implied) { implied_ = implied; }
+	
+};
+
+typedef processed_item<setup::file_entry> processed_file;
 
 class path_filter {
 	
@@ -179,6 +214,83 @@ static void print_size_info(const stream::file & file) {
 	
 	std::cout << " (" << color::dim_cyan << print_bytes(file.size) << color::reset << ")";
 }
+
+static bool prompt_overwrite() {
+	return true; // TODO the user always overwrites
+}
+
+static const char * handle_collision(const setup::file_entry & oldfile,
+                                     const setup::data_entry & olddata,
+                                     const setup::file_entry & newfile,
+                                     const setup::data_entry & newdata) {
+	
+	bool allow_timestamp = true;
+	
+	if(!(newfile.options & setup::file_entry::IgnoreVersion)) {
+		
+		bool version_info_valid = (newdata.options & setup::data_entry::VersionInfoValid);
+		
+		if(olddata.options & setup::data_entry::VersionInfoValid) {
+			allow_timestamp = false;
+			
+			if(!version_info_valid || olddata.file_version > newdata.file_version) {
+				if(!(newfile.options & setup::file_entry::PromptIfOlder) || !prompt_overwrite()) {
+					return "old version";
+				}
+			} else if(newdata.file_version == olddata.file_version
+				   && !(newfile.options & setup::file_entry::OverwriteSameVersion)) {
+				
+				if((newfile.options & setup::file_entry::ReplaceSameVersionIfContentsDiffer)
+				   && olddata.file.checksum == newdata.file.checksum) {
+					return "duplicate (checksum)";
+				}
+				
+				if(!(newfile.options & setup::file_entry::CompareTimeStamp)) {
+					return "duplicate (version)";
+				}
+				
+				allow_timestamp = true;
+			}
+			
+		} else if(version_info_valid) {
+			allow_timestamp = false;
+		}
+		
+	}
+	
+	if(allow_timestamp && (newfile.options & setup::file_entry::CompareTimeStamp)) {
+		
+		if(newdata.timestamp == olddata.timestamp
+		   && newdata.timestamp_nsec == olddata.timestamp_nsec) {
+			return "duplicate (modification time)";
+		}
+		
+		
+		if(newdata.timestamp < olddata.timestamp
+		   || (newdata.timestamp == olddata.timestamp
+		       && newdata.timestamp_nsec < olddata.timestamp_nsec)) {
+			if(!(newfile.options & setup::file_entry::PromptIfOlder) || !prompt_overwrite()) {
+				return "old version (modification time)";
+			}
+		}
+		
+	}
+	
+	if((newfile.options & setup::file_entry::ConfirmOverwrite) && !prompt_overwrite()) {
+		return "user chose not to overwrite";
+	}
+	
+	if(oldfile.attributes != boost::uint32_t(-1)
+	   && (oldfile.attributes & setup::file_entry::ReadOnly) != 0) {
+		if(!(newfile.options & setup::file_entry::OverwriteReadOnly) && !prompt_overwrite()) {
+			return "user chose not to overwrite read-only file";
+		}
+	}
+	
+	return NULL; // overwrite old file
+}
+
+typedef boost::unordered_map<std::string, processed_file> FilesMap;
 
 } // anonymous namespace
 
@@ -314,14 +426,74 @@ void process_file(const fs::path & file, const extract_options & o) {
 		std::cout << "Files:\n";
 	}
 	
+	FilesMap processed_files;
+	processed_files.reserve(info.files.size());
+	
 	path_filter includes(o);
 	
-	std::vector< std::vector<size_t> > files_for_location;
-	files_for_location.resize(info.data_entries.size());
-	for(size_t i = 0; i < info.files.size(); i++) {
-		if(info.files[i].location < files_for_location.size()) {
-			files_for_location[info.files[i].location].push_back(i);
+	// Filter the files to be extracted
+	BOOST_FOREACH(const setup::file_entry & file, info.files) {
+		
+		if(file.location >= info.data_entries.size()) {
+			continue; // Ignore external files (copy commands)
 		}
+		
+		if(!file.languages.empty()) {
+			if(!o.language.empty() && !setup::expression_match(o.language, file.languages)) {
+				continue; // Ignore other languages
+			}
+		}
+		
+		std::string path = o.filenames.convert(file.destination);
+		if(path.empty()) {
+			continue; // Internal file, not extracted
+		}
+		
+		if(!includes.match(path)) {
+			continue; // Ignore excluded file
+		}
+		
+		std::string internal_path = boost::algorithm::to_lower_copy(path);
+		std::pair<FilesMap::iterator, bool> insertion = processed_files.insert(std::make_pair(
+			std::move(internal_path), processed_file(&file, path)
+		));
+		
+		if(!insertion.second) {
+			// Collision!
+			processed_file & existing = insertion.first->second;
+			
+			const setup::data_entry & newdata = info.data_entries[file.location];
+			const setup::data_entry & olddata = info.data_entries[existing.entry().location];
+			const char * skip = handle_collision(existing.entry(), olddata, file, newdata);
+			
+			if(!o.silent) {
+				std::cout << " - ";
+				const std::string & clobberedpath = skip ? path : existing.path();
+				std::cout << '"' << color::dim_yellow << clobberedpath << color::reset << '"';
+				print_filter_info(skip ? file : existing.entry());
+				if(!o.quiet) {
+					print_size_info(skip ? newdata.file : olddata.file);
+				}
+				std::cout << " - " << (skip ? skip : "overwritten") << '\n';
+			}
+			
+			if(!skip) {
+				existing.set_entry(&file);
+				if(file.type != setup::file_entry::UninstExe) {
+					// Old file is "deleted" first → use case from new file
+					existing.set_path(path);
+				}
+			}
+			
+		}
+		
+	}
+	
+	std::vector< std::vector<const processed_file *> > files_for_location;
+	files_for_location.resize(info.data_entries.size());
+	BOOST_FOREACH(const FilesMap::value_type & i, processed_files) {
+		const processed_file & file = i.second;
+		files_for_location[file.entry().location].push_back(&file);
 	}
 	
 	boost::uint64_t total_size = 0;
@@ -378,33 +550,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 		
 		BOOST_FOREACH(const Files::value_type & location, chunk.second) {
 			const stream::file & file = location.first;
-			
-			// Convert output filenames
-			typedef std::pair<std::string, size_t> file_t;
-			std::vector<file_t> output_names;
-			for(size_t i = 0; i < files_for_location[location.second].size(); i++) {
-				
-				size_t file_i = files_for_location[location.second][i];
-				
-				if(!o.language.empty() && !info.files[file_i].languages.empty()) {
-					if(!setup::expression_match(o.language, info.files[file_i].languages)) {
-						continue;
-					}
-				}
-				
-				if(!info.files[file_i].destination.empty()) {
-					std::string path = o.filenames.convert(info.files[file_i].destination);
-					if(!path.empty() && includes.match(path)) {
-						output_names.push_back(std::make_pair(path, file_i));
-					}
-				}
-				
-			}
-			
-			if(output_names.empty()) {
-				extract_progress.update(location.first.size);
-				continue;
-			}
+			const std::vector<const processed_file *> & names = files_for_location[location.second];
 			
 			if(file.offset > offset) {
 				debug("discarding " << print_bytes(file.offset - offset)
@@ -423,16 +569,16 @@ void process_file(const fs::path & file, const extract_options & o) {
 					
 					std::cout << " - ";
 					bool named = false;
-					BOOST_FOREACH(const file_t & path, output_names) {
+					BOOST_FOREACH(const processed_file * name, names) {
 						if(named) {
 							std::cout << ", ";
 						}
 						if(chunk.first.encrypted) {
-							std::cout << '"' << color::dim_yellow << path.first << color::reset << '"';
+							std::cout << '"' << color::dim_yellow << name->path() << color::reset << '"';
 						} else {
-							std::cout << '"' << color::white << path.first << color::reset << '"';
+							std::cout << '"' << color::white << name->path() << color::reset << '"';
 						}
-						print_filter_info(info.files[path.second]);
+						print_filter_info(name->entry());
 						named = true;
 					}
 					if(!named) {
@@ -447,8 +593,8 @@ void process_file(const fs::path & file, const extract_options & o) {
 					std::cout << '\n';
 					
 				} else {
-					BOOST_FOREACH(const file_t & path, output_names) {
-						std::cout << color::white << path.first << color::reset << '\n';
+					BOOST_FOREACH(const processed_file * name, names) {
+						std::cout << color::white << name->path() << color::reset << '\n';
 					}
 				}
 				
@@ -481,10 +627,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 			// Open output files
 			boost::ptr_vector<file_output> output;
 			if(!o.test) {
-				output.reserve(output_names.size());
-				BOOST_FOREACH(const file_t & path, output_names) {
+				output.reserve(names.size());
+				BOOST_FOREACH(const processed_file * name, names) {
 					try {
-						output.push_back(new file_output(o.output_dir / path.first));
+						output.push_back(new file_output(o.output_dir / name->path()));
 					} catch(boost::bad_pointer &) {
 						// should never happen
 						std::terminate();
