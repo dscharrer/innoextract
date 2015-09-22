@@ -1621,10 +1621,7 @@ def CheckSpacingForFunctionCall(filename, line, linenum, error):
     if Search(r'[^)]\s+\)\s*[^{\s]', fncall):
       # If the closing parenthesis is preceded by only whitespaces,
       # try to give a more descriptive error message.
-      if Search(r'^\s+\)', fncall):
-        error(filename, linenum, 'whitespace/parens', 2,
-              'Closing ) should be moved to the previous line')
-      else:
+      if not Search(r'^\s+\)', fncall):
         error(filename, linenum, 'whitespace/parens', 2,
               'Extra space before )')
 
