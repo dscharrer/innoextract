@@ -87,18 +87,20 @@ foreach(arg IN LISTS VERSION_SOURCES)
 				
 			endif()
 			
-			# Get everything before the last space
-			string(SUBSTRING "${line}" 0 ${last_space} line_name)
-			string(STRIP "${line_name}" ${var}_${${var}_COUNT}_NAME)
-			escape_var(${var}_${${var}_COUNT}_NAME)
-			
-			# Get everything after the last space
-			if(${last_space} LESS ${line_length})
-				math(EXPR num_length "${line_length} - ${last_space}")
-				string(SUBSTRING "${line}" ${last_space} ${num_length} line_num)
-				string(STRIP "${line_num}" ${var}_${${var}_COUNT}_NUMBER)
-				escape_var(${var}_${${var}_COUNT}_NUMBER)
+			if("${line}" MATCHES " ([0-9]\\.[^ ]* \\+ )?[^ ]*$")
+				string(REGEX REPLACE " (([0-9]\\.[^ ]* \\+ )?[^ ]*)$" ""
+				       ${var}_${${var}_COUNT}_NAME "${line}")
+				string(LENGTH ${${var}_${${var}_COUNT}_NAME} begin)
+				math(EXPR begin "${begin} + 1")
+				math(EXPR length "${line_length} - ${begin}")
+				string(SUBSTRING "${line}" "${begin}" "${length}" ${var}_${${var}_COUNT}_NUMBER)
+				
+			else()
+				set(${var}_${${var}_COUNT}_NAME "${line}")
+				set(${var}_${${var}_COUNT}_NUMBER)
 			endif()
+			escape_var(${var}_${${var}_COUNT}_NAME)
+			escape_var(${var}_${${var}_COUNT}_NUMBER)
 			
 			math(EXPR ${var}_COUNT "${${var}_COUNT} + 1")
 		endforeach()
