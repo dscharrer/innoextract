@@ -1,4 +1,35 @@
 
+innoextract 1.5 (2015-09-24)
+ - Added support for Inno Setup 5.5.6 installers
+ - Added support for a modified Inno Setup 5.5.0 variant
+ - Added support for building without iconv (Windows-1252 and UTF-16LE only)
+ - Added warnings for .bin files that are not part of the installer
+ - Added a simple --include (-I) option to filter files thanks to Alexandre Detiste
+ - Added a --list-languages option to list available languages
+ - Added a --exclude-temp (-m) option to not extract temporary files
+ - Added a --language-only option to skip language-independent files
+ - Added a --collisions option to abort or rename files on collision
+ - Added a --default-language option to prefer a language in case of file collisions
+ - Added a --gog-game-id option to print the GOG.com game ID for Galaxy-ready installers
+ - Added a --gog (-g) option to extract additional .bin files using unrar or unar
+ - Fixed handling of spaces in the --data-dir option
+ - Fixed an infinite loop with truncated LZMA streams
+ - Fixed handling of forward slashes in stored file paths
+ - Fixed size display for powers of 1024
+ - Fixed loading headers if there are encrypted chunks
+ - Fixed file collisions not being handled case-insensitively
+ - Files will now be extracted into the same directory even if the stored case differs
+ - Empty directories are now created correctly when extracting
+ - Skipped files in encrypted chunks are now listed individually
+ - Temporary files are now marked in file listings
+ - Error summary is now written to stderr when using --quiet
+ - Colors are now only enabled automatically if $TERM is set to something other than "dumb"
+ - Improved error and warning messages
+ - Build system improvements
+ - Debug output can now be enabled separately from debug builds
+ - Windows: Added support for using the Win32 API for string encoding conversion
+ - Windows: Fixed unicode console output
+
 innoextract 1.4-windows-r2 (2014-04-17)
  - This is a Windows-specific hotfix release, no other platforms are affected
  - Fixed running innoextract under Windows XP
