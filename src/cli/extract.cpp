@@ -361,7 +361,11 @@ static bool insert_dirs(DirectoriesMap & processed_directories, const path_filte
 		if(!existing.second) {
 			if(existing.first->second.path() != dir) {
 				// Existing dir case differs, fix path
-				path.replace(0, dir.length(), existing.first->second.path());
+				if(existing.first->second.path().length() == dir.length()) {
+					path.replace(0, dir.length(), existing.first->second.path());
+				} else {
+					path = existing.first->second.path() + path.substr(dir.length());
+				}
 				return true;
 			} else {
 				return false;
@@ -371,8 +375,13 @@ static bool insert_dirs(DirectoriesMap & processed_directories, const path_filte
 		implied = true;
 	}
 	
+	size_t oldlength = dir.length();
 	if(insert_dirs(processed_directories, includes, internal_dir, dir, implied)) {
-		path.replace(0, dir.length(), dir);
+		if(dir.length() == oldlength) {
+			path.replace(0, dir.length(), dir);
+		} else {
+			path = dir + path.substr(oldlength);
+		}
 		return true;
 	}
 	
