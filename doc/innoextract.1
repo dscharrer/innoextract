@@ -41,7 +41,7 @@ Here is a short summary of the options available in innoextract. Please refer to
 .B Modifiers:
 .nf
     \-\-collisions \fIACTION\fP  How to handle filename collisions
-    \-\-default-language   Default language for renaming
+    \-\-default\-language   Default language for renaming
     \-\-dump               Dump contents without converting filenames
  \-L \-\-lowercase          Convert extracted filenames to lower-case
  \-T \-\-timestamps \fITZ\fP      Timezone for file times or "local" or "none"
@@ -75,16 +75,16 @@ Inno Setup installers can contain multiple files with the same name. This option
 
   "\fBoverwrite\fP"  Extract only one of the colliding files. The choice is done similar to how Inno Setup overwrites files during installation. This is the default.
 
-  "\fBrename\fP"     Rename files in the collision set by appending "#\fIcomponent\fP", "@\fIlanguage\fP" and/or "$\fIid\fP" where \fIcomponent\fP and \fIlanguage\fP are the file's \fIunique\fP component and language and \fIid\fP is the lowest number to make the filename unique. If the \fB\-\-default-language\fP is specified, the "@\fIlanguage\fP" component is omitted if it matches the default language.
+  "\fBrename\fP"     Rename files in the collision set by appending "#\fIcomponent\fP", "@\fIlanguage\fP" and/or "$\fIid\fP" where \fIcomponent\fP and \fIlanguage\fP are the file's \fIunique\fP component and language and \fIid\fP is the lowest number to make the filename unique. If the \fB\-\-default\-language\fP is specified, the "@\fIlanguage\fP" component is omitted if it matches the default language.
 
   "\fBerror\fP"      Exit when a collision is detected.
 .TP
-\fB\-\-default-language\fP \fILANG\fP
+\fB\-\-default\-language\fP \fILANG\fP
 Set a language as the default.
 
-With \fB\-\-collisions\=overwrite\fP (the default) this will change the choice of which file to keep to always prefer the given language. In effect, \fB\-\-default-language\fP behaves almost like \fB\-\-language\fP, except that files are extracted for all languages if they have different names.
+With \fB\-\-collisions\=overwrite\fP (the default) this will change the choice of which file to keep to always prefer the given language. In effect, \fB\-\-default\-language\fP behaves almost like \fB\-\-language\fP, except that files are extracted for all languages if they have different names.
 
-When using the \fB\-\-collisions\=rename\fP option, \fB\-\-default-language\fP chooses a language for which the files should keep the original name if possible.
+When using the \fB\-\-collisions\=rename\fP option, \fB\-\-default\-language\fP chooses a language for which the files should keep the original name if possible.
 .TP
 \fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
 By default
@@ -125,14 +125,14 @@ For newer multi-part GOG.com installers the \fI.bin\fP files are not part of the
 \fB\-h\fP, \fB\-\-help\fP
 Show a list of the supported options.
 .TP
-\fB-I\fP, \fB\-\-include\fP \fIEXPR\fP
+\fB\-I\fP, \fB\-\-include\fP \fIEXPR\fP
 If this option is specified, innoextract will only process files whose path matches \fIEXPR\fP. The expression can be either a single path component (a file or directory name) or a series of successive path components joined by the OS path separator (\\ on Windows, / elsewhere).
 
 The expression is always matched against one or more full path components. Filtering by parts of filenames is currently not supported. Matching is done case-insensitively.
 
 \fIEXPR\fP may contain one leading path separator, in which case the rest of the expression is matched against the start of the path. Otherwise, the expression is matched against any part of the path.
 
-The \fB\-\-include\fP may be repeated in order allow files matching against one of multiple patterns. If not \fB\-\-include\fP is used, all files are processed.
+The \fB\-\-include\fP option may be repeated in order allow files matching against one of multiple patterns. If \fB\-\-include\fP is not used, all files are processed.
 .TP
 \fB\-\-language\fP \fILANG\fP
 Extract only language-independent files and files for the given language. By default all files are extracted.
