@@ -693,6 +693,16 @@ void process_file(const fs::path & file, const extract_options & o) {
 				const setup::data_entry & olddata = info.data_entries[existing.entry().location];
 				const char * skip = handle_collision(existing.entry(), olddata, file, newdata);
 				
+				if(!o.default_language.empty()) {
+					bool oldlang = setup::expression_match(o.default_language, file.languages);
+					bool newlang = setup::expression_match(o.default_language, existing.entry().languages);
+					if(oldlang && !newlang) {
+						skip = NULL;
+					} else if(!oldlang && newlang) {
+						skip = "overwritten";
+					}
+				}
+				
 				if(!o.silent) {
 					std::cout << " - ";
 					const std::string & clobberedpath = skip ? path : existing.path();

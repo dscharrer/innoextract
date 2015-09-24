@@ -79,8 +79,12 @@ Inno Setup installers can contain multiple files with the same name. This option
 
   "\fBerror\fP"      Exit when a collision is detected.
 .TP
-\fB\-\-default-language\fP
-Set a language as the default. Currently this only has an effect in combination with the \fB\-\-collisions\=rename\fP option.
+\fB\-\-default-language\fP \fILANG\fP
+Set a language as the default.
+
+With \fB\-\-collisions\=overwrite\fP (the default) this will change the choice of which file to keep to always prefer the given language. In effect, \fB\-\-default-language\fP behaves almost like \fB\-\-language\fP, except that files are extracted for all languages if they have different names.
+
+When using the \fB\-\-collisions\=rename\fP option, \fB\-\-default-language\fP chooses a language for which the files should keep the original name if possible.
 .TP
 \fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
 By default
