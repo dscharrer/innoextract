@@ -58,6 +58,7 @@ Build options:
 | `ZLIB_USE_STATIC_LIBS`   | `OFF`^4   | Statically link `libz`. (used via Boost)
 | `BZip2_USE_STATIC_LIBS`  | `OFF`^4   | Statically link `libbz2`. (used via Boost)
 | `iconv_USE_STATIC_LIBS`  | `OFF`^4   | Statically link `libiconv`.
+| `STRICT_USE`             | `OFF`     | Abort if there are missing optional dependencies
 1. The builtin charset conversion only supports Windows-1252 and UTF-16LE. This is normally enough for filenames, but custom message strings (which can be included in filenames) may use arbitrary encodings.
 2. Enabled automatically if `CMAKE_BUILD_TYPE` is set to `Debug`.
 3. Under Windows, the default is `ON`.

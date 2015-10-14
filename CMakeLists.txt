@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 2.8)
 
 # Define configuration options
 
+option(STRICT_USE "Abort if there are missing optional dependencies"  OFF)
 option(USE_LZMA "Build lzma decompression support" ON)
 set(WITH_CONV CACHE STRING "The library to use for charset conversions")
 option(ENABLE_BUILTIN_CONV "Build internal charset conversion routines" ON)
