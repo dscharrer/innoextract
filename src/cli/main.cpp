@@ -138,7 +138,7 @@ int main(int argc, char * argv[]) {
 	
 	po::options_description modifiers("Modifiers");
 	modifiers.add_options()
-		("collisions", po::value<std::string>(), "How to handle filename collisions")
+		("collisions", po::value<std::string>(), "How to handle duplicate files")
 		("default-language", po::value<std::string>(), "Default language for renaming")
 		("dump", "Dump contents without converting filenames")
 		("lowercase,L", "Convert extracted filenames to lower-case")
