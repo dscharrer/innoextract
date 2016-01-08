@@ -98,6 +98,7 @@ struct header {
 		CloseApplications,
 		RestartApplications,
 		AllowNetworkDrive,
+		ForceCloseApplications,
 		
 		// Obsolete flags
 		Uninstallable,
@@ -185,6 +186,13 @@ struct header {
 	Color image_back_color;
 	Color small_image_back_color;
 	
+	enum alpha_format {
+		AlphaIgnored,
+		AlphaDefined,
+		AlphaPremultiplied
+	};
+	alpha_format image_alpha_format;
+	
 	crypto::checksum password;
 	salt password_salt;
 	
@@ -259,6 +267,7 @@ struct header {
 
 NAMED_FLAGS(setup::header::flags)
 NAMED_FLAGS(setup::header::architecture_types)
+NAMED_ENUM(setup::header::alpha_format)
 NAMED_ENUM(setup::header::install_verbosity)
 NAMED_ENUM(setup::header::log_mode)
 NAMED_ENUM(setup::header::style)

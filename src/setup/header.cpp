@@ -34,6 +34,12 @@ namespace setup {
 
 namespace {
 
+STORED_ENUM_MAP(stored_alpha_format, header::AlphaIgnored,
+	header::AlphaIgnored,
+	header::AlphaDefined,
+	header::AlphaPremultiplied
+);
+
 STORED_ENUM_MAP(stored_install_verbosity, header::NormalInstallMode,
 	header::NormalInstallMode,
 	header::SilentInstallMode,
@@ -298,11 +304,21 @@ void header::load(std::istream & is, const version & version) {
 	} else {
 		back_color2 = 0;
 	}
-	image_back_color = util::load<boost::uint32_t>(is);
+	if(version < INNO_VERSION(5, 5, 7)) {
+		image_back_color = util::load<boost::uint32_t>(is);
+	} else {
+		image_back_color = 0;
+	}
 	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 4)) {
 		small_image_back_color = util::load<boost::uint32_t>(is);
 	} else {
 		small_image_back_color = 0;
+	}
+	
+	if(version >= INNO_VERSION(5, 5, 7)) {
+		image_alpha_format = stored_enum<stored_alpha_format>(is).get();
+	} else {
+		image_alpha_format = AlphaIgnored;
 	}
 	
 	if(version < INNO_VERSION(4, 2, 0)) {
@@ -558,6 +574,9 @@ void header::load(std::istream & is, const version & version) {
 	} else {
 		options |= AllowNetworkDrive;
 	}
+	if(version >= INNO_VERSION(5, 5, 7)) {
+		flagreader.add(ForceCloseApplications);
+	}
 	
 	options |= flagreader;
 	
@@ -652,6 +671,7 @@ NAMES(setup::header::flags, "Setup Option",
 	"close applications",
 	"restart applications",
 	"allow network drive",
+	"force close applications",
 	"uninstallable",
 	"disable dir page",
 	"disable program group page",
@@ -672,6 +692,12 @@ NAMES(setup::header::architecture_types, "Architecture",
 	"x86",
 	"amd64",
 	"IA64",
+)
+
+NAMES(setup::header::alpha_format, "Alpha Format",
+	"ignored",
+	"defined",
+	"premultiplied",
 )
 
 NAMES(setup::header::install_verbosity, "Install Mode",
