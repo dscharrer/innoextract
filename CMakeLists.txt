@@ -2,6 +2,11 @@ project(innoextract)
 
 cmake_minimum_required(VERSION 2.8)
 
+if(POLICY CMP0054)
+	# CMake 3.1+: Only interpret if() arguments as variables or keywords when unquoted.
+	cmake_policy(SET CMP0054 NEW)
+endif()
+
 
 # Define configuration options
 
