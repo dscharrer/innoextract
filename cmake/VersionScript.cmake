@@ -61,7 +61,7 @@ foreach(arg IN LISTS VERSION_SOURCES)
 			set(first_space -1)
 			set(last_space ${line_length})
 			foreach(i RANGE ${line_length})
-				if(${i} LESS ${line_length})
+				if(i LESS line_length)
 					string(SUBSTRING "${line}" ${i} 1 line_char)
 					if(line_char STREQUAL " ")
 						set(last_space ${i})
@@ -72,7 +72,7 @@ foreach(arg IN LISTS VERSION_SOURCES)
 				endif()
 			endforeach()
 			
-			if(${first_space} GREATER -1)
+			if(first_space GREATER -1)
 				
 				# Get everything before the first space
 				string(SUBSTRING "${line}" 0 ${first_space} line_name)
@@ -87,7 +87,7 @@ foreach(arg IN LISTS VERSION_SOURCES)
 				
 			endif()
 			
-			if("${line}" MATCHES " ([0-9]\\.[^ ]* \\+ )?[^ ]*$")
+			if(line MATCHES " ([0-9]\\.[^ ]* \\+ )?[^ ]*$")
 				string(REGEX REPLACE " (([0-9]\\.[^ ]* \\+ )?[^ ]*)$" ""
 				       ${var}_${${var}_COUNT}_NAME "${line}")
 				string(LENGTH ${${var}_${${var}_COUNT}_NAME} begin)
@@ -140,7 +140,7 @@ if(EXISTS "${GIT_DIR}")
 		
 		file(READ "${GIT_DIR}/HEAD" git_head)
 		
-		if("${git_head}" MATCHES "^[ \t\r\n]*ref\\:(.*)$")
+		if(git_head MATCHES "^[ \t\r\n]*ref\\:(.*)$")
 			
 			# Remove the first for characters from git_head to get git_ref.
 			# We can't use a length of -1 for string(SUBSTRING) as cmake < 2.8.5 doesn't support it.
@@ -165,7 +165,7 @@ if(EXISTS "${GIT_DIR}")
 	# Create variables for all prefixes of the git comit ID.
 	string(REGEX MATCH "[0-9A-Za-z]+" git_commit "${git_head}")
 	string(LENGTH "${git_commit}" git_commit_length)
-	if(NOT ${git_commit_length} LESS 40)
+	if(NOT git_commit_length LESS 40)
 		string(TOLOWER "${git_commit}" GIT_COMMIT)
 		foreach(i RANGE 20)
 			string(SUBSTRING "${GIT_COMMIT}" 0 ${i} GIT_COMMIT_PREFIX_${i})
