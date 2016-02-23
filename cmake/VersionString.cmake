@@ -74,7 +74,7 @@ function(version_file SRC DST VERSION_SOURCES GIT_DIR)
 	get_filename_component(abs_git_dir "${GIT_DIR}" ABSOLUTE)
 	
 	set(defines)
-	if(${ARGC} GREATER 4)
+	if(ARGC GREATER 4)
 		set(defines ${ARGV4})
 	endif()
 	
