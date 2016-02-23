@@ -178,7 +178,7 @@ endif()
 
 # Set compiler flags
 
-if(${Boost_VERSION} LESS 104800)
+if(Boost_VERSION LESS 104800)
 	# Older Boost versions don't work with C++11
 elseif(USE_CXX11)
 	enable_cxx11()
@@ -197,7 +197,7 @@ endif()
 
 # Older glibc versions won't provide some useful symbols by default - request them
 # This flag is currently also set by gcc when compiling C++, but not for plain C
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 	set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE=1")
 	add_definitions(-D_GNU_SOURCE=1)
 endif()
@@ -428,9 +428,9 @@ add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/d
 message("")
 message("Configuration:")
 set(BUILD_TYPE_SUFFIX "")
-if(DEBUG AND NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+if(DEBUG AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(BUILD_TYPE_SUFFIX "${BUILD_TYPE_SUFFIX} with debug output")
-elseif(NOT DEBUG AND NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+elseif(NOT DEBUG AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(BUILD_TYPE_SUFFIX "${BUILD_TYPE_SUFFIX} without debug output")
 endif()
 message(" - Build type: ${CMAKE_BUILD_TYPE}${BUILD_TYPE_SUFFIX}")
