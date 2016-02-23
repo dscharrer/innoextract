@@ -47,7 +47,7 @@ function(filter_list LIST_NAME)
 	set(all)
 	
 	# the item from the previous iteration
-	set(last_item)
+	set(last_item "")
 	
 	# current syntax state:
 	# 0 - start
@@ -66,7 +66,7 @@ function(filter_list LIST_NAME)
 				list(APPEND filtered ${last_item})
 			endif()
 			set(mode 0)
-			set(last_item)
+			set(last_item "")
 			
 		elseif(item STREQUAL TOKEN_IF)
 			
@@ -75,7 +75,7 @@ function(filter_list LIST_NAME)
 			endif()
 			
 			# Handle condition start
-			if("${last_item}" STREQUAL "")
+			if(last_item STREQUAL "")
 				message(FATAL_ERROR "bad filter_list syntax: IF without preceding item")
 			endif()
 			set(mode 1)
@@ -96,7 +96,7 @@ function(filter_list LIST_NAME)
 			else()
 				set(mode 3)
 			endif()
-			set(last_item)
+			set(last_item "")
 			
 		else()
 			
