@@ -47,19 +47,22 @@ set(VERSION_STRING_SCRIPT "${VERSION_STRING_DIR}/VersionScript.cmake")
 # The version file is regenerated whenever VERSION_FILE or the current commit changes.
 function(version_file SRC DST VERSION_SOURCES GIT_DIR)
 	
-	set(mode "variable")
+	set(MODE_VARIABLE 0)
+	set(MODE_FILE 1)
+	
+	set(mode ${MODE_VARIABLE})
 	
 	set(args)
 	set(dependencies "${VERSION_STRING_SCRIPT}")
 	
 	foreach(arg IN LISTS VERSION_SOURCES)
 		
-		if(mode STREQUAL "variable")
-			set(mode "file")
+		if(mode EQUAL MODE_VARIABLE)
+			set(mode ${MODE_FILE})
 		else()
 			get_filename_component(arg "${arg}" ABSOLUTE)
 			list(APPEND dependencies ${arg})
-			set(mode "variable")
+			set(mode ${MODE_VARIABLE})
 		endif()
 		
 		list(APPEND args ${arg})
