@@ -31,7 +31,8 @@ See the Website for [operating system-specific instructions](http://constexpr.or
 
 To compile innoextract, run:
 
-    $ mkdir -p build && cd build && cmake ..
+    $ mkdir -p build && cd build
+    $ cmake ..
     $ make
 
 To install the binaries system-wide, run as root:
