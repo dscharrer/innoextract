@@ -466,8 +466,13 @@ void process_file(const fs::path & file, const extract_options & o) {
 		throw std::runtime_error("Input file \"" + file.string() + "\" is a directory!");
 	}
 	
-	util::ifstream ifs(file, std::ios_base::in | std::ios_base::binary);
-	if(!ifs.is_open()) {
+	util::ifstream ifs;
+	try {
+		ifs.open(file, std::ios_base::in | std::ios_base::binary);
+		if(!ifs.is_open()) {
+			throw 0;
+		}
+	} catch(...) {
 		throw std::runtime_error("Could not open file \"" + file.string() + '"');
 	}
 	
