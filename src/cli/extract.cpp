@@ -120,8 +120,12 @@ struct file_output {
 	util::ofstream stream;
 	
 	explicit file_output(const fs::path & file) : name(file) {
-		stream.open(name, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-		if(!stream.is_open()) {
+		try {
+			stream.open(name, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+			if(!stream.is_open()) {
+				throw 0;
+			}
+		} catch(...) {
 			throw std::runtime_error("Coul not open output file \"" + name.string() + '"');
 		}
 	}
