@@ -25,6 +25,7 @@
 
 #include <stddef.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <clocale>
 #include <iostream>
@@ -73,9 +74,23 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 	//! Current console display attributes
 	WORD attributes;
 	
+	bool deferred_clear;
+	SHORT clear_line;
+	WORD clear_attributes;
+	
+	void clear_deferred(const CONSOLE_SCREEN_BUFFER_INFO & info, SHORT offset = 0) {
+		COORD pos = { offset, clear_line };
+		DWORD count = DWORD(info.dwSize.X - offset);
+		DWORD ignored;
+		FillConsoleOutputCharacterW(handle, L' ', count, pos, &ignored);
+		FillConsoleOutputAttribute(handle, clear_attributes, count, pos, &ignored);
+		deferred_clear = false;
+	}
+	
 	void erase_in_line(const char * codes, const char * end) {
 		
 		bool left = false, right = false;
+		bool deferred = false;
 		
 		do {
 			unsigned code = read_code(codes, end);
@@ -83,6 +98,7 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 				case 0:              right = true; break;
 				case 1: left = true;               break;
 				case 2: left = true, right = true; break;
+				case 3: deferred = true;           break;
 				default: {
 					#ifdef DEBUG
 					std::ostringstream oss;
@@ -98,6 +114,18 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 			return;
 		}
 		
+		if(deferred_clear && (!deferred
+		   || clear_line != info.dwCursorPosition.Y || clear_attributes != attributes)) {
+			clear_deferred(info);
+		}
+		
+		if(deferred) {
+			deferred_clear = true;
+			clear_line = info.dwCursorPosition.Y;
+			clear_attributes = attributes;
+			return;
+		}
+		
 		SHORT cbegin = left ? SHORT(0) : info.dwCursorPosition.X;
 		SHORT cend = right ? info.dwSize.X : info.dwCursorPosition.X;
 		
@@ -105,7 +133,7 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 		DWORD count = DWORD(cend - cbegin);
 		
 		DWORD ignored;
-		FillConsoleOutputCharacterW(handle, WCHAR(' '), count, pos, &ignored);
+		FillConsoleOutputCharacterW(handle, L' ', count, pos, &ignored);
 		FillConsoleOutputAttribute(handle, attributes, count, pos, &ignored);
 	}
 	
@@ -209,6 +237,95 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 		}
 	}
 	
+	void handle_deferred_clear(wchar_t * & begin, wchar_t * end) {
+		
+		CONSOLE_SCREEN_BUFFER_INFO info;
+		if(!GetConsoleScreenBufferInfo(handle, &info)) {
+			deferred_clear = false;
+			return;
+		}
+		
+		while(begin != end) {
+			
+			if(*begin == L'\r') {
+				// End deferred clear mode
+				deferred_clear = false;
+				break;
+			}
+			
+			wchar_t * cr = std::find(begin, end, L'\r');
+			wchar_t * ln = std::find(begin, cr, L'\n');
+			
+			// Insert an empty line before the "cleared" line
+			if(clear_line == info.dwCursorPosition.Y) {
+				
+				if(info.dwCursorPosition.Y == info.dwSize.Y - 1) {
+					// Cursor is at the end of the buffer
+					// Move buffer contents up one line except for the last line
+					SMALL_RECT source = { 0, 1, SHORT(info.dwSize.X), SHORT(info.dwSize.Y - 2) };
+					COORD dest = { 0, 0 };
+					CHAR_INFO fill;
+					fill.Char.UnicodeChar = L' ';
+					fill.Attributes = clear_attributes;
+					ScrollConsoleScreenBufferW(handle, &source, NULL, dest, &fill);
+					COORD cursor = { 0, SHORT(info.dwCursorPosition.Y - 1) };
+					SetConsoleCursorPosition(handle, cursor);
+				} else {
+					// Move cleared line down one line
+					SMALL_RECT source = { 0, SHORT(info.dwCursorPosition.Y),
+					                      SHORT(info.dwSize.X), SHORT(info.dwCursorPosition.Y + 1) };
+					SMALL_RECT clip = { 0, SHORT(info.dwCursorPosition.Y + 1),
+					                    SHORT(info.dwSize.X), SHORT(info.dwCursorPosition.Y + 2) };
+					COORD dest = { 0, SHORT(info.dwCursorPosition.Y + 1) };
+					CHAR_INFO fill;
+					fill.Char.UnicodeChar = L' ';
+					fill.Attributes = clear_attributes;
+					ScrollConsoleScreenBufferW(handle, &source, &clip, dest, &fill);
+					clear_line = SHORT(info.dwCursorPosition.Y + 1);
+					if(info.dwCursorPosition.Y == info.srWindow.Bottom) {
+						// Cursor is at the end of the window
+						// Scroll up before overwriting the cleared line
+						SMALL_RECT window = { 0, 1, 0, 1 };
+						SetConsoleWindowInfo(handle, FALSE, &window);
+					}
+					COORD pos = { 0, info.dwCursorPosition.Y };
+					DWORD count = DWORD(info.dwSize.X);
+					DWORD ignored;
+					FillConsoleOutputCharacterW(handle, L' ', count, pos, &ignored);
+					FillConsoleOutputAttribute(handle, clear_attributes, count, pos, &ignored);
+				}
+				
+				info.dwCursorPosition.X = 0;
+				
+			}
+			
+			// Write at most one line!
+			DWORD len = DWORD(std::min(ln + 1 - begin, cr - begin));
+			len = std::min(len, DWORD(info.dwSize.X - info.dwCursorPosition.X));
+			
+			DWORD count;
+			WriteConsoleW(handle, begin, len, &count, NULL);
+			begin += len;
+			
+			if(!GetConsoleScreenBufferInfo(handle, &info)) {
+				deferred_clear = false;
+				break;
+			}
+			
+			if(info.dwCursorPosition.Y > clear_line) {
+				// Line completely overwritten with text
+				deferred_clear = false;
+				break;
+			} else if(info.dwCursorPosition.Y == clear_line && info.dwCursorPosition.X > 0) {
+				// Line partially overwritten with text - clear the rest
+				clear_deferred(info, info.dwCursorPosition.X);
+				break;
+			}
+			
+		}
+		
+	}
+	
 	void handle_text(const char * s, size_t n) {
 		
 		const char * end = s + n;
@@ -226,8 +343,12 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 			std::codecvt_base::result res;
 			res = codecvt->in(codecvt_state, s, end, s, obegin, oend, onext);
 			
+			if(deferred_clear) {
+				handle_deferred_clear(obegin, onext);
+			}
+			
 			DWORD count;
-			WriteConsoleW(handle, &buffer.front(), DWORD(onext - obegin), &count, NULL);
+			WriteConsoleW(handle, obegin, DWORD(onext - obegin), &count, NULL);
 			
 			if(res != std::codecvt_base::partial) {
 				break;
@@ -250,9 +371,18 @@ public:
 		, initial_attributes(get_attributes())
 		, default_attributes(get_default_attributes())
 		, attributes(initial_attributes)
+		, deferred_clear(false)
+		, clear_line(0)
+		, clear_attributes(0)
 	{ }
 	
 	~windows_console_sink() {
+		if(deferred_clear) {
+			CONSOLE_SCREEN_BUFFER_INFO info;
+			if(GetConsoleScreenBufferInfo(handle, &info)) {
+				clear_deferred(info);
+			}
+		}
 		set_attributes(initial_attributes);
 	}
 	

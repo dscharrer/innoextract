@@ -857,7 +857,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 			// Print filename and size
 			if(o.list) {
 				
-				extract_progress.clear();
+				extract_progress.clear(DeferredClear);
 				
 				if(!o.silent) {
 					

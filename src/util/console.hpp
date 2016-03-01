@@ -90,6 +90,12 @@ void init(is_enabled color = automatic, is_enabled progress = automatic);
 
 } // namespace color
 
+enum ClearMode {
+	FullClear,
+	FastClear,
+	DeferredClear
+};
+
 //! A text-based progress bar for terminals.
 class progress {
 	
@@ -152,7 +158,7 @@ public:
 	 * \param reset_only Only reset the cursor if cleaning the line is expensive.
 	 *                   This should be used if the whole line will be written anyway.
 	 */
-	static void clear(bool reset_only = false);
+	static void clear(ClearMode mode = FullClear);
 	
 	//! Enable or disable the progress bar.
 	static void set_enabled(bool enable);
