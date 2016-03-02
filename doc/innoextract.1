@@ -79,7 +79,7 @@ Inno Setup installers can contain duplicate files with the same name. This optio
 Extract only one of the colliding files. The choice is done similar to how Inno Setup overwrites files during installation. This is the default.
 .TP
 "\fBrename\fP"
-Rename files except for the first by appending a suffix comprised of the file's language, the component it belongs to and/or a number to make the filename unique. The language suffix (if applicable) is also appended to the first file.
+Rename files that would be overwritten using the "\fBoverwrite\fP" option by appending a suffix comprised of the file's language, the component it belongs to and/or a number to make the filename unique. The language suffix (if applicable) is also appended to the \fIdefault\fP file that would have been extracted with the "\fBoverwrite\fP" option.
 .TP
 "\fBerror\fP"
 Exit when a collision is detected.

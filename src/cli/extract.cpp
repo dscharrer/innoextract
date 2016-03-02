@@ -707,8 +707,6 @@ void process_file(const fs::path & file, const extract_options & o) {
 			
 			if(o.collisions == ErrorOnCollisions) {
 				throw std::runtime_error("Collision: " + path);
-			} else if(o.collisions == RenameCollisions) {
-				collisions[internal_path].push_back(processed_file(&file, path));
 			} else {
 				
 				const setup::data_entry & newdata = info.data_entries[file.location];
@@ -725,7 +723,11 @@ void process_file(const fs::path & file, const extract_options & o) {
 					}
 				}
 				
-				if(!o.silent) {
+				if(o.collisions == RenameCollisions) {
+					const setup::file_entry & clobberedfile = skip ? file : existing.entry();
+					const std::string & clobberedpath = skip ? path : existing.path();
+					collisions[internal_path].push_back(processed_file(&clobberedfile, clobberedpath));
+				} else if(!o.silent) {
 					std::cout << " - ";
 					const std::string & clobberedpath = skip ? path : existing.path();
 					std::cout << '"' << color::dim_yellow << clobberedpath << color::reset << '"';
