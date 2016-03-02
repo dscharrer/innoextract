@@ -392,37 +392,50 @@ static bool insert_dirs(DirectoriesMap & processed_directories, const path_filte
 	return false;
 }
 
-static void rename_collision(const extract_options & o, FilesMap & processed_files,
+static bool rename_collision(const extract_options & o, FilesMap & processed_files,
                              const std::string & path, const processed_file & other,
-                             bool common_component, bool common_language) {
+                             bool common_component, bool common_language, bool first) {
 	
 	const setup::file_entry & file = other.entry();
 	
+	bool require_number_suffix = !first;
 	std::ostringstream oss;
 	
 	if(!common_component && !file.components.empty()) {
 		if(setup::is_simple_expression(file.components)) {
+			require_number_suffix = false;
 			oss << '#' << file.components;
 		}
 	}
-	if(!common_language && !file.languages.empty() && file.languages != o.default_language) {
+	if(!common_language && !file.languages.empty()) {
 		if(setup::is_simple_expression(file.languages)) {
-			oss << '@' << file.languages;
+			require_number_suffix = false;
+			if(file.languages != o.default_language) {
+				oss << '@' << file.languages;
+			}
 		}
 	}
 	
 	size_t i = 0;
 	std::string suffix = oss.str();
-	if(suffix.empty() && file.languages != o.default_language) {
+	if(require_number_suffix) {
 		oss << '$' << i++;
 	}
-	while(processed_files.find(path + oss.str()) != processed_files.end()) {
+	for(;;) {
+		std::pair<FilesMap::iterator, bool> insertion = processed_files.insert(std::make_pair(
+			path + oss.str(), processed_file(&file, other.path() + oss.str())
+		));
+		if(insertion.second) {
+			// Found an available name and inserted
+			return true;
+		}
+		if(&insertion.first->second.entry() == &file) {
+			// File already has the desired name, abort
+			return false;
+		}
 		oss.str(suffix);
 		oss << '$' << i++;
 	}
-	processed_files.insert(std::make_pair(
-		path + oss.str(), processed_file(&file, other.path() + oss.str())
-	));
 	
 }
 
@@ -443,13 +456,13 @@ static void rename_collisions(const extract_options & o, FilesMap & processed_fi
 			common_language = common_language && other.entry().languages == file.languages;
 		}
 		
-		if(common_component && !common_language && file.languages != o.default_language) {
-			rename_collision(o, processed_files, path, base, common_component, common_language);
+		if(rename_collision(o, processed_files, path, base, true, common_language, true)) {
 			processed_files.erase(path);
 		}
 		
 		BOOST_FOREACH(const processed_file & other, collision.second) {
-			rename_collision(o, processed_files, path, other, common_component, common_language);
+			rename_collision(o, processed_files, path, other,
+			                 common_component, common_language, false);
 		}
 		
 	}
