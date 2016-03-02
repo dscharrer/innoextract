@@ -41,6 +41,7 @@ struct format_error : public std::runtime_error {
 enum CollisionAction {
 	OverwriteCollisions,
 	RenameCollisions,
+	RenameAllCollisions,
 	ErrorOnCollisions
 };
 

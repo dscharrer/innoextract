@@ -398,7 +398,7 @@ static bool rename_collision(const extract_options & o, FilesMap & processed_fil
 	
 	const setup::file_entry & file = other.entry();
 	
-	bool require_number_suffix = !first;
+	bool require_number_suffix = !first || (o.collisions == RenameAllCollisions);
 	std::ostringstream oss;
 	
 	if(!common_component && !file.components.empty()) {
@@ -456,7 +456,9 @@ static void rename_collisions(const extract_options & o, FilesMap & processed_fi
 			common_language = common_language && other.entry().languages == file.languages;
 		}
 		
-		if(rename_collision(o, processed_files, path, base, true, common_language, true)) {
+		bool ignore_component = common_component || o.collisions != RenameAllCollisions;
+		if(rename_collision(o, processed_files, path, base,
+		                    ignore_component, common_language, true)) {
 			processed_files.erase(path);
 		}
 		
@@ -707,6 +709,8 @@ void process_file(const fs::path & file, const extract_options & o) {
 			
 			if(o.collisions == ErrorOnCollisions) {
 				throw std::runtime_error("Collision: " + path);
+			} else if(o.collisions == RenameAllCollisions) {
+				collisions[internal_path].push_back(processed_file(&file, path));
 			} else {
 				
 				const setup::data_entry & newdata = info.data_entries[file.location];
@@ -752,7 +756,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 		
 	}
 	
-	if(o.collisions == RenameCollisions) {
+	if(o.collisions == RenameCollisions || o.collisions == RenameAllCollisions) {
 		rename_collisions(o, processed_files, collisions);
 		collisions.clear();
 	}

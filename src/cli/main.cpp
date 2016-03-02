@@ -298,6 +298,8 @@ int main(int argc, char * argv[]) {
 				o.collisions = OverwriteCollisions;
 			} else if(collisions == "rename") {
 				o.collisions = RenameCollisions;
+			} else if(collisions == "rename-all") {
+				o.collisions = RenameAllCollisions;
 			} else if(collisions == "error") {
 				o.collisions = ErrorOnCollisions;
 			} else {
