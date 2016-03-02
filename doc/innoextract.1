@@ -1,6 +1,6 @@
 .\" Manpage for innoextract.
 .\" Contact daniel@constexpr.org to correct errors or typos.
-.TH innoextract 1 "2015-09-22" "1.5"
+.TH innoextract 1 "2016-03-02" "1.5"
 .SH NAME
 innoextract - tool to extract installers created by Inno Setup
 .SH SYNOPSIS
@@ -73,11 +73,26 @@ Treat all arguments after this one as files, even if they begin with a dash.
 \fB\-\-collisions\fP \fIACTION\fP
 Inno Setup installers can contain duplicate files with the same name. This option tells innoextract what to do when such a collisions is encountered. Valid actions are:
 
-  "\fBoverwrite\fP"  Extract only one of the colliding files. The choice is done similar to how Inno Setup overwrites files during installation. This is the default.
+.RS
+.TP
+"\fBoverwrite\fP"
+Extract only one of the colliding files. The choice is done similar to how Inno Setup overwrites files during installation. This is the default.
+.TP
+"\fBrename\fP"
+Rename files except for the first by appending a suffix comprised of the file's language, the component it belongs to and/or a number to make the filename unique. The language suffix (if applicable) is also appended to the first file.
+.TP
+"\fBerror\fP"
+Exit when a collision is detected.
+.RE
+.IP
+.B Rename rules:
 
-  "\fBrename\fP"     Rename files in the collision set by appending "#\fIcomponent\fP", "@\fIlanguage\fP" and/or "$\fIid\fP" where \fIcomponent\fP and \fIlanguage\fP are the file's \fIunique\fP component and language and \fIid\fP is the lowest number to make the filename unique. If the \fB\-\-default\-language\fP is specified, the "@\fIlanguage\fP" component is omitted if it matches the default language.
+1. If the \fBcomponent\fP is not the same for all files in the collision set (all files with the same filename), "\fB#\fP" (without quotes) followed by the component id is appended to all files that are specific to a single component.
 
-  "\fBerror\fP"      Exit when a collision is detected.
+2. If the \fBlanguage\fP is not the same for all files in the collision set, "\fB@\fP" (without quotes) followed by the language id is appended to all files that are specific to a single component unless that language matches the default language specified by the \fB--default-language\fP. While the suffix is omitted for the default language, no numbered suffix is added in it's place unless needed to make the filename unique.
+
+3. If no suffix was added by the previous steps, or if the filename is not yet unique, "\fB$\fP" (without quotes) followed by the lowest integer (starting at 0) to make the filename unique is appended.
+
 .TP
 \fB\-\-default\-language\fP \fILANG\fP
 Set a language as the default.
