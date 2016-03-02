@@ -110,8 +110,8 @@ bool inno_lzma1_decompressor_impl::filter(const char * & begin_in, const char * 
 		if(properties > (9 * 5 * 5)) {
 			throw lzma_error("inno lzma1 property error", LZMA_FORMAT_ERROR);
 		}
-		options.pb = properties / (9 * 5);
-		options.lp = (properties % (9 * 5)) / 9;
+		options.pb = boost::uint32_t(properties / (9 * 5));
+		options.lp = boost::uint32_t((properties % (9 * 5)) / 9);
 		options.lc = properties % 9;
 		
 		options.dict_size = util::little_endian::load<boost::uint32_t>(header + 1);
