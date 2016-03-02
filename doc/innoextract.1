@@ -207,9 +207,15 @@ Valid values are those accepted by \fBtzset\fP in the \fBTZ\fP environment varia
 
 Besides timezones, two special values are accepted:
 
-  "\fBnone\fP"    Don't preserve file times for extracted files, both for UTC and 'local' timestamps. The file times wil be left the way the OS set them when creating the output files.
-
-  "\fBlocal\fP"  Use the system timezone for 'local' timestamps. This is the normal Inno Setup behavior, and can be used together with the \fBTZ\fP environment variable.
+.RS
+.HP
+"\fBnone\fP"
+Don't preserve file times for extracted files, both for UTC and 'local' timestamps. The file times wil be left the way the OS set them when creating the output files.
+.HP
+"\fBlocal\fP"
+Use the system timezone for 'local' timestamps. This is the normal Inno Setup behavior, and can be used together with the \fBTZ\fP environment variable.
+.RE
+.IP
 
 The default value for this option is \fBUTC\fP, causing innoextract to not adjust 'local' file times. File times marked as UTC in the Inno Setup file will never be adjusted no matter what \fB\-\-timestamps\fP is set to.
 .TP
