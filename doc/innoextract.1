@@ -112,6 +112,8 @@ will try to detect if the terminal supports shell escape codes and enable or dis
 .TP
 \fB\-\-dump\fP
 Don't convert Windows paths to UNIX paths and don't substitute variables in paths.
+
+When combining \fB\-\-dump\fP with \fB\-\-extract\fP innoextract will \fInot\fP ensure that the paths don't point outside the destination directory. Use this option with caution when handling untrusted files.
 .TP
 \fB\-m\fP, \fB\-\-exclude\-temp\fP
 Don't extract files that would have been deleted at the end of the install process. Such files are marked with [temp] in the file listing.
