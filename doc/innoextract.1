@@ -111,7 +111,7 @@ By default
 will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Specifically, colors will be enabled if both \fBstdout\fP and \fBstderr\fP point to a TTY and the \fBTERM\fP environment variable is not set to "\fBdumb\fP". Pass \fB1\fP or \fBtrue\fP to \fB\-\-color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
 .TP
 \fB\-\-dump\fP
-Don't convert Windows paths to UNIX paths and don't substitute variables in paths.
+Don't convert Windows paths to UNIX paths and don't substitute constants in paths.
 
 When combining \fB\-\-dump\fP with \fB\-\-extract\fP innoextract will \fInot\fP ensure that the paths don't point outside the destination directory. Use this option with caution when handling untrusted files.
 .TP
@@ -232,6 +232,10 @@ If combined with the \fB\-\-silent\fP option, only the version \fInumber\fP is p
 .TP
 \fB\-\-no\-warn\-unused\fP
 By default, innoextract will print a warning if it encounters \fI.bin\fP files that look like they could be part of the setup but are not used. This option disables that warning.
+.SH PATH CONSTANTS
+Paths in Inno Setup installers can contain constants (variable or code references) that are expanded at install time. innoextract expands all such constants to their name  and replaces unsafe characters with \fB$\fP. For exmaple \fB{app}\fP is expanded to \fBapp\fP while \fB{code:Example}\fP is expanded to \fBcode$Example\fP.
+
+There is currently no way to configure this expansion except for disabling it with the \fB\-\-dump\fP option.
 .SH EXIT VALUES
 .PP
 .IP \fB0\fP
@@ -245,7 +249,7 @@ There is no support for extracting individual components and limited support for
 
 Included scripts and checks are not executed.
 
-The mapping from Inno Setup variables like the application directory to subdirectories is hard-coded.
+The mapping from Inno Setup constants like the application directory to subdirectories is hard-coded.
 
 Names for data slice/disk files in multi-file installers must follow the standard naming scheme.
 
