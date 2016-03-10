@@ -91,9 +91,10 @@ void init(is_enabled color = automatic, is_enabled progress = automatic);
 } // namespace color
 
 enum ClearMode {
-	FullClear,
-	FastClear,
-	DeferredClear
+	FullClear,    //!< Perform a full clear.
+	FastClear,    //!< Perform a full clear if it is cheap, otherwise only reset the cursor.
+	DeferredClear //!< Perform a full clear if it is cheap, otherwise leave the line as-is,
+	              //!< but insert new writes before it until the next full/fast clear.
 };
 
 //! A text-based progress bar for terminals.
@@ -155,8 +156,7 @@ public:
 	/*!
 	 * Clear any progress bar to make way for other output.
 	 *
-	 * \param reset_only Only reset the cursor if cleaning the line is expensive.
-	 *                   This should be used if the whole line will be written anyway.
+	 * \param mode The clear mode to perform.
 	 */
 	static void clear(ClearMode mode = FullClear);
 	
