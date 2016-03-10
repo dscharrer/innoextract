@@ -44,7 +44,7 @@ static const char path_sep = '/';
  */
 class filename_map : public std::map<std::string, std::string> {
 	
-	const std::string & lookup(const std::string & key) const;
+	std::string lookup(const std::string & key) const;
 	
 	bool lowercase;
 	bool expand;

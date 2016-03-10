@@ -6,6 +6,7 @@ innoextract 1.6 (TBD)
  - Fixed @lang suffix sometimes missing for the first file with the --collisions=rename option
  - Fixed build error with CMake 3.5
  - Now compiles in C++14 mode if supported
+ - Unsafe characters in special constant strings (ie ':' in {code:…}) are now replaced with '$'
  - Windows: Fixed error message if the source file could not be opened
  - Windows: Fixed progress bar flickering while printing extracted filenames
  - Windows binaries: Fixed crash on platforms without AVX support
