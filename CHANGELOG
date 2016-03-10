@@ -4,7 +4,7 @@ innoextract 1.6 (TBD)
  - Added a --collisions=rename-all option
  - Changed --collisions=rename to omit the suffix for the file that would have been extracted with --collisions=overwrite instead of the first encountered file
  - Fixed @lang suffix sometimes missing for the first file with the --collisions=rename option
- - Fixed build error with CMake 3.5 release candidates
+ - Fixed build error with CMake 3.5
  - Now compiles in C++14 mode if supported
  - Windows: Fixed error message if the source file could not be opened
  - Windows: Fixed progress bar flickering while printing extracted filenames
