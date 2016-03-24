@@ -1,5 +1,5 @@
 
-innoextract 1.6 (TBD)
+innoextract 1.6 (2016-03-24)
  - Added support for Inno Setup 5.5.7 (and 5.5.8) installers
  - Added a --collisions=rename-all option
  - Changed --collisions=rename to omit the suffix for the file that would have been extracted with --collisions=overwrite instead of the first encountered file
