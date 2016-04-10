@@ -54,6 +54,8 @@ struct data_entry {
 		ChunkEncrypted,
 		ChunkCompressed,
 		SolidBreak,
+		Sign,
+		SignOnce,
 		
 		// obsolete:
 		BZipped

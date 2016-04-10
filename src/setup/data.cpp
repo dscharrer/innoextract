@@ -144,6 +144,11 @@ void data_entry::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(5, 1, 13)) {
 		flagreader.add(SolidBreak);
 	}
+	if(version >= INNO_VERSION(5, 5, 7)) {
+		// Actually added in Inno Setup 5.5.9 but the data version was not bumped
+		flagreader.add(Sign);
+		flagreader.add(SignOnce);
+	}
 	
 	options |= flagreader;
 	
@@ -184,5 +189,7 @@ NAMES(setup::data_entry::flags, "File Location Option",
 	"chunk encrypted",
 	"chunk compressed",
 	"solid break",
+	"sign",
+	"sign once",
 	"bzipped",
 )
