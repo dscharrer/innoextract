@@ -34,8 +34,12 @@ namespace setup {
 //! Separator to use for output paths.
 #if defined(_WIN32)
 static const char path_sep = '\\';
+static const std::string regex_path_sep = "\\\\";
+static const std::string regex_not_path_sep = "[^\\]";
 #else
 static const char path_sep = '/';
+static const std::string regex_path_sep = "/";
+static const std::string regex_not_path_sep = "[^/]";
 #endif
 
 /*!

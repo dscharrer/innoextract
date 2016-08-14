@@ -35,6 +35,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/range/size.hpp>
+#include <boost/regex.hpp>
 
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 104800
@@ -168,19 +169,13 @@ typedef processed_item<setup::directory_entry> processed_directory;
 
 class path_filter {
 	
-	typedef std::pair<bool, std::string> Filter;
-	std::vector<Filter> includes;
+	std::vector<boost::regex> includes;
 	
 public:
 	
 	explicit path_filter(const extract_options & o) {
 		BOOST_FOREACH(const std::string & include, o.include) {
-			if(!include.empty() && include[0] == setup::path_sep) {
-				includes.push_back(Filter(true, boost::to_lower_copy(include) + setup::path_sep));
-			} else {
-				includes.push_back(Filter(false, setup::path_sep + boost::to_lower_copy(include)
-				                                 + setup::path_sep));
-			}
+			includes.push_back(translate_glob(include));
 		}
 	}
 	
@@ -190,22 +185,52 @@ public:
 			return true;
 		}
 		
-		BOOST_FOREACH(const Filter & i, includes) {
-			if(i.first) {
-				if(!i.second.compare(1, i.second.size() - 1,
-				                     path + setup::path_sep, 0, i.second.size() - 1)) {
-					return true;
-				}
-			} else {
-				if((setup::path_sep + path + setup::path_sep).find(i.second) != std::string::npos) {
-					return true;
-				}
+		BOOST_FOREACH(const boost::regex & e, includes) {
+			if(boost::regex_search(setup::path_sep + path + setup::path_sep, e)) {
+				return true;
 			}
 		}
 		
 		return false;
 	}
-	
+
+private:
+
+	static boost::regex translate_glob(const std::string & glob) {
+
+		std::string e = !glob.empty() && glob[0] == setup::path_sep
+		              ? "^" : setup::regex_path_sep;
+
+		char prev = '\0';
+		BOOST_FOREACH(char c, glob) {
+			e += translate_wildcards(c, prev);
+			prev = c;
+		}
+
+		e += setup::regex_path_sep;
+
+		return boost::regex(e, boost::regex::basic | boost::regex::icase);
+	}
+
+	static std::string translate_wildcards(char c, char prev) {
+
+		if(prev != '\\') {
+			if(c == '*') {
+				return setup::regex_not_path_sep + "*";
+			}
+
+			if(c == '?') {
+				return setup::regex_not_path_sep;
+			}
+
+			if(std::string("^.[$\\").find(c) != std::string::npos) {
+				return std::string("\\") + c;
+			}
+		}
+
+		return std::string() + c;
+	}
+
 };
 
 static void print_filter_info(const setup::item & item, bool temp) {
