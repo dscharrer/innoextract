@@ -4,7 +4,7 @@
 # that replicate the folder hierarchy on disk
 function(create_source_groups source_files_variable)
 	foreach(source_file ${${source_files_variable}})
-		string( REGEX REPLACE ${CMAKE_CURRENT_SOURCE_DIR} "" relative_directory "${source_file}")
+		string( REPLACE ${CMAKE_CURRENT_SOURCE_DIR} "" relative_directory "${source_file}")
 		string( REGEX REPLACE "[\\\\/][^\\\\/]*$" "" relative_directory "${relative_directory}")
 		string( REGEX REPLACE "^[\\\\/]" "" relative_directory "${relative_directory}")
 		if( WIN32 )
