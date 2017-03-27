@@ -381,10 +381,16 @@ static bool insert_dirs(DirectoriesMap & processed_directories, const path_filte
 	
 	size_t oldlength = dir.length();
 	if(insert_dirs(processed_directories, includes, internal_dir, dir, implied)) {
+		// Existing dir case differs, fix path
 		if(dir.length() == oldlength) {
 			path.replace(0, dir.length(), dir);
 		} else {
 			path = dir + path.substr(oldlength);
+		}
+		// Also fix previously inserted directory
+		DirectoriesMap::iterator inserted = processed_directories.find(internal_dir);
+		if(inserted != processed_directories.end()) {
+			inserted->second.set_path(dir);
 		}
 		return true;
 	}
