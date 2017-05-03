@@ -405,7 +405,7 @@ include_directories(src ${CMAKE_CURRENT_BINARY_DIR})
 
 configure_file("src/configure.hpp.in" "configure.hpp")
 
-set(VERSION_FILE "${CMAKE_BINARY_DIR}/release.cpp")
+set(VERSION_FILE "${PROJECT_BINARY_DIR}/release.cpp")
 set(VERSION_SOURCES VERSION "VERSION" LICENSE "LICENSE")
 version_file("src/release.cpp.in" "${VERSION_FILE}" "${VERSION_SOURCES}" ".git")
 list(APPEND INNOEXTRACT_SOURCES ${VERSION_FILE})
@@ -425,7 +425,7 @@ install(FILES doc/innoextract.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONA
 
 add_style_check_target(style "${ALL_INNOEXTRACT_SOURCES}" innoextract)
 
-add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/doc")
+add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${PROJECT_BINARY_DIR}/doc")
 
 
 # Print a configuration summary

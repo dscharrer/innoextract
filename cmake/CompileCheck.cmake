@@ -74,7 +74,7 @@ function(check_compile RESULT FILE FLAG TYPE)
 	
 	# Check if we can compile and link a simple file with the new flags
 	try_compile(
-		check_compiler_flag ${CMAKE_BINARY_DIR} ${FILE}
+		check_compiler_flag ${PROJECT_BINARY_DIR} ${FILE}
 		CMAKE_FLAGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
 		            "-DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}"
 		            "-DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}"
@@ -178,7 +178,7 @@ function(try_link_library LIBRARY_NAME LIBRARY_FILE ERROR_VAR)
 		list(APPEND LIBRARY_FILE "${CMAKE_THREAD_LIBS_INIT}")
 	endif()
 	try_compile(
-		CHECK_${LIBRARY_NAME}_LINK "${CMAKE_BINARY_DIR}" "${link_test_file}"
+		CHECK_${LIBRARY_NAME}_LINK "${PROJECT_BINARY_DIR}" "${link_test_file}"
 		CMAKE_FLAGS "-DLINK_LIBRARIES=${LIBRARY_FILE}"
 		            "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
 		            "-DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}"

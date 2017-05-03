@@ -42,7 +42,7 @@ function(add_doxygen_target TARGET_NAME DOXYFILE_IN VERSION_FILE GIT_DIR OUT_DIR
 		return()
 	endif()
 	
-	set(doxyfile "${CMAKE_BINARY_DIR}/Doxyfile.${TARGET_NAME}")
+	set(doxyfile "${PROJECT_BINARY_DIR}/Doxyfile.${TARGET_NAME}")
 	set(defines "-DDOXYGEN_OUTPUT_DIR=${OUT_DIR}")
 	
 	version_file("${DOXYFILE_IN}" "${doxyfile}" "${VERSION_FILE}" "${GIT_DIR}" "${defines}")
