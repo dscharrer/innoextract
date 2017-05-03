@@ -1,5 +1,5 @@
 
-innoextract 1.7	(TDB)
+innoextract 1.7 (TDB)
  - Fix building in paths that contain regex expressions
  - Fixed wrong case in parent directory when creating subdirectories
 
