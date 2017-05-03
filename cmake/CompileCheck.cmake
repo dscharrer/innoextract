@@ -195,6 +195,8 @@ endfunction(try_link_library)
 
 ##############################################################################
 # Check that a a library actually works for the current configuration
+# This is neede because CMake prefers /usr/lib over /usr/lib32 for -m32 builds
+# See https://public.kitware.com/Bug/view.php?id=11260
 function(check_link_library LIBRARY_NAME LIBRARY_VARIABLE)
 	
 	if(MSVC)
