@@ -248,6 +248,10 @@ if(NOT WIN32)
 		check_symbol_exists(waitpid "sys/wait.h" INNOEXTRACT_HAVE_WAITPID)
 	endif()
 	
+endif()
+
+if(NOT MSVC)
+	
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "PathScale")
 		# EKOPath recognizes these but then fails to link
 	else()
