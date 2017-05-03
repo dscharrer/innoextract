@@ -51,7 +51,7 @@ function(add_doxygen_target TARGET_NAME DOXYFILE_IN VERSION_FILE GIT_DIR OUT_DIR
 		COMMAND "${CMAKE_COMMAND}" -E make_directory "${OUT_DIR}"
 		COMMAND ${DOXYGEN_EXECUTABLE} "${doxyfile}"
 		DEPENDS "${doxyfile}"
-		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+		WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
 		COMMENT "Building doxygen documentation."
 		VERBATIM
 		SOURCES "${DOXYFILE_IN}"

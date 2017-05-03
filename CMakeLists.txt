@@ -61,7 +61,7 @@ endif()
 
 include(CheckSymbolExists)
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake") # For custom cmake modules
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake") # For custom cmake modules
 include(BuildType)
 include(CompileCheck)
 include(CreateSourceGroups)
