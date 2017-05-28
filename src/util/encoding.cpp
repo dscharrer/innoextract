@@ -172,18 +172,18 @@ static void utf8_write(std::string & to, unicode_char chr) {
 	// Extract bytes to write
 	boost::uint8_t bytes[4];
 	switch(length) {
-		case 4: bytes[3] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6;
-		case 3: bytes[2] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6;
-		case 2: bytes[1] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6;
+		case 4: bytes[3] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6; /* fall-through */
+		case 3: bytes[2] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6; /* fall-through */
+		case 2: bytes[1] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6; /* fall-through */
 		case 1: bytes[0] = static_cast<boost::uint8_t>(chr | first_bytes[length]);
 	}
 	
 	// Add them to the output
 	const boost::uint8_t * cur_byte = bytes;
 	switch(length) {
-		case 4: to.push_back(char(*cur_byte++));
-		case 3: to.push_back(char(*cur_byte++));
-		case 2: to.push_back(char(*cur_byte++));
+		case 4: to.push_back(char(*cur_byte++)); /* fall-through */
+		case 3: to.push_back(char(*cur_byte++)); /* fall-through */
+		case 2: to.push_back(char(*cur_byte++)); /* fall-through */
 		case 1: to.push_back(char(*cur_byte++));
 	}
 	
