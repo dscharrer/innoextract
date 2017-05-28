@@ -57,7 +57,7 @@ innoextract 1.4-windows-r1 (2013-05-14)
  - Fixed original console text color not being restored under Windows
 
 innoextract 1.4 (2013-03-11)
- - Fixed build on non-Linux platforms with a separate libiconv (Windows™, Mac OS X)
+ - Fixed build on non-Linux platforms with a separate libiconv (Windows™, macOS)
  - Fixed build on systems with non-standard iconv function prototypes (FreeBSD)
  - Fixed MSVC build
  - Fixed build with older glibc versions
