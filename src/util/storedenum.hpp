@@ -55,12 +55,12 @@ const size_t MapName::count = (sizeof(MapName::values)/sizeof(*(MapName::values)
 #define STORED_ENUM_MAP(MapName, Default, /* elements */ ...) \
 	STORED_MAP_HELPER(MapName, Default, \
 	static const enum_type default_value;, \
-	## __VA_ARGS__); \
+	__VA_ARGS__); \
 const MapName::enum_type MapName::default_value = Default
 
 //! Declare a mapping from bits to flag enum elements to be used for \ref stored_flags
 #define STORED_FLAGS_MAP(MapName, Flag0, /* additional flags */ ...) \
-	STORED_MAP_HELPER(MapName, Flag0, , Flag0, ## __VA_ARGS__)
+	STORED_MAP_HELPER(MapName, Flag0, , Flag0, __VA_ARGS__)
 
 template <class Mapping>
 struct stored_enum {
