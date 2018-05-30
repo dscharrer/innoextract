@@ -65,6 +65,6 @@ inline const std::string as_string(const boost::filesystem::path & path) {
 	return path.string();
 }
 
-} // namespace utl
+} // namespace util
 
 #endif // INNOEXTRACT_UTIL_BOOSTFS_COMPAT_HPP
