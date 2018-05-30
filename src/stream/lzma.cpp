@@ -35,10 +35,6 @@ static lzma_stream * init_raw_lzma_stream(lzma_vli filter, lzma_options_lzma & o
 	
 	options.preset_dict = NULL;
 	
-	if(options.dict_size > (boost::uint32_t(1) << 28)) {
-		throw lzma_error("inno lzma dict size too large", LZMA_FORMAT_ERROR);
-	}
-	
 	lzma_stream * strm = new lzma_stream;
 	lzma_stream tmp = LZMA_STREAM_INIT;
 	*strm = tmp;
