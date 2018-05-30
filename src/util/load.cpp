@@ -44,7 +44,7 @@ void binary_string::load(std::istream & is, std::string & target) {
 	}
 }
 
-void binary_string::skip(std::istream&  is) {
+void binary_string::skip(std::istream & is) {
 	
 	boost::uint32_t length = util::load<boost::uint32_t>(is);
 	if(is.fail()) {
