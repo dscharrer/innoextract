@@ -55,6 +55,7 @@ struct type_entry;
  */
 struct info {
 	
+	// Explicit constructor/destructor required to allow forward-declaring entry types
 	info();
 	~info();
 	
