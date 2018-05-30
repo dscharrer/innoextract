@@ -105,7 +105,7 @@ std::ostream & operator<<(std::ostream & os, const if_not<T> & s) {
 	}
 }
 
-}
+} // namespace detail
 
 
 template <class T>
@@ -143,7 +143,7 @@ std::ostream & operator<<(std::ostream & os, const print_hex<T> & s) {
 	return os;
 }
 
-}
+} // namespace detail
 
 template <class T>
 detail::print_hex<T> print_hex(T value) {
@@ -203,7 +203,7 @@ std::ostream & operator<<(std::ostream & os, const print_bytes<T> & s) {
 	return os << ' ' << byte_size_units[i];
 }
 
-}
+} // namespace detail
 
 template <class T>
 detail::print_bytes<T> print_bytes(T value, int precision = 3) {
