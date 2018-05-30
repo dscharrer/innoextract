@@ -21,12 +21,12 @@
 #include "cli/extract.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <map>
 #include <sstream>
 #include <vector>
-#include <cmath>
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
