@@ -69,9 +69,8 @@ namespace fs = boost::filesystem;
 
 namespace {
 
-static size_t probe_bin_files(const extract_options & o, const setup::info & info,
-                              const fs::path & dir, const std::string & basename,
-                              size_t format = 0, size_t start = 0) {
+size_t probe_bin_files(const extract_options & o, const setup::info & info, const fs::path & dir,
+                       const std::string & basename, size_t format = 0, size_t start = 0) {
 	
 	size_t count = 0;
 	
@@ -208,7 +207,7 @@ public:
 	
 };
 
-static void print_filter_info(const setup::item & item, bool temp) {
+void print_filter_info(const setup::item & item, bool temp) {
 	
 	bool first = true;
 	
@@ -230,17 +229,17 @@ static void print_filter_info(const setup::item & item, bool temp) {
 	}
 }
 
-static void print_filter_info(const setup::file_entry & file) {
+void print_filter_info(const setup::file_entry & file) {
 	bool is_temp = !!(file.options & setup::file_entry::DeleteAfterInstall);
 	print_filter_info(file, is_temp);
 }
 
-static void print_filter_info(const setup::directory_entry & dir) {
+void print_filter_info(const setup::directory_entry & dir) {
 	bool is_temp = !!(dir.options & setup::directory_entry::DeleteAfterInstall);
 	print_filter_info(dir, is_temp);
 }
 
-static void print_size_info(const stream::file & file) {
+void print_size_info(const stream::file & file) {
 	
 	if(logger::debug) {
 		std::cout << " @ " << print_hex(file.offset);
@@ -249,14 +248,12 @@ static void print_size_info(const stream::file & file) {
 	std::cout << " (" << color::dim_cyan << print_bytes(file.size) << color::reset << ")";
 }
 
-static bool prompt_overwrite() {
+bool prompt_overwrite() {
 	return true; // TODO the user always overwrites
 }
 
-static const char * handle_collision(const setup::file_entry & oldfile,
-                                     const setup::data_entry & olddata,
-                                     const setup::file_entry & newfile,
-                                     const setup::data_entry & newdata) {
+const char * handle_collision(const setup::file_entry & oldfile, const setup::data_entry & olddata,
+                              const setup::file_entry & newfile, const setup::data_entry & newdata) {
 	
 	bool allow_timestamp = true;
 	
@@ -332,7 +329,7 @@ typedef std::map<std::string, processed_directory> DirectoriesMap;
 #endif
 typedef boost::unordered_map<std::string, std::vector<processed_file> > CollisionMap;
 
-static std::string parent_dir(const std::string & path) {
+std::string parent_dir(const std::string & path) {
 	
 	size_t pos = path.find_last_of(setup::path_sep);
 	if(pos == std::string::npos) {
@@ -342,8 +339,8 @@ static std::string parent_dir(const std::string & path) {
 	return path.substr(0, pos);
 }
 
-static bool insert_dirs(DirectoriesMap & processed_directories, const path_filter & includes,
-                        const std::string & internal_path, std::string & path, bool implied) {
+bool insert_dirs(DirectoriesMap & processed_directories, const path_filter & includes,
+                 const std::string & internal_path, std::string & path, bool implied) {
 	
 	std::string dir = parent_dir(path);
 	std::string internal_dir = parent_dir(internal_path);
@@ -398,9 +395,8 @@ static bool insert_dirs(DirectoriesMap & processed_directories, const path_filte
 	return false;
 }
 
-static bool rename_collision(const extract_options & o, FilesMap & processed_files,
-                             const std::string & path, const processed_file & other,
-                             bool common_component, bool common_language, bool first) {
+bool rename_collision(const extract_options & o, FilesMap & processed_files, const std::string & path,
+                      const processed_file & other, bool common_component, bool common_language, bool first) {
 	
 	const setup::file_entry & file = other.entry();
 	
@@ -445,8 +441,8 @@ static bool rename_collision(const extract_options & o, FilesMap & processed_fil
 	
 }
 
-static void rename_collisions(const extract_options & o, FilesMap & processed_files,
-                              const CollisionMap & collisions) {
+void rename_collisions(const extract_options & o, FilesMap & processed_files,
+                       const CollisionMap & collisions) {
 	
 	BOOST_FOREACH(const CollisionMap::value_type & collision, collisions) {
 		
