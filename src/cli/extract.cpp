@@ -147,9 +147,6 @@ public:
 	
 	processed_item(const std::string & path, bool implied = false)
 		: path_(path), entry_(NULL), implied_(implied) { }
-		
-	processed_item(const processed_item & o)
-		: path_(o.path_), entry_(o.entry_), implied_(o.implied_) { }
 	
 	bool has_entry() const { return entry_ != NULL; }
 	const Entry & entry() const { return *entry_; }
