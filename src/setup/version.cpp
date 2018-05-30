@@ -151,6 +151,7 @@ static const known_version versions[] = {
 	{ "Inno Setup Setup Data (5.5.6) (u)",  INNO_VERSION_EXT(5, 5,  6, 0), true  },
 	{ "Inno Setup Setup Data (5.5.7)",      INNO_VERSION_EXT(5, 5,  7, 0), false },
 	{ "Inno Setup Setup Data (5.5.7) (u)",  INNO_VERSION_EXT(5, 5,  7, 0), true  },
+	{ "!!! Inno Setup 5.6-dev",             INNO_VERSION_EXT(5, 6,  0, 0), true  },
 };
 
 } // anonymous namespace
@@ -335,6 +336,11 @@ bool version::is_ambiguous() const {
 	
 	if(value == INNO_VERSION(5, 5, 0)) {
 		// might be either 5.5.0 or 5.5.0.1
+		return true;
+	}
+	
+	if(value == INNO_VERSION(5, 5, 7)) {
+		// might be either 5.5.7 or 5.6.0
 		return true;
 	}
 	

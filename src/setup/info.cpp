@@ -90,24 +90,41 @@ static void load_entries(std::istream & is, const setup::version & version,
 	load_entries<Entry, no_arg>(is, version, entry_types, count, entries, entry_type);
 }
 
+static void load_wizard_images(std::istream & is, const setup::version & version,
+                               std::vector<std::string> & images, info::entry_types entries) {
+	
+	size_t count = 1;
+	if(version >= INNO_VERSION(5, 6, 0)) {
+		count = util::load<boost::uint32_t>(is);
+	}
+	
+	if(entries & (info::WizardImages | info::NoSkip)) {
+		images.resize(count);
+		for(size_t i = 0; i < count; i++) {
+			is >> util::binary_string(images[i]);
+		}
+		if(version < INNO_VERSION(5, 6, 0) && images[0].empty()) {
+			images.clear();
+		}
+	} else {
+		for(size_t i = 0; i < count; i++) {
+			util::binary_string::skip(is);
+		}
+	}
+	
+}
+
 static void load_wizard_and_decompressor(std::istream & is, const setup::version & version,
                                         const setup::header & header,
                                         setup::info & info, info::entry_types entries) {
 	
-	(void)entries;
+	info.wizard_images.clear();
+	info.wizard_images_small.clear();
 	
-	info.wizard_image.clear();
-	info.wizard_image_small.clear();
-	if(entries & (info::WizardImages | info::NoSkip)) {
-		is >> util::binary_string(info.wizard_image);
-		if(version >= INNO_VERSION(2, 0, 0)) {
-			is >> util::binary_string(info.wizard_image_small);
-		}
-	} else {
-		util::binary_string::skip(is);
-		if(version >= INNO_VERSION(2, 0, 0)) {
-			util::binary_string::skip(is);
-		}
+	load_wizard_images(is, version, info.wizard_images, entries);
+	
+	if(version >= INNO_VERSION(2, 0, 0)) {
+		load_wizard_images(is, version, info.wizard_images_small, entries);
 	}
 	
 	info.decompressor_dll.clear();

@@ -104,8 +104,8 @@ struct info {
 	
 	//! Images displayed in the installer UI.
 	//! Loading enabled by \c WizardImages
-	std::string wizard_image;
-	std::string wizard_image_small;
+	std::vector<std::string> wizard_images;
+	std::vector<std::string> wizard_images_small;
 	
 	//! Contents of the helper DLL used to decompress setup data in some versions.
 	//! Loading enabled by \c DecompressorDll

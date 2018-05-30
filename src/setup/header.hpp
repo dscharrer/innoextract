@@ -121,7 +121,8 @@ struct header {
 		ArchitectureUnknown,
 		X86,
 		Amd64,
-		IA64
+		IA64,
+		ARM64
 	);
 	
 	std::string app_name;

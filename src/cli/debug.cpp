@@ -555,21 +555,21 @@ static const char * guess_extension(const std::string & data) {
 
 static void print_aux(const setup::info & info) {
 	
-	if(info.wizard_image.empty() && info.wizard_image_small.empty()
+	if(info.wizard_images.empty() && info.wizard_images_small.empty()
 	   && info.decompressor_dll.empty()) {
 		return;
 	}
 	
 	std::cout << '\n';
 	
-	if(!info.wizard_image.empty()) {
-		std::cout << "Wizard image: " << print_bytes(info.wizard_image.length())
-		          << " (" << guess_extension(info.wizard_image) << ")\n";
+	for(size_t i = 0; i < info.wizard_images.size(); i++) {
+		std::cout << "Wizard image #" << (i + 1) << ": " << print_bytes(info.wizard_images[i].length())
+		          << " (" << guess_extension(info.wizard_images[i]) << ")\n";
 	}
 	
-	if(!info.wizard_image_small.empty()) {
-		std::cout << "Wizard small image: " << print_bytes(info.wizard_image_small.length())
-		          << " (" << guess_extension(info.wizard_image_small) << ")\n";
+	for(size_t i = 0; i < info.wizard_images_small.empty(); i++) {
+		std::cout << "Wizard small image #" << (i + 1) << ": " << print_bytes(info.wizard_images_small[i].length())
+		          << " (" << guess_extension(info.wizard_images_small[i]) << ")\n";
 	}
 	
 	if(!info.decompressor_dll.empty()) {
