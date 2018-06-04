@@ -39,6 +39,7 @@
 namespace crypto {
 
 enum checksum_type {
+	None,
 	Adler32,
 	CRC32,
 	MD5,

@@ -36,6 +36,7 @@ bool checksum::operator==(const checksum & o) const {
 	}
 	
 	switch(type) {
+		case None: return true;
 		case Adler32: return (adler32 == o.adler32);
 		case CRC32: return (crc32 == o.crc32);
 		case MD5: return !memcmp(md5, o.md5, sizeof(md5));
@@ -47,6 +48,7 @@ bool checksum::operator==(const checksum & o) const {
 } // namespace crypto
 
 NAMES(crypto::checksum_type, "Checksum Type",
+	"None",
 	"Adler32",
 	"CRC32",
 	"MD5",
@@ -60,6 +62,10 @@ std::ostream & operator<<(std::ostream & os, const crypto::checksum & checksum) 
 	os << checksum.type << ' ';
 	
 	switch(checksum.type) {
+		case crypto::None: {
+			os << "(no checksum)";
+			break;
+		}
 		case crypto::Adler32: {
 			os << "0x" << std::hex << std::setw(8) << checksum.adler32;
 			break;
