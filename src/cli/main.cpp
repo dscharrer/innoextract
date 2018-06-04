@@ -188,7 +188,7 @@ int main(int argc, char * argv[]) {
 		po::store(po::command_line_parser(argc, argv).options(options_desc).positional(p).run(),
 		          options);
 		po::notify(options);
-	} catch(po::error & e) {
+	} catch(std::exception & e) {
 		color::init(color::disable, color::disable); // Be conservative
 		std::cerr << "Error parsing command-line: " << e.what() << "\n\n";
 		print_help(get_command(argv[0]), visible);
