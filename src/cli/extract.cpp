@@ -70,50 +70,6 @@ namespace fs = boost::filesystem;
 
 namespace {
 
-size_t probe_bin_files(const extract_options & o, const setup::info & info, const fs::path & dir,
-                       const std::string & basename, size_t format = 0, size_t start = 0) {
-	
-	size_t count = 0;
-	
-	std::vector<fs::path> files;
-	
-	for(size_t i = start;; i++) {
-		
-		fs::path file;
-		if(format == 0) {
-			file = dir / basename;
-		} else {
-			file = dir / stream::slice_reader::slice_filename(basename, i, format);
-		}
-		
-		try {
-			if(!fs::is_regular_file(file)) {
-				break;
-			}
-		} catch(...) {
-			break;
-		}
-		
-		if(o.gog) {
-			files.push_back(file);
-		} else {
-			log_warning << file.filename() << " is not part of the installer!";
-			count++;
-		}
-		
-		if(format == 0) {
-			break;
-		}
-		
-	}
-	
-	if(!files.empty()) {
-		gog::process_bin_files(files, o, info);
-	}
-	
-	return count;
-}
-
 struct file_output : private boost::noncopyable {
 	
 	fs::path name;
@@ -810,20 +766,15 @@ void process_file(const fs::path & file, const extract_options & o) {
 	}
 	
 	boost::uint64_t total_size = 0;
-	size_t max_slice = 0;
 	
 	typedef std::map<stream::file, size_t> Files;
 	typedef std::map<stream::chunk, Files> Chunks;
 	Chunks chunks;
 	for(size_t i = 0; i < info.data_entries.size(); i++) {
-		setup::data_entry & location = info.data_entries[i];
-		if(!offsets.data_offset) {
-			max_slice = std::max(max_slice, location.chunk.first_slice);
-			max_slice = std::max(max_slice, location.chunk.last_slice);
-		}
 		if(files_for_location[i].empty()) {
 			continue;
 		}
+		setup::data_entry & location = info.data_entries[i];
 		if(location.chunk.compression == stream::UnknownCompression) {
 			location.chunk.compression = info.header.compression;
 		}
@@ -1005,34 +956,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 	extract_progress.clear();
 	
 	if(o.warn_unused || o.gog) {
-		size_t bin_count = 0;
-		bin_count += size_t(probe_bin_files(o, info, dir, basename + ".bin"));
-		bin_count += size_t(probe_bin_files(o, info, dir, basename + "-0" + ".bin"));
-		size_t slice =  0;
-		size_t format = 1;
-		if(!offsets.data_offset && info.header.slices_per_disk == 1) {
-			slice = max_slice + 1;
-		}
-		bin_count += probe_bin_files(o, info, dir, basename, format, slice);
-		slice = 0;
-		format = 2;
-		if(!offsets.data_offset && info.header.slices_per_disk != 1) {
-			slice = max_slice + 1;
-			format = info.header.slices_per_disk;
-		}
-		bin_count += probe_bin_files(o, info, dir, basename, format, slice);
-		if(bin_count) {
-			const char * verb = "inspecting";
-			if(o.extract) {
-				verb = "extracting";
-			} else if(o.test) {
-				verb = "testing";
-			} else if(o.list) {
-				verb = "listing the contents of";
-			}
-			std::cerr << color::yellow << "Use the --gog option to try " << verb << " "
-			          << (bin_count > 1 ? "these files" : "this file") << ".\n" << color::reset;
-		}
+		gog::probe_bin_files(o, info, dir, basename, offsets.data_offset == 0);
 	}
 	
 }

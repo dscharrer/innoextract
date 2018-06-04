@@ -24,6 +24,7 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 #include <signal.h>
 
 #include <boost/foreach.hpp>
@@ -36,9 +37,13 @@
 
 #include "loader/offsets.hpp"
 
+#include "setup/data.hpp"
 #include "setup/info.hpp"
 #include "setup/registry.hpp"
 
+#include "stream/slice.hpp"
+
+#include "util/console.hpp"
 #include "util/boostfs_compat.hpp"
 #include "util/fstream.hpp"
 #include "util/log.hpp"
@@ -401,8 +406,6 @@ static void process_rar_files(const std::vector<fs::path> & files,
 	                         + "\": install `unrar` or `unar`");
 }
 
-} // anonymous namespace
-
 void process_bin_files(const std::vector<fs::path> & files, const extract_options & o,
                       const setup::info & info) {
 	
@@ -438,6 +441,98 @@ void process_bin_files(const std::vector<fs::path> & files, const extract_option
 	
 	throw std::runtime_error("Could not " + get_verb(o) + " \"" + files.front().string()
 	                         + "\": unknown filetype");
+}
+
+size_t probe_bin_file_series(const extract_options & o, const setup::info & info, const fs::path & dir,
+                             const std::string & basename, size_t format = 0, size_t start = 0) {
+	
+	size_t count = 0;
+	
+	std::vector<fs::path> files;
+	
+	for(size_t i = start;; i++) {
+		
+		fs::path file;
+		if(format == 0) {
+			file = dir / basename;
+		} else {
+			file = dir / stream::slice_reader::slice_filename(basename, i, format);
+		}
+		
+		try {
+			if(!fs::is_regular_file(file)) {
+				break;
+			}
+		} catch(...) {
+			break;
+		}
+		
+		if(o.gog) {
+			files.push_back(file);
+		} else {
+			log_warning << file.filename() << " is not part of the installer!";
+			count++;
+		}
+		
+		if(format == 0) {
+			break;
+		}
+		
+	}
+	
+	if(!files.empty()) {
+		process_bin_files(files, o, info);
+	}
+	
+	return count;
+}
+
+} // anonymous namespace
+
+void probe_bin_files(const extract_options & o, const setup::info & info, const fs::path & dir,
+                     const std::string & basename, bool external) {
+	
+	size_t bin_count = 0;
+	bin_count += probe_bin_file_series(o, info, dir, basename + ".bin");
+	bin_count += probe_bin_file_series(o, info, dir, basename + "-0" + ".bin");
+	
+
+	size_t max_slice = 0;
+	if(external) {
+		BOOST_FOREACH(const setup::data_entry & location, info.data_entries) {
+			max_slice = std::max(max_slice, location.chunk.first_slice);
+			max_slice = std::max(max_slice, location.chunk.last_slice);
+		}
+	}
+	
+	size_t slice =  0;
+	size_t format = 1;
+	if(external && info.header.slices_per_disk == 1) {
+		slice = max_slice + 1;
+	}
+	bin_count += probe_bin_file_series(o, info, dir, basename, format, slice);
+	
+	slice = 0;
+	format = 2;
+	if(external && info.header.slices_per_disk != 1) {
+		slice = max_slice + 1;
+		format = info.header.slices_per_disk;
+	}
+	bin_count += probe_bin_file_series(o, info, dir, basename, format, slice);
+	
+	if(bin_count) {
+		const char * verb = "inspecting";
+		if(o.extract) {
+			verb = "extracting";
+		} else if(o.test) {
+			verb = "testing";
+		} else if(o.list) {
+			verb = "listing the contents of";
+		}
+		std::cerr << color::yellow << "Use the --gog option to try " << verb << " "
+		          << (bin_count > 1 ? "these files" : "this file") << ".\n" << color::reset;
+	}
+	
 }
 
 } // namespace gog
