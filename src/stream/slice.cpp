@@ -44,9 +44,8 @@ const char slice_ids[][8] = {
 
 slice_reader::slice_reader(std::istream * istream, boost::uint32_t data_offset)
 	: data_offset(data_offset),
-	  dir(), last_dir(), base_file(), slices_per_disk(1),
-	  current_slice(0), slice_file(), slice_size(0),
-	  ifs(), is(istream) {
+	  slices_per_disk(1), current_slice(0), slice_size(0),
+	  is(istream) {
 	
 	std::streampos max_size = std::streampos(std::numeric_limits<boost::int32_t>::max());
 	
@@ -61,9 +60,9 @@ slice_reader::slice_reader(std::istream * istream, boost::uint32_t data_offset)
 slice_reader::slice_reader(const path_type & dir, const std::string & base_file,
                            size_t slices_per_disk)
 	: data_offset(0),
-	  dir(dir), last_dir(dir), base_file(base_file), slices_per_disk(slices_per_disk),
-	  current_slice(0), slice_file(), slice_size(0),
-	  ifs(), is(&ifs) { }
+	  dir(dir), base_file(base_file),
+	  slices_per_disk(slices_per_disk), current_slice(0), slice_size(0),
+	  is(&ifs) { }
 
 void slice_reader::seek(size_t slice) {
 	
@@ -128,8 +127,6 @@ bool slice_reader::open_file(const path_type & file) {
 	
 	slice_file = file;
 	
-	last_dir = file.parent_path();
-	
 	return true;
 }
 
@@ -164,11 +161,7 @@ void slice_reader::open(size_t slice) {
 	
 	path_type slice_file = slice_filename(base_file, slice, slices_per_disk);
 	
-	if(open_file(last_dir / slice_file)) {
-		return;
-	}
-	
-	if(dir != last_dir && open_file(dir / slice_file)) {
+	if(open_file(dir / slice_file)) {
 		return;
 	}
 	

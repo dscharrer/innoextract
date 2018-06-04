@@ -63,7 +63,6 @@ class slice_reader : public boost::iostreams::source {
 	
 	// Information for eading external setup data
 	path_type    dir;             //!< Slice directory specified at construction.
-	path_type    last_dir;        //!< Directory containing the current slice.
 	std::string  base_file;       //!< Base file name for slices.
 	const size_t slices_per_disk; //!< Number of slices grouped into each disk (for names).
 	
