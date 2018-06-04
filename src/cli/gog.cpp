@@ -488,8 +488,11 @@ size_t probe_bin_file_series(const extract_options & o, const setup::info & info
 
 } // anonymous namespace
 
-void probe_bin_files(const extract_options & o, const setup::info & info, const fs::path & dir,
-                     const std::string & basename, bool external) {
+void probe_bin_files(const extract_options & o, const setup::info & info,
+                     const fs::path & setup_file, bool external) {
+	
+	boost::filesystem::path dir = setup_file.parent_path();
+	std::string basename = util::as_string(setup_file.stem());
 	
 	size_t bin_count = 0;
 	bin_count += probe_bin_file_series(o, info, dir, basename + ".bin");

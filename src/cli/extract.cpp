@@ -782,15 +782,22 @@ void process_file(const fs::path & file, const extract_options & o) {
 		total_size += location.uncompressed_size;
 	}
 	
-	fs::path dir = file.parent_path();
-	std::string basename = util::as_string(file.stem());
-	
 	boost::scoped_ptr<stream::slice_reader> slice_reader;
 	if(o.extract || o.test) {
 		if(offsets.data_offset) {
 			slice_reader.reset(new stream::slice_reader(&ifs, offsets.data_offset));
 		} else {
-			slice_reader.reset(new stream::slice_reader(dir, basename, info.header.slices_per_disk));
+			fs::path dir = file.parent_path();
+			std::string basename = util::as_string(file.stem());
+			std::string basename2 = info.header.base_filename;
+			// Prevent access to unexpected files
+			std::replace(basename2.begin(), basename2.end(), '/', '_');
+			std::replace(basename2.begin(), basename2.end(), '\\', '_');
+			// Older Inno Setup versions used the basename stored in the headers, change our default accordingly
+			if(info.version < INNO_VERSION(4, 1, 7) && !basename2.empty()) {
+				std::swap(basename2, basename);
+			}
+			slice_reader.reset(new stream::slice_reader(dir, basename, basename2, info.header.slices_per_disk));
 		}
 	}
 	
@@ -963,7 +970,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 	extract_progress.clear();
 	
 	if(o.warn_unused || o.gog) {
-		gog::probe_bin_files(o, info, dir, basename, offsets.data_offset == 0);
+		gog::probe_bin_files(o, info, file, offsets.data_offset == 0);
 	}
 	
 }

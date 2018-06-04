@@ -57,10 +57,10 @@ slice_reader::slice_reader(std::istream * istream, boost::uint32_t data_offset)
 	}
 }
 
-slice_reader::slice_reader(const path_type & dir, const std::string & base_file,
-                           size_t slices_per_disk)
+slice_reader::slice_reader(const path_type & dir, const std::string & basename,
+                           const std::string & basename2, size_t slices_per_disk)
 	: data_offset(0),
-	  dir(dir), base_file(base_file),
+	  dir(dir), base_file(basename), base_file2(basename2),
 	  slices_per_disk(slices_per_disk), current_slice(0), slice_size(0),
 	  is(&ifs) { }
 
@@ -78,6 +78,10 @@ void slice_reader::seek(size_t slice) {
 }
 
 bool slice_reader::open_file(const path_type & file) {
+	
+	if(!boost::filesystem::exists(file)) {
+		return false;
+	}
 	
 	log_info << "Opening \"" << color::cyan << file.string() << color::reset << '"';
 	
@@ -160,13 +164,20 @@ void slice_reader::open(size_t slice) {
 	ifs.close();
 	
 	path_type slice_file = slice_filename(base_file, slice, slices_per_disk);
-	
 	if(open_file(dir / slice_file)) {
+		return;
+	}
+	
+	path_type slice_file2 = slice_filename(base_file2, slice, slices_per_disk);
+	if(!base_file2.empty() && slice_file2 != slice_file && open_file(dir / slice_file2)) {
 		return;
 	}
 	
 	std::ostringstream oss;
 	oss << "could not open slice " << slice << ": " << slice_file;
+	if(!base_file2.empty() && slice_file2 != slice_file) {
+		oss << " or " << slice_file2;
+	}
 	throw slice_error(oss.str());
 }
 

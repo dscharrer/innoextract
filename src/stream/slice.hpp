@@ -64,6 +64,7 @@ class slice_reader : public boost::iostreams::source {
 	// Information for eading external setup data
 	path_type    dir;             //!< Slice directory specified at construction.
 	std::string  base_file;       //!< Base file name for slices.
+	std::string  base_file2;      //!< Fallback base filename for slices.
 	const size_t slices_per_disk; //!< Number of slices grouped into each disk (for names).
 	
 	// Information about the current slice
@@ -110,9 +111,11 @@ public:
 	 *
 	 * \param dir             The directory containing the slice files.
 	 * \param basename        The base name for slice files.
+	 * \param basename2       Alternative base name for slice files.
 	 * \param slices_per_disk How many slices are grouped into one disk. Must not be \c 0.
 	 */
-	slice_reader(const path_type & dir, const std::string & basename, size_t slices_per_disk);
+	slice_reader(const path_type & dir, const std::string & basename, const std::string & basename2,
+	             size_t slices_per_disk);
 	
 	/*!
 	 * Attempt to seek to an offset within a slice.

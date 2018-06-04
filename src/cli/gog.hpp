@@ -41,7 +41,7 @@ namespace gog {
 std::string get_game_id(const setup::info & info);
 
 void probe_bin_files(const extract_options & o, const setup::info & info,
-                     const boost::filesystem::path & dir, const std::string & basename, bool external);
+                     const boost::filesystem::path & setup_file, bool external);
 
 } // namespace gog
 
