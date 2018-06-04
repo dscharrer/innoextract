@@ -428,6 +428,7 @@ void process_bin_files(const std::vector<fs::path> & files, const extract_option
 				extract_options new_options = o;
 				new_options.gog = false;
 				new_options.warn_unused = false;
+				std::cout << '\n';
 				process_file(files.front(), new_options);
 				return;
 			}

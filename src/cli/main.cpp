@@ -369,6 +369,9 @@ int main(int argc, char * argv[]) {
 	try {
 		BOOST_FOREACH(const std::string & file, files) {
 			process_file(file, o);
+			if(files.size() > 1) {
+				std::cout << '\n';
+			}
 		}
 	} catch(const std::ios_base::failure & e) {
 		log_error << "Stream error while extracting files!\n"
