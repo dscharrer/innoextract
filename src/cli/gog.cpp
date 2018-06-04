@@ -85,7 +85,7 @@ std::string get_game_id(const setup::info & info) {
 
 namespace {
 
-static std::string get_verb(const extract_options & o) {
+std::string get_verb(const extract_options & o) {
 	const char * verb = "inspect";
 	if(o.extract) {
 		verb = "extract";
@@ -97,12 +97,12 @@ static std::string get_verb(const extract_options & o) {
 	return verb;
 }
 
-static volatile sig_atomic_t quit_requested = 0;
-static void quit_handler(int /* ignored */) {
+volatile sig_atomic_t quit_requested = 0;
+void quit_handler(int /* ignored */) {
 	quit_requested = 1;
 }
 
-static bool process_file_unrar(const fs::path & file, const extract_options & o,
+bool process_file_unrar(const fs::path & file, const extract_options & o,
                                const std::string & password) {
 	
 	std::vector<const char *> args;
@@ -185,7 +185,7 @@ static bool process_file_unrar(const fs::path & file, const extract_options & o,
 	return true;
 }
 
-static bool process_file_unar(const fs::path & file, const extract_options & o,
+bool process_file_unar(const fs::path & file, const extract_options & o,
                               const std::string & password) {
 	
 	std::string dir = o.output_dir.string();
@@ -240,12 +240,11 @@ static bool process_file_unar(const fs::path & file, const extract_options & o,
 	return true;
 }
 
-static bool process_rar_file(const fs::path & file, const extract_options & o,
-                             const std::string & password) {
+bool process_rar_file(const fs::path & file, const extract_options & o, const std::string & password) {
 	return process_file_unrar(file, o, password) || process_file_unar(file, o, password);
 }
 
-static char hex_char(int c) {
+char hex_char(int c) {
 	if(c < 10) {
 		return char('0' + c);
 	} else {
@@ -289,8 +288,8 @@ public:
 	
 };
 
-static void process_rar_files(const std::vector<fs::path> & files,
-                              const extract_options & o, const setup::info & info) {
+void process_rar_files(const std::vector<fs::path> & files,
+                       const extract_options & o, const setup::info & info) {
 	
 	if((!o.list && !o.test && !o.extract) || files.empty()) {
 		return;
