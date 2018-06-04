@@ -29,6 +29,7 @@
 #include <vector>
 
 #include <boost/foreach.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
@@ -113,7 +114,7 @@ size_t probe_bin_files(const extract_options & o, const setup::info & info, cons
 	return count;
 }
 
-struct file_output {
+struct file_output : private boost::noncopyable {
 	
 	fs::path name;
 	util::ofstream stream;
