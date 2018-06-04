@@ -779,7 +779,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 			location.chunk.compression = info.header.compression;
 		}
 		chunks[location.chunk][location.file] = i;
-		total_size += location.file.size;
+		total_size += location.uncompressed_size;
 	}
 	
 	fs::path dir = file.parent_path();
@@ -903,6 +903,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 			}
 			
 			// Copy data
+			boost::uint64_t output_size = 0;
 			while(!file_source->eof()) {
 				char buffer[8192 * 10];
 				std::streamsize buffer_size = std::streamsize(boost::size(buffer));
@@ -916,7 +917,13 @@ void process_file(const fs::path & file, const extract_options & o) {
 						}
 					}
 					extract_progress.update(boost::uint64_t(n));
+					output_size += boost::uint64_t(n);
 				}
+			}
+			
+			if(output_size != info.data_entries[location.second].uncompressed_size) {
+				log_warning << "Unexpected output file size: " << output_size << " != "
+				            << info.data_entries[location.second].uncompressed_size;
 			}
 			
 			// Adjust file timestamps

@@ -57,6 +57,7 @@ void data_entry::load(std::istream & is, const version & version) {
 		file.size = util::load<boost::uint32_t>(is);
 		chunk.size = util::load<boost::uint32_t>(is);
 	}
+	uncompressed_size = file.size;
 	
 	if(version >= INNO_VERSION(5, 3, 9)) {
 		is.read(file.checksum.sha1, std::streamsize(sizeof(file.checksum.sha1)));

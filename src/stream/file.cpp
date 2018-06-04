@@ -21,6 +21,7 @@
 #include "stream/file.hpp"
 
 #include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
 
 #include "stream/checksum.hpp"
 #include "stream/exefilter.hpp"
@@ -55,6 +56,10 @@ file_reader::pointer file_reader::get(base_type & base, const file & file,
 	
 	util::unique_ptr<io::filtering_istream>::type result(new io::filtering_istream);
 	
+	if(file.filter == ZlibFilter) {
+		result->push(io::zlib_decompressor(), 8192);
+	}
+	
 	if(checksum) {
 		result->push(stream::checksum_filter(checksum, file.checksum.type), 8192);
 	}
@@ -64,6 +69,7 @@ file_reader::pointer file_reader::get(base_type & base, const file & file,
 		case InstructionFilter4108: result->push(stream::inno_exe_decoder_4108(), 8192); break;
 		case InstructionFilter5200: result->push(stream::inno_exe_decoder_5200(false), 8192); break;
 		case InstructionFilter5309: result->push(stream::inno_exe_decoder_5200(true), 8192); break;
+		case ZlibFilter: /* applied *after* calculating the checksum */ break;
 	}
 	
 	result->push(stream::restrict(base, file.size));

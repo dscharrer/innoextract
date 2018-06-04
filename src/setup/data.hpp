@@ -65,6 +65,8 @@ struct data_entry {
 	
 	stream::file file;
 	
+	boost::uint64_t uncompressed_size;
+	
 	boost::int64_t timestamp;
 	boost::uint32_t timestamp_nsec;
 	

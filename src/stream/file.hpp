@@ -40,6 +40,7 @@ enum compression_filter {
 	InstructionFilter4108,
 	InstructionFilter5200,
 	InstructionFilter5309,
+	ZlibFilter,
 };
 
 /*!
@@ -52,7 +53,7 @@ enum compression_filter {
 struct file {
 	
 	boost::uint64_t    offset;   //!< Offset of this file within the decompressed chunk.
-	boost::uint64_t    size;     //!< Decompressed size of this file.
+	boost::uint64_t    size;     //!< Pre-filter size of this file in the decompressed chunk.
 	
 	crypto::checksum   checksum; //!< Checksum for the file.
 	
