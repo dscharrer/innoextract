@@ -78,6 +78,7 @@ class slice_reader : public boost::iostreams::source {
 	
 	void seek(size_t slice);
 	bool open_file(const path_type & file);
+	bool open_file_case_insensitive(const path_type & dir, const path_type & filename);
 	void open(size_t slice);
 	
 public:

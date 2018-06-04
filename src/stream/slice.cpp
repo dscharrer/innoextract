@@ -25,6 +25,8 @@
 #include <limits>
 
 #include <boost/cstdint.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/range/size.hpp>
 
 #include "util/console.hpp"
@@ -157,6 +159,19 @@ std::string slice_reader::slice_filename(const std::string & basename, size_t sl
 	return oss.str();
 }
 
+bool slice_reader::open_file_case_insensitive(const path_type & dir, const path_type & filename) {
+	
+	boost::filesystem::directory_iterator end;
+	for(boost::filesystem::directory_iterator i(dir); i != end; ++i) {
+		path_type actual_filename = i->path().filename();
+		if(boost::iequals(actual_filename.string(), filename.string()) && open_file(dir / actual_filename)) {
+			return true;
+		}
+	}
+	
+	return false;
+}
+
 void slice_reader::open(size_t slice) {
 	
 	current_slice = slice;
@@ -170,6 +185,14 @@ void slice_reader::open(size_t slice) {
 	
 	path_type slice_file2 = slice_filename(base_file2, slice, slices_per_disk);
 	if(!base_file2.empty() && slice_file2 != slice_file && open_file(dir / slice_file2)) {
+		return;
+	}
+	
+	if(open_file_case_insensitive(dir, slice_file)) {
+		return;
+	}
+	
+	if(!base_file2.empty() && slice_file2 != slice_file && open_file_case_insensitive(dir, slice_file2)) {
 		return;
 	}
 	
