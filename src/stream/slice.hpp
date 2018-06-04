@@ -69,7 +69,6 @@ class slice_reader : public boost::iostreams::source {
 	
 	// Information about the current slice
 	size_t          current_slice; //!< Number of the currently opened slice.
-	path_type       slice_file;    //!< Filename of the currently opened slice.
 	boost::uint32_t slice_size;    //!< Size in bytes of the currently opened slice.
 	
 	// Streams
@@ -148,9 +147,6 @@ public:
 	
 	//! \return the number currently opened slice.
 	size_t slice() { return current_slice; }
-	
-	//! \return filename for the currently opened slice.
-	path_type & file() { return slice_file; }
 	
 	//! \return true a slice is currently open.
 	bool is_open() { return (is != &ifs || ifs.is_open()); }

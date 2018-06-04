@@ -131,8 +131,6 @@ bool slice_reader::open_file(const path_type & file) {
 		throw slice_error(oss.str());
 	}
 	
-	slice_file = file;
-	
 	return true;
 }
 
