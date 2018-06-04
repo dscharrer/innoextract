@@ -52,7 +52,7 @@ private:
 	int error_code;
 };
 
-class lzma_decompressor_impl_base : public boost::noncopyable {
+class lzma_decompressor_impl_base : private boost::noncopyable {
 	
 public:
 	
