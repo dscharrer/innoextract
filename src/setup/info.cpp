@@ -51,19 +51,19 @@ namespace {
 struct no_arg { };
 
 template <class Entry, class Arg>
-static void load_entry(std::istream & is, const setup::version & version,
+void load_entry(std::istream & is, const setup::version & version,
                        Entry & entity, Arg arg) {
 	entity.load(is, version, arg);
 }
 template <class Entry>
-static void load_entry(std::istream & is, const setup::version & version,
+void load_entry(std::istream & is, const setup::version & version,
                                     Entry & entity, no_arg arg) {
 	(void)arg;
 	entity.load(is, version);
 }
 
 template <class Entry, class Arg>
-static void load_entries(std::istream & is, const setup::version & version,
+void load_entries(std::istream & is, const setup::version & version,
                   info::entry_types entry_types, size_t count,
                   std::vector<Entry> & entries, info::entry_types::enum_type entry_type,
                   Arg arg = Arg()) {
@@ -84,14 +84,14 @@ static void load_entries(std::istream & is, const setup::version & version,
 }
 
 template <class Entry>
-static void load_entries(std::istream & is, const setup::version & version,
+void load_entries(std::istream & is, const setup::version & version,
                   info::entry_types entry_types, size_t count,
                   std::vector<Entry> & entries, info::entry_types::enum_type entry_type) {
 	load_entries<Entry, no_arg>(is, version, entry_types, count, entries, entry_type);
 }
 
-static void load_wizard_images(std::istream & is, const setup::version & version,
-                               std::vector<std::string> & images, info::entry_types entries) {
+void load_wizard_images(std::istream & is, const setup::version & version,
+                        std::vector<std::string> & images, info::entry_types entries) {
 	
 	size_t count = 1;
 	if(version >= INNO_VERSION(5, 6, 0)) {
@@ -114,9 +114,9 @@ static void load_wizard_images(std::istream & is, const setup::version & version
 	
 }
 
-static void load_wizard_and_decompressor(std::istream & is, const setup::version & version,
-                                        const setup::header & header,
-                                        setup::info & info, info::entry_types entries) {
+void load_wizard_and_decompressor(std::istream & is, const setup::version & version,
+                                  const setup::header & header,
+                                  setup::info & info, info::entry_types entries) {
 	
 	info.wizard_images.clear();
 	info.wizard_images_small.clear();
@@ -151,15 +151,15 @@ static void load_wizard_and_decompressor(std::istream & is, const setup::version
 	
 }
 
-} // anonymous namespace
-
-static void check_is_end(stream::block_reader::pointer & is, const char * what) {
+void check_is_end(stream::block_reader::pointer & is, const char * what) {
 	is->exceptions(std::ios_base::goodbit);
 	char dummy;
 	if(!is->get(dummy).eof()) {
 		throw std::ios_base::failure(what);
 	}
 }
+
+} // anonymous namespace
 
 void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
 	
