@@ -28,6 +28,7 @@
 
 #include <string>
 #include <iosfwd>
+#include <vector>
 
 #include <boost/cstdint.hpp>
 
@@ -104,6 +105,11 @@ struct file_entry : public item {
 	flags options;
 	
 	file_type type;
+	
+	// Information about GOG Galaxy multi-part files
+	// These are not used in normal Inno Setup installers
+	std::vector<boost::uint32_t> additional_locations;
+	boost::uint64_t size;
 	
 	void load(std::istream & is, const version & version);
 	

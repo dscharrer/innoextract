@@ -191,6 +191,10 @@ void file_entry::load(std::istream & is, const version & version) {
 	} else {
 		type = stored_enum<stored_file_type_1>(is).get();
 	}
+	
+	additional_locations.clear();
+	size = 0;
+	
 }
 
 } // namespace setup

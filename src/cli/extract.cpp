@@ -27,6 +27,7 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include <limits>
 
 #include <boost/foreach.hpp>
 #include <boost/noncopyable.hpp>
@@ -34,6 +35,7 @@
 #include <boost/unordered_map.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/ptr_container/ptr_map.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/range/size.hpp>
 
@@ -97,6 +99,8 @@ public:
 	processed_file(const setup::file_entry * entry, const std::string & path)
 		: processed_item<setup::file_entry>(path, entry) { }
 	
+	bool is_multipart() const { return !entry().additional_locations.empty(); }
+	
 };
 
 class processed_directory : public processed_item<setup::directory_entry> {
@@ -122,11 +126,16 @@ class file_output : private boost::noncopyable {
 	const processed_file * file_;
 	util::ofstream stream_;
 	
+	boost::uint64_t position_;
+	boost::uint64_t total_written_;
+	
 public:
 	
 	explicit file_output(const fs::path & dir, const processed_file * f)
 		: path_(dir / f->path())
 		, file_(f)
+		, position_(0)
+		, total_written_(0)
 	{
 		try {
 			stream_.open(path_, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
@@ -142,7 +151,44 @@ public:
 		
 		stream_.write(data, std::streamsize(n));
 		
+		position_ += n;
+		total_written_ += n;
+		
 		return !stream_.fail();
+	}
+	
+	void seek(boost::uint64_t new_position) {
+		
+		if(new_position == position_) {
+			return;
+		}
+		
+		debug("seeking output from " << print_hex(position_) << " to " << print_hex(new_position));
+		
+		const boost::uint64_t max = boost::uint64_t(std::numeric_limits<util::ofstream::off_type>::max() / 4);
+		
+		if(new_position <= max) {
+			stream_.seekp(util::ofstream::off_type(new_position), std::ios_base::beg);
+		} else {
+			if(new_position > position_) {
+				boost::uint64_t diff = new_position - position_;
+				while(diff > max) {
+					stream_.seekp(util::ofstream::off_type(max), std::ios_base::cur);
+					diff -= max;
+				}
+				stream_.seekp(util::ofstream::off_type(diff), std::ios_base::cur);
+			} else {
+				boost::uint64_t diff = position_ - new_position;
+				while(diff > max) {
+					stream_.seekp(-util::ofstream::off_type(max), std::ios_base::cur);
+					diff -= max;
+				}
+				stream_.seekp(-util::ofstream::off_type(diff), std::ios_base::cur);
+			}
+		}
+		
+		position_ = new_position;
+		
 	}
 	
 	void close() {
@@ -153,6 +199,10 @@ public:
 	
 	const fs::path & path() const { return path_; }
 	const processed_file * file() const { return file_; }
+	
+	bool is_complete() const {
+		return total_written_ == file_->entry().size;
+	}
 	
 };
 
@@ -230,13 +280,13 @@ void print_filter_info(const setup::directory_entry & dir) {
 	print_filter_info(dir, is_temp);
 }
 
-void print_size_info(const stream::file & file) {
+void print_size_info(const stream::file & file, boost::uint64_t size) {
 	
 	if(logger::debug) {
 		std::cout << " @ " << print_hex(file.offset);
 	}
 	
-	std::cout << " (" << color::dim_cyan << print_bytes(file.size) << color::reset << ")";
+	std::cout << " (" << color::dim_cyan << print_bytes(size ? size : file.size) << color::reset << ")";
 }
 
 bool prompt_overwrite() {
@@ -730,7 +780,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 					std::cout << '"' << color::dim_yellow << clobberedpath << color::reset << '"';
 					print_filter_info(skip ? file : existing.entry());
 					if(!o.quiet) {
-						print_size_info(skip ? newdata.file : olddata.file);
+						print_size_info(skip ? newdata.file : olddata.file, skip ? file.size : existing.entry().size);
 					}
 					std::cout << " - " << (skip ? skip : "overwritten") << '\n';
 				}
@@ -795,11 +845,19 @@ void process_file(const fs::path & file, const extract_options & o) {
 		
 	}
 	
-	std::vector< std::vector<const processed_file *> > files_for_location;
+	typedef std::pair<const processed_file *, boost::uint64_t> output_location;
+	std::vector< std::vector<output_location> > files_for_location;
 	files_for_location.resize(info.data_entries.size());
 	BOOST_FOREACH(const FilesMap::value_type & i, processed_files) {
 		const processed_file & file = i.second;
-		files_for_location[file.entry().location].push_back(&file);
+		files_for_location[file.entry().location].push_back(output_location(&file, 0));
+		if(o.test || o.extract) {
+			boost::uint64_t offset = info.data_entries[file.entry().location].uncompressed_size;
+			BOOST_FOREACH(boost::uint32_t location, file.entry().additional_locations) {
+				files_for_location[location].push_back(output_location(&file, offset));
+				offset += info.data_entries[location].uncompressed_size;
+			}
+		}
 	}
 	
 	boost::uint64_t total_size = 0;
@@ -840,6 +898,9 @@ void process_file(const fs::path & file, const extract_options & o) {
 	
 	progress extract_progress(total_size);
 	
+	typedef boost::ptr_map<const processed_file *, file_output> multi_part_outputs;
+	multi_part_outputs multi_outputs;
+	
 	BOOST_FOREACH(const Chunks::value_type & chunk, chunks) {
 		
 		debug("[starting " << chunk.first.compression << " chunk @ slice " << chunk.first.first_slice
@@ -858,7 +919,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 		
 		BOOST_FOREACH(const Files::value_type & location, chunk.second) {
 			const stream::file & file = location.first;
-			const std::vector<const processed_file *> & names = files_for_location[location.second];
+			const std::vector<output_location> & output_locations = files_for_location[location.second];
 			
 			if(file.offset > offset) {
 				debug("discarding " << print_bytes(file.offset - offset)
@@ -875,34 +936,47 @@ void process_file(const fs::path & file, const extract_options & o) {
 				
 				if(!o.silent) {
 					
-					std::cout << " - ";
 					bool named = false;
-					BOOST_FOREACH(const processed_file * name, names) {
+					boost::uint64_t size = 0;
+					BOOST_FOREACH(const output_location & output, output_locations) {
+						if(output.second != 0) {
+							continue;
+						}
+						if(output.first->entry().size != 0) {
+							if(size != 0 && size != output.first->entry().size) {
+								log_warning << "Mismatched output sizes";
+							}
+							size = output.first->entry().size;
+						}
 						if(named) {
 							std::cout << ", ";
+						} else {
+							std::cout << " - ";
+							named = true;
 						}
 						if(chunk.first.encrypted) {
-							std::cout << '"' << color::dim_yellow << name->path() << color::reset << '"';
+							std::cout << '"' << color::dim_yellow << output.first->path() << color::reset << '"';
 						} else {
-							std::cout << '"' << color::white << name->path() << color::reset << '"';
+							std::cout << '"' << color::white << output.first->path() << color::reset << '"';
 						}
-						print_filter_info(name->entry());
-						named = true;
+						print_filter_info(output.first->entry());
 					}
-					if(!named) {
-						std::cout << color::white << "unnamed file" << color::reset;
+					
+					if(named) {
+						if(!o.quiet) {
+							print_size_info(file, size);
+						}
+						if(chunk.first.encrypted) {
+							std::cout << " - encrypted";
+						}
+						std::cout << '\n';
 					}
-					if(!o.quiet) {
-						print_size_info(file);
-					}
-					if(chunk.first.encrypted) {
-						std::cout << " - encrypted";
-					}
-					std::cout << '\n';
 					
 				} else {
-					BOOST_FOREACH(const processed_file * name, names) {
-						std::cout << color::white << name->path() << color::reset << '\n';
+					BOOST_FOREACH(const output_location & output, output_locations) {
+						if(output.second == 0) {
+							std::cout << color::white << output.first->path() << color::reset << '\n';
+						}
 					}
 				}
 				
@@ -935,17 +1009,35 @@ void process_file(const fs::path & file, const extract_options & o) {
 			// Open output files
 			boost::ptr_vector<file_output> single_outputs;
 			std::vector<file_output *> outputs;
-			BOOST_FOREACH(const processed_file * name, names) {
+			BOOST_FOREACH(const output_location & location, output_locations) {
+				const processed_file * fileinfo = location.first;
 				try {
 					
 					if(!o.extract) {
 						continue;
 					}
 					
-					file_output * output = new file_output(o.output_dir, name);
-					single_outputs.push_back(output);
+					// Re-use existing file output for multi-part files
+					file_output * output = NULL;
+					if(fileinfo->is_multipart()) {
+						multi_part_outputs::iterator it = multi_outputs.find(fileinfo);
+						if(it != multi_outputs.end()) {
+							output = it->second;
+						}
+					}
+					
+					if(!output) {
+						output = new file_output(o.output_dir, fileinfo);
+						if(fileinfo->is_multipart()) {
+							multi_outputs.insert(fileinfo, output);
+						} else {
+							single_outputs.push_back(output);
+						}
+					}
 					
 					outputs.push_back(output);
+					
+					output->seek(location.second);
 					
 				} catch(boost::bad_pointer &) {
 					// should never happen
@@ -984,12 +1076,21 @@ void process_file(const fs::path & file, const extract_options & o) {
 			
 			BOOST_FOREACH(file_output * output, outputs) {
 				
+				if(output->file()->is_multipart() && !output->is_complete()) {
+					continue;
+				}
+				
 				// Adjust file timestamps
 				if(o.extract && o.preserve_file_times) {
 					output->close();
 					if(!util::set_file_time(output->path(), filetime, data.timestamp_nsec)) {
 						log_warning << "Error setting timestamp on file " << output->path();
 					}
+				}
+				
+				if(output->file()->is_multipart()) {
+					debug("[finalizing multi-part file]");
+					multi_outputs.erase(output->file());
 				}
 				
 			}
@@ -1015,6 +1116,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 	}
 	
 	extract_progress.clear();
+	
+	if(!multi_outputs.empty()) {
+		log_warning << "Incomplete multi-part files";
+	}
 	
 	if(o.warn_unused || o.gog) {
 		gog::probe_bin_files(o, info, file, offsets.data_offset == 0);
