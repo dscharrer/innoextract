@@ -178,7 +178,7 @@ struct constraint {
 	std::string name;
 	bool negated;
 	
-	constraint(const std::string & name, bool negated = false) : name(name), negated(negated) { }
+	explicit constraint(const std::string & name, bool negated = false) : name(name), negated(negated) { }
 	
 };
 
