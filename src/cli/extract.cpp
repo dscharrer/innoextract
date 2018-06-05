@@ -93,31 +93,46 @@ class processed_item {
 	
 	std::string path_;
 	const Entry * entry_;
-	bool implied_;
 	
 public:
 	
-	processed_item() : entry_(NULL), implied_(false) { }
-	
-	processed_item(const Entry * entry, const std::string & path, bool implied = false)
-		: path_(path), entry_(entry), implied_(implied) { }
-	
-	processed_item(const std::string & path, bool implied = false)
-		: path_(path), entry_(NULL), implied_(implied) { }
+	processed_item(const std::string & path, const Entry * entry)
+		: path_(path), entry_(entry) { }
 	
 	bool has_entry() const { return entry_ != NULL; }
 	const Entry & entry() const { return *entry_; }
 	const std::string & path() const { return path_; }
-	bool implied() const { return implied_; }
 	
 	void set_entry(const Entry * entry) { entry_ = entry; }
 	void set_path(const std::string & path) { path_ = path; }
-	void set_implied(bool implied) { implied_ = implied; }
 	
 };
 
-typedef processed_item<setup::file_entry> processed_file;
-typedef processed_item<setup::directory_entry> processed_directory;
+class processed_file : public processed_item<setup::file_entry> {
+	
+public:
+	
+	processed_file(const setup::file_entry * entry, const std::string & path)
+		: processed_item<setup::file_entry>(path, entry) { }
+	
+};
+
+class processed_directory : public processed_item<setup::directory_entry> {
+	
+	std::string path_;
+	const setup::directory_entry * entry_;
+	bool implied_;
+	
+public:
+	
+	processed_directory(const std::string & path)
+		: processed_item<setup::directory_entry>(path, NULL) { }
+	
+	bool implied() const { return implied_; }
+	
+	void set_implied(bool implied) { implied_ = implied; }
+	
+};
 
 class path_filter {
 	
@@ -402,7 +417,7 @@ void rename_collisions(const extract_options & o, FilesMap & processed_files,
 		
 		const std::string & path = collision.first;
 		
-		const processed_file & base = processed_files[path];
+		const processed_file & base = processed_files.find(path)->second;
 		const setup::file_entry & file = base.entry();
 		
 		bool common_component = true;
