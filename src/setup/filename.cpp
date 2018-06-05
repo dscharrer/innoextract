@@ -48,8 +48,8 @@ struct is_unsafe_path_char {
 			case '|': return true;
 			case '?': return true;
 			case '*': return true;
+			default:  return false;
 		}
-		return false;
 	}
 };
 
