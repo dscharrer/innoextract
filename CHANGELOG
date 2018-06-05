@@ -6,6 +6,7 @@ innoextract 1.7 (TDB)
  - Fixed case-sensitivity in parent directory when creating subdirectories
  - Fixed .bin slice file names used with Inno Setup versions older than 4.1.7
  - Made loading of .bin slice files case-insensitive
+ - Now compiles in C++17 mode if supported
 
 innoextract 1.6 (2016-03-24)
  - Added support for Inno Setup 5.5.7 (and 5.5.8) installers
