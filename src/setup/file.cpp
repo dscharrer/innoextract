@@ -193,6 +193,7 @@ void file_entry::load(std::istream & is, const version & version) {
 	}
 	
 	additional_locations.clear();
+	checksum.type = crypto::None;
 	size = 0;
 	
 }

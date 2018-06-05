@@ -32,6 +32,7 @@
 
 #include <boost/cstdint.hpp>
 
+#include "crypto/checksum.hpp"
 #include "setup/item.hpp"
 #include "util/enum.hpp"
 #include "util/flags.hpp"
@@ -109,6 +110,7 @@ struct file_entry : public item {
 	// Information about GOG Galaxy multi-part files
 	// These are not used in normal Inno Setup installers
 	std::vector<boost::uint32_t> additional_locations;
+	crypto::checksum checksum;
 	boost::uint64_t size;
 	
 	void load(std::istream & is, const version & version);

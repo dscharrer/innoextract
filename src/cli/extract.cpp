@@ -48,6 +48,9 @@
 #include "cli/gog.hpp"
 #include "cli/goggalaxy.hpp"
 
+#include "crypto/checksum.hpp"
+#include "crypto/hasher.hpp"
+
 #include "loader/offsets.hpp"
 
 #include "setup/data.hpp"
@@ -127,35 +130,51 @@ class file_output : private boost::noncopyable {
 	const processed_file * file_;
 	util::ofstream stream_;
 	
+	crypto::hasher checksum_;
+	bool checksum_valid_;
+	
 	boost::uint64_t position_;
 	boost::uint64_t total_written_;
 	
+	bool write_;
+	
 public:
 	
-	explicit file_output(const fs::path & dir, const processed_file * f)
+	explicit file_output(const fs::path & dir, const processed_file * f, bool write)
 		: path_(dir / f->path())
 		, file_(f)
+		, checksum_(f->entry().checksum.type)
+		, checksum_valid_(f->entry().checksum.type != crypto::None)
 		, position_(0)
 		, total_written_(0)
+		, write_(write)
 	{
-		try {
-			stream_.open(path_, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-			if(!stream_.is_open()) {
-				throw std::exception();
+		if(write_) {
+			try {
+				stream_.open(path_, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+				if(!stream_.is_open()) {
+					throw std::exception();
+				}
+			} catch(...) {
+				throw std::runtime_error("Coul not open output file \"" + path_.string() + '"');
 			}
-		} catch(...) {
-			throw std::runtime_error("Coul not open output file \"" + path_.string() + '"');
 		}
 	}
 	
 	bool write(const char * data, size_t n) {
 		
-		stream_.write(data, std::streamsize(n));
+		if(write_) {
+			stream_.write(data, std::streamsize(n));
+		}
+		
+		if(checksum_valid_) {
+			checksum_.update(data, n);
+		}
 		
 		position_ += n;
 		total_written_ += n;
 		
-		return !stream_.fail();
+		return !write_ || !stream_.fail();
 	}
 	
 	void seek(boost::uint64_t new_position) {
@@ -164,7 +183,13 @@ public:
 			return;
 		}
 		
+		checksum_valid_ = false;
+		
 		debug("seeking output from " << print_hex(position_) << " to " << print_hex(new_position));
+		
+		if(!write_) {
+			return;
+		}
 		
 		const boost::uint64_t max = boost::uint64_t(std::numeric_limits<util::ofstream::off_type>::max() / 4);
 		
@@ -194,7 +219,9 @@ public:
 	
 	void close() {
 		
-		stream_.close();
+		if(write_) {
+			stream_.close();
+		}
 		
 	}
 	
@@ -203,6 +230,14 @@ public:
 	
 	bool is_complete() const {
 		return total_written_ == file_->entry().size;
+	}
+	
+	bool has_checksum() const {
+		return checksum_valid_ && position_ == file_->entry().size;
+	}
+	
+	crypto::checksum checksum() {
+		return checksum_.finalize();
 	}
 	
 };
@@ -1018,7 +1053,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 				const processed_file * fileinfo = location.first;
 				try {
 					
-					if(!o.extract) {
+					if(!o.extract && fileinfo->entry().checksum.type == crypto::None) {
 						continue;
 					}
 					
@@ -1032,7 +1067,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 					}
 					
 					if(!output) {
-						output = new file_output(o.output_dir, fileinfo);
+						output = new file_output(o.output_dir, fileinfo, o.extract);
 						if(fileinfo->is_multipart()) {
 							multi_outputs.insert(fileinfo, output);
 						} else {
@@ -1083,6 +1118,24 @@ void process_file(const fs::path & file, const extract_options & o) {
 				
 				if(output->file()->is_multipart() && !output->is_complete()) {
 					continue;
+				}
+				
+				// Verify output checksum if available
+				if(output->file()->entry().checksum.type != crypto::None) {
+					if(output->has_checksum()) {
+						crypto::checksum checksum = output->checksum();
+						if(checksum != output->file()->entry().checksum) {
+							log_warning << "Output checksum mismatch for " << output->file()->path() << ":\n"
+							            << " ├─ actual:   " << checksum << '\n'
+							            << " └─ expected: " << output->file()->entry().checksum;
+							if(o.test) {
+								throw std::runtime_error("Integrity test failed!");
+							}
+						}
+					} else {
+						// This should not happen
+						log_warning << "Could not verify output checksum of file " << output->file()->path();
+					}
 				}
 				
 				// Adjust file timestamps
