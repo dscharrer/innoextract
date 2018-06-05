@@ -675,7 +675,7 @@ def _SetFilters(filters):
 class _FunctionState(object):
   """Tracks current function name and the number of lines in its body."""
 
-  _NORMAL_TRIGGER = 250  # for --v=0, 500 for --v=1, etc.
+  _NORMAL_TRIGGER = 260  # for --v=0, 500 for --v=1, etc.
   _TEST_TRIGGER = 400    # about 50% more than _NORMAL_TRIGGER.
 
   def __init__(self):
@@ -2326,9 +2326,9 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, class_state,
       not Match(r'^\s*//.*http(s?)://\S*$', line) and
       not Match(r'^// \$Id:.*#[0-9]+ \$$', line)):
     line_width = GetLineWidth(line)
-    if line_width > 100:
+    if line_width > 120:
       error(filename, linenum, 'whitespace/line_length', 4,
-            'Lines should very rarely be longer than 100 characters')
+            'Lines should very rarely be longer than 120 characters')
 
   if (cleansed_line.count(';') > 1 and
       # allow one-line definitions for small structs or classes
