@@ -226,17 +226,17 @@ std::string create_constraint_expression(std::vector<constraint> & constraints) 
 	
 	std::string result;
 	
-	BOOST_FOREACH(const constraint & constraint, constraints) {
+	BOOST_FOREACH(const constraint & entry, constraints) {
 		
 		if(!result.empty()) {
 			result += " or ";
 		}
 		
-		if(constraint.negated) {
+		if(entry.negated) {
 			result += " not ";
 		}
 		
-		result += constraint.name;
+		result += entry.name;
 		
 	}
 	
