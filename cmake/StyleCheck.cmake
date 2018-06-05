@@ -42,6 +42,9 @@ set(STYLE_FILTER ${STYLE_FILTER},-whitespace/blank_line)
 # Suggessts excessive indentation.
 set(STYLE_FILTER ${STYLE_FILTER},-whitespace/labels)
 
+# Disallows brace on new line after long class memeber init list
+set(STYLE_FILTER ${STYLE_FILTER},-whitespace/braces)
+
 # Don't tell me how to name my variables.
 set(STYLE_FILTER ${STYLE_FILTER},-runtime/arrays)
 
