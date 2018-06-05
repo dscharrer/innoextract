@@ -567,7 +567,7 @@ static void print_aux(const setup::info & info) {
 		          << " (" << guess_extension(info.wizard_images[i]) << ")\n";
 	}
 	
-	for(size_t i = 0; i < info.wizard_images_small.empty(); i++) {
+	for(size_t i = 0; i < info.wizard_images_small.size(); i++) {
 		std::cout << "Wizard small image #" << (i + 1) << ": " << print_bytes(info.wizard_images_small[i].length())
 		          << " (" << guess_extension(info.wizard_images_small[i]) << ")\n";
 	}
