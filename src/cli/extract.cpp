@@ -114,7 +114,7 @@ class processed_directory : public processed_item<setup::directory_entry> {
 public:
 	
 	explicit processed_directory(const std::string & path)
-		: processed_item<setup::directory_entry>(path, NULL) { }
+		: processed_item<setup::directory_entry>(path, NULL), implied_(false) { }
 	
 	bool implied() const { return implied_; }
 	
