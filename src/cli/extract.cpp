@@ -70,24 +70,6 @@ namespace fs = boost::filesystem;
 
 namespace {
 
-struct file_output : private boost::noncopyable {
-	
-	fs::path name;
-	util::ofstream stream;
-	
-	explicit file_output(const fs::path & file) : name(file) {
-		try {
-			stream.open(name, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-			if(!stream.is_open()) {
-				throw std::exception();
-			}
-		} catch(...) {
-			throw std::runtime_error("Coul not open output file \"" + name.string() + '"');
-		}
-	}
-	
-};
-
 template <typename Entry>
 class processed_item {
 	
@@ -131,6 +113,46 @@ public:
 	bool implied() const { return implied_; }
 	
 	void set_implied(bool implied) { implied_ = implied; }
+	
+};
+
+class file_output : private boost::noncopyable {
+	
+	fs::path path_;
+	const processed_file * file_;
+	util::ofstream stream_;
+	
+public:
+	
+	explicit file_output(const fs::path & dir, const processed_file * f)
+		: path_(dir / f->path())
+		, file_(f)
+	{
+		try {
+			stream_.open(path_, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+			if(!stream_.is_open()) {
+				throw std::exception();
+			}
+		} catch(...) {
+			throw std::runtime_error("Coul not open output file \"" + path_.string() + '"');
+		}
+	}
+	
+	bool write(const char * data, size_t n) {
+		
+		stream_.write(data, std::streamsize(n));
+		
+		return !stream_.fail();
+	}
+	
+	void close() {
+		
+		stream_.close();
+		
+	}
+	
+	const fs::path & path() const { return path_; }
+	const processed_file * file() const { return file_; }
 	
 };
 
@@ -911,16 +933,23 @@ void process_file(const fs::path & file, const extract_options & o) {
 			file_source = stream::file_reader::get(*chunk_source, file, &checksum);
 			
 			// Open output files
-			boost::ptr_vector<file_output> output;
-			if(!o.test) {
-				output.reserve(names.size());
-				BOOST_FOREACH(const processed_file * name, names) {
-					try {
-						output.push_back(new file_output(o.output_dir / name->path()));
-					} catch(boost::bad_pointer &) {
-						// should never happen
-						std::terminate();
+			boost::ptr_vector<file_output> single_outputs;
+			std::vector<file_output *> outputs;
+			BOOST_FOREACH(const processed_file * name, names) {
+				try {
+					
+					if(!o.extract) {
+						continue;
 					}
+					
+					file_output * output = new file_output(o.output_dir, name);
+					single_outputs.push_back(output);
+					
+					outputs.push_back(output);
+					
+				} catch(boost::bad_pointer &) {
+					// should never happen
+					std::terminate();
 				}
 			}
 			
@@ -931,11 +960,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 				std::streamsize buffer_size = std::streamsize(boost::size(buffer));
 				std::streamsize n = file_source->read(buffer, buffer_size).gcount();
 				if(n > 0) {
-					BOOST_FOREACH(file_output & out, output) {
-						out.stream.write(buffer, n);
-						if(out.stream.fail()) {
-							throw std::runtime_error("Error writing file \""
-							                         + out.name.string() + '"');
+					BOOST_FOREACH(file_output * output, outputs) {
+						bool success = output->write(buffer, size_t(n));
+						if(!success) {
+							throw std::runtime_error("Error writing file \"" + output->path().string() + '"');
 						}
 					}
 					extract_progress.update(boost::uint64_t(n));
@@ -943,24 +971,27 @@ void process_file(const fs::path & file, const extract_options & o) {
 				}
 			}
 			
-			if(output_size != info.data_entries[location.second].uncompressed_size) {
-				log_warning << "Unexpected output file size: " << output_size << " != "
-				            << info.data_entries[location.second].uncompressed_size;
+			const setup::data_entry & data = info.data_entries[location.second];
+			
+			if(output_size != data.uncompressed_size) {
+				log_warning << "Unexpected output file size: " << output_size << " != " << data.uncompressed_size;
 			}
 			
-			// Adjust file timestamps
-			if(o.preserve_file_times) {
-				const setup::data_entry & data = info.data_entries[location.second];
-				util::time filetime = data.timestamp;
-				if(o.local_timestamps && !(data.options & data.TimeStampInUTC)) {
-					filetime = util::to_local_time(filetime);
-				}
-				BOOST_FOREACH(file_output & out, output) {
-					out.stream.close();
-					if(!util::set_file_time(out.name, filetime, data.timestamp_nsec)) {
-						log_warning << "Error setting timestamp on file " << out.name;
+			util::time filetime = data.timestamp;
+			if(o.extract && o.preserve_file_times && o.local_timestamps && !(data.options & data.TimeStampInUTC)) {
+				filetime = util::to_local_time(filetime);
+			}
+			
+			BOOST_FOREACH(file_output * output, outputs) {
+				
+				// Adjust file timestamps
+				if(o.extract && o.preserve_file_times) {
+					output->close();
+					if(!util::set_file_time(output->path(), filetime, data.timestamp_nsec)) {
+						log_warning << "Error setting timestamp on file " << output->path();
 					}
 				}
+				
 			}
 			
 			// Verify checksums
@@ -972,6 +1003,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 					throw std::runtime_error("Integrity test failed!");
 				}
 			}
+			
 		}
 		
 		#ifdef DEBUG
