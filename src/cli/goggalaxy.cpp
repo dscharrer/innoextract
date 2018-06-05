@@ -271,15 +271,11 @@ void parse_galaxy_files(setup::info & info) {
 				file.destination = start_info[1];
 			}
 			
-			if(start_info.size() < 1) {
-				log_warning << "Missing checksum for GOG Galaxy file " << file.destination;
-			} else {
-				file.checksum = parse_checksum(start_info[0]);
-				file.size = 0;
-				if(file.checksum.type == crypto::None) {
-					log_warning << "Could not parse checksum for GOG Galaxy file " << file.destination
-					            << ": " << start_info[0];
-				}
+			file.checksum = parse_checksum(start_info[0]);
+			file.size = 0;
+			if(file.checksum.type == crypto::None) {
+				log_warning << "Could not parse checksum for GOG Galaxy file " << file.destination
+				            << ": " << start_info[0];
 			}
 			
 			if(start_info.size() < 3) {
@@ -374,14 +370,11 @@ void parse_galaxy_files(setup::info & info) {
 		if(!file.destination.empty()) {
 			// languages, architectures, winversions
 			std::vector<std::string> check = parse_function_call(file.check, "check_if_install");
-			if(!check.empty()) {
-				if(check.size() >= 1 && !check[0].empty()) {
-					std::vector<constraint> languages = parse_constraints(check[0]);
-					BOOST_FOREACH(const constraint & language, languages) {
-						all_languages.insert(language.name);
-					}
+			if(!check.empty() && !check[0].empty()) {
+				std::vector<constraint> languages = parse_constraints(check[0]);
+				BOOST_FOREACH(const constraint & language, languages) {
+					all_languages.insert(language.name);
 				}
-				
 			}
 		}
 		
@@ -408,7 +401,7 @@ void parse_galaxy_files(setup::info & info) {
 		std::vector<std::string> check = parse_function_call(file.check, "check_if_install");
 		if(!check.empty()) {
 			
-			if(check.size() >= 1 && !check[0].empty()) {
+			if(!check[0].empty()) {
 				
 				std::vector<constraint> languages = parse_constraints(check[0]);
 				
@@ -460,7 +453,7 @@ void parse_galaxy_files(setup::info & info) {
 		std::vector<std::string> dependency = parse_function_call(file.check, "check_if_install_dependency");
 		if(!dependency.empty()) {
 			
-			if(file.components.empty() && dependency.size() >= 1 && !dependency[0].empty()) {
+			if(file.components.empty() && !dependency[0].empty()) {
 				file.components = dependency[0];
 			}
 			
