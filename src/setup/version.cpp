@@ -219,7 +219,7 @@ void version::load(std::istream & is) {
 			unsigned b = util::to_unsigned(version_str.data() + 3, 1);
 			unsigned c = util::to_unsigned(version_str.data() + 5, 2);
 			value = INNO_VERSION(a, b, c);
-		} catch(boost::bad_lexical_cast) {
+		} catch(const boost::bad_lexical_cast &) {
 			throw version_error();
 		}
 		
@@ -304,7 +304,7 @@ void version::load(std::istream & is) {
 			value = INNO_VERSION_EXT(a, b, c, d);
 			break;
 			
-		} catch(boost::bad_lexical_cast) {
+		} catch(const boost::bad_lexical_cast &) {
 			continue;
 		}
 	}
