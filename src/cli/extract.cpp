@@ -109,8 +109,6 @@ public:
 
 class processed_directory : public processed_item<setup::directory_entry> {
 	
-	std::string path_;
-	const setup::directory_entry * entry_;
 	bool implied_;
 	
 public:
