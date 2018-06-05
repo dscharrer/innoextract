@@ -178,7 +178,7 @@ void data_entry::load(std::istream & is, const version & version) {
 	}
 }
 
-} // namespace setup;
+} // namespace setup
 
 NAMES(setup::data_entry::flags, "File Location Option",
 	"version info valid",
