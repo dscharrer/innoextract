@@ -20,6 +20,8 @@
 
 #include "chunk.hpp"
 
+#include <cstring>
+
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/make_shared.hpp>
@@ -69,7 +71,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 	}
 	
 	char magic[sizeof(chunk_id)];
-	if(base.read(magic, 4) != 4 || memcmp(magic, chunk_id, sizeof(chunk_id))) {
+	if(base.read(magic, 4) != 4 || std::memcmp(magic, chunk_id, sizeof(chunk_id)) != 0) {
 		throw chunk_error("bad chunk magic");
 	}
 	
