@@ -26,6 +26,8 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include "crypto/checksum.hpp"
+
 #include "setup/data.hpp"
 #include "setup/file.hpp"
 #include "setup/info.hpp"
@@ -133,6 +135,51 @@ std::vector<std::string> parse_function_call(const std::string & code, const std
 	return arguments;
 }
 
+int parse_hex(char c) {
+	if(c >= '0' && c <= '9') {
+		return c - '0';
+	} else if(c >= 'a' && c <= 'f') {
+		return c - 'a' + 10;
+	} else if(c >= 'A' && c <= 'F') {
+		return c - 'a' + 10;
+	} else {
+		return -1;
+	}
+}
+
+crypto::checksum parse_checksum(const std::string & string) {
+	
+	crypto::checksum checksum;
+	checksum.type = crypto::MD5;
+	
+	if(string.length() != 32) {
+		// Unknown checksum type
+		checksum.type = crypto::None;
+		return checksum;
+	}
+	
+	for(size_t i = 0; i < 16; i++) {
+		int a = parse_hex(string[2 * i]);
+		int b = parse_hex(string[2 * i + 1]);
+		if(a < 0 || b < 0) {
+			checksum.type = crypto::None;
+			break;
+		}
+		checksum.md5[i] = char((a << 4) | b);
+	}
+	
+	return checksum;
+}
+
+struct constraint {
+	
+	std::string name;
+	bool negated;
+	
+	constraint(const std::string & name, bool negated = false) : name(name), negated(negated) { }
+	
+};
+
 } // anonymous namespace
 
 void parse_galaxy_files(setup::info & info) {
@@ -157,6 +204,17 @@ void parse_galaxy_files(setup::info & info) {
 			// Recover the original filename - parts are named after the MD5 hash of their contents
 			if(start_info.size() >= 2 && !start_info[1].empty()) {
 				file.destination = start_info[1];
+			}
+			
+			if(start_info.size() < 1) {
+				log_warning << "Missing checksum for GOG Galaxy file " << file.destination;
+			} else {
+				file.checksum = parse_checksum(start_info[0]);
+				file.size = 0;
+				if(file.checksum.type == crypto::None) {
+					log_warning << "Could not parse checksum for GOG Galaxy file " << file.destination
+					            << ": " << start_info[0];
+				}
 			}
 			
 			if(start_info.size() < 3) {
