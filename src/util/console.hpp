@@ -43,8 +43,6 @@ struct shell_command {
 	const char * command;
 };
 
-std::ostream & operator<<(std::ostream & os, const shell_command command);
-
 //! Reset the output color to the original value.
 extern shell_command reset;
 
@@ -69,7 +67,7 @@ extern shell_command dim_white;
 //! The last set output color.
 extern shell_command current;
 
-inline std::ostream & operator<<(std::ostream & os, const shell_command command) {
+inline std::ostream & operator<<(std::ostream & os, shell_command command) {
 	color::current = command;
 	return os << command.command;
 }
