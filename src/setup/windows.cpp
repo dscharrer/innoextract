@@ -118,7 +118,7 @@ const char * get_version_name(const windows_version::data & version, bool nt = f
 	return NULL;
 }
 
-} // nanonymous namespace
+} // anonymous namespace
 
 std::ostream & operator<<(std::ostream & os, const windows_version::data & v) {
 	os << v.major << '.' << v.minor;
