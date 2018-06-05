@@ -5,6 +5,7 @@ innoextract 1.7 (TDB)
  - Fixed building in paths that contain regex expressions
  - Fixed case-sensitivity in parent directory when creating subdirectories
  - Fixed .bin slice file names used with Inno Setup versions older than 4.1.7
+ - Fixed build with newer libc++ versions
  - Made loading of .bin slice files case-insensitive
  - Now compiles in C++17 mode if supported
 

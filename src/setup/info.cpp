@@ -226,7 +226,7 @@ void info::load(std::istream & is, entry_types entries) {
 		entries |= NoSkip;
 	}
 	if(!version.known || ambiguous) {
-		std::ios_base::streampos start = is.tellg();
+		std::streampos start = is.tellg();
 		try {
 			load(is, entries, version);
 			return;
