@@ -46,6 +46,7 @@
 
 #include "cli/debug.hpp"
 #include "cli/gog.hpp"
+#include "cli/goggalaxy.hpp"
 
 #include "loader/offsets.hpp"
 
@@ -647,6 +648,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 	
 	if(!o.list && !o.test && !o.extract) {
 		return;
+	}
+	
+	if(o.gog) {
+		gog::parse_galaxy_files(info);
 	}
 	
 	if(!o.silent && multiple_sections) {
