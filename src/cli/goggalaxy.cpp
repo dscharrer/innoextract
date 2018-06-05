@@ -470,4 +470,4 @@ void parse_galaxy_files(setup::info & info) {
 	
 }
 
-} //namespace gog
+} // namespace gog
