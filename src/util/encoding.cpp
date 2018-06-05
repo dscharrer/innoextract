@@ -110,6 +110,7 @@ static void to_utf8_fallback(const std::string & from, std::string & to, codepag
 	switch(cp) {
 		case  1201: shift = 1u * 8u; break; // UTF-16BE
 		case 12001: shift = 3u * 8u; break; // UTF-32BE
+		default: break;
 	}
 	
 	to.clear();
@@ -176,6 +177,7 @@ static void utf8_write(std::string & to, unicode_char chr) {
 		case 3: bytes[2] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6; /* fall-through */
 		case 2: bytes[1] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6; /* fall-through */
 		case 1: bytes[0] = static_cast<boost::uint8_t>(chr | first_bytes[length]);
+		default: break;
 	}
 	
 	// Add them to the output
@@ -185,6 +187,7 @@ static void utf8_write(std::string & to, unicode_char chr) {
 		case 3: to.push_back(char(*cur_byte++)); /* fall-through */
 		case 2: to.push_back(char(*cur_byte++)); /* fall-through */
 		case 1: to.push_back(char(*cur_byte++));
+		default: break;
 	}
 	
 }
