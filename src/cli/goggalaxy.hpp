@@ -41,6 +41,8 @@ namespace gog {
  *
  * Each part (including the first) has an after_install script with a checksum for the decompressed
  * part as well as compressed and decompressed sizes.
+ *
+ * Additionally, language constrained are also parsed from check scripts and added to the language list.
  */
 void parse_galaxy_files(setup::info & info);
 

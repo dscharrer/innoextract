@@ -20,11 +20,13 @@
 
 #include "cli/goggalaxy.hpp"
 
+#include <set>
 #include <string>
 #include <vector>
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include "crypto/checksum.hpp"
 
@@ -180,12 +182,75 @@ struct constraint {
 	
 };
 
+std::vector<constraint> parse_constraints(const std::string & input) {
+	
+	std::vector<constraint> result;
+	
+	size_t start = 0;
+	
+	while(start < input.length()) {
+		
+		start = input.find_first_not_of(" \t\r\n", start);
+		if(start == std::string::npos) {
+			break;
+		}
+		
+		bool negated = false;
+		if(input[start] == '!') {
+			negated = true;
+			start++;
+		}
+		
+		size_t end = input.find('#', start);
+		if(end == std::string::npos) {
+			end = input.length();
+		}
+		
+		if(end != start) {
+			std::string token = input.substr(start, end - start);
+			boost::trim(token);
+			result.push_back(constraint(token, negated));
+		}
+		
+		if(end == std::string::npos) {
+			end = input.length();
+		}
+		
+		start = end + 1;
+	}
+	
+	return result;
+}
+
+std::string create_constraint_expression(std::vector<constraint> & constraints) {
+	
+	std::string result;
+	
+	BOOST_FOREACH(const constraint & constraint, constraints) {
+		
+		if(!result.empty()) {
+			result += " or ";
+		}
+		
+		if(constraint.negated) {
+			result += " not ";
+		}
+		
+		result += constraint.name;
+		
+	}
+	
+	return result;
+}
+
 } // anonymous namespace
 
 void parse_galaxy_files(setup::info & info) {
 	
 	setup::file_entry * file_start = NULL;
 	size_t remaining_parts = 0;
+	
+	std::set<std::string> all_languages;
 	
 	BOOST_FOREACH(setup::file_entry & file, info.files) {
 		
@@ -306,10 +371,101 @@ void parse_galaxy_files(setup::info & info) {
 			remaining_parts = 0;
 		}
 		
+		if(!file.destination.empty()) {
+			// languages, architectures, winversions
+			std::vector<std::string> check = parse_function_call(file.check, "check_if_install");
+			if(!check.empty()) {
+				if(check.size() >= 1 && !check[0].empty()) {
+					std::vector<constraint> languages = parse_constraints(check[0]);
+					BOOST_FOREACH(const constraint & language, languages) {
+						all_languages.insert(language.name);
+					}
+				}
+				
+			}
+		}
+		
 	}
 	
 	if(remaining_parts != 0) {
 		log_warning << "Incomplete GOG Galaxy file " << file_start->destination;
+	}
+	
+	/*
+	 * GOG Galaxy multi-part files also have their own constraints, convert these to standard
+	 * Inno Setup ones.
+	 *
+	 * Do this in a separate loop to not break constraint checks above.
+	 */
+	
+	BOOST_FOREACH(setup::file_entry & file, info.files) {
+		
+		if(file.destination.empty()) {
+			continue;
+		}
+		
+		// languages, architectures, winversions
+		std::vector<std::string> check = parse_function_call(file.check, "check_if_install");
+		if(!check.empty()) {
+			
+			if(check.size() >= 1 && !check[0].empty()) {
+				
+				std::vector<constraint> languages = parse_constraints(check[0]);
+				
+				// Ignore constraints that just contain all languages
+				bool has_all_languages = false;
+				if(languages.size() >= all_languages.size() && all_languages.size() > 1) {
+					has_all_languages = true;
+					BOOST_FOREACH(const std::string & known_language, all_languages) {
+						bool has_language = false;
+						BOOST_FOREACH(const constraint & language, languages) {
+							if(!language.negated && language.name == known_language) {
+								has_language = true;
+								break;
+							}
+						}
+						if(!has_language) {
+							has_all_languages = false;
+							break;
+						}
+					}
+				}
+				
+				if(!languages.empty() && !has_all_languages) {
+					if(!file.languages.empty()) {
+						log_warning << "Overwriting language constraints for GOG Galaxy file " << file.destination;
+					}
+					file.languages = create_constraint_expression(languages);
+				}
+				
+			}
+			
+			if(check.size() >= 2 && !check[1].empty() && check[1] != "32#64#") {
+				log_warning << "Ignoring architecture constraint for GOG Galaxy file " << file.destination
+				            << ": " << check[1];
+			}
+			
+			if(check.size() >= 3 && !check[2].empty()) {
+				log_warning << "Ignoring OS constraint for GOG Galaxy file " << file.destination
+				            << ": " << check[2];
+			}
+			
+			if(file.components.empty()) {
+				file.components = "game";
+			}
+			
+		}
+		
+		// component id, ?
+		std::vector<std::string> dependency = parse_function_call(file.check, "check_if_install_dependency");
+		if(!dependency.empty()) {
+			
+			if(file.components.empty() && dependency.size() >= 1 && !dependency[0].empty()) {
+				file.components = dependency[0];
+			}
+			
+		}
+		
 	}
 	
 }
