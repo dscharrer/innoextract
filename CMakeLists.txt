@@ -11,6 +11,14 @@ endif()
 
 # Define configuration options
 
+macro(suboption _var _comment _type _default)
+	if(NOT DEFINED ${_var})
+		set(${_var} "${_default}")
+	else()
+		set(${_var} "${${_var}}" CACHE ${_type} "${_comment}")
+	endif()
+endmacro()
+
 option(STRICT_USE "Abort if there are missing optional dependencies"  OFF)
 option(USE_LZMA "Build lzma decompression support" ON)
 set(WITH_CONV CACHE STRING "The library to use for charset conversions")
@@ -20,9 +28,13 @@ option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
 option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
 option(USE_CXX11 "Try to use C++11 if available" ON)
 option(USE_DYNAMIC_UTIMENSAT "Dynamically load utimensat if not available at compile time" OFF)
-if(NOT DEFINED DEBUG AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(DEBUG 1)
+
+set(default_DEBUG OFF)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(default_DEBUG ON)
 endif()
+suboption(DEBUG "Build with debug output" BOOL ${default_DEBUG})
+
 if(DEBUG)
 	add_definitions(-DDEBUG=1)
 endif()
