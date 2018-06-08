@@ -619,6 +619,169 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 	return multiple_sections;
 }
 
+struct processed_entries {
+	
+	FilesMap files;
+	
+	DirectoriesMap directories;
+	
+};
+
+processed_entries filter_entries(const extract_options & o, const setup::info & info) {
+	
+	processed_entries processed;
+	
+	#if BOOST_VERSION >= 105000
+	processed.files.reserve(info.files.size());
+	#endif
+	
+	#if BOOST_VERSION >= 104800
+	processed.directories.reserve(info.directories.size()
+	                              + size_t(std::log(double(info.files.size()))));
+	#endif
+	
+	CollisionMap collisions;
+	
+	path_filter includes(o);
+	
+	// Filter the directories to be created
+	BOOST_FOREACH(const setup::directory_entry & directory, info.directories) {
+		
+		if(!o.extract_temp && (directory.options & setup::directory_entry::DeleteAfterInstall)) {
+			continue; // Ignore temporary dirs
+		}
+		
+		if(!directory.languages.empty()) {
+			if(!o.language.empty() && !setup::expression_match(o.language, directory.languages)) {
+				continue; // Ignore other languages
+			}
+		} else if(o.language_only) {
+			continue; // Ignore language-agnostic dirs
+		}
+		
+		std::string path = o.filenames.convert(directory.name);
+		if(path.empty()) {
+			continue; // Don't know what to do with this
+		}
+		std::string internal_path = boost::algorithm::to_lower_copy(path);
+		
+		bool path_included = includes.match(internal_path);
+		
+		insert_dirs(processed.directories, includes, internal_path, path, path_included);
+		
+		DirectoriesMap::iterator it;
+		if(path_included) {
+			std::pair<DirectoriesMap::iterator, bool> existing = processed.directories.insert(
+				std::make_pair(internal_path, processed_directory(path))
+			);
+			it = existing.first;
+		} else {
+			it = processed.directories.find(internal_path);
+			if(it == processed.directories.end()) {
+				continue;
+			}
+		}
+		
+		it->second.set_entry(&directory);
+	}
+	
+	// Filter the files to be extracted
+	BOOST_FOREACH(const setup::file_entry & file, info.files) {
+		
+		if(file.location >= info.data_entries.size()) {
+			continue; // Ignore external files (copy commands)
+		}
+		
+		if(!o.extract_temp && (file.options & setup::file_entry::DeleteAfterInstall)) {
+			continue; // Ignore temporary files
+		}
+		
+		if(!file.languages.empty()) {
+			if(!o.language.empty() && !setup::expression_match(o.language, file.languages)) {
+				continue; // Ignore other languages
+			}
+		} else if(o.language_only) {
+			continue; // Ignore language-agnostic files
+		}
+		
+		std::string path = o.filenames.convert(file.destination);
+		if(path.empty()) {
+			continue; // Internal file, not extracted
+		}
+		std::string internal_path = boost::algorithm::to_lower_copy(path);
+		
+		bool path_included = includes.match(internal_path);
+		
+		insert_dirs(processed.directories, includes, internal_path, path, path_included);
+		
+		if(!path_included) {
+			continue; // Ignore excluded file
+		}
+		
+		std::pair<FilesMap::iterator, bool> insertion = processed.files.insert(std::make_pair(
+			internal_path, processed_file(&file, path)
+		));
+		
+		if(!insertion.second) {
+			// Collision!
+			processed_file & existing = insertion.first->second;
+			
+			if(o.collisions == ErrorOnCollisions) {
+				throw std::runtime_error("Collision: " + path);
+			} else if(o.collisions == RenameAllCollisions) {
+				collisions[internal_path].push_back(processed_file(&file, path));
+			} else {
+				
+				const setup::data_entry & newdata = info.data_entries[file.location];
+				const setup::data_entry & olddata = info.data_entries[existing.entry().location];
+				const char * skip = handle_collision(existing.entry(), olddata, file, newdata);
+				
+				if(!o.default_language.empty()) {
+					bool oldlang = setup::expression_match(o.default_language, file.languages);
+					bool newlang = setup::expression_match(o.default_language, existing.entry().languages);
+					if(oldlang && !newlang) {
+						skip = NULL;
+					} else if(!oldlang && newlang) {
+						skip = "overwritten";
+					}
+				}
+				
+				if(o.collisions == RenameCollisions) {
+					const setup::file_entry & clobberedfile = skip ? file : existing.entry();
+					const std::string & clobberedpath = skip ? path : existing.path();
+					collisions[internal_path].push_back(processed_file(&clobberedfile, clobberedpath));
+				} else if(!o.silent) {
+					std::cout << " - ";
+					const std::string & clobberedpath = skip ? path : existing.path();
+					std::cout << '"' << color::dim_yellow << clobberedpath << color::reset << '"';
+					print_filter_info(skip ? file : existing.entry());
+					if(!o.quiet) {
+						print_size_info(skip ? newdata.file : olddata.file, skip ? file.size : existing.entry().size);
+					}
+					std::cout << " - " << (skip ? skip : "overwritten") << '\n';
+				}
+				
+				if(!skip) {
+					existing.set_entry(&file);
+					if(file.type != setup::file_entry::UninstExe) {
+						// Old file is "deleted" first → use case from new file
+						existing.set_path(path);
+					}
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	if(o.collisions == RenameCollisions || o.collisions == RenameAllCollisions) {
+		rename_collisions(o, processed.files, collisions);
+	}
+	
+	return processed;
+}
+
 } // anonymous namespace
 
 void process_file(const fs::path & file, const extract_options & o) {
@@ -698,157 +861,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 		std::cout << "Files:\n";
 	}
 	
-	FilesMap processed_files;
-	#if BOOST_VERSION >= 105000
-	processed_files.reserve(info.files.size());
-	#endif
-	
-	DirectoriesMap processed_directories;
-	#if BOOST_VERSION >= 104800
-	processed_directories.reserve(info.directories.size()
-	                              + size_t(std::log(double(info.files.size()))));
-	#endif
-	
-	CollisionMap collisions;
-	
-	path_filter includes(o);
-	
-	// Filter the directories to be created
-	BOOST_FOREACH(const setup::directory_entry & directory, info.directories) {
-		
-		if(!o.extract_temp && (directory.options & setup::directory_entry::DeleteAfterInstall)) {
-			continue; // Ignore temporary dirs
-		}
-		
-		if(!directory.languages.empty()) {
-			if(!o.language.empty() && !setup::expression_match(o.language, directory.languages)) {
-				continue; // Ignore other languages
-			}
-		} else if(o.language_only) {
-			continue; // Ignore language-agnostic dirs
-		}
-		
-		std::string path = o.filenames.convert(directory.name);
-		if(path.empty()) {
-			continue; // Don't know what to do with this
-		}
-		std::string internal_path = boost::algorithm::to_lower_copy(path);
-		
-		bool path_included = includes.match(internal_path);
-		
-		insert_dirs(processed_directories, includes, internal_path, path, path_included);
-		
-		DirectoriesMap::iterator it;
-		if(path_included) {
-			std::pair<DirectoriesMap::iterator, bool> existing = processed_directories.insert(
-				std::make_pair(internal_path, processed_directory(path))
-			);
-			it = existing.first;
-		} else {
-			it = processed_directories.find(internal_path);
-			if(it == processed_directories.end()) {
-				continue;
-			}
-		}
-		
-		it->second.set_entry(&directory);
-	}
-	
-	// Filter the files to be extracted
-	BOOST_FOREACH(const setup::file_entry & file, info.files) {
-		
-		if(file.location >= info.data_entries.size()) {
-			continue; // Ignore external files (copy commands)
-		}
-		
-		if(!o.extract_temp && (file.options & setup::file_entry::DeleteAfterInstall)) {
-			continue; // Ignore temporary files
-		}
-		
-		if(!file.languages.empty()) {
-			if(!o.language.empty() && !setup::expression_match(o.language, file.languages)) {
-				continue; // Ignore other languages
-			}
-		} else if(o.language_only) {
-			continue; // Ignore language-agnostic files
-		}
-		
-		std::string path = o.filenames.convert(file.destination);
-		if(path.empty()) {
-			continue; // Internal file, not extracted
-		}
-		std::string internal_path = boost::algorithm::to_lower_copy(path);
-		
-		bool path_included = includes.match(internal_path);
-		
-		insert_dirs(processed_directories, includes, internal_path, path, path_included);
-		
-		if(!path_included) {
-			continue; // Ignore excluded file
-		}
-		
-		std::pair<FilesMap::iterator, bool> insertion = processed_files.insert(std::make_pair(
-			internal_path, processed_file(&file, path)
-		));
-		
-		if(!insertion.second) {
-			// Collision!
-			processed_file & existing = insertion.first->second;
-			
-			if(o.collisions == ErrorOnCollisions) {
-				throw std::runtime_error("Collision: " + path);
-			} else if(o.collisions == RenameAllCollisions) {
-				collisions[internal_path].push_back(processed_file(&file, path));
-			} else {
-				
-				const setup::data_entry & newdata = info.data_entries[file.location];
-				const setup::data_entry & olddata = info.data_entries[existing.entry().location];
-				const char * skip = handle_collision(existing.entry(), olddata, file, newdata);
-				
-				if(!o.default_language.empty()) {
-					bool oldlang = setup::expression_match(o.default_language, file.languages);
-					bool newlang = setup::expression_match(o.default_language, existing.entry().languages);
-					if(oldlang && !newlang) {
-						skip = NULL;
-					} else if(!oldlang && newlang) {
-						skip = "overwritten";
-					}
-				}
-				
-				if(o.collisions == RenameCollisions) {
-					const setup::file_entry & clobberedfile = skip ? file : existing.entry();
-					const std::string & clobberedpath = skip ? path : existing.path();
-					collisions[internal_path].push_back(processed_file(&clobberedfile, clobberedpath));
-				} else if(!o.silent) {
-					std::cout << " - ";
-					const std::string & clobberedpath = skip ? path : existing.path();
-					std::cout << '"' << color::dim_yellow << clobberedpath << color::reset << '"';
-					print_filter_info(skip ? file : existing.entry());
-					if(!o.quiet) {
-						print_size_info(skip ? newdata.file : olddata.file, skip ? file.size : existing.entry().size);
-					}
-					std::cout << " - " << (skip ? skip : "overwritten") << '\n';
-				}
-				
-				if(!skip) {
-					existing.set_entry(&file);
-					if(file.type != setup::file_entry::UninstExe) {
-						// Old file is "deleted" first → use case from new file
-						existing.set_path(path);
-					}
-				}
-				
-			}
-			
-		}
-		
-	}
-	
-	if(o.collisions == RenameCollisions || o.collisions == RenameAllCollisions) {
-		rename_collisions(o, processed_files, collisions);
-		collisions.clear();
-	}
-	
+	processed_entries processed = filter_entries(o, info);
 	
 	if(o.extract && !o.output_dir.empty()) {
 		fs::create_directories(o.output_dir);
@@ -856,7 +869,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 	
 	if(o.list || o.extract) {
 		
-		BOOST_FOREACH(const DirectoriesMap::value_type & i, processed_directories) {
+		BOOST_FOREACH(const DirectoriesMap::value_type & i, processed.directories) {
 			
 			const std::string & path = i.second.path();
 			
@@ -893,7 +906,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 	typedef std::pair<const processed_file *, boost::uint64_t> output_location;
 	std::vector< std::vector<output_location> > files_for_location;
 	files_for_location.resize(info.data_entries.size());
-	BOOST_FOREACH(const FilesMap::value_type & i, processed_files) {
+	BOOST_FOREACH(const FilesMap::value_type & i, processed.files) {
 		const processed_file & file = i.second;
 		files_for_location[file.entry().location].push_back(output_location(&file, 0));
 		if(o.test || o.extract) {
