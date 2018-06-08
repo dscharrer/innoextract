@@ -137,21 +137,11 @@ static void to_utf8_fallback(const std::string & from, std::string & to, codepag
 	}
 	
 	if(warn) {
-		static bool warned = false;
 		log_warning << "Unknown data while converting from CP" << cp << " to UTF-8.";
-		if(!warned && (cp == cp_windows1252 || cp == cp_utf16le)) {
-			#if INNOEXTRACT_HAVE_ICONV
-			log_warning << " └─ make sure your iconv installation supports Windows-1252 and UTF-16LE";
-			#elif !INNOEXTRACT_HAVE_BUILTIN_CONV && !INNOEXTRACT_HAVE_WIN32_CONV
-			log_warning << " └─ build innoextract with charset conversion routines enabled!";
-			#endif
-			warned = true;
-		}
 	}
 	
 }
 
-#if INNOEXTRACT_HAVE_BUILTIN_CONV
 
 static size_t utf8_length(unicode_char chr) {
 	if     (chr <  0x80)       return 1;
@@ -298,19 +288,6 @@ static void windows1252_to_utf8(const std::string & from, std::string & to) {
 	}
 	
 }
-
-static bool to_utf8_builtin(const std::string & from, std::string & to, codepage_id cp) {
-	
-	switch(cp) {
-		case cp_utf16le:     utf16le_to_utf8(from, to); return true;
-		case cp_windows1252: windows1252_to_utf8(from, to); return true;
-		case cp_iso_8859_1:  windows1252_to_utf8(from, to); return true;
-		default:             return false;
-	}
-	
-}
-
-#endif // INNOEXTRACT_HAVE_BUILTIN_CONV
 
 #if INNOEXTRACT_HAVE_ICONV
 
@@ -574,11 +551,12 @@ void to_utf8(const std::string & from, std::string & to, codepage_id cp) {
 		return;
 	}
 	
-	#if INNOEXTRACT_HAVE_BUILTIN_CONV
-	if(to_utf8_builtin(from, to, cp)) {
-		return;
+	switch(cp) {
+		case cp_utf16le:     utf16le_to_utf8(from, to); return;
+		case cp_windows1252: windows1252_to_utf8(from, to); return;
+		case cp_iso_8859_1:  windows1252_to_utf8(from, to); return;
+		default: break;
 	}
-	#endif
 	
 	#if INNOEXTRACT_HAVE_ICONV
 	if(to_utf8_iconv(from, to, cp)) {

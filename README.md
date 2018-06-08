@@ -45,7 +45,6 @@ Build options:
 |:------------------------ |:---------:|:----------- |
 | `USE_LZMA`               | `ON`      | Use `liblzma`.
 | `WITH_CONV`              | *not set* | The charset conversion library to use. Valid values are `iconv`, `win32` and `builtin`^1. If not set, a library appropriate for the target platform will be chosen.
-| `ENABLE_BUILTIN_CONV`    | `ON`      | Build internal Windows-1252 and UTF-16LE to UTF-18 charset conversion routines. These might be used even if `WITH_CONV` is not set to `builtin`.
 | `CMAKE_BUILD_TYPE`       | `Release` | Set to `Debug` to enable debug output.
 | `DEBUG`                  | `OFF`^2   | Enable debug output and runtime checks.
 | `DEBUG_EXTRA`            | `OFF`     | Expensive debug options.

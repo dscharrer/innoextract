@@ -22,7 +22,6 @@ endmacro()
 option(STRICT_USE "Abort if there are missing optional dependencies"  OFF)
 option(USE_LZMA "Build lzma decompression support" ON)
 set(WITH_CONV CACHE STRING "The library to use for charset conversions")
-option(ENABLE_BUILTIN_CONV "Build internal charset conversion routines" ON)
 option(DEBUG_EXTRA "Expensive debug options" OFF)
 option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
 option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
@@ -162,7 +161,6 @@ endif()
 
 set(INNOEXTRACT_HAVE_ICONV 0)
 set(INNOEXTRACT_HAVE_WIN32_CONV 0)
-set(INNOEXTRACT_HAVE_BUILTIN_CONV ${ENABLE_BUILTIN_CONV})
 if(WIN32 AND (NOT WITH_CONV OR WITH_CONV STREQUAL "win32"))
 	set(INNOEXTRACT_HAVE_WIN32_CONV 1)
 elseif(NOT WITH_CONV OR WITH_CONV STREQUAL "iconv")
@@ -181,11 +179,6 @@ elseif(NOT WITH_CONV OR WITH_CONV STREQUAL "iconv")
 	endif()
 elseif(WITH_CONV AND NOT WITH_CONV STREQUAL "builtin")
 	message(FATAL_ERROR "Invalid WITH_CONV option: ${WITH_CONV}")
-endif()
-if(NOT INNOEXTRACT_HAVE_ICONV AND NOT INNOEXTRACT_HAVE_WIN32_CONV
-   AND NOT INNOEXTRACT_HAVE_BUILTIN_CONV)
-	message(WARNING "\nBuilding without any charset conversion support.\n"
-	                "Any non-ASCII characters in extracted filenames will be missing.")
 endif()
 
 
@@ -470,6 +463,6 @@ print_configuration("File time precision" FIRST
 print_configuration("Charset conversion"
 	INNOEXTRACT_HAVE_ICONV        "iconv"
 	INNOEXTRACT_HAVE_WIN32_CONV   "Win32"
-	INNOEXTRACT_HAVE_BUILTIN_CONV "builtin"
+	1                             "builtin"
 )
 message("")
