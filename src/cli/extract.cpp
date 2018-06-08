@@ -547,6 +547,78 @@ void rename_collisions(const extract_options & o, FilesMap & processed_files,
 	}
 }
 
+bool print_file_info(const extract_options & o, const setup::info & info) {
+	
+	if(!o.quiet) {
+		const std::string & name = info.header.app_versioned_name.empty()
+		                           ? info.header.app_name : info.header.app_versioned_name;
+		const char * verb = "Inspecting";
+		if(o.extract) {
+			verb = "Extracting";
+		} else if(o.test) {
+			verb = "Testing";
+		} else if(o.list) {
+			verb = "Listing";
+		}
+		std::cout << verb << " \"" << color::green << name << color::reset
+		          << "\" - setup data version " << color::white << info.version << color::reset
+		          << std::endl;
+	}
+	
+	#ifdef DEBUG
+	if(logger::debug) {
+		std::cout << '\n';
+		print_info(info);
+		std::cout << '\n';
+	}
+	#endif
+	
+	bool multiple_sections = (o.list_languages + o.gog_game_id + o.list > 1);
+	if(!o.quiet && multiple_sections) {
+		std::cout << '\n';
+	}
+	
+	if(o.list_languages) {
+		if(o.silent) {
+			BOOST_FOREACH(const setup::language_entry & language, info.languages) {
+				std::cout << language.name <<' ' << language.language_name << '\n';
+			}
+		} else {
+			if(multiple_sections) {
+				std::cout << "Languages:\n";
+			}
+			BOOST_FOREACH(const setup::language_entry & language, info.languages) {
+				std::cout << " - " << color::green << language.name << color::reset;
+				std::cout << ": " << color::white << language.language_name << color::reset << '\n';
+			}
+			if(info.languages.empty()) {
+				std::cout << " (none)\n";
+			}
+		}
+		if((o.silent || !o.quiet) && multiple_sections) {
+			std::cout << '\n';
+		}
+	}
+	
+	if(o.gog_game_id) {
+		std::string id = gog::get_game_id(info);
+		if(id.empty()) {
+			if(!o.quiet) {
+				std::cout << "No GOG.com game ID found!\n";
+			}
+		} else if(!o.silent) {
+			std::cout << "GOG.com game ID is " << color::cyan << id << color::reset << '\n';
+		} else {
+			std::cout << id << '\n';
+		}
+		if((o.silent || !o.quiet) && multiple_sections) {
+			std::cout << '\n';
+		}
+	}
+	
+	return multiple_sections;
+}
+
 } // anonymous namespace
 
 void process_file(const fs::path & file, const extract_options & o) {
@@ -612,72 +684,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 		throw format_error(oss.str());
 	}
 	
-	if(!o.quiet) {
-		const std::string & name = info.header.app_versioned_name.empty()
-		                           ? info.header.app_name : info.header.app_versioned_name;
-		const char * verb = "Inspecting";
-		if(o.extract) {
-			verb = "Extracting";
-		} else if(o.test) {
-			verb = "Testing";
-		} else if(o.list) {
-			verb = "Listing";
-		}
-		std::cout << verb << " \"" << color::green << name << color::reset
-		          << "\" - setup data version " << color::white << info.version << color::reset
-		          << std::endl;
-	}
-	
-#ifdef DEBUG
-	if(logger::debug) {
-		std::cout << '\n';
-		print_info(info);
-		std::cout << '\n';
-	}
-#endif
-	
-	bool multiple_sections = (o.list_languages + o.gog_game_id + o.list > 1);
-	if(!o.quiet && multiple_sections) {
-		std::cout << '\n';
-	}
-	
-	if(o.list_languages) {
-		if(o.silent) {
-			BOOST_FOREACH(const setup::language_entry & language, info.languages) {
-				std::cout << language.name <<' ' << language.language_name << '\n';
-			}
-		} else {
-			if(multiple_sections) {
-				std::cout << "Languages:\n";
-			}
-			BOOST_FOREACH(const setup::language_entry & language, info.languages) {
-				std::cout << " - " << color::green << language.name << color::reset;
-				std::cout << ": " << color::white << language.language_name << color::reset << '\n';
-			}
-			if(info.languages.empty()) {
-				std::cout << " (none)\n";
-			}
-		}
-		if((o.silent || !o.quiet) && multiple_sections) {
-			std::cout << '\n';
-		}
-	}
-	
-	if(o.gog_game_id) {
-		std::string id = gog::get_game_id(info);
-		if(id.empty()) {
-			if(!o.quiet) {
-				std::cout << "No GOG.com game ID found!\n";
-			}
-		} else if(!o.silent) {
-			std::cout << "GOG.com game ID is " << color::cyan << id << color::reset << '\n';
-		} else {
-			std::cout << id;
-		}
-		if((o.silent || !o.quiet) && multiple_sections) {
-			std::cout << '\n';
-		}
-	}
+	bool multiple_sections = print_file_info(o, info);
 	
 	if(!o.list && !o.test && !o.extract) {
 		return;
