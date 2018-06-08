@@ -44,6 +44,8 @@ typedef boost::uint32_t codepage_id;
  */
 void to_utf8(const std::string & from, std::string & to, codepage_id codepage = 1252);
 
+std::string encoding_name(codepage_id codepage);
+
 } // namespace util
 
 #endif // INNOEXTRACT_UTIL_ENCODING_HPP

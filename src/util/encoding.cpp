@@ -87,6 +87,79 @@ enum known_codepages {
 
 namespace {
 
+//! Get names for encodings where iconv doesn't have the codepage alias
+static const char * get_encoding_name(codepage_id codepage) {
+	switch(codepage) {
+		case   708: return "ISO-8859-6";
+		case   936: return "GBK";
+		case   949: return "UHC";
+		case   950: return "BIG5";
+		// iconv's behavior for "UTF-16" is platform-dependent if there is no BOM.
+		// There never is any BOM in Inno Setup files and it's always little-endian,
+		// so we specify the exact encoding.
+		case  1200: return "UTF-16LE";
+		case  1201: return "UTF-16BE";
+		case  1252: return "MS-ANSI";
+		case  1361: return "JOHAB";
+		case 10000: return "MACINTOSH";
+		case 10002: return "BIG5";
+		case 10008: return "GB2312";
+		case 12000: return "UTF-32LE";
+		case 12001: return "UTF-32BE";
+		case 20003: return "IBM5550";
+		case 20127: return "US-ASCII";
+		case 20261: return "T.61";
+		case 20269: return "ISO_6937";
+		case 20273: return "IBM273";
+		case 20277: return "IBM277";
+		case 20278: return "IBM278";
+		case 20280: return "IBM280";
+		case 20284: return "IBM284";
+		case 20285: return "IBM285";
+		case 20290: return "IBM290";
+		case 20297: return "IBM297";
+		case 20420: return "IBM420";
+		case 20423: return "IBM423";
+		case 20424: return "IBM424";
+		case 20866: return "KOI8-R";
+		case 20871: return "IBM871";
+		case 20880: return "IBM880";
+		case 20905: return "IBM905";
+		case 20924: return "IBM1047";
+		case 20932: return "EUC-JP-MS";
+		case 20936: return "EUC-CN";
+		case 21025: return "IBM1025";
+		case 21866: return "KOI8-U";
+		case 28591: return "ISO-8859-1";
+		case 28592: return "ISO-8859-2";
+		case 28593: return "ISO-8859-3";
+		case 28594: return "ISO-8859-4";
+		case 28595: return "ISO-8859-5";
+		case 28596: return "ISO-8859-6";
+		case 28597: return "ISO-8859-7";
+		case 28598: return "ISO-8859-8";
+		case 28599: return "ISO-8859-9";
+		case 28603: return "ISO-8859-13";
+		case 28605: return "ISO-8859-15";
+		case 38598: return "ISO-8859-8";
+		case 50220: return "ISO-2022-JP";
+		case 50221: return "ISO-2022-JP-2";
+		case 50222: return "ISO-2022-JP-3";
+		case 50225: return "ISO-2022-KR";
+		case 50227: return "ISO-2022-CN";
+		case 50229: return "ISO-2022-CN-EXT";
+		case 50930: return "EBCDIC-JP-E";
+		case 51932: return "EUC-JP";
+		case 51936: return "EUC-CN";
+		case 51949: return "EUC-KR";
+		case 51950: return "EUC-CN";
+		case 54936: return "GB18030";
+		case 65000: return "UTF-7";
+		case 65001: return "UTF-8";
+		default: return NULL;
+	}
+}
+
 static const char replacement_char = '_';
 
 typedef boost::uint32_t unicode_char;
@@ -294,79 +367,6 @@ static void windows1252_to_utf8(const std::string & from, std::string & to) {
 typedef boost::unordered_map<codepage_id, iconv_t> converter_map;
 static converter_map converters;
 
-//! Get names for encodings where iconv doesn't have the codepage alias
-static const char * get_encoding_name(codepage_id codepage) {
-	switch(codepage) {
-		case   708: return "ISO-8859-6";
-		case   936: return "GBK";
-		case   949: return "UHC";
-		case   950: return "BIG5";
-		// iconv's behavior for "UTF-16" is platform-dependent if there is no BOM.
-		// There never is any BOM in Inno Setup files and it's always little-endian,
-		// so we specify the exact encoding.
-		case  1200: return "UTF-16LE";
-		case  1201: return "UTF-16BE";
-		case  1252: return "MS-ANSI";
-		case  1361: return "JOHAB";
-		case 10000: return "MACINTOSH";
-		case 10002: return "BIG5";
-		case 10008: return "GB2312";
-		case 12000: return "UTF-32LE";
-		case 12001: return "UTF-32BE";
-		case 20003: return "IBM5550";
-		case 20127: return "US-ASCII";
-		case 20261: return "T.61";
-		case 20269: return "ISO_6937";
-		case 20273: return "IBM273";
-		case 20277: return "IBM277";
-		case 20278: return "IBM278";
-		case 20280: return "IBM280";
-		case 20284: return "IBM284";
-		case 20285: return "IBM285";
-		case 20290: return "IBM290";
-		case 20297: return "IBM297";
-		case 20420: return "IBM420";
-		case 20423: return "IBM423";
-		case 20424: return "IBM424";
-		case 20866: return "KOI8-R";
-		case 20871: return "IBM871";
-		case 20880: return "IBM880";
-		case 20905: return "IBM905";
-		case 20924: return "IBM1047";
-		case 20932: return "EUC-JP-MS";
-		case 20936: return "EUC-CN";
-		case 21025: return "IBM1025";
-		case 21866: return "KOI8-U";
-		case 28591: return "ISO-8859-1";
-		case 28592: return "ISO-8859-2";
-		case 28593: return "ISO-8859-3";
-		case 28594: return "ISO-8859-4";
-		case 28595: return "ISO-8859-5";
-		case 28596: return "ISO-8859-6";
-		case 28597: return "ISO-8859-7";
-		case 28598: return "ISO-8859-8";
-		case 28599: return "ISO-8859-9";
-		case 28603: return "ISO-8859-13";
-		case 28605: return "ISO-8859-15";
-		case 38598: return "ISO-8859-8";
-		case 50220: return "ISO-2022-JP";
-		case 50221: return "ISO-2022-JP-2";
-		case 50222: return "ISO-2022-JP-3";
-		case 50225: return "ISO-2022-KR";
-		case 50227: return "ISO-2022-CN";
-		case 50229: return "ISO-2022-CN-EXT";
-		case 50930: return "EBCDIC-JP-E";
-		case 51932: return "EUC-JP";
-		case 51936: return "EUC-CN";
-		case 51949: return "EUC-KR";
-		case 51950: return "EUC-CN";
-		case 54936: return "GB18030";
-		case 65000: return "UTF-7";
-		case 65001: return "UTF-8";
-		default: return NULL;
-	}
-}
-
 static iconv_t get_converter(codepage_id codepage) {
 	
 	// Try to reuse an existing converter if possible
@@ -572,6 +572,19 @@ void to_utf8(const std::string & from, std::string & to, codepage_id cp) {
 	
 	to_utf8_fallback(from, to, cp);
 	
+}
+
+std::string encoding_name(codepage_id codepage) {
+	
+	const char * name = get_encoding_name(codepage);
+	if(name) {
+		return name;
+	}
+	
+	std::ostringstream oss;
+	oss << "Windows-" << codepage;
+	
+	return oss.str();
 }
 
 } // namespace util
