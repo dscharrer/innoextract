@@ -14,7 +14,7 @@
 #  - Allow #ifdef BOOST_PP_IS_ITERATING + #endif in place of header guards
 #  - C++ source files are named .cpp, not .cc
 #
-# Copyright (c) 2011-1015 Daniel Scharrer
+# Copyright (c) 2011-2018 Daniel Scharrer
 # Copyright (c) 2009 Google Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
