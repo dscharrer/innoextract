@@ -913,8 +913,8 @@ void process_file(const fs::path & file, const extract_options & o) {
 		return;
 	}
 	
-	if(o.gog) {
-		gog::parse_galaxy_files(info);
+	if(o.gog_galaxy) {
+		gog::parse_galaxy_files(info, o.gog);
 	}
 	
 	if(!o.silent && multiple_sections) {

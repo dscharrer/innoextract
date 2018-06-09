@@ -26,6 +26,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #include "crypto/checksum.hpp"
@@ -245,7 +246,17 @@ std::string create_constraint_expression(std::vector<constraint> & constraints) 
 
 } // anonymous namespace
 
-void parse_galaxy_files(setup::info & info) {
+void parse_galaxy_files(setup::info & info, bool force) {
+	
+	if(!force) {
+		bool is_gog = boost::icontains(info.header.app_publisher, "GOG.com");
+		is_gog = is_gog || boost::icontains(info.header.app_publisher_url, "www.gog.com");
+		is_gog = is_gog || boost::icontains(info.header.app_support_url, "www.gog.com");
+		is_gog = is_gog || boost::icontains(info.header.app_updates_url, "www.gog.com");
+		if(!is_gog) {
+			return;
+		}
+	}
 	
 	setup::file_entry * file_start = NULL;
 	size_t remaining_parts = 0;

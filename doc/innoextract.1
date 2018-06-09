@@ -51,6 +51,7 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-P \-\-password \fIPASSWORD\fP  Password for encrypted files
     \-\-password\-file \fIFILE\fP File to load password from
  \-g \-\-gog                Process additional archives from GOG.com installers
+ \-\-no\-gog\-galaxy         Don't re-assemble GOG Galaxy file parts
 .fi
 .TP
 .B Filters:
@@ -140,6 +141,13 @@ Extracting these RAR archives requires rar, unrar or lsar/unar command-line util
 The \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-extract\fP and \fB\-\-output\-dir\fP options are passed along to unrar/unar, but other options may be ignored for the RAR files. For multi-part RAR archives, the \fB\-\-test\fP requires a writable output directory for temporary files.
 
 Note that is option is geared towards GOG.com installers. Other installers may come be bundled with different extraneous \fI.bin\fP which this option might not be able to handle.
+
+This option also forces re-assembly of GOG Galaxy file parts. See the \fB\-\-no\-gog\-galaxy\fP for details.
+.TP
+\fB\-\-no\-gog\-galaxy\fP
+Some GOG.com installers contain files in GOG Galaxy format (split into multiple parts that are individually compressed) which are re-assembled using post-install scripts. By default \fBinnoextract\fP will try to re\-assemble such files if it detects a GOG.com installer. This option disables that.
+
+GOG.com installers are detected using the publisher and URL fields in the setup headers. Use the \fB\-\-gog\fP option to force reassembly for all installers.
 .TP
 \fB\-\-gog\-game\-id\fP
 Determine the ID used by GOG.com for the game contained in this installer. This will only work with Galaxy-ready GOG.com installers.

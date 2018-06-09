@@ -150,6 +150,7 @@ int main(int argc, char * argv[]) {
 		("password,P", po::value<std::string>(), "Password for encrypted files")
 		("password-file", po::value<std::string>(), "File to load password from")
 		("gog,g", "Extract additional archives from GOG.com installers")
+		("no-gog-galaxy", "Don't re-assemble GOG Galaxy file parts")
 	;
 	
 	po::options_description filter("Filters");
@@ -408,6 +409,7 @@ int main(int argc, char * argv[]) {
 	}
 	
 	o.gog = (options.count("gog") != 0);
+	o.gog_galaxy = (options.count("no-gog-galaxy") == 0);
 	
 	const std::vector<std::string> & files = options["setup-files"]
 	                                         .as< std::vector<std::string> >();

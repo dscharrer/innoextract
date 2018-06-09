@@ -44,7 +44,7 @@ namespace gog {
  *
  * Additionally, language constrained are also parsed from check scripts and added to the language list.
  */
-void parse_galaxy_files(setup::info & info);
+void parse_galaxy_files(setup::info & info, bool force);
 
 } // namespace gog
 
