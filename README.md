@@ -43,6 +43,7 @@ Build options:
 
 | Option                   | Default   | Description |
 |:------------------------ |:---------:|:----------- |
+| `USE_ARC4`               | `ON`      | Build ARC4 decryption support.
 | `USE_LZMA`               | `ON`      | Use `liblzma`.
 | `WITH_CONV`              | *not set* | The charset conversion library to use. Valid values are `iconv`, `win32` and `builtin`^1. If not set, a library appropriate for the target platform will be chosen.
 | `CMAKE_BUILD_TYPE`       | `Release` | Set to `Debug` to enable debug output.

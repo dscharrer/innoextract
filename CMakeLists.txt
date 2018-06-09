@@ -20,7 +20,8 @@ macro(suboption _var _comment _type _default)
 endmacro()
 
 option(STRICT_USE "Abort if there are missing optional dependencies"  OFF)
-option(USE_LZMA "Build lzma decompression support" ON)
+option(USE_ARC4 "Build ARC4 decryption support" ON)
+option(USE_LZMA "Build LZMA decompression support" ON)
 set(WITH_CONV CACHE STRING "The library to use for charset conversions")
 option(DEBUG_EXTRA "Expensive debug options" OFF)
 option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
@@ -116,6 +117,10 @@ if((NOT LAST_CMAKE_CXX_FLAGS STREQUAL CMAKE_CXX_FLAGS)
 endif()
 
 unset(LIBRARIES)
+
+if(USE_ARC4)
+	set(INNOEXTRACT_HAVE_ARC4 1)
+endif()
 
 if(USE_LZMA)
 	find_package(LZMA REQUIRED)
@@ -298,6 +303,8 @@ set(INNOEXTRACT_SOURCES
 	
 	src/crypto/adler32.hpp
 	src/crypto/adler32.cpp
+	src/crypto/arc4.hpp if INNOEXTRACT_HAVE_ARC4
+	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_ARC4
 	src/crypto/checksum.hpp
 	src/crypto/checksum.cpp
 	src/crypto/crc32.hpp
@@ -446,6 +453,10 @@ elseif(NOT DEBUG AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(BUILD_TYPE_SUFFIX "${BUILD_TYPE_SUFFIX} without debug output")
 endif()
 message(" - Build type: ${CMAKE_BUILD_TYPE}${BUILD_TYPE_SUFFIX}")
+print_configuration("ARC4 decryption" FIRST
+	INNOEXTRACT_HAVE_ARC4 "enabled"
+	1                     "disabled"
+)
 print_configuration("LZMA decompression" FIRST
 	INNOEXTRACT_HAVE_LZMA "enabled"
 	1                     "disabled"
