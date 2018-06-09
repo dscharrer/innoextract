@@ -153,6 +153,7 @@ int main(int argc, char * argv[]) {
 		("password-file", po::value<std::string>(), "File to load password from")
 		("gog,g", "Extract additional archives from GOG.com installers")
 		("no-gog-galaxy", "Don't re-assemble GOG Galaxy file parts")
+		("no-extract-unknown,n", "Don't extract unknown Inno Setup versions")
 	;
 	
 	po::options_description filter("Filters");
@@ -419,6 +420,8 @@ int main(int argc, char * argv[]) {
 		log_error << "Combining --data-version with other options is not allowed";
 		return ExitUserError;
 	}
+	
+	o.extract_unknown = (options.count("no-extract-unknown") == 0);
 	
 	const std::vector<std::string> & files = options["setup-files"]
 	                                         .as< std::vector<std::string> >();

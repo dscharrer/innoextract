@@ -22,6 +22,7 @@
 
 #include <cassert>
 #include <istream>
+#include <sstream>
 
 #include <boost/foreach.hpp>
 
@@ -212,6 +213,11 @@ void info::load(std::istream & is, entry_types entries) {
 	version.load(is);
 	
 	if(!version.known) {
+		if(entries & NoUnknownVersion) {
+			std::ostringstream oss;
+			oss << "Unexpected setup data version: " << version;
+			throw std::runtime_error(oss.str());
+		}
 		log_warning << "Unexpected setup data version: "
 		            << color::white << version << color::reset;
 	}

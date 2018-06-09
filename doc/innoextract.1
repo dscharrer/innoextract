@@ -54,6 +54,7 @@ Here is a short summary of the options available in innoextract. Please refer to
     \-\-password\-file \fIFILE\fP File to load password from
  \-g \-\-gog                Process additional archives from GOG.com installers
  \-\-no\-gog\-galaxy         Don't re-assemble GOG Galaxy file parts
+ \-n \-\-no\-extract\-unknown Don't extract unknown Inno Setup versions
 .fi
 .TP
 .B Filters:
@@ -145,6 +146,9 @@ This option takes precedence over \fB\-\-include\fP and \fB\-\-language\fP: temp
 Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP, \fB\-\-show\-password\fP or \fB\-\-check\-password\fP actions are specified.
 
 Be default innoextract will continue after encountering file checksum errors. The \fB\-\-extract\fP option can be combined with \fB\-\-test\fP to abort on checksum errors.
+.TP
+\fB\-n\fP, \fB\-\-no\-extract\-unknown\fP
+By default innoextract will try to extract installers with and unknown Inno Setup data version by treating it as the closest known version. This option tells innoextract to aborts instead.
 .TP
 \fB\-g\fP, \fB\-\-gog\fP
 Try to process additional .bin files that have the same basename as the setup but are not actually part of the Inno Setup installer. This is the case for newer multi-part GOG.com installers where these .bin files are RAR archives, potential encrypted with the MD5 checksum of the game ID (see the \fB\-\-gog\-game\-id\fP option).

@@ -2,11 +2,12 @@
 innoextract 1.7 (TDB)
  - Added support for Inno Setup 5.6.0 installers
  - Added support for new GOG installers with GOG Galaxy file parts
- - Added support for encrypted installers with the --password and --password-file options
+ - Added support for encrypted installers with the --password (-P) and --password-file options
  - Added a --show-password option to print password check information
  - Added a --check-password option to abort if the provided password does not match the stored checksum
- - Added a --info convenience option to print information about the installer
- - Added a --data-version option to print the data version and exit
+ - Added a --info (-i) convenience option to print information about the installer
+ - Added a --data-version (-V) option to print the data version and exit
+ - Added a --no-extract-unknown (-n) option to abort on unknown Inno Setup data versions
  - Fixed building in paths that contain regex expressions
  - Fixed case-sensitivity in parent directory when creating subdirectories
  - Fixed .bin slice file names used with Inno Setup versions older than 4.1.7

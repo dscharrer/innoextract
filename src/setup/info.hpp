@@ -79,7 +79,8 @@ struct info {
 		WizardImages,
 		DecompressorDll,
 		DecryptDll,
-		NoSkip
+		NoSkip,
+		NoUnknownVersion
 	);
 	
 	setup::version version;

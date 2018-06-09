@@ -876,6 +876,9 @@ void process_file(const fs::path & file, const extract_options & o) {
 	if(o.gog_game_id || o.gog) {
 		entries |= setup::info::RegistryEntries;
 	}
+	if(!o.extract_unknown) {
+		entries |= setup::info::NoUnknownVersion;
+	}
 #ifdef DEBUG
 	if(logger::debug) {
 		entries = setup::info::entry_types::all();

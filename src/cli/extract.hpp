@@ -67,6 +67,8 @@ struct extract_options {
 	bool gog; //!< Try to extract additional archives used in GOG.com installers
 	bool gog_galaxy; //!< Try to re-assemble GOG Galaxy files
 	
+	bool extract_unknown; //!< Try to extract unknown Inno Setup versions
+	
 	bool extract_temp; //!< Extract temporary files
 	bool language_only; //!< Extract files not associated with any language
 	std::string language; //!< Extract only files for this language
