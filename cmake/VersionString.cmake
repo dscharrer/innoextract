@@ -1,5 +1,5 @@
 
-# Copyright (C) 2011-2015 Daniel Scharrer
+# Copyright (C) 2011-2016 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -47,19 +47,22 @@ set(VERSION_STRING_SCRIPT "${VERSION_STRING_DIR}/VersionScript.cmake")
 # The version file is regenerated whenever VERSION_FILE or the current commit changes.
 function(version_file SRC DST VERSION_SOURCES GIT_DIR)
 	
-	set(mode "variable")
+	set(MODE_VARIABLE 0)
+	set(MODE_FILE 1)
+	
+	set(mode ${MODE_VARIABLE})
 	
 	set(args)
 	set(dependencies "${VERSION_STRING_SCRIPT}")
 	
 	foreach(arg IN LISTS VERSION_SOURCES)
 		
-		if(mode STREQUAL "variable")
-			set(mode "file")
+		if(mode EQUAL MODE_VARIABLE)
+			set(mode ${MODE_FILE})
 		else()
 			get_filename_component(arg "${arg}" ABSOLUTE)
 			list(APPEND dependencies ${arg})
-			set(mode "variable")
+			set(mode ${MODE_VARIABLE})
 		endif()
 		
 		list(APPEND args ${arg})
@@ -71,7 +74,7 @@ function(version_file SRC DST VERSION_SOURCES GIT_DIR)
 	get_filename_component(abs_git_dir "${GIT_DIR}" ABSOLUTE)
 	
 	set(defines)
-	if(${ARGC} GREATER 4)
+	if(ARGC GREATER 4)
 		set(defines ${ARGV4})
 	endif()
 	

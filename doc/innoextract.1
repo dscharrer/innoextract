@@ -1,6 +1,6 @@
 .\" Manpage for innoextract.
 .\" Contact daniel@constexpr.org to correct errors or typos.
-.TH innoextract 1 "2015-09-22" "1.5"
+.TH innoextract 1 "2016-03-02" "1.7-dev"
 .SH NAME
 innoextract - tool to extract installers created by Inno Setup
 .SH SYNOPSIS
@@ -34,19 +34,27 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-t \-\-test               Only verify checksums, don't write anything
  \-e \-\-extract            Extract files (default action)
  \-l \-\-list               Only list files, don't write anything
+ \-i \-\-info               Print information about the installer
     \-\-list\-languages     List languages supported by the installer
     \-\-gog\-game\-id        Determine the GOG.com game ID for this installer
+    \-\-show\-password      Show password check information
+    \-\-check\-password     Abort if the password is incorrect
+ \-V \-\-data\-version       Only print the data version
 .fi
 .TP
 .B Modifiers:
 .nf
-    \-\-collisions \fIACTION\fP  How to handle filename collisions
-    \-\-default-language   Default language for renaming
+    \-\-collisions \fIACTION\fP  How to handle duplicate files
+    \-\-default\-language   Default language for renaming
     \-\-dump               Dump contents without converting filenames
  \-L \-\-lowercase          Convert extracted filenames to lower-case
  \-T \-\-timestamps \fITZ\fP      Timezone for file times or "local" or "none"
  \-d \-\-output\-dir \fIDIR\fP     Extract files into the given directory
+ \-P \-\-password \fIPASSWORD\fP  Password for encrypted files
+    \-\-password\-file \fIFILE\fP File to load password from
  \-g \-\-gog                Process additional archives from GOG.com installers
+ \-\-no\-gog\-galaxy         Don't re-assemble GOG Galaxy file parts
+ \-n \-\-no\-extract\-unknown Don't extract unknown Inno Setup versions
 .fi
 .TP
 .B Filters:
@@ -70,25 +78,64 @@ Here is a short summary of the options available in innoextract. Please refer to
 \fB--\fP
 Treat all arguments after this one as files, even if they begin with a dash.
 .TP
-\fB\-\-collisions\fP \fIACTION\fP
-Inno Setup installers can contain multiple files with the same name. This option tells innoextract what to do when such a collisions is encountered. Valid actions are:
+\fB\-\-check\-password\fB
+Abort processing if the password provided using the \fB\-\-password\fP or \fB\-\-password\-file\fP option does not match the checksum stored in the installer.
 
-  "\fBoverwrite\fP"  Extract only one of the colliding files. The choice is done similar to how Inno Setup overwrites files during installation. This is the default.
-
-  "\fBrename\fP"     Rename files in the collision set by appending "#\fIcomponent\fP", "@\fIlanguage\fP" and/or "$\fIid\fP" where \fIcomponent\fP and \fIlanguage\fP are the file's \fIunique\fP component and language and \fIid\fP is the lowest number to make the filename unique. If the \fB\-\-default-language\fP is specified, the "@\fIlanguage\fP" component is omitted if it matches the default language.
-
-  "\fBerror\fP"      Exit when a collision is detected.
+The password checksum used for this check can be retrieved using the \fB\-\-show\-password\fP option.
 .TP
-\fB\-\-default-language\fP
-Set a language as the default. Currently this only has an effect in combination with the \fB\-\-collisions\=rename\fP option.
+\fB\-\-collisions\fP \fIACTION\fP
+Inno Setup installers can contain duplicate files with the same name. This option tells innoextract what to do when such a collisions is encountered. Valid actions are:
+
+.RS
+.TP
+"\fBoverwrite\fP"
+Extract only one of the colliding files. The choice is done similar to how Inno Setup overwrites files during installation. This is the default.
+.TP
+"\fBrename\fP"
+Rename files that would be overwritten using the "\fBoverwrite\fP" action by appending a suffix comprised of the file's language, the component it belongs to and/or a number to make the filename unique. The language suffix (if applicable) is also appended to the \fIdefault\fP file that would have been extracted with the "\fBoverwrite\fP" action.
+.TP
+"\fBrename-all\fP"
+Rename all colliding files by appending a suffix comprised of the file's language, the component it belongs to and/or a number to make the filename unique. The complete suffix is appended to both files that would have been overwritten using the "\fBoverwrite\fP" action and to those that would have overwritten other files.
+.TP
+"\fBerror\fP"
+Exit when a collision is detected.
+.RE
+.IP
+.B Rename rules:
+
+1. If the \fBcomponent\fP is not the same for all files in the collision set (all files with the same filename), "\fB#\fP" (without quotes) followed by the component id is appended to all files that are specific to a single component.
+
+2. If the \fBlanguage\fP is not the same for all files in the collision set, "\fB@\fP" (without quotes) followed by the language id is appended to all files that are specific to a single component unless that language matches the default language specified by the \fB--default-language\fP. While the suffix is omitted for the default language, no numbered suffix is added in it's place unless needed to make the filename unique.
+
+3. If no suffix was added by the previous steps, or if the filename is not yet unique, "\fB$\fP" (without quotes) followed by the lowest integer (starting at 0) to make the filename unique is appended.
+
+With the "\fBrename\fP" action, steps 1 and 3 are only applied to files that would have been overwritten by the "\fBoverwrite\fP" action while "\fBrename-all\fP" applies them to all files in the collision set.
 .TP
 \fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
 By default
 .B innoextract
 will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Specifically, colors will be enabled if both \fBstdout\fP and \fBstderr\fP point to a TTY and the \fBTERM\fP environment variable is not set to "\fBdumb\fP". Pass \fB1\fP or \fBtrue\fP to \fB\-\-color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
 .TP
+\fB\-V\FP, \fB\-\-data\-version\fP
+Print the Inno Setup data version of the installer and exit immediately.
+
+The version printed using this option is the one stored in the setup file and can differ from the version printed with other actions as the stored data version is not always correct.
+
+This option can be used to determine if a file is an Inno Setup installer without loading any compressed headers.
+
+This option cannot be combined with any other action.
+.TP
+\fB\-\-default\-language\fP \fILANG\fP
+Set a language as the default.
+
+With \fB\-\-collisions\=overwrite\fP (the default) this will change the choice of which file to keep to always prefer the given language. In effect, \fB\-\-default\-language\fP behaves almost like \fB\-\-language\fP, except that files are extracted for all languages if they have different names.
+
+When using the \fB\-\-collisions\=rename\fP option, \fB\-\-default\-language\fP chooses a language for which the files should keep the original name if possible.
+.TP
 \fB\-\-dump\fP
-Don't convert Windows paths to UNIX paths and don't substitute variables in paths.
+Don't convert Windows paths to UNIX paths and don't substitute constants in paths.
+
+When combining \fB\-\-dump\fP with \fB\-\-extract\fP innoextract will \fInot\fP ensure that the paths don't point outside the destination directory. Use this option with caution when handling untrusted files.
 .TP
 \fB\-m\fP, \fB\-\-exclude\-temp\fP
 Don't extract files that would have been deleted at the end of the install process. Such files are marked with [temp] in the file listing.
@@ -96,7 +143,12 @@ Don't extract files that would have been deleted at the end of the install proce
 This option takes precedence over \fB\-\-include\fP and \fB\-\-language\fP: temporary files are never extracted when using the \fB\-\-exclude\-temp\fP, even if they match the selected language or include expressions.
 .TP
 \fB\-e\fP, \fB\-\-extract\fP
-Extract all files to the current directory. This action is enabled by default, unless either \fB\-\-list\fP or \fB\-\-extract\fP is specified. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
+Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP, \fB\-\-show\-password\fP or \fB\-\-check\-password\fP actions are specified.
+
+Be default innoextract will continue after encountering file checksum errors. The \fB\-\-extract\fP option can be combined with \fB\-\-test\fP to abort on checksum errors.
+.TP
+\fB\-n\fP, \fB\-\-no\-extract\-unknown\fP
+By default innoextract will try to extract installers with and unknown Inno Setup data version by treating it as the closest known version. This option tells innoextract to aborts instead.
 .TP
 \fB\-g\fP, \fB\-\-gog\fP
 Try to process additional .bin files that have the same basename as the setup but are not actually part of the Inno Setup installer. This is the case for newer multi-part GOG.com installers where these .bin files are RAR archives, potential encrypted with the MD5 checksum of the game ID (see the \fB\-\-gog\-game\-id\fP option).
@@ -106,6 +158,13 @@ Extracting these RAR archives requires rar, unrar or lsar/unar command-line util
 The \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-extract\fP and \fB\-\-output\-dir\fP options are passed along to unrar/unar, but other options may be ignored for the RAR files. For multi-part RAR archives, the \fB\-\-test\fP requires a writable output directory for temporary files.
 
 Note that is option is geared towards GOG.com installers. Other installers may come be bundled with different extraneous \fI.bin\fP which this option might not be able to handle.
+
+This option also forces re-assembly of GOG Galaxy file parts. See the \fB\-\-no\-gog\-galaxy\fP for details.
+.TP
+\fB\-\-no\-gog\-galaxy\fP
+Some GOG.com installers contain files in GOG Galaxy format (split into multiple parts that are individually compressed) which are re-assembled using post-install scripts. By default \fBinnoextract\fP will try to re\-assemble such files if it detects a GOG.com installer. This option disables that.
+
+GOG.com installers are detected using the publisher and URL fields in the setup headers. Use the \fB\-\-gog\fP option to force reassembly for all installers.
 .TP
 \fB\-\-gog\-game\-id\fP
 Determine the ID used by GOG.com for the game contained in this installer. This will only work with Galaxy-ready GOG.com installers.
@@ -121,14 +180,21 @@ For newer multi-part GOG.com installers the \fI.bin\fP files are not part of the
 \fB\-h\fP, \fB\-\-help\fP
 Show a list of the supported options.
 .TP
-\fB-I\fP, \fB\-\-include\fP \fIEXPR\fP
+\fB\-I\fP, \fB\-\-include\fP \fIEXPR\fP
 If this option is specified, innoextract will only process files whose path matches \fIEXPR\fP. The expression can be either a single path component (a file or directory name) or a series of successive path components joined by the OS path separator (\\ on Windows, / elsewhere).
 
 The expression is always matched against one or more full path components. Filtering by parts of filenames is currently not supported. Matching is done case-insensitively.
 
 \fIEXPR\fP may contain one leading path separator, in which case the rest of the expression is matched against the start of the path. Otherwise, the expression is matched against any part of the path.
 
-The \fB\-\-include\fP may be repeated in order allow files matching against one of multiple patterns. If not \fB\-\-include\fP is used, all files are processed.
+The \fB\-\-include\fP option may be repeated in order allow files matching against one of multiple patterns. If \fB\-\-include\fP is not used, all files are processed.
+.TP
+\fB\-i\fP \fB\-\-info\fP
+This is a convenience option to enable all actions that print information about the installer.
+
+Scrips should not rely on the output format with this option and should instead enable the individual actions instead.
+
+Currently this option enables \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP and \fB\-\-show\-password\fP.
 .TP
 \fB\-\-language\fP \fILANG\fP
 Extract only language-independent files and files for the given language. By default all files are extracted.
@@ -165,11 +231,40 @@ Extract all files into the given directory. By default, \fBinnoextract\fP will e
 
 If the specified directory does not exist, it will be created. However, the parent directory must exist or extracting will fail.
 .TP
+\fB\-P\fP, \fB\-\-password \fIPASSWORD\fP
+Specifies the password to decrypt encrypted files. The password is assumed to be encoded as UTF-8 and converted the internal according used in the installer as needed.
+
+Use the \fB\-\-password-file\fP option to load the password from a file or standard input instead. This option cannot be combined with \fB\-\-password-file\fP.
+
+If this password does not match the checksum stored in the installer, encrypted files will be skipped but unencrypted files will still be extracted. Use the \fB\-\-check\-password\fP option to abort processing entirely if the password is incorrect.
+.TP
+\fB\-\-password-file\fP \fIFILE\fP
+Load a password form the specified file. Only the first line excluding the terminating carriage return and/or line break is used as the password. The password is assumed to be encoded as UTF-8 and converted the internal according used in the installer as needed.
+
+If the special file name "\fB-\fP" is used, the password will be read from standard input.
+
+Use the \fB\-\-password\fP option to specify the password on the command\-line instead. This option cannot be combined with \fB\-\-password\fP.
+
+If this password does not match the checksum stored in the installer, encrypted files will be skipped but unencrypted files will still be extracted. Use the \fB\-\-check\-password\fP option to abort processing entirely if the password is incorrect.
+.TP
 \fB\-p\fP, \fB\-\-progress\fP[=\fIENABLE\fP]
 By default \fBinnoextract\fP will try to detect if the terminal supports shell escape codes and enable or disable progress bar output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB\-\-progress\fP to force progress bar output. Pass \fB0\fP or \fBfalse\fP to never show a progress bar.
 .TP
 \fB\-q\fP, \fB\-\-quiet\fP
 Less verbose output.
+.TP
+\fB\-\-show\-password\fP
+Show checksum \fB$c\fP and salt \fB$s\fP used for the password \fB$p\fP check as well as encoding of the password. The checksum is calculated from the salt concatenated with the password:
+
+ \fB$c = hash($s . $p)\fP
+
+With \fB\-\-silent\fP option, the checksum name and hash is printed on one line seperated buy a space followed by the salt encoded as hex bytes and password encoding on separate lines.
+
+Checksum types can be \fBCRC32\fP, \fBMD5\fP or \fBSHA-1\fP although \fBCRC32\fP is not used in installers with encryption.
+
+The password encoding is either \fBMS-ANSI\fP (Windows-1252) or \fBUTF16-LE\fP.
+
+Use the \fB\-\-password\fP or \fB\-\-password\-file\fP option together with \fB\-\-check\-password\fP to check if a password matches this checksum.
 .TP
 \fB\-s\fP, \fB\-\-silent\fP
 Don't output anything except errors and warnings unless explicitly requested.
@@ -177,7 +272,9 @@ Don't output anything except errors and warnings unless explicitly requested.
 This option can be combined with \fB\-\-list\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
 .TP
 \fB\-t\fP, \fB\-\-test\fP
-Test archive integrity but don't write any output files. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
+Test archive integrity but don't write any output files.
+
+This option can be combined with \fB\-\-extract\fP to abort on file checksum errors.
 .TP
 \fB\-T\fP, \fB\-\-timestamps\fP \fITZ\fP
 Inno Setup installers can contain timestamps in both UTC and 'local' timezones.
@@ -188,9 +285,15 @@ Valid values are those accepted by \fBtzset\fP in the \fBTZ\fP environment varia
 
 Besides timezones, two special values are accepted:
 
-  "\fBnone\fP"    Don't preserve file times for extracted files, both for UTC and 'local' timestamps. The file times wil be left the way the OS set them when creating the output files.
-
-  "\fBlocal\fP"  Use the system timezone for 'local' timestamps. This is the normal Inno Setup behavior, and can be used together with the \fBTZ\fP environment variable.
+.RS
+.HP
+"\fBnone\fP"
+Don't preserve file times for extracted files, both for UTC and 'local' timestamps. The file times wil be left the way the OS set them when creating the output files.
+.HP
+"\fBlocal\fP"
+Use the system timezone for 'local' timestamps. This is the normal Inno Setup behavior, and can be used together with the \fBTZ\fP environment variable.
+.RE
+.IP
 
 The default value for this option is \fBUTC\fP, causing innoextract to not adjust 'local' file times. File times marked as UTC in the Inno Setup file will never be adjusted no matter what \fB\-\-timestamps\fP is set to.
 .TP
@@ -201,6 +304,10 @@ If combined with the \fB\-\-silent\fP option, only the version \fInumber\fP is p
 .TP
 \fB\-\-no\-warn\-unused\fP
 By default, innoextract will print a warning if it encounters \fI.bin\fP files that look like they could be part of the setup but are not used. This option disables that warning.
+.SH PATH CONSTANTS
+Paths in Inno Setup installers can contain constants (variable or code references) that are expanded at install time. innoextract expands all such constants to their name  and replaces unsafe characters with \fB$\fP. For exmaple \fB{app}\fP is expanded to \fBapp\fP while \fB{code:Example}\fP is expanded to \fBcode$Example\fP.
+
+There is currently no way to configure this expansion except for disabling it with the \fB\-\-dump\fP option.
 .SH EXIT VALUES
 .PP
 .IP \fB0\fP
@@ -214,16 +321,12 @@ There is no support for extracting individual components and limited support for
 
 Included scripts and checks are not executed.
 
-The mapping from Inno Setup variables like the application directory to subdirectories is hard-coded.
+The mapping from Inno Setup constants like the application directory to subdirectories is hard-coded.
 
 Names for data slice/disk files in multi-file installers must follow the standard naming scheme.
-
-Encrypted installers are not supported.
 .SH SEE ALSO
 \fBcabextract\fP(1), \fBunar\fP(1), \fBunrar\fP(1), \fBunshield\fP(1), \fBtzset\fP(3)
 .SH BUGS
-.PP
-No known bugs.
 .PP
 Please report bugs to http://innoextract.constexpr.org/issues.
 .SH CREDITS

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -118,7 +118,7 @@ const char * get_version_name(const windows_version::data & version, bool nt = f
 	return NULL;
 }
 
-} // nanonymous namespace
+} // anonymous namespace
 
 std::ostream & operator<<(std::ostream & os, const windows_version::data & v) {
 	os << v.major << '.' << v.minor;

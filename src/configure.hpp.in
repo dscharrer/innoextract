@@ -33,6 +33,7 @@
 #cmakedefine01 INNOEXTRACT_HAVE_STD_UNIQUE_PTR
 
 // Optional dependencies
+#cmakedefine01 INNOEXTRACT_HAVE_ARC4
 #cmakedefine01 INNOEXTRACT_HAVE_LZMA
 #cmakedefine01 INNOEXTRACT_HAVE_ICONV
 #cmakedefine01 INNOEXTRACT_HAVE_WIN32_CONV

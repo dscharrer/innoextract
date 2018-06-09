@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2014 Daniel Scharrer
+ * Copyright (C) 2012-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -65,6 +65,6 @@ inline const std::string as_string(const boost::filesystem::path & path) {
 	return path.string();
 }
 
-} // namespace utl
+} // namespace util
 
 #endif // INNOEXTRACT_UTIL_BOOSTFS_COMPAT_HPP

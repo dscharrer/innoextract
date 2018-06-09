@@ -2,20 +2,39 @@ project(innoextract)
 
 cmake_minimum_required(VERSION 2.8)
 
+if(CMAKE_VERSION VERSION_GREATER 3.4)
+	cmake_policy(VERSION 3.4)
+else()
+	cmake_policy(VERSION ${CMAKE_VERSION})
+endif()
+
 
 # Define configuration options
 
-option(USE_LZMA "Build lzma decompression support" ON)
+macro(suboption _var _comment _type _default)
+	if(NOT DEFINED ${_var})
+		set(${_var} "${_default}")
+	else()
+		set(${_var} "${${_var}}" CACHE ${_type} "${_comment}")
+	endif()
+endmacro()
+
+option(STRICT_USE "Abort if there are missing optional dependencies"  OFF)
+option(USE_ARC4 "Build ARC4 decryption support" ON)
+option(USE_LZMA "Build LZMA decompression support" ON)
 set(WITH_CONV CACHE STRING "The library to use for charset conversions")
-option(ENABLE_BUILTIN_CONV "Build internal charset conversion routines" ON)
 option(DEBUG_EXTRA "Expensive debug options" OFF)
 option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
 option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
-option(USE_CXX11 "Try to use C++11 if available" ON)
+suboption(CXX_STD_VERSION "Maximum C++ standard version to enable" STRING 2017)
 option(USE_DYNAMIC_UTIMENSAT "Dynamically load utimensat if not available at compile time" OFF)
-if(NOT DEFINED DEBUG AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(DEBUG 1)
+
+set(default_DEBUG OFF)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(default_DEBUG ON)
 endif()
+suboption(DEBUG "Build with debug output" BOOL ${default_DEBUG})
+
 if(DEBUG)
 	add_definitions(-DDEBUG=1)
 endif()
@@ -54,11 +73,11 @@ endif()
 
 include(CheckSymbolExists)
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake") # For custom cmake modules
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake") # For custom cmake modules
 include(BuildType)
 include(CompileCheck)
 include(CreateSourceGroups)
-include(CXX11Check)
+include(CXXVersionCheck)
 include(Doxygen)
 include(FilterList)
 include(PrintConfiguration)
@@ -98,6 +117,10 @@ if((NOT LAST_CMAKE_CXX_FLAGS STREQUAL CMAKE_CXX_FLAGS)
 endif()
 
 unset(LIBRARIES)
+
+if(USE_ARC4)
+	set(INNOEXTRACT_HAVE_ARC4 1)
+endif()
 
 if(USE_LZMA)
 	find_package(LZMA REQUIRED)
@@ -143,7 +166,6 @@ endif()
 
 set(INNOEXTRACT_HAVE_ICONV 0)
 set(INNOEXTRACT_HAVE_WIN32_CONV 0)
-set(INNOEXTRACT_HAVE_BUILTIN_CONV ${ENABLE_BUILTIN_CONV})
 if(WIN32 AND (NOT WITH_CONV OR WITH_CONV STREQUAL "win32"))
 	set(INNOEXTRACT_HAVE_WIN32_CONV 1)
 elseif(NOT WITH_CONV OR WITH_CONV STREQUAL "iconv")
@@ -163,19 +185,14 @@ elseif(NOT WITH_CONV OR WITH_CONV STREQUAL "iconv")
 elseif(WITH_CONV AND NOT WITH_CONV STREQUAL "builtin")
 	message(FATAL_ERROR "Invalid WITH_CONV option: ${WITH_CONV}")
 endif()
-if(NOT INNOEXTRACT_HAVE_ICONV AND NOT INNOEXTRACT_HAVE_WIN32_CONV
-   AND NOT INNOEXTRACT_HAVE_BUILTIN_CONV)
-	message(WARNING "\nBuilding without any charset conversion support.\n"
-	                "Any non-ASCII characters in extracted filenames will be missing.")
-endif()
 
 
 # Set compiler flags
 
-if(${Boost_VERSION} LESS 104800)
+if(Boost_VERSION LESS 104800)
 	# Older Boost versions don't work with C++11
-elseif(USE_CXX11)
-	enable_cxx11()
+elseif(NOT CXX_STD_VERSION LESS 2011)
+	enable_cxx_version(${CXX_STD_VERSION})
 	check_cxx11("alignof" INNOEXTRACT_HAVE_ALIGNOF)
 	if(WIN32)
 		check_cxx11("std::codecvt_utf8_utf16" INNOEXTRACT_HAVE_STD_CODECVT_UTF8_UTF16 1600)
@@ -191,7 +208,7 @@ endif()
 
 # Older glibc versions won't provide some useful symbols by default - request them
 # This flag is currently also set by gcc when compiling C++, but not for plain C
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 	set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE=1")
 	add_definitions(-D_GNU_SOURCE=1)
 endif()
@@ -241,6 +258,10 @@ if(NOT WIN32)
 		check_symbol_exists(waitpid "sys/wait.h" INNOEXTRACT_HAVE_WAITPID)
 	endif()
 	
+endif()
+
+if(NOT MSVC)
+	
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "PathScale")
 		# EKOPath recognizes these but then fails to link
 	else()
@@ -276,10 +297,14 @@ set(INNOEXTRACT_SOURCES
 	src/cli/extract.cpp
 	src/cli/gog.hpp
 	src/cli/gog.cpp
+	src/cli/goggalaxy.hpp
+	src/cli/goggalaxy.cpp
 	src/cli/main.cpp
 	
 	src/crypto/adler32.hpp
 	src/crypto/adler32.cpp
+	src/crypto/arc4.hpp if INNOEXTRACT_HAVE_ARC4
+	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_ARC4
 	src/crypto/checksum.hpp
 	src/crypto/checksum.cpp
 	src/crypto/crc32.hpp
@@ -394,7 +419,7 @@ include_directories(src ${CMAKE_CURRENT_BINARY_DIR})
 
 configure_file("src/configure.hpp.in" "configure.hpp")
 
-set(VERSION_FILE "${CMAKE_BINARY_DIR}/release.cpp")
+set(VERSION_FILE "${PROJECT_BINARY_DIR}/release.cpp")
 set(VERSION_SOURCES VERSION "VERSION" LICENSE "LICENSE")
 version_file("src/release.cpp.in" "${VERSION_FILE}" "${VERSION_SOURCES}" ".git")
 list(APPEND INNOEXTRACT_SOURCES ${VERSION_FILE})
@@ -414,7 +439,7 @@ install(FILES doc/innoextract.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONA
 
 add_style_check_target(style "${ALL_INNOEXTRACT_SOURCES}" innoextract)
 
-add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/doc")
+add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${PROJECT_BINARY_DIR}/doc")
 
 
 # Print a configuration summary
@@ -422,12 +447,16 @@ add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${CMAKE_BINARY_DIR}/d
 message("")
 message("Configuration:")
 set(BUILD_TYPE_SUFFIX "")
-if(DEBUG AND NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+if(DEBUG AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(BUILD_TYPE_SUFFIX "${BUILD_TYPE_SUFFIX} with debug output")
-elseif(NOT DEBUG AND NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+elseif(NOT DEBUG AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(BUILD_TYPE_SUFFIX "${BUILD_TYPE_SUFFIX} without debug output")
 endif()
 message(" - Build type: ${CMAKE_BUILD_TYPE}${BUILD_TYPE_SUFFIX}")
+print_configuration("ARC4 decryption" FIRST
+	INNOEXTRACT_HAVE_ARC4 "enabled"
+	1                     "disabled"
+)
 print_configuration("LZMA decompression" FIRST
 	INNOEXTRACT_HAVE_LZMA "enabled"
 	1                     "disabled"
@@ -445,6 +474,6 @@ print_configuration("File time precision" FIRST
 print_configuration("Charset conversion"
 	INNOEXTRACT_HAVE_ICONV        "iconv"
 	INNOEXTRACT_HAVE_WIN32_CONV   "Win32"
-	INNOEXTRACT_HAVE_BUILTIN_CONV "builtin"
+	1                             "builtin"
 )
 message("")

@@ -1,5 +1,5 @@
 
-# Copyright (C) 2013-2015 Daniel Scharrer
+# Copyright (C) 2013-2018 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -42,6 +42,9 @@ set(STYLE_FILTER ${STYLE_FILTER},-whitespace/blank_line)
 # Suggessts excessive indentation.
 set(STYLE_FILTER ${STYLE_FILTER},-whitespace/labels)
 
+# Disallows brace on new line after long class memeber init list
+set(STYLE_FILTER ${STYLE_FILTER},-whitespace/braces)
+
 # Don't tell me how to name my variables.
 set(STYLE_FILTER ${STYLE_FILTER},-runtime/arrays)
 
@@ -71,7 +74,7 @@ function(add_style_check_target TARGET_NAME SOURCES_LIST PROJECT)
 	
 	add_custom_target(${TARGET_NAME}
 		COMMAND "${CMAKE_COMMAND}" -E chdir
-			"${CMAKE_SOURCE_DIR}"
+			"${PROJECT_SOURCE_DIR}"
 			"${PYTHON_EXECUTABLE}"
 			"${STYLE_CHECK_SCRIPT}"
 			"--filter=${STYLE_FILTER}"

@@ -1,5 +1,5 @@
 
-# Copyright (C) 2013-2015 Daniel Scharrer
+# Copyright (C) 2013-2016 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -25,7 +25,7 @@ macro(use_static_libs ID)
 		else()
 			set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
 		endif()
-		if(${ARGC} GREATER 1)
+		if(ARGC GREATER 1)
 			set(prefix "${ARGV1}")
 			set(${prefix}_LIBRARIES     "${${prefix}_STATIC_LIBRARIES}")
 			set(${prefix}_LIBRARY_DIRS  "${${prefix}_STATIC_LIBRARY_DIRS}")

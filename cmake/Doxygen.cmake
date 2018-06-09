@@ -1,5 +1,5 @@
 
-# Copyright (C) 2011-2012 Daniel Scharrer
+# Copyright (C) 2011-2017 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -42,7 +42,7 @@ function(add_doxygen_target TARGET_NAME DOXYFILE_IN VERSION_FILE GIT_DIR OUT_DIR
 		return()
 	endif()
 	
-	set(doxyfile "${CMAKE_BINARY_DIR}/Doxyfile.${TARGET_NAME}")
+	set(doxyfile "${PROJECT_BINARY_DIR}/Doxyfile.${TARGET_NAME}")
 	set(defines "-DDOXYGEN_OUTPUT_DIR=${OUT_DIR}")
 	
 	version_file("${DOXYFILE_IN}" "${doxyfile}" "${VERSION_FILE}" "${GIT_DIR}" "${defines}")
@@ -51,7 +51,7 @@ function(add_doxygen_target TARGET_NAME DOXYFILE_IN VERSION_FILE GIT_DIR OUT_DIR
 		COMMAND "${CMAKE_COMMAND}" -E make_directory "${OUT_DIR}"
 		COMMAND ${DOXYGEN_EXECUTABLE} "${doxyfile}"
 		DEPENDS "${doxyfile}"
-		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+		WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
 		COMMENT "Building doxygen documentation."
 		VERBATIM
 		SOURCES "${DOXYFILE_IN}"

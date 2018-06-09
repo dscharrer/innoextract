@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2016 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -203,7 +203,7 @@ static int get_screen_width() {
 
 static bool progress_cleared = true;
 
-void progress::clear(bool reset_only) {
+void progress::clear(ClearMode mode) {
 	
 	if(!show_progress) {
 		return;
@@ -213,7 +213,7 @@ void progress::clear(bool reset_only) {
 	
 	#if defined(_WIN32)
 	
-	if(reset_only) {
+	if(mode == FastClear) {
 		
 		/*
 		 * If we overwrite the whole line with spaces, windows console likes to draw
@@ -229,11 +229,23 @@ void progress::clear(bool reset_only) {
 		std::cout << '\r';
 		
 		return;
+		
+	} else if(mode == DeferredClear && isatty(1)) {
+		
+		/*
+		 * Special clear mode that leaves the original line but insert new lines before it
+		 * until the next carriage return.
+		 */
+		
+		std::cout << "\r\x1b[3K";
+		
+		return;
+		
 	}
 	
 	#else
 	
-	(void)reset_only;
+	(void)mode;
 	
 	#endif
 	
@@ -249,7 +261,7 @@ void progress::show(float value, const std::string & label) {
 		return;
 	}
 	
-	clear(true);
+	clear(FastClear);
 	
 	int width = get_screen_width();
 	
@@ -288,7 +300,7 @@ void progress::show_unbounded(float value, const std::string & label) {
 		return;
 	}
 	
-	clear(true);
+	clear(FastClear);
 	
 	int width = get_screen_width();
 	

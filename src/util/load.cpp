@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -44,7 +44,7 @@ void binary_string::load(std::istream & is, std::string & target) {
 	}
 }
 
-void binary_string::skip(std::istream&  is) {
+void binary_string::skip(std::istream & is) {
 	
 	boost::uint32_t length = util::load<boost::uint32_t>(is);
 	if(is.fail()) {

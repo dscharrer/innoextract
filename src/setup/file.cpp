@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -191,6 +191,11 @@ void file_entry::load(std::istream & is, const version & version) {
 	} else {
 		type = stored_enum<stored_file_type_1>(is).get();
 	}
+	
+	additional_locations.clear();
+	checksum.type = crypto::None;
+	size = 0;
+	
 }
 
 } // namespace setup

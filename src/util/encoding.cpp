@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -71,6 +71,7 @@
 #include <boost/foreach.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/range/size.hpp>
 
 #include "util/log.hpp"
 #include "util/math.hpp"
@@ -86,6 +87,79 @@ enum known_codepages {
 };
 
 namespace {
+
+//! Get names for encodings where iconv doesn't have the codepage alias
+static const char * get_encoding_name(codepage_id codepage) {
+	switch(codepage) {
+		case   708: return "ISO-8859-6";
+		case   936: return "GBK";
+		case   949: return "UHC";
+		case   950: return "BIG5";
+		// iconv's behavior for "UTF-16" is platform-dependent if there is no BOM.
+		// There never is any BOM in Inno Setup files and it's always little-endian,
+		// so we specify the exact encoding.
+		case  1200: return "UTF-16LE";
+		case  1201: return "UTF-16BE";
+		case  1252: return "MS-ANSI";
+		case  1361: return "JOHAB";
+		case 10000: return "MACINTOSH";
+		case 10002: return "BIG5";
+		case 10008: return "GB2312";
+		case 12000: return "UTF-32LE";
+		case 12001: return "UTF-32BE";
+		case 20003: return "IBM5550";
+		case 20127: return "US-ASCII";
+		case 20261: return "T.61";
+		case 20269: return "ISO_6937";
+		case 20273: return "IBM273";
+		case 20277: return "IBM277";
+		case 20278: return "IBM278";
+		case 20280: return "IBM280";
+		case 20284: return "IBM284";
+		case 20285: return "IBM285";
+		case 20290: return "IBM290";
+		case 20297: return "IBM297";
+		case 20420: return "IBM420";
+		case 20423: return "IBM423";
+		case 20424: return "IBM424";
+		case 20866: return "KOI8-R";
+		case 20871: return "IBM871";
+		case 20880: return "IBM880";
+		case 20905: return "IBM905";
+		case 20924: return "IBM1047";
+		case 20932: return "EUC-JP-MS";
+		case 20936: return "EUC-CN";
+		case 21025: return "IBM1025";
+		case 21866: return "KOI8-U";
+		case 28591: return "ISO-8859-1";
+		case 28592: return "ISO-8859-2";
+		case 28593: return "ISO-8859-3";
+		case 28594: return "ISO-8859-4";
+		case 28595: return "ISO-8859-5";
+		case 28596: return "ISO-8859-6";
+		case 28597: return "ISO-8859-7";
+		case 28598: return "ISO-8859-8";
+		case 28599: return "ISO-8859-9";
+		case 28603: return "ISO-8859-13";
+		case 28605: return "ISO-8859-15";
+		case 38598: return "ISO-8859-8";
+		case 50220: return "ISO-2022-JP";
+		case 50221: return "ISO-2022-JP-2";
+		case 50222: return "ISO-2022-JP-3";
+		case 50225: return "ISO-2022-KR";
+		case 50227: return "ISO-2022-CN";
+		case 50229: return "ISO-2022-CN-EXT";
+		case 50930: return "EBCDIC-JP-E";
+		case 51932: return "EUC-JP";
+		case 51936: return "EUC-CN";
+		case 51949: return "EUC-KR";
+		case 51950: return "EUC-CN";
+		case 54936: return "GB18030";
+		case 65000: return "UTF-7";
+		case 65001: return "UTF-8";
+		default: return NULL;
+	}
+}
 
 static const char replacement_char = '_';
 
@@ -110,6 +184,7 @@ static void to_utf8_fallback(const std::string & from, std::string & to, codepag
 	switch(cp) {
 		case  1201: shift = 1u * 8u; break; // UTF-16BE
 		case 12001: shift = 3u * 8u; break; // UTF-32BE
+		default: break;
 	}
 	
 	to.clear();
@@ -136,21 +211,64 @@ static void to_utf8_fallback(const std::string & from, std::string & to, codepag
 	}
 	
 	if(warn) {
-		static bool warned = false;
 		log_warning << "Unknown data while converting from CP" << cp << " to UTF-8.";
-		if(!warned && (cp == cp_windows1252 || cp == cp_utf16le)) {
-			#if INNOEXTRACT_HAVE_ICONV
-			log_warning << " └─ make sure your iconv installation supports Windows-1252 and UTF-16LE";
-			#elif !INNOEXTRACT_HAVE_BUILTIN_CONV && !INNOEXTRACT_HAVE_WIN32_CONV
-			log_warning << " └─ build innoextract with charset conversion routines enabled!";
-			#endif
-			warned = true;
-		}
 	}
 	
 }
 
-#if INNOEXTRACT_HAVE_BUILTIN_CONV
+bool is_utf8_continuation_byte(unicode_char chr) {
+	return (chr & 0xc0) == 0x80;
+}
+
+template <typename In>
+unicode_char utf8_read(In & it, In end, unicode_char replacement = unicode_char(replacement_char)) {
+	
+	if(it == end) {
+		return unicode_char(-1);
+	}
+	unicode_char chr = boost::uint8_t(*it++);
+	
+	// For multi-byte characters, read the remaining bytes
+	if(chr & (1 << 7)) {
+		
+		if(is_utf8_continuation_byte(chr)) {
+			// Bad start position
+			return replacement;
+		}
+		
+		if(it == end || !is_utf8_continuation_byte(boost::uint8_t(*it))) {
+			// Unexpected end of multi-byte sequence
+			return replacement;
+		}
+		chr &= 0x3f, chr <<= 6, chr |= unicode_char(boost::uint8_t(*it++) & 0x3f);
+		
+		if(chr & (1 << (5 + 6))) {
+			
+			if(it == end || !is_utf8_continuation_byte(boost::uint8_t(*it))) {
+				// Unexpected end of multi-byte sequence
+				return replacement;
+			}
+			chr &= ~unicode_char(1 << (5 + 6)), chr <<= 6, chr |= unicode_char(boost::uint8_t(*it++) & 0x3f);
+			
+			if(chr & (1 << (4 + 6 + 6))) {
+				
+				if(it == end || !is_utf8_continuation_byte(boost::uint8_t(*it))) {
+					// Unexpected end of multi-byte sequence
+					return replacement;
+				}
+				chr &= ~unicode_char(1 << (4 + 6 + 6)), chr <<= 6, chr |= unicode_char(boost::uint8_t(*it++) & 0x3f);
+				
+				if(chr & (1 << (3 + 6 + 6 + 6))) {
+					// Illegal UTF-8 byte
+					return replacement;
+				}
+				
+			}
+		}
+	}
+	
+	return chr;
+}
 
 static size_t utf8_length(unicode_char chr) {
 	if     (chr <  0x80)       return 1;
@@ -172,19 +290,21 @@ static void utf8_write(std::string & to, unicode_char chr) {
 	// Extract bytes to write
 	boost::uint8_t bytes[4];
 	switch(length) {
-		case 4: bytes[3] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6;
-		case 3: bytes[2] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6;
-		case 2: bytes[1] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6;
+		case 4: bytes[3] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6; /* fall-through */
+		case 3: bytes[2] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6; /* fall-through */
+		case 2: bytes[1] = static_cast<boost::uint8_t>((chr | 0x80) & 0xBF), chr >>= 6; /* fall-through */
 		case 1: bytes[0] = static_cast<boost::uint8_t>(chr | first_bytes[length]);
+		default: break;
 	}
 	
 	// Add them to the output
 	const boost::uint8_t * cur_byte = bytes;
 	switch(length) {
-		case 4: to.push_back(char(*cur_byte++));
-		case 3: to.push_back(char(*cur_byte++));
-		case 2: to.push_back(char(*cur_byte++));
+		case 4: to.push_back(char(*cur_byte++)); /* fall-through */
+		case 3: to.push_back(char(*cur_byte++)); /* fall-through */
+		case 2: to.push_back(char(*cur_byte++)); /* fall-through */
 		case 1: to.push_back(char(*cur_byte++));
+		default: break;
 	}
 	
 }
@@ -262,16 +382,48 @@ static void utf16le_to_utf8(const std::string & from, std::string & to) {
 	
 }
 
-static void windows1252_to_utf8(const std::string & from, std::string & to) {
+void utf8_to_utf16le(const std::string & from, std::string & to) {
 	
-	static unicode_char replacements[] = {
-		0x20ac, replacement_char, 0x201a, 0x192, 0x201e, 0x2026, 0x2020, 0x2021, 0x2c6,
-		0x2030, 0x160, 0x2039, 0x152, replacement_char, 0x17d, replacement_char,
-		replacement_char, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014, 0x2dc,
-		0x2122, 0x161, 0x203a, 0x153, replacement_char, 0x17e, 0x178
-	};
+	to.clear();
+	to.reserve(from.size() * 2); // optimistically, most strings only have ASCII characters
+	
+	bool warn = false;
+	
+	for(std::string::const_iterator i = from.begin(); i != from.end(); ) {
+		
+		unicode_char chr = utf8_read(i, from.end());
+		
+		if((chr >= 0xd800 && chr <= 0xdfff) || chr > 0x10ffff) {
+			chr = replacement_char;
+			warn = true;
+		} else if(chr >= 0x10000) {
+			chr -= 0x10000;
+			unicode_char high_surrogate = 0xd800 + (chr >> 10);
+			to.push_back(char(boost::uint8_t(high_surrogate)));
+			to.push_back(char(boost::uint8_t(high_surrogate >> 8)));
+			chr = 0xdc00 + (chr & 0x3ff);
+		}
+		
+		to.push_back(char(boost::uint8_t(chr)));
+		to.push_back(char(boost::uint8_t(chr >> 8)));
+	}
+	
+	if(warn) {
+		log_warning << "Unexpected data while converting from UTF-8 to UTF-16LE.";
+	}
+	
+}
 
-	BOOST_STATIC_ASSERT(sizeof(replacements) == (160 - 128) * sizeof(*replacements));
+static unicode_char windows1252_replacements[] = {
+	0x20ac, replacement_char, 0x201a, 0x192, 0x201e, 0x2026, 0x2020, 0x2021, 0x2c6,
+	0x2030, 0x160, 0x2039, 0x152, replacement_char, 0x17d, replacement_char,
+	replacement_char, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014, 0x2dc,
+	0x2122, 0x161, 0x203a, 0x153, replacement_char, 0x17e, 0x178
+};
+
+BOOST_STATIC_ASSERT(sizeof(windows1252_replacements) == (160 - 128) * sizeof(*windows1252_replacements));
+
+static void windows1252_to_utf8(const std::string & from, std::string & to) {
 	
 	to.clear();
 	to.reserve(from.size()); // optimistically, most strings only have ASCII characters
@@ -283,7 +435,7 @@ static void windows1252_to_utf8(const std::string & from, std::string & to) {
 		// Windows-1252 maps almost directly to Unicode - yay!
 		unicode_char chr = boost::uint8_t(c);
 		if(chr >= 128 && chr < 160) {
-			chr = replacements[chr - 128];
+			chr = windows1252_replacements[chr - 128];
 			warn = warn || (chr == unicode_char(replacement_char));
 		}
 		
@@ -296,96 +448,46 @@ static void windows1252_to_utf8(const std::string & from, std::string & to) {
 	
 }
 
-static bool to_utf8_builtin(const std::string & from, std::string & to, codepage_id cp) {
+static void utf8_to_windows1252(const std::string & from, std::string & to) {
 	
-	switch(cp) {
-		case cp_utf16le:     utf16le_to_utf8(from, to); return true;
-		case cp_windows1252: windows1252_to_utf8(from, to); return true;
-		case cp_iso_8859_1:  windows1252_to_utf8(from, to); return true;
-		default:             return false;
+	to.clear();
+	to.reserve(from.size()); // optimistically, most strings only have ASCII characters
+	
+	bool warn = false;
+	
+	for(std::string::const_iterator i = from.begin(); i != from.end(); ) {
+		
+		unicode_char chr = utf8_read(i, from.end());
+		
+		// Windows-1252 maps almost directly to Unicode - yay!
+		if(chr >= 256 || (chr >= 128 && chr < 160)) {
+			size_t i = 0;
+			for(; i < boost::size(windows1252_replacements); i++) {
+				if(chr == windows1252_replacements[i] && windows1252_replacements[i] != replacement_char) {
+					break;
+				}
+			}
+			if(i < boost::size(windows1252_replacements)) {
+				chr = unicode_char(128 + i);
+			} else {
+				chr = replacement_char;
+				warn = true;
+			}
+		}
+		
+		to.push_back(char(boost::uint8_t(chr)));
+	}
+	
+	if(warn) {
+		log_warning << "Unsupported character while converting from UTF-8 to Windows-1252.";
 	}
 	
 }
-
-#endif // INNOEXTRACT_HAVE_BUILTIN_CONV
 
 #if INNOEXTRACT_HAVE_ICONV
 
 typedef boost::unordered_map<codepage_id, iconv_t> converter_map;
 static converter_map converters;
-
-//! Get names for encodings where iconv doesn't have the codepage alias
-static const char * get_encoding_name(codepage_id codepage) {
-	switch(codepage) {
-		case   708: return "ISO-8859-6";
-		case   936: return "GBK";
-		case   949: return "UHC";
-		case   950: return "BIG5";
-		// iconv's behavior for "UTF-16" is platform-dependent if there is no BOM.
-		// There never is any BOM in Inno Setup files and it's always little-endian,
-		// so we specify the exact encoding.
-		case  1200: return "UTF-16LE";
-		case  1201: return "UTF-16BE";
-		case  1252: return "MS-ANSI";
-		case  1361: return "JOHAB";
-		case 10000: return "MACINTOSH";
-		case 10002: return "BIG5";
-		case 10008: return "GB2312";
-		case 12000: return "UTF-32LE";
-		case 12001: return "UTF-32BE";
-		case 20003: return "IBM5550";
-		case 20127: return "US-ASCII";
-		case 20261: return "T.61";
-		case 20269: return "ISO_6937";
-		case 20273: return "IBM273";
-		case 20277: return "IBM277";
-		case 20278: return "IBM278";
-		case 20280: return "IBM280";
-		case 20284: return "IBM284";
-		case 20285: return "IBM285";
-		case 20290: return "IBM290";
-		case 20297: return "IBM297";
-		case 20420: return "IBM420";
-		case 20423: return "IBM423";
-		case 20424: return "IBM424";
-		case 20866: return "KOI8-R";
-		case 20871: return "IBM871";
-		case 20880: return "IBM880";
-		case 20905: return "IBM905";
-		case 20924: return "IBM1047";
-		case 20932: return "EUC-JP-MS";
-		case 20936: return "EUC-CN";
-		case 21025: return "IBM1025";
-		case 21866: return "KOI8-U";
-		case 28591: return "ISO-8859-1";
-		case 28592: return "ISO-8859-2";
-		case 28593: return "ISO-8859-3";
-		case 28594: return "ISO-8859-4";
-		case 28595: return "ISO-8859-5";
-		case 28596: return "ISO-8859-6";
-		case 28597: return "ISO-8859-7";
-		case 28598: return "ISO-8859-8";
-		case 28599: return "ISO-8859-9";
-		case 28603: return "ISO-8859-13";
-		case 28605: return "ISO-8859-15";
-		case 38598: return "ISO-8859-8";
-		case 50220: return "ISO-2022-JP";
-		case 50221: return "ISO-2022-JP-2";
-		case 50222: return "ISO-2022-JP-3";
-		case 50225: return "ISO-2022-KR";
-		case 50227: return "ISO-2022-CN";
-		case 50229: return "ISO-2022-CN-EXT";
-		case 50930: return "EBCDIC-JP-E";
-		case 51932: return "EUC-JP";
-		case 51936: return "EUC-CN";
-		case 51949: return "EUC-KR";
-		case 51950: return "EUC-CN";
-		case 54936: return "GB18030";
-		case 65000: return "UTF-7";
-		case 65001: return "UTF-8";
-		default: return NULL;
-	}
-}
 
 static iconv_t get_converter(codepage_id codepage) {
 	
@@ -571,11 +673,12 @@ void to_utf8(const std::string & from, std::string & to, codepage_id cp) {
 		return;
 	}
 	
-	#if INNOEXTRACT_HAVE_BUILTIN_CONV
-	if(to_utf8_builtin(from, to, cp)) {
-		return;
+	switch(cp) {
+		case cp_utf16le:     utf16le_to_utf8(from, to); return;
+		case cp_windows1252: windows1252_to_utf8(from, to); return;
+		case cp_iso_8859_1:  windows1252_to_utf8(from, to); return;
+		default: break;
 	}
-	#endif
 	
 	#if INNOEXTRACT_HAVE_ICONV
 	if(to_utf8_iconv(from, to, cp)) {
@@ -591,6 +694,43 @@ void to_utf8(const std::string & from, std::string & to, codepage_id cp) {
 	
 	to_utf8_fallback(from, to, cp);
 	
+}
+
+void from_utf8(const std::string & from, std::string & to, codepage_id codepage) {
+	
+	if(from.empty()) {
+		to.clear();
+		return;
+	}
+	
+	if(codepage == cp_utf8) {
+		to = from;
+		return;
+	}
+	
+	switch(codepage) {
+		case cp_utf16le:     utf8_to_utf16le(from, to); return;
+		case cp_windows1252: utf8_to_windows1252(from, to); return;
+		case cp_iso_8859_1:  utf8_to_windows1252(from, to); return;
+		default: {
+			log_warning << "Unsupported output codepage: " << codepage;
+			to = from;
+		}
+	}
+	
+}
+
+std::string encoding_name(codepage_id codepage) {
+	
+	const char * name = get_encoding_name(codepage);
+	if(name) {
+		return name;
+	}
+	
+	std::ostringstream oss;
+	oss << "Windows-" << codepage;
+	
+	return oss.str();
 }
 
 } // namespace util

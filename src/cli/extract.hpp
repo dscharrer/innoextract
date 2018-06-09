@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Daniel Scharrer
+ * Copyright (C) 2014-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -41,6 +41,7 @@ struct format_error : public std::runtime_error {
 enum CollisionAction {
 	OverwriteCollisions,
 	RenameCollisions,
+	RenameAllCollisions,
 	ErrorOnCollisions
 };
 
@@ -51,16 +52,22 @@ struct extract_options {
 	
 	bool warn_unused; //!< Warn if there are unused files
 	
+	bool data_version; //!< Print the data version
 	bool list; //!< List files
 	bool test; //!< Test files (but don't extract)
 	bool extract; //!< Extract files
 	bool list_languages; //!< List available languages
 	bool gog_game_id; //!< Show the GOG.com game id
+	bool show_password; //!< Show password check information
+	bool check_password; //!< Abort if the provided password is incorrect
 	
 	bool preserve_file_times; //!< Set timestamps of extracted files
 	bool local_timestamps; //!< Use local timezone for setting timestamps
 	
 	bool gog; //!< Try to extract additional archives used in GOG.com installers
+	bool gog_galaxy; //!< Try to re-assemble GOG Galaxy files
+	
+	bool extract_unknown; //!< Try to extract unknown Inno Setup versions
 	
 	bool extract_temp; //!< Extract temporary files
 	bool language_only; //!< Extract files not associated with any language
@@ -70,6 +77,8 @@ struct extract_options {
 	setup::filename_map filenames;
 	CollisionAction collisions;
 	std::string default_language;
+	
+	std::string password;
 	
 	boost::filesystem::path output_dir;
 	

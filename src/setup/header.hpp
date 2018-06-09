@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -98,6 +98,7 @@ struct header {
 		CloseApplications,
 		RestartApplications,
 		AllowNetworkDrive,
+		ForceCloseApplications,
 		
 		// Obsolete flags
 		Uninstallable,
@@ -120,7 +121,8 @@ struct header {
 		ArchitectureUnknown,
 		X86,
 		Amd64,
-		IA64
+		IA64,
+		ARM64
 	);
 	
 	std::string app_name;
@@ -185,8 +187,15 @@ struct header {
 	Color image_back_color;
 	Color small_image_back_color;
 	
+	enum alpha_format {
+		AlphaIgnored,
+		AlphaDefined,
+		AlphaPremultiplied
+	};
+	alpha_format image_alpha_format;
+	
 	crypto::checksum password;
-	salt password_salt;
+	std::string password_salt;
 	
 	boost::int64_t extra_disk_space_required;
 	size_t slices_per_disk;
@@ -259,6 +268,7 @@ struct header {
 
 NAMED_FLAGS(setup::header::flags)
 NAMED_FLAGS(setup::header::architecture_types)
+NAMED_ENUM(setup::header::alpha_format)
 NAMED_ENUM(setup::header::install_verbosity)
 NAMED_ENUM(setup::header::log_mode)
 NAMED_ENUM(setup::header::style)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -43,8 +43,6 @@ struct shell_command {
 	const char * command;
 };
 
-std::ostream & operator<<(std::ostream & os, const shell_command command);
-
 //! Reset the output color to the original value.
 extern shell_command reset;
 
@@ -69,7 +67,7 @@ extern shell_command dim_white;
 //! The last set output color.
 extern shell_command current;
 
-inline std::ostream & operator<<(std::ostream & os, const shell_command command) {
+inline std::ostream & operator<<(std::ostream & os, shell_command command) {
 	color::current = command;
 	return os << command.command;
 }
@@ -89,6 +87,13 @@ enum is_enabled {
 void init(is_enabled color = automatic, is_enabled progress = automatic);
 
 } // namespace color
+
+enum ClearMode {
+	FullClear,    //!< Perform a full clear.
+	FastClear,    //!< Perform a full clear if it is cheap, otherwise only reset the cursor.
+	DeferredClear //!< Perform a full clear if it is cheap, otherwise leave the line as-is,
+	              //!< but insert new writes before it until the next full/fast clear.
+};
 
 //! A text-based progress bar for terminals.
 class progress {
@@ -149,10 +154,9 @@ public:
 	/*!
 	 * Clear any progress bar to make way for other output.
 	 *
-	 * \param reset_only Only reset the cursor if cleaning the line is expensive.
-	 *                   This should be used if the whole line will be written anyway.
+	 * \param mode The clear mode to perform.
 	 */
-	static void clear(bool reset_only = false);
+	static void clear(ClearMode mode = FullClear);
 	
 	//! Enable or disable the progress bar.
 	static void set_enabled(bool enable);

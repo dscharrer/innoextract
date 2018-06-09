@@ -1,5 +1,5 @@
 
-# Copyright (C) 2013 Daniel Scharrer
+# Copyright (C) 2013-2016 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -39,11 +39,15 @@
 #
 function(filter_list LIST_NAME)
 	
+	set(TOKEN_IF "if")
+	set(TOKEN_GROUP_BEGIN "{")
+	set(TOKEN_GROUP_END "}")
+	
 	set(filtered)
 	set(all)
 	
 	# the item from the previous iteration
-	set(last_item)
+	set(last_item "")
 	
 	# current syntax state:
 	# 0 - start
@@ -62,27 +66,27 @@ function(filter_list LIST_NAME)
 				list(APPEND filtered ${last_item})
 			endif()
 			set(mode 0)
-			set(last_item)
+			set(last_item "")
 			
-		elseif("${item}" STREQUAL "if")
+		elseif(item STREQUAL TOKEN_IF)
 			
 			if(NOT mode EQUAL 0)
 				message(FATAL_ERROR "bad filter_list syntax: IF inside { } block is forbidden")
 			endif()
 			
 			# Handle condition start
-			if("${last_item}" STREQUAL "")
+			if(last_item STREQUAL "")
 				message(FATAL_ERROR "bad filter_list syntax: IF without preceding item")
 			endif()
 			set(mode 1)
 			
-		elseif("${item}" STREQUAL "{")
+		elseif(item STREQUAL TOKEN_GROUP_BEGIN)
 			
 			if(NOT mode EQUAL 0)
 				message(FATAL_ERROR "bad filter_list syntax: cannot nest { } blocks")
 			endif()
 			
-			if("${last_item}" STREQUAL "")
+			if(last_item STREQUAL "")
 				message(FATAL_ERROR "bad filter_list syntax: { without preceding item")
 			endif()
 			
@@ -92,16 +96,16 @@ function(filter_list LIST_NAME)
 			else()
 				set(mode 3)
 			endif()
-			set(last_item)
+			set(last_item "")
 			
 		else()
 			
 			# Handle unconditional items
-			if(NOT "${last_item}" STREQUAL "" AND NOT mode EQUAL 3)
+			if(NOT last_item STREQUAL "" AND NOT mode EQUAL 3)
 				list(APPEND filtered ${last_item})
 			endif()
 			
-			if("${item}" STREQUAL "}")
+			if(item STREQUAL TOKEN_GROUP_END)
 				
 				if(mode EQUAL 0)
 					message(FATAL_ERROR "bad filter_list syntax: } without open block")
@@ -131,7 +135,7 @@ function(filter_list LIST_NAME)
 	list(REMOVE_DUPLICATES filtered)
 	set(${LIST_NAME} ${filtered} PARENT_SCOPE)
 	
-	if(${ARGC} GREATER 1)
+	if(ARGC GREATER 1)
 		list(SORT all)
 		list(REMOVE_DUPLICATES all)
 		set(${ARGV1} ${all} PARENT_SCOPE)

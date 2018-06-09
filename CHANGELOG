@@ -1,4 +1,64 @@
 
+innoextract 1.7 (TDB)
+ - Added support for Inno Setup 5.6.0 installers
+ - Added support for new GOG installers with GOG Galaxy file parts
+ - Added support for encrypted installers with the --password (-P) and --password-file options
+ - Added a --show-password option to print password check information
+ - Added a --check-password option to abort if the provided password does not match the stored checksum
+ - Added a --info (-i) convenience option to print information about the installer
+ - Added a --data-version (-V) option to print the data version and exit
+ - Added a --no-extract-unknown (-n) option to abort on unknown Inno Setup data versions
+ - Fixed building in paths that contain regex expressions
+ - Fixed case-sensitivity in parent directory when creating subdirectories
+ - Fixed .bin slice file names used with Inno Setup versions older than 4.1.7
+ - Fixed build with newer libc++ versions
+ - Made loading of .bin slice files case-insensitive
+ - The --test option can now be combined with --extract to abort on file checksum errors
+ - Now compiles in C++17 mode if supported
+
+innoextract 1.6 (2016-03-24)
+ - Added support for Inno Setup 5.5.7 (and 5.5.8) installers
+ - Added a --collisions=rename-all option
+ - Changed --collisions=rename to omit the suffix for the file that would have been extracted with --collisions=overwrite instead of the first encountered file
+ - Fixed @lang suffix sometimes missing for the first file with the --collisions=rename option
+ - Fixed build error with CMake 3.5
+ - Now compiles in C++14 mode if supported
+ - Unsafe characters in special constant strings (ie ':' in {code:…}) are now replaced with '$'
+ - Windows: Fixed error message if the source file could not be opened
+ - Windows: Fixed progress bar flickering while printing extracted filenames
+ - Windows binaries: Fixed crash on platforms without AVX support
+
+innoextract 1.5 (2015-09-24)
+ - Added support for Inno Setup 5.5.6 installers
+ - Added support for a modified Inno Setup 5.5.0 variant
+ - Added support for building without iconv (Windows-1252 and UTF-16LE only)
+ - Added warnings for .bin files that are not part of the installer
+ - Added a simple --include (-I) option to filter files thanks to Alexandre Detiste
+ - Added a --list-languages option to list available languages
+ - Added a --exclude-temp (-m) option to not extract temporary files
+ - Added a --language-only option to skip language-independent files
+ - Added a --collisions option to abort or rename files on collision
+ - Added a --default-language option to prefer a language in case of file collisions
+ - Added a --gog-game-id option to print the GOG.com game ID for Galaxy-ready installers
+ - Added a --gog (-g) option to extract additional .bin files using unrar or unar
+ - Fixed handling of spaces in the --data-dir option
+ - Fixed an infinite loop with truncated LZMA streams
+ - Fixed handling of forward slashes in stored file paths
+ - Fixed size display for powers of 1024
+ - Fixed loading headers if there are encrypted chunks
+ - Fixed file collisions not being handled case-insensitively
+ - Files will now be extracted into the same directory even if the stored case differs
+ - Empty directories are now created correctly when extracting
+ - Skipped files in encrypted chunks are now listed individually
+ - Temporary files are now marked in file listings
+ - Error summary is now written to stderr when using --quiet
+ - Colors are now only enabled automatically if $TERM is set to something other than "dumb"
+ - Improved error and warning messages
+ - Build system improvements
+ - Debug output can now be enabled separately from debug builds
+ - Windows: Added support for using the Win32 API for string encoding conversion
+ - Windows: Fixed unicode console output
+
 innoextract 1.4-windows-r2 (2014-04-17)
  - This is a Windows-specific hotfix release, no other platforms are affected
  - Fixed running innoextract under Windows XP
@@ -10,7 +70,7 @@ innoextract 1.4-windows-r1 (2013-05-14)
  - Fixed original console text color not being restored under Windows
 
 innoextract 1.4 (2013-03-11)
- - Fixed build on non-Linux platforms with a separate libiconv (Windows™, Mac OS X)
+ - Fixed build on non-Linux platforms with a separate libiconv (Windows™, macOS)
  - Fixed build on systems with non-standard iconv function prototypes (FreeBSD)
  - Fixed MSVC build
  - Fixed build with older glibc versions

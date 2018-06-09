@@ -1,0 +1,96 @@
+#!/bin/sh
+
+copyright='Daniel Scharrer'
+
+die() {
+	printf '%s\n' "$1"
+	exit 1
+}
+
+if [ -z "$1" ] || [ ! -d "$1" ]
+	then repo="$(git rev-parse --show-toplevel)"
+	else repo="$1" ; shift
+fi
+[ -d "$repo/.git" ] || die "$1 is not a git repository"
+
+if [ -z "$1" ]
+	then last_tag="$(git --git-dir="$repo/.git" rev-list --tags --max-count=1)"
+	else last_tag="$1"
+fi
+[ -z "$last_tag" ] && die "Could not determine last tag"
+last_tag_name="$(git --git-dir="$repo/.git" describe --tags "$last_tag")"
+printf 'Updating files modified since %s\n' "$last_tag_name"
+
+files="$(git --git-dir="$repo/.git" diff --name-only "$last_tag" HEAD | tr '\n' ' ')"
+eval "set -- LICENSE COPYING $files"
+
+for file ; do
+	path="$repo/$file"
+	[ -f "$path" ] || continue # File was deleted
+	
+	case "$file" in
+		*.yml|.*)
+			# Never try to update the copyright year for these files
+			continue ;;
+	esac
+	
+	c="$(grep -P "(^|[^a-zA-Z0-9_])Copyright( \\([cC]\\))? (\\d{4}\\-)?\\d{4} $copyright" "$file")"
+	
+	if [ -z "$c" ] ; then
+		case "$file" in
+			cmake/*.cpp|*CMakeLists.txt|*.md|*.1|*.in|LICENSE.*)
+				# These files don't have to contain copyright information
+				;;
+			*.*|scripts/*)
+				c="$(grep -P "(^|[^a-zA-Z0-9_])Copyright( \([cC]\))?[ \:].*public domain" "$file")"
+				[ -z "$c" ] && printf 'No copyright info found in %s, skipping\n' "$file" ;;
+		esac
+		continue
+	fi
+	
+	if [ "$(printf '%s\n' "$c" | wc -l)" -gt 1 ] ; then
+		printf 'Multiple copyright lines found in %s, skipping\n' "$file"
+		continue
+	fi
+	
+	s='\(^.*Copyright\( ([cC])\)\? \([0-9]\{4\}\-\)\?\)\([0-9]\{4\}\)\( '"$copyright"'.*$\)'
+	old_year="$(printf '%s\n' "$c" | sed "s/$s/\\4/")"
+	if [ -z "$old_year" ] || printf '%s\n' "$old_year" | grep -P '[^0-9]' > /dev/null ; then
+		printf 'Could not determine new copyright year for %s, skipping\n' "$file"
+		continue
+	fi
+	
+	case "$file" in
+		COPYING|LICENSE)
+			new_year="$(git --git-dir="$repo/.git" log -1 --format=%cd --date=short)" ;;
+		*)
+			new_year="$(git --git-dir="$repo/.git" log -1 --format=%cd --date=short -- "$path")"
+	esac
+	new_year="${new_year%%-*}"
+	if [ -z "$new_year" ] || printf '%s\n' "$new_year" | grep -P '[^0-9]' > /dev/null ; then
+		printf 'Could not determine new copyright year for %s, skipping\n' "$file"
+		continue
+	fi
+	
+	[ "$new_year" = "$old_year" ] && continue
+	
+	if [ ! "$new_year" -gt "$old_year" ] ; then
+		printf 'Copyright downgrade in %s: %s→%s, skipping\n' "$file" "$old_year" "$new_year"
+		continue
+	fi
+	
+	first_year="$(printf '%s\n' "$c" | sed "s/$s/\\3/")"
+	if [ -z "$first_year" ] ; then
+		replacement="$old_year-$new_year"
+		old="$old_year"
+		new="$old_year-$new_year"
+	else
+		replacement="$new_year"
+		old="$first_year$old_year"
+		new="$first_year$new_year"
+	fi
+	
+	printf '%s: %s → %s\n' "$file" "$old" "$new"
+	sed -i "s/$s/\\1$replacement\\5/" "$path"
+	
+done

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -43,6 +43,18 @@ typedef boost::uint32_t codepage_id;
  * \note This function is not thread-safe.
  */
 void to_utf8(const std::string & from, std::string & to, codepage_id codepage = 1252);
+
+/*!
+ * Convert a string from UTF-8 to a specified encoding.
+ * \param from     The input string to convert.
+ * \param to       The output for the converted string.
+ * \param codepage The Windows codepage number for the input string encoding.
+ *
+ * \note This function is not thread-safe.
+ */
+void from_utf8(const std::string & from, std::string & to, codepage_id codepage = 1252);
+
+std::string encoding_name(codepage_id codepage);
 
 } // namespace util
 

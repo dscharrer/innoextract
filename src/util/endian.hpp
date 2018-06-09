@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2017 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -136,7 +136,7 @@ struct endianness {
 	 */
 	template <typename T>
 	static void load(const char * buffer, T * values, size_t count) {
-		if(Endianness::native() || sizeof(*values) == 8) {
+		if(Endianness::native() || sizeof(*values) == 1) {
 			std::memcpy(values, buffer, sizeof(*values) * count);
 		} else {
 			for(size_t i = 0; i < count; i++, buffer += sizeof(*values)) {
@@ -170,7 +170,7 @@ struct endianness {
 	 */
 	template <typename T>
 	static void store(T * values, size_t count, char * buffer) {
-		if(Endianness::native() || sizeof(*values) == 8) {
+		if(Endianness::native() || sizeof(*values) == 1) {
 			std::memcpy(buffer, values, sizeof(*values) * count);
 		} else {
 			for(size_t i = 0; i < count; i++, buffer += sizeof(*values)) {

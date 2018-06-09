@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -21,18 +21,21 @@
 #include "cli/extract.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <map>
 #include <sstream>
 #include <vector>
-#include <cmath>
+#include <limits>
 
 #include <boost/foreach.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/ptr_container/ptr_map.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/range/size.hpp>
 
@@ -43,6 +46,10 @@
 
 #include "cli/debug.hpp"
 #include "cli/gog.hpp"
+#include "cli/goggalaxy.hpp"
+
+#include "crypto/checksum.hpp"
+#include "crypto/hasher.hpp"
 
 #include "loader/offsets.hpp"
 
@@ -59,6 +66,7 @@
 
 #include "util/boostfs_compat.hpp"
 #include "util/console.hpp"
+#include "util/encoding.hpp"
 #include "util/fstream.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
@@ -69,98 +77,169 @@ namespace fs = boost::filesystem;
 
 namespace {
 
-static size_t probe_bin_files(const extract_options & o, const setup::info & info,
-                              const fs::path & dir, const std::string & basename,
-                              size_t format = 0, size_t start = 0) {
-	
-	size_t count = 0;
-	
-	std::vector<fs::path> files;
-	
-	for(size_t i = start;; i++) {
-		
-		fs::path file;
-		if(format == 0) {
-			file = dir / basename;
-		} else {
-			file = dir / stream::slice_reader::slice_filename(basename, i, format);
-		}
-		
-		try {
-			if(!fs::is_regular_file(file)) {
-				break;
-			}
-		} catch(...) {
-			break;
-		}
-		
-		if(o.gog) {
-			files.push_back(file);
-		} else {
-			log_warning << file.filename() << " is not part of the installer!";
-			count++;
-		}
-		
-		if(format == 0) {
-			break;
-		}
-		
-	}
-	
-	if(!files.empty()) {
-		gog::process_bin_files(files, o, info);
-	}
-	
-	return count;
-}
-
-struct file_output {
-	
-	fs::path name;
-	util::ofstream stream;
-	
-	explicit file_output(const fs::path & file) : name(file) {
-		stream.open(name, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-		if(!stream.is_open()) {
-			throw std::runtime_error("Coul not open output file \"" + name.string() + '"');
-		}
-	}
-	
-};
-
 template <typename Entry>
 class processed_item {
 	
 	std::string path_;
 	const Entry * entry_;
-	bool implied_;
 	
 public:
 	
-	processed_item() : entry_(NULL), implied_(false) { }
-	
-	processed_item(const Entry * entry, const std::string & path, bool implied = false)
-		: path_(path), entry_(entry), implied_(implied) { }
-	
-	processed_item(const std::string & path, bool implied = false)
-		: path_(path), entry_(NULL), implied_(implied) { }
-		
-	processed_item(const processed_item & o)
-		: path_(o.path_), entry_(o.entry_), implied_(o.implied_) { }
+	processed_item(const std::string & path, const Entry * entry)
+		: path_(path), entry_(entry) { }
 	
 	bool has_entry() const { return entry_ != NULL; }
 	const Entry & entry() const { return *entry_; }
 	const std::string & path() const { return path_; }
-	bool implied() const { return implied_; }
 	
 	void set_entry(const Entry * entry) { entry_ = entry; }
 	void set_path(const std::string & path) { path_ = path; }
+	
+};
+
+class processed_file : public processed_item<setup::file_entry> {
+	
+public:
+	
+	processed_file(const setup::file_entry * entry, const std::string & path)
+		: processed_item<setup::file_entry>(path, entry) { }
+	
+	bool is_multipart() const { return !entry().additional_locations.empty(); }
+	
+};
+
+class processed_directory : public processed_item<setup::directory_entry> {
+	
+	bool implied_;
+	
+public:
+	
+	explicit processed_directory(const std::string & path)
+		: processed_item<setup::directory_entry>(path, NULL), implied_(false) { }
+	
+	bool implied() const { return implied_; }
+	
 	void set_implied(bool implied) { implied_ = implied; }
 	
 };
 
-typedef processed_item<setup::file_entry> processed_file;
-typedef processed_item<setup::directory_entry> processed_directory;
+class file_output : private boost::noncopyable {
+	
+	fs::path path_;
+	const processed_file * file_;
+	util::ofstream stream_;
+	
+	crypto::hasher checksum_;
+	bool checksum_valid_;
+	
+	boost::uint64_t position_;
+	boost::uint64_t total_written_;
+	
+	bool write_;
+	
+public:
+	
+	explicit file_output(const fs::path & dir, const processed_file * f, bool write)
+		: path_(dir / f->path())
+		, file_(f)
+		, checksum_(f->entry().checksum.type)
+		, checksum_valid_(f->entry().checksum.type != crypto::None)
+		, position_(0)
+		, total_written_(0)
+		, write_(write)
+	{
+		if(write_) {
+			try {
+				stream_.open(path_, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+				if(!stream_.is_open()) {
+					throw std::exception();
+				}
+			} catch(...) {
+				throw std::runtime_error("Coul not open output file \"" + path_.string() + '"');
+			}
+		}
+	}
+	
+	bool write(const char * data, size_t n) {
+		
+		if(write_) {
+			stream_.write(data, std::streamsize(n));
+		}
+		
+		if(checksum_valid_) {
+			checksum_.update(data, n);
+		}
+		
+		position_ += n;
+		total_written_ += n;
+		
+		return !write_ || !stream_.fail();
+	}
+	
+	void seek(boost::uint64_t new_position) {
+		
+		if(new_position == position_) {
+			return;
+		}
+		
+		checksum_valid_ = false;
+		
+		debug("seeking output from " << print_hex(position_) << " to " << print_hex(new_position));
+		
+		if(!write_) {
+			return;
+		}
+		
+		const boost::uint64_t max = boost::uint64_t(std::numeric_limits<util::ofstream::off_type>::max() / 4);
+		
+		if(new_position <= max) {
+			stream_.seekp(util::ofstream::off_type(new_position), std::ios_base::beg);
+		} else {
+			if(new_position > position_) {
+				boost::uint64_t diff = new_position - position_;
+				while(diff > max) {
+					stream_.seekp(util::ofstream::off_type(max), std::ios_base::cur);
+					diff -= max;
+				}
+				stream_.seekp(util::ofstream::off_type(diff), std::ios_base::cur);
+			} else {
+				boost::uint64_t diff = position_ - new_position;
+				while(diff > max) {
+					stream_.seekp(-util::ofstream::off_type(max), std::ios_base::cur);
+					diff -= max;
+				}
+				stream_.seekp(-util::ofstream::off_type(diff), std::ios_base::cur);
+			}
+		}
+		
+		position_ = new_position;
+		
+	}
+	
+	void close() {
+		
+		if(write_) {
+			stream_.close();
+		}
+		
+	}
+	
+	const fs::path & path() const { return path_; }
+	const processed_file * file() const { return file_; }
+	
+	bool is_complete() const {
+		return total_written_ == file_->entry().size;
+	}
+	
+	bool has_checksum() const {
+		return checksum_valid_ && position_ == file_->entry().size;
+	}
+	
+	crypto::checksum checksum() {
+		return checksum_.finalize();
+	}
+	
+};
 
 class path_filter {
 	
@@ -204,7 +283,7 @@ public:
 	
 };
 
-static void print_filter_info(const setup::item & item, bool temp) {
+void print_filter_info(const setup::item & item, bool temp) {
 	
 	bool first = true;
 	
@@ -226,33 +305,31 @@ static void print_filter_info(const setup::item & item, bool temp) {
 	}
 }
 
-static void print_filter_info(const setup::file_entry & file) {
+void print_filter_info(const setup::file_entry & file) {
 	bool is_temp = !!(file.options & setup::file_entry::DeleteAfterInstall);
 	print_filter_info(file, is_temp);
 }
 
-static void print_filter_info(const setup::directory_entry & dir) {
+void print_filter_info(const setup::directory_entry & dir) {
 	bool is_temp = !!(dir.options & setup::directory_entry::DeleteAfterInstall);
 	print_filter_info(dir, is_temp);
 }
 
-static void print_size_info(const stream::file & file) {
+void print_size_info(const stream::file & file, boost::uint64_t size) {
 	
 	if(logger::debug) {
 		std::cout << " @ " << print_hex(file.offset);
 	}
 	
-	std::cout << " (" << color::dim_cyan << print_bytes(file.size) << color::reset << ")";
+	std::cout << " (" << color::dim_cyan << print_bytes(size ? size : file.size) << color::reset << ")";
 }
 
-static bool prompt_overwrite() {
+bool prompt_overwrite() {
 	return true; // TODO the user always overwrites
 }
 
-static const char * handle_collision(const setup::file_entry & oldfile,
-                                     const setup::data_entry & olddata,
-                                     const setup::file_entry & newfile,
-                                     const setup::data_entry & newdata) {
+const char * handle_collision(const setup::file_entry & oldfile, const setup::data_entry & olddata,
+                              const setup::file_entry & newfile, const setup::data_entry & newdata) {
 	
 	bool allow_timestamp = true;
 	
@@ -328,7 +405,7 @@ typedef std::map<std::string, processed_directory> DirectoriesMap;
 #endif
 typedef boost::unordered_map<std::string, std::vector<processed_file> > CollisionMap;
 
-static std::string parent_dir(const std::string & path) {
+std::string parent_dir(const std::string & path) {
 	
 	size_t pos = path.find_last_of(setup::path_sep);
 	if(pos == std::string::npos) {
@@ -338,8 +415,8 @@ static std::string parent_dir(const std::string & path) {
 	return path.substr(0, pos);
 }
 
-static bool insert_dirs(DirectoriesMap & processed_directories, const path_filter & includes,
-                        const std::string & internal_path, std::string & path, bool implied) {
+bool insert_dirs(DirectoriesMap & processed_directories, const path_filter & includes,
+                 const std::string & internal_path, std::string & path, bool implied) {
 	
 	std::string dir = parent_dir(path);
 	std::string internal_dir = parent_dir(internal_path);
@@ -361,7 +438,11 @@ static bool insert_dirs(DirectoriesMap & processed_directories, const path_filte
 		if(!existing.second) {
 			if(existing.first->second.path() != dir) {
 				// Existing dir case differs, fix path
-				path.replace(0, dir.length(), existing.first->second.path());
+				if(existing.first->second.path().length() == dir.length()) {
+					path.replace(0, dir.length(), existing.first->second.path());
+				} else {
+					path = existing.first->second.path() + path.substr(dir.length());
+				}
 				return true;
 			} else {
 				return false;
@@ -371,56 +452,79 @@ static bool insert_dirs(DirectoriesMap & processed_directories, const path_filte
 		implied = true;
 	}
 	
+	size_t oldlength = dir.length();
 	if(insert_dirs(processed_directories, includes, internal_dir, dir, implied)) {
-		path.replace(0, dir.length(), dir);
+		// Existing dir case differs, fix path
+		if(dir.length() == oldlength) {
+			path.replace(0, dir.length(), dir);
+		} else {
+			path = dir + path.substr(oldlength);
+		}
+		// Also fix previously inserted directory
+		DirectoriesMap::iterator inserted = processed_directories.find(internal_dir);
+		if(inserted != processed_directories.end()) {
+			inserted->second.set_path(dir);
+		}
 		return true;
 	}
 	
 	return false;
 }
 
-static void rename_collision(const extract_options & o, FilesMap & processed_files,
-                             const std::string & path, const processed_file & other,
-                             bool common_component, bool common_language) {
+bool rename_collision(const extract_options & o, FilesMap & processed_files, const std::string & path,
+                      const processed_file & other, bool common_component, bool common_language, bool first) {
 	
 	const setup::file_entry & file = other.entry();
 	
+	bool require_number_suffix = !first || (o.collisions == RenameAllCollisions);
 	std::ostringstream oss;
 	
 	if(!common_component && !file.components.empty()) {
 		if(setup::is_simple_expression(file.components)) {
+			require_number_suffix = false;
 			oss << '#' << file.components;
 		}
 	}
-	if(!common_language && !file.languages.empty() && file.languages != o.default_language) {
+	if(!common_language && !file.languages.empty()) {
 		if(setup::is_simple_expression(file.languages)) {
-			oss << '@' << file.languages;
+			require_number_suffix = false;
+			if(file.languages != o.default_language) {
+				oss << '@' << file.languages;
+			}
 		}
 	}
 	
 	size_t i = 0;
 	std::string suffix = oss.str();
-	if(suffix.empty() && file.languages != o.default_language) {
+	if(require_number_suffix) {
 		oss << '$' << i++;
 	}
-	while(processed_files.find(path + oss.str()) != processed_files.end()) {
+	for(;;) {
+		std::pair<FilesMap::iterator, bool> insertion = processed_files.insert(std::make_pair(
+			path + oss.str(), processed_file(&file, other.path() + oss.str())
+		));
+		if(insertion.second) {
+			// Found an available name and inserted
+			return true;
+		}
+		if(&insertion.first->second.entry() == &file) {
+			// File already has the desired name, abort
+			return false;
+		}
 		oss.str(suffix);
 		oss << '$' << i++;
 	}
-	processed_files.insert(std::make_pair(
-		path + oss.str(), processed_file(&file, other.path() + oss.str())
-	));
 	
 }
 
-static void rename_collisions(const extract_options & o, FilesMap & processed_files,
-                              const CollisionMap & collisions) {
+void rename_collisions(const extract_options & o, FilesMap & processed_files,
+                       const CollisionMap & collisions) {
 	
 	BOOST_FOREACH(const CollisionMap::value_type & collision, collisions) {
 		
 		const std::string & path = collision.first;
 		
-		const processed_file & base = processed_files[path];
+		const processed_file & base = processed_files.find(path)->second;
 		const setup::file_entry & file = base.entry();
 		
 		bool common_component = true;
@@ -430,77 +534,21 @@ static void rename_collisions(const extract_options & o, FilesMap & processed_fi
 			common_language = common_language && other.entry().languages == file.languages;
 		}
 		
-		if(common_component && !common_language && file.languages != o.default_language) {
-			rename_collision(o, processed_files, path, base, common_component, common_language);
+		bool ignore_component = common_component || o.collisions != RenameAllCollisions;
+		if(rename_collision(o, processed_files, path, base,
+		                    ignore_component, common_language, true)) {
 			processed_files.erase(path);
 		}
 		
 		BOOST_FOREACH(const processed_file & other, collision.second) {
-			rename_collision(o, processed_files, path, other, common_component, common_language);
+			rename_collision(o, processed_files, path, other,
+			                 common_component, common_language, false);
 		}
 		
 	}
 }
 
-} // anonymous namespace
-
-void process_file(const fs::path & file, const extract_options & o) {
-	
-	bool is_directory;
-	try {
-		is_directory = fs::is_directory(file);
-	} catch(...) {
-		throw std::runtime_error("Could not open file \"" + file.string()
-		                         + "\": access denied");
-	}
-	if(is_directory) {
-		throw std::runtime_error("Input file \"" + file.string() + "\" is a directory!");
-	}
-	
-	util::ifstream ifs(file, std::ios_base::in | std::ios_base::binary);
-	if(!ifs.is_open()) {
-		throw std::runtime_error("Could not open file \"" + file.string() + '"');
-	}
-	
-	loader::offsets offsets;
-	offsets.load(ifs);
-	
-#ifdef DEBUG
-	if(logger::debug) {
-		print_offsets(offsets);
-		std::cout << '\n';
-	}
-#endif
-	
-	setup::info::entry_types entries = 0;
-	if(o.list || o.test || o.extract) {
-		entries |= setup::info::Files;
-		entries |= setup::info::Directories;
-		entries |= setup::info::DataEntries;
-	}
-	if(o.list_languages) {
-		entries |= setup::info::Languages;
-	}
-	if(o.gog_game_id || o.gog) {
-		entries |= setup::info::RegistryEntries;
-	}
-#ifdef DEBUG
-	if(logger::debug) {
-		entries = setup::info::entry_types::all();
-	}
-#endif
-	
-	ifs.seekg(offsets.header_offset);
-	setup::info info;
-	try {
-		info.load(ifs, entries);
-	} catch(const std::ios_base::failure & e) {
-		std::ostringstream oss;
-		oss << "Stream error while parsing setup headers!\n";
-		oss << " ├─ detected setup version: " << info.version << '\n';
-		oss << " └─ error reason: " << e.what();
-		throw format_error(oss.str());
-	}
+bool print_file_info(const extract_options & o, const setup::info & info) {
 	
 	if(!o.quiet) {
 		const std::string & name = info.header.app_versioned_name.empty()
@@ -518,15 +566,15 @@ void process_file(const fs::path & file, const extract_options & o) {
 		          << std::endl;
 	}
 	
-#ifdef DEBUG
+	#ifdef DEBUG
 	if(logger::debug) {
 		std::cout << '\n';
 		print_info(info);
 		std::cout << '\n';
 	}
-#endif
+	#endif
 	
-	bool multiple_sections = (o.list_languages + o.gog_game_id + o.list > 1);
+	bool multiple_sections = (o.list_languages + o.gog_game_id + o.list + o.show_password > 1);
 	if(!o.quiet && multiple_sections) {
 		std::cout << '\n';
 	}
@@ -542,7 +590,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 			}
 			BOOST_FOREACH(const setup::language_entry & language, info.languages) {
 				std::cout << " - " << color::green << language.name << color::reset;
-				std::cout << ": " << color::white << language.language_name << color::reset << '\n';
+				if(!language.language_name.empty()) {
+					std::cout << ": " << color::white << language.language_name << color::reset;
+				}
+				std::cout << '\n';
 			}
 			if(info.languages.empty()) {
 				std::cout << " (none)\n";
@@ -562,29 +613,65 @@ void process_file(const fs::path & file, const extract_options & o) {
 		} else if(!o.silent) {
 			std::cout << "GOG.com game ID is " << color::cyan << id << color::reset << '\n';
 		} else {
-			std::cout << id;
+			std::cout << id << '\n';
 		}
 		if((o.silent || !o.quiet) && multiple_sections) {
 			std::cout << '\n';
 		}
 	}
 	
-	if(!o.list && !o.test && !o.extract) {
-		return;
+	if(o.show_password) {
+		if(info.header.options & setup::header::Password) {
+			if(o.silent) {
+				std::cout << info.header.password << '\n';
+			} else {
+				std::cout << "Password hash: " << color::yellow << info.header.password << color::reset << '\n';
+			}
+			if(o.silent) {
+				std::cout << print_hex(info.header.password_salt) << '\n';
+			} else if(!info.header.password_salt.empty()) {
+				std::cout << "Password salt: " << color::yellow
+				          << print_hex(info.header.password_salt) << color::reset;
+				if(!o.quiet) {
+					std::cout << " (hex bytes, prepended to password)";
+				}
+				std::cout << '\n';
+			}
+			if(o.silent) {
+				std::cout << util::encoding_name(info.version.codepage()) << '\n';
+			} else {
+				std::cout << "Password encoding: " << color::yellow
+				          << util::encoding_name(info.version.codepage()) << color::reset << '\n';
+			}
+		} else if(!o.quiet) {
+			std::cout << "Setup is not passworded!\n";
+		}
+		if((o.silent || !o.quiet) && multiple_sections) {
+			std::cout << '\n';
+		}
 	}
 	
-	if(!o.silent && multiple_sections) {
-		std::cout << "Files:\n";
-	}
+	return multiple_sections;
+}
+
+struct processed_entries {
 	
-	FilesMap processed_files;
+	FilesMap files;
+	
+	DirectoriesMap directories;
+	
+};
+
+processed_entries filter_entries(const extract_options & o, const setup::info & info) {
+	
+	processed_entries processed;
+	
 	#if BOOST_VERSION >= 105000
-	processed_files.reserve(info.files.size());
+	processed.files.reserve(info.files.size());
 	#endif
 	
-	DirectoriesMap processed_directories;
 	#if BOOST_VERSION >= 104800
-	processed_directories.reserve(info.directories.size()
+	processed.directories.reserve(info.directories.size()
 	                              + size_t(std::log(double(info.files.size()))));
 	#endif
 	
@@ -615,17 +702,17 @@ void process_file(const fs::path & file, const extract_options & o) {
 		
 		bool path_included = includes.match(internal_path);
 		
-		insert_dirs(processed_directories, includes, internal_path, path, path_included);
+		insert_dirs(processed.directories, includes, internal_path, path, path_included);
 		
 		DirectoriesMap::iterator it;
 		if(path_included) {
-			std::pair<DirectoriesMap::iterator, bool> existing = processed_directories.insert(
+			std::pair<DirectoriesMap::iterator, bool> existing = processed.directories.insert(
 				std::make_pair(internal_path, processed_directory(path))
 			);
 			it = existing.first;
 		} else {
-			it = processed_directories.find(internal_path);
-			if(it == processed_directories.end()) {
+			it = processed.directories.find(internal_path);
+			if(it == processed.directories.end()) {
 				continue;
 			}
 		}
@@ -660,13 +747,13 @@ void process_file(const fs::path & file, const extract_options & o) {
 		
 		bool path_included = includes.match(internal_path);
 		
-		insert_dirs(processed_directories, includes, internal_path, path, path_included);
+		insert_dirs(processed.directories, includes, internal_path, path, path_included);
 		
 		if(!path_included) {
 			continue; // Ignore excluded file
 		}
 		
-		std::pair<FilesMap::iterator, bool> insertion = processed_files.insert(std::make_pair(
+		std::pair<FilesMap::iterator, bool> insertion = processed.files.insert(std::make_pair(
 			internal_path, processed_file(&file, path)
 		));
 		
@@ -676,7 +763,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 			
 			if(o.collisions == ErrorOnCollisions) {
 				throw std::runtime_error("Collision: " + path);
-			} else if(o.collisions == RenameCollisions) {
+			} else if(o.collisions == RenameAllCollisions) {
 				collisions[internal_path].push_back(processed_file(&file, path));
 			} else {
 				
@@ -684,13 +771,27 @@ void process_file(const fs::path & file, const extract_options & o) {
 				const setup::data_entry & olddata = info.data_entries[existing.entry().location];
 				const char * skip = handle_collision(existing.entry(), olddata, file, newdata);
 				
-				if(!o.silent) {
+				if(!o.default_language.empty()) {
+					bool oldlang = setup::expression_match(o.default_language, file.languages);
+					bool newlang = setup::expression_match(o.default_language, existing.entry().languages);
+					if(oldlang && !newlang) {
+						skip = NULL;
+					} else if(!oldlang && newlang) {
+						skip = "overwritten";
+					}
+				}
+				
+				if(o.collisions == RenameCollisions) {
+					const setup::file_entry & clobberedfile = skip ? file : existing.entry();
+					const std::string & clobberedpath = skip ? path : existing.path();
+					collisions[internal_path].push_back(processed_file(&clobberedfile, clobberedpath));
+				} else if(!o.silent) {
 					std::cout << " - ";
 					const std::string & clobberedpath = skip ? path : existing.path();
 					std::cout << '"' << color::dim_yellow << clobberedpath << color::reset << '"';
 					print_filter_info(skip ? file : existing.entry());
 					if(!o.quiet) {
-						print_size_info(skip ? newdata.file : olddata.file);
+						print_size_info(skip ? newdata.file : olddata.file, skip ? file.size : existing.entry().size);
 					}
 					std::cout << " - " << (skip ? skip : "overwritten") << '\n';
 				}
@@ -709,11 +810,136 @@ void process_file(const fs::path & file, const extract_options & o) {
 		
 	}
 	
-	if(o.collisions == RenameCollisions) {
-		rename_collisions(o, processed_files, collisions);
-		collisions.clear();
+	if(o.collisions == RenameCollisions || o.collisions == RenameAllCollisions) {
+		rename_collisions(o, processed.files, collisions);
 	}
 	
+	return processed;
+}
+
+} // anonymous namespace
+
+void process_file(const fs::path & file, const extract_options & o) {
+	
+	bool is_directory;
+	try {
+		is_directory = fs::is_directory(file);
+	} catch(...) {
+		throw std::runtime_error("Could not open file \"" + file.string()
+		                         + "\": access denied");
+	}
+	if(is_directory) {
+		throw std::runtime_error("Input file \"" + file.string() + "\" is a directory!");
+	}
+	
+	util::ifstream ifs;
+	try {
+		ifs.open(file, std::ios_base::in | std::ios_base::binary);
+		if(!ifs.is_open()) {
+			throw std::exception();
+		}
+	} catch(...) {
+		throw std::runtime_error("Could not open file \"" + file.string() + '"');
+	}
+	
+	loader::offsets offsets;
+	offsets.load(ifs);
+	
+	if(o.data_version)  {
+		setup::version version;
+		ifs.seekg(offsets.header_offset);
+		version.load(ifs);
+		if(o.silent) {
+			std::cout << version << '\n';
+		} else {
+			std::cout << color::white << version << color::reset << '\n';
+		}
+		return;
+	}
+	
+#ifdef DEBUG
+	if(logger::debug) {
+		print_offsets(offsets);
+		std::cout << '\n';
+	}
+#endif
+	
+	setup::info::entry_types entries = 0;
+	if(o.list || o.test || o.extract || (o.gog_galaxy && o.list_languages)) {
+		entries |= setup::info::Files;
+		entries |= setup::info::Directories;
+		entries |= setup::info::DataEntries;
+	}
+	if(o.list_languages) {
+		entries |= setup::info::Languages;
+	}
+	if(o.gog_game_id || o.gog) {
+		entries |= setup::info::RegistryEntries;
+	}
+	if(!o.extract_unknown) {
+		entries |= setup::info::NoUnknownVersion;
+	}
+#ifdef DEBUG
+	if(logger::debug) {
+		entries = setup::info::entry_types::all();
+	}
+#endif
+	
+	ifs.seekg(offsets.header_offset);
+	setup::info info;
+	try {
+		info.load(ifs, entries);
+	} catch(const std::ios_base::failure & e) {
+		std::ostringstream oss;
+		oss << "Stream error while parsing setup headers!\n";
+		oss << " ├─ detected setup version: " << info.version << '\n';
+		oss << " └─ error reason: " << e.what();
+		throw format_error(oss.str());
+	}
+	
+	if(o.gog_galaxy && (o.list || o.test || o.extract || o.list_languages)) {
+		gog::parse_galaxy_files(info, o.gog);
+	}
+	
+	bool multiple_sections = print_file_info(o, info);
+	
+	std::string password;
+	if(o.password.empty()) {
+		if(!o.quiet && (o.list || o.test || o.extract) && (info.header.options & setup::header::EncryptionUsed)) {
+			log_warning << "Setup contains encrypted files, use the --password option to extract them";
+		}
+	} else {
+		util::from_utf8(o.password, password, info.version.codepage());
+		if(info.header.options & setup::header::Password) {
+			crypto::hasher checksum(info.header.password.type);
+			checksum.update(info.header.password_salt.c_str(), info.header.password_salt.length());
+			checksum.update(password.c_str(), password.length());
+			if(checksum.finalize() != info.header.password) {
+				if(o.check_password) {
+					throw std::runtime_error("Incorrect password provided");
+				} else {
+					log_error << "Incorrect password provided";
+				}
+				password.clear();
+			}
+		}
+		#if !INNOEXTRACT_HAVE_ARC4
+		if((o.extract || o.test) && (info.header.options & setup::header::EncryptionUsed)) {
+			log_warning << "ARC4 decryption not supported in this build, skipping compressed chunks";
+		}
+		password.clear();
+		#endif
+	}
+	
+	if(!o.list && !o.test && !o.extract) {
+		return;
+	}
+	
+	if(!o.silent && multiple_sections) {
+		std::cout << "Files:\n";
+	}
+	
+	processed_entries processed = filter_entries(o, info);
 	
 	if(o.extract && !o.output_dir.empty()) {
 		fs::create_directories(o.output_dir);
@@ -721,7 +947,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 	
 	if(o.list || o.extract) {
 		
-		BOOST_FOREACH(const DirectoriesMap::value_type & i, processed_directories) {
+		BOOST_FOREACH(const DirectoriesMap::value_type & i, processed.directories) {
 			
 			const std::string & path = i.second.path();
 			
@@ -755,48 +981,61 @@ void process_file(const fs::path & file, const extract_options & o) {
 		
 	}
 	
-	std::vector< std::vector<const processed_file *> > files_for_location;
+	typedef std::pair<const processed_file *, boost::uint64_t> output_location;
+	std::vector< std::vector<output_location> > files_for_location;
 	files_for_location.resize(info.data_entries.size());
-	BOOST_FOREACH(const FilesMap::value_type & i, processed_files) {
+	BOOST_FOREACH(const FilesMap::value_type & i, processed.files) {
 		const processed_file & file = i.second;
-		files_for_location[file.entry().location].push_back(&file);
+		files_for_location[file.entry().location].push_back(output_location(&file, 0));
+		if(o.test || o.extract) {
+			boost::uint64_t offset = info.data_entries[file.entry().location].uncompressed_size;
+			BOOST_FOREACH(boost::uint32_t location, file.entry().additional_locations) {
+				files_for_location[location].push_back(output_location(&file, offset));
+				offset += info.data_entries[location].uncompressed_size;
+			}
+		}
 	}
 	
 	boost::uint64_t total_size = 0;
-	size_t max_slice = 0;
 	
 	typedef std::map<stream::file, size_t> Files;
 	typedef std::map<stream::chunk, Files> Chunks;
 	Chunks chunks;
 	for(size_t i = 0; i < info.data_entries.size(); i++) {
-		setup::data_entry & location = info.data_entries[i];
-		if(!offsets.data_offset) {
-			max_slice = std::max(max_slice, location.chunk.first_slice);
-			max_slice = std::max(max_slice, location.chunk.last_slice);
-		}
 		if(files_for_location[i].empty()) {
 			continue;
 		}
+		setup::data_entry & location = info.data_entries[i];
 		if(location.chunk.compression == stream::UnknownCompression) {
 			location.chunk.compression = info.header.compression;
 		}
 		chunks[location.chunk][location.file] = i;
-		total_size += location.file.size;
+		total_size += location.uncompressed_size;
 	}
-	
-	fs::path dir = file.parent_path();
-	std::string basename = util::as_string(file.stem());
 	
 	boost::scoped_ptr<stream::slice_reader> slice_reader;
 	if(o.extract || o.test) {
 		if(offsets.data_offset) {
 			slice_reader.reset(new stream::slice_reader(&ifs, offsets.data_offset));
 		} else {
-			slice_reader.reset(new stream::slice_reader(dir, basename, info.header.slices_per_disk));
+			fs::path dir = file.parent_path();
+			std::string basename = util::as_string(file.stem());
+			std::string basename2 = info.header.base_filename;
+			// Prevent access to unexpected files
+			std::replace(basename2.begin(), basename2.end(), '/', '_');
+			std::replace(basename2.begin(), basename2.end(), '\\', '_');
+			// Older Inno Setup versions used the basename stored in the headers, change our default accordingly
+			if(info.version < INNO_VERSION(4, 1, 7) && !basename2.empty()) {
+				std::swap(basename2, basename);
+			}
+			slice_reader.reset(new stream::slice_reader(dir, basename, basename2, info.header.slices_per_disk));
 		}
 	}
 	
 	progress extract_progress(total_size);
+	
+	typedef boost::ptr_map<const processed_file *, file_output> multi_part_outputs;
+	multi_part_outputs multi_outputs;
 	
 	BOOST_FOREACH(const Chunks::value_type & chunk, chunks) {
 		
@@ -804,19 +1043,15 @@ void process_file(const fs::path & file, const extract_options & o) {
 		      << " + " << print_hex(offsets.data_offset) << " + " << print_hex(chunk.first.offset)
 		      << ']');
 		
-		if(chunk.first.encrypted) {
-			log_warning << "Skipping encrypted chunk (unsupported)";
-		}
-		
 		stream::chunk_reader::pointer chunk_source;
-		if((o.extract || o.test) && !chunk.first.encrypted) {
-			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);
+		if((o.extract || o.test) && (chunk.first.encryption == stream::Plaintext || !password.empty())) {
+			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first, password);
 		}
 		boost::uint64_t offset = 0;
 		
 		BOOST_FOREACH(const Files::value_type & location, chunk.second) {
 			const stream::file & file = location.first;
-			const std::vector<const processed_file *> & names = files_for_location[location.second];
+			const std::vector<output_location> & output_locations = files_for_location[location.second];
 			
 			if(file.offset > offset) {
 				debug("discarding " << print_bytes(file.offset - offset)
@@ -829,38 +1064,55 @@ void process_file(const fs::path & file, const extract_options & o) {
 			// Print filename and size
 			if(o.list) {
 				
-				extract_progress.clear();
+				extract_progress.clear(DeferredClear);
 				
 				if(!o.silent) {
 					
-					std::cout << " - ";
 					bool named = false;
-					BOOST_FOREACH(const processed_file * name, names) {
+					boost::uint64_t size = 0;
+					BOOST_FOREACH(const output_location & output, output_locations) {
+						if(output.second != 0) {
+							continue;
+						}
+						if(output.first->entry().size != 0) {
+							if(size != 0 && size != output.first->entry().size) {
+								log_warning << "Mismatched output sizes";
+							}
+							size = output.first->entry().size;
+						}
 						if(named) {
 							std::cout << ", ";
-						}
-						if(chunk.first.encrypted) {
-							std::cout << '"' << color::dim_yellow << name->path() << color::reset << '"';
 						} else {
-							std::cout << '"' << color::white << name->path() << color::reset << '"';
+							std::cout << " - ";
+							named = true;
 						}
-						print_filter_info(name->entry());
-						named = true;
+						if(chunk.first.encryption != stream::Plaintext) {
+							if(password.empty()) {
+								std::cout << '"' << color::dim_yellow << output.first->path() << color::reset << '"';
+							} else {
+								std::cout << '"' << color::yellow << output.first->path() << color::reset << '"';
+							}
+						} else {
+							std::cout << '"' << color::white << output.first->path() << color::reset << '"';
+						}
+						print_filter_info(output.first->entry());
 					}
-					if(!named) {
-						std::cout << color::white << "unnamed file" << color::reset;
+					
+					if(named) {
+						if(!o.quiet) {
+							print_size_info(file, size);
+						}
+						if(chunk.first.encryption != stream::Plaintext && password.empty()) {
+							std::cout << " - encrypted";
+						}
+						std::cout << '\n';
 					}
-					if(!o.quiet) {
-						print_size_info(file);
-					}
-					if(chunk.first.encrypted) {
-						std::cout << " - encrypted";
-					}
-					std::cout << '\n';
 					
 				} else {
-					BOOST_FOREACH(const processed_file * name, names) {
-						std::cout << color::white << name->path() << color::reset << '\n';
+					BOOST_FOREACH(const output_location & output, output_locations) {
+						if(output.second == 0) {
+							std::cout << color::white << output.first->path() << color::reset << '\n';
+						}
 					}
 				}
 				
@@ -891,49 +1143,110 @@ void process_file(const fs::path & file, const extract_options & o) {
 			file_source = stream::file_reader::get(*chunk_source, file, &checksum);
 			
 			// Open output files
-			boost::ptr_vector<file_output> output;
-			if(!o.test) {
-				output.reserve(names.size());
-				BOOST_FOREACH(const processed_file * name, names) {
-					try {
-						output.push_back(new file_output(o.output_dir / name->path()));
-					} catch(boost::bad_pointer &) {
-						// should never happen
-						std::terminate();
+			boost::ptr_vector<file_output> single_outputs;
+			std::vector<file_output *> outputs;
+			BOOST_FOREACH(const output_location & location, output_locations) {
+				const processed_file * fileinfo = location.first;
+				try {
+					
+					if(!o.extract && fileinfo->entry().checksum.type == crypto::None) {
+						continue;
 					}
+					
+					// Re-use existing file output for multi-part files
+					file_output * output = NULL;
+					if(fileinfo->is_multipart()) {
+						multi_part_outputs::iterator it = multi_outputs.find(fileinfo);
+						if(it != multi_outputs.end()) {
+							output = it->second;
+						}
+					}
+					
+					if(!output) {
+						output = new file_output(o.output_dir, fileinfo, o.extract);
+						if(fileinfo->is_multipart()) {
+							multi_outputs.insert(fileinfo, output);
+						} else {
+							single_outputs.push_back(output);
+						}
+					}
+					
+					outputs.push_back(output);
+					
+					output->seek(location.second);
+					
+				} catch(boost::bad_pointer &) {
+					// should never happen
+					std::terminate();
 				}
 			}
 			
 			// Copy data
+			boost::uint64_t output_size = 0;
 			while(!file_source->eof()) {
 				char buffer[8192 * 10];
 				std::streamsize buffer_size = std::streamsize(boost::size(buffer));
 				std::streamsize n = file_source->read(buffer, buffer_size).gcount();
 				if(n > 0) {
-					BOOST_FOREACH(file_output & out, output) {
-						out.stream.write(buffer, n);
-						if(out.stream.fail()) {
-							throw std::runtime_error("Error writing file \""
-							                         + out.name.string() + '"');
+					BOOST_FOREACH(file_output * output, outputs) {
+						bool success = output->write(buffer, size_t(n));
+						if(!success) {
+							throw std::runtime_error("Error writing file \"" + output->path().string() + '"');
 						}
 					}
 					extract_progress.update(boost::uint64_t(n));
+					output_size += boost::uint64_t(n);
 				}
 			}
 			
-			// Adjust file timestamps
-			if(o.preserve_file_times) {
-				const setup::data_entry & data = info.data_entries[location.second];
-				util::time filetime = data.timestamp;
-				if(o.local_timestamps && !(data.options & data.TimeStampInUTC)) {
-					filetime = util::to_local_time(filetime);
+			const setup::data_entry & data = info.data_entries[location.second];
+			
+			if(output_size != data.uncompressed_size) {
+				log_warning << "Unexpected output file size: " << output_size << " != " << data.uncompressed_size;
+			}
+			
+			util::time filetime = data.timestamp;
+			if(o.extract && o.preserve_file_times && o.local_timestamps && !(data.options & data.TimeStampInUTC)) {
+				filetime = util::to_local_time(filetime);
+			}
+			
+			BOOST_FOREACH(file_output * output, outputs) {
+				
+				if(output->file()->is_multipart() && !output->is_complete()) {
+					continue;
 				}
-				BOOST_FOREACH(file_output & out, output) {
-					out.stream.close();
-					if(!util::set_file_time(out.name, filetime, data.timestamp_nsec)) {
-						log_warning << "Error setting timestamp on file " << out.name;
+				
+				// Verify output checksum if available
+				if(output->file()->entry().checksum.type != crypto::None) {
+					if(output->has_checksum()) {
+						crypto::checksum checksum = output->checksum();
+						if(checksum != output->file()->entry().checksum) {
+							log_warning << "Output checksum mismatch for " << output->file()->path() << ":\n"
+							            << " ├─ actual:   " << checksum << '\n'
+							            << " └─ expected: " << output->file()->entry().checksum;
+							if(o.test) {
+								throw std::runtime_error("Integrity test failed!");
+							}
+						}
+					} else {
+						// This should not happen
+						log_warning << "Could not verify output checksum of file " << output->file()->path();
 					}
 				}
+				
+				// Adjust file timestamps
+				if(o.extract && o.preserve_file_times) {
+					output->close();
+					if(!util::set_file_time(output->path(), filetime, data.timestamp_nsec)) {
+						log_warning << "Error setting timestamp on file " << output->path();
+					}
+				}
+				
+				if(output->file()->is_multipart()) {
+					debug("[finalizing multi-part file]");
+					multi_outputs.erase(output->file());
+				}
+				
 			}
 			
 			// Verify checksums
@@ -945,6 +1258,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 					throw std::runtime_error("Integrity test failed!");
 				}
 			}
+			
 		}
 		
 		#ifdef DEBUG
@@ -957,35 +1271,12 @@ void process_file(const fs::path & file, const extract_options & o) {
 	
 	extract_progress.clear();
 	
+	if(!multi_outputs.empty()) {
+		log_warning << "Incomplete multi-part files";
+	}
+	
 	if(o.warn_unused || o.gog) {
-		size_t bin_count = 0;
-		bin_count += size_t(probe_bin_files(o, info, dir, basename + ".bin"));
-		bin_count += size_t(probe_bin_files(o, info, dir, basename + "-0" + ".bin"));
-		size_t slice =  0;
-		size_t format = 1;
-		if(!offsets.data_offset && info.header.slices_per_disk == 1) {
-			slice = max_slice + 1;
-		}
-		bin_count += probe_bin_files(o, info, dir, basename, format, slice);
-		slice = 0;
-		format = 2;
-		if(!offsets.data_offset && info.header.slices_per_disk != 1) {
-			slice = max_slice + 1;
-			format = info.header.slices_per_disk;
-		}
-		bin_count += probe_bin_files(o, info, dir, basename, format, slice);
-		if(bin_count) {
-			const char * verb = "inspecting";
-			if(o.extract) {
-				verb = "extracting";
-			} else if(o.test) {
-				verb = "testing";
-			} else if(o.list) {
-				verb = "listing the contents of";
-			}
-			std::cerr << color::yellow << "Use the --gog option to try " << verb << " "
-			          << (bin_count > 1 ? "these files" : "this file") << ".\n" << color::reset;
-		}
+		gog::probe_bin_files(o, info, file, offsets.data_offset == 0);
 	}
 	
 }

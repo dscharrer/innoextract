@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Daniel Scharrer
+ * Copyright (C) 2011-2016 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -86,7 +86,7 @@ public:
 		std::streamsize nread = boost::iostreams::read(src, temp, temp_size);
 		if(nread == EOF) {
 			return false;
-		} else if(nread != sizeof(temp)) {
+		} else if(size_t(nread) != sizeof(temp)) {
 			throw block_error("unexpected block end");
 		}
 		boost::uint32_t block_crc32 = util::little_endian::load<boost::uint32_t>(temp);

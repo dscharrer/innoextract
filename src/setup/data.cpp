@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -57,6 +57,7 @@ void data_entry::load(std::istream & is, const version & version) {
 		file.size = util::load<boost::uint32_t>(is);
 		chunk.size = util::load<boost::uint32_t>(is);
 	}
+	uncompressed_size = file.size;
 	
 	if(version >= INNO_VERSION(5, 3, 9)) {
 		is.read(file.checksum.sha1, std::streamsize(sizeof(file.checksum.sha1)));
@@ -144,6 +145,11 @@ void data_entry::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(5, 1, 13)) {
 		flagreader.add(SolidBreak);
 	}
+	if(version >= INNO_VERSION(5, 5, 7)) {
+		// Actually added in Inno Setup 5.5.9 but the data version was not bumped
+		flagreader.add(Sign);
+		flagreader.add(SignOnce);
+	}
 	
 	options |= flagreader;
 	
@@ -157,7 +163,15 @@ void data_entry::load(std::istream & is, const version & version) {
 		chunk.compression = stream::BZip2;
 	}
 	
-	chunk.encrypted = ((options & ChunkEncrypted) != 0);
+	if(options & ChunkEncrypted) {
+		if(version >= INNO_VERSION(5, 3, 9)) {
+			chunk.encryption = stream::ARC4_SHA1;
+		} else {
+			chunk.encryption = stream::ARC4_MD5;
+		}
+	} else {
+		chunk.encryption = stream::Plaintext;
+	}
 	
 	if(options & CallInstructionOptimized) {
 		if(version < INNO_VERSION(5, 2, 0)) {
@@ -172,7 +186,7 @@ void data_entry::load(std::istream & is, const version & version) {
 	}
 }
 
-} // namespace setup;
+} // namespace setup
 
 NAMES(setup::data_entry::flags, "File Location Option",
 	"version info valid",
@@ -184,5 +198,7 @@ NAMES(setup::data_entry::flags, "File Location Option",
 	"chunk encrypted",
 	"chunk compressed",
 	"solid break",
+	"sign",
+	"sign once",
 	"bzipped",
 )

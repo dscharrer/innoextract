@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015 Daniel Scharrer
+ * Copyright (C) 2012-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -35,11 +35,36 @@ struct is_path_separator {
 	}
 };
 
+struct is_unsafe_path_char {
+	bool operator()(char c) {
+		if(c < 32) {
+			return true;
+		}
+		switch(c) {
+			case '<': return true;
+			case '>': return true;
+			case ':': return true;
+			case '"': return true;
+			case '|': return true;
+			case '?': return true;
+			case '*': return true;
+			default:  return false;
+		}
+	}
+};
+
+static std::string replace_unsafe_chars(const std::string & str) {
+	std::string result;
+	result.resize(str.size());
+	std::replace_copy_if(str.begin(), str.end(), result.begin(), is_unsafe_path_char(), '$');
+	return result;
+}
+
 } // anonymous namespace
 
-const std::string & filename_map::lookup(const std::string & key) const {
+std::string filename_map::lookup(const std::string & key) const {
 	std::map<std::string, std::string>::const_iterator i = find(key);
-	return (i == end()) ? key : i->second;
+	return (i == end()) ? replace_unsafe_chars(key) : i->second;
 }
 
 std::string filename_map::expand_variables(it & begin, it end, bool close) const {

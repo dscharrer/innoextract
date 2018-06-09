@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -63,13 +63,12 @@ class slice_reader : public boost::iostreams::source {
 	
 	// Information for eading external setup data
 	path_type    dir;             //!< Slice directory specified at construction.
-	path_type    last_dir;        //!< Directory containing the current slice.
 	std::string  base_file;       //!< Base file name for slices.
+	std::string  base_file2;      //!< Fallback base filename for slices.
 	const size_t slices_per_disk; //!< Number of slices grouped into each disk (for names).
 	
 	// Information about the current slice
 	size_t          current_slice; //!< Number of the currently opened slice.
-	path_type       slice_file;    //!< Filename of the currently opened slice.
 	boost::uint32_t slice_size;    //!< Size in bytes of the currently opened slice.
 	
 	// Streams
@@ -78,6 +77,7 @@ class slice_reader : public boost::iostreams::source {
 	
 	void seek(size_t slice);
 	bool open_file(const path_type & file);
+	bool open_file_case_insensitive(const path_type & dir, const path_type & filename);
 	void open(size_t slice);
 	
 public:
@@ -111,9 +111,11 @@ public:
 	 *
 	 * \param dir             The directory containing the slice files.
 	 * \param basename        The base name for slice files.
+	 * \param basename2       Alternative base name for slice files.
 	 * \param slices_per_disk How many slices are grouped into one disk. Must not be \c 0.
 	 */
-	slice_reader(const path_type & dir, const std::string & basename, size_t slices_per_disk);
+	slice_reader(const path_type & dir, const std::string & basename, const std::string & basename2,
+	             size_t slices_per_disk);
 	
 	/*!
 	 * Attempt to seek to an offset within a slice.
@@ -145,9 +147,6 @@ public:
 	
 	//! \return the number currently opened slice.
 	size_t slice() { return current_slice; }
-	
-	//! \return filename for the currently opened slice.
-	path_type & file() { return slice_file; }
 	
 	//! \return true a slice is currently open.
 	bool is_open() { return (is != &ifs || ifs.is_open()); }

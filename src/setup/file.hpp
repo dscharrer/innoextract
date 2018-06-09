@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -28,9 +28,11 @@
 
 #include <string>
 #include <iosfwd>
+#include <vector>
 
 #include <boost/cstdint.hpp>
 
+#include "crypto/checksum.hpp"
 #include "setup/item.hpp"
 #include "util/enum.hpp"
 #include "util/flags.hpp"
@@ -104,6 +106,12 @@ struct file_entry : public item {
 	flags options;
 	
 	file_type type;
+	
+	// Information about GOG Galaxy multi-part files
+	// These are not used in normal Inno Setup installers
+	std::vector<boost::uint32_t> additional_locations;
+	crypto::checksum checksum;
+	boost::uint64_t size;
 	
 	void load(std::istream & is, const version & version);
 	

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -38,6 +38,7 @@
 #include "setup/version.hpp"
 
 #include "util/console.hpp"
+#include "util/fstream.hpp"
 #include "util/log.hpp"
 #include "util/time.hpp"
 #include "util/windows.hpp"
@@ -132,19 +133,27 @@ int main(int argc, char * argv[]) {
 		("test,t", "Only verify checksums, don't write anything")
 		("extract,e", "Extract files (default action)")
 		("list,l", "Only list files, don't write anything")
+		("info,i", "Print information about the installer")
 		("list-languages", "List languages supported by the installer")
-		("gog-game-id", "Determine the GOG.com game ID for this installer")
+		("gog-game-id", "Determine the installer's GOG.com game ID")
+		("show-password", "Show password check information")
+		("check-password", "Abort if the password is incorrect")
+		("data-version,V", "Only print the data version")
 	;
 	
 	po::options_description modifiers("Modifiers");
 	modifiers.add_options()
-		("collisions", po::value<std::string>(), "How to handle filename collisions")
+		("collisions", po::value<std::string>(), "How to handle duplicate files")
 		("default-language", po::value<std::string>(), "Default language for renaming")
 		("dump", "Dump contents without converting filenames")
 		("lowercase,L", "Convert extracted filenames to lower-case")
 		("timestamps,T", po::value<std::string>(), "Timezone for file times or \"local\" or \"none\"")
 		("output-dir,d", po::value<std::string>(), "Extract files into the given directory")
+		("password,P", po::value<std::string>(), "Password for encrypted files")
+		("password-file", po::value<std::string>(), "File to load password from")
 		("gog,g", "Extract additional archives from GOG.com installers")
+		("no-gog-galaxy", "Don't re-assemble GOG Galaxy file parts")
+		("no-extract-unknown,n", "Don't extract unknown Inno Setup versions")
 	;
 	
 	po::options_description filter("Filters");
@@ -188,7 +197,7 @@ int main(int argc, char * argv[]) {
 		po::store(po::command_line_parser(argc, argv).options(options_desc).positional(p).run(),
 		          options);
 		po::notify(options);
-	} catch(po::error & e) {
+	} catch(std::exception & e) {
 		color::init(color::disable, color::disable); // Be conservative
 		std::cerr << "Error parsing command-line: " << e.what() << "\n\n";
 		print_help(get_command(argv[0]), visible);
@@ -244,14 +253,17 @@ int main(int argc, char * argv[]) {
 	o.test = (options.count("test") != 0);
 	o.list_languages = (options.count("list-languages") != 0);
 	o.gog_game_id = (options.count("gog-game-id") != 0);
-	bool explicit_action = o.list || o.test || o.extract
-	                       || o.list_languages || o.gog_game_id;
+	o.show_password = (options.count("show-password") != 0);
+	o.check_password = (options.count("check-password") != 0);
+	if(options.count("info") != 0) {
+		o.list_languages = true;
+		o.gog_game_id = true;
+		o.show_password = true;
+	}
+	bool explicit_action = o.list || o.test || o.extract || o.list_languages
+	                       || o.gog_game_id || o.show_password || o.check_password;
 	if(!explicit_action) {
 		o.extract = true;
-	}
-	if(o.extract && o.test) {
-		log_error << "Combining --extract and --test is not allowed!";
-		return ExitUserError;
 	}
 	if(!o.extract && !o.test) {
 		progress::set_enabled(false);
@@ -298,6 +310,8 @@ int main(int argc, char * argv[]) {
 				o.collisions = OverwriteCollisions;
 			} else if(collisions == "rename") {
 				o.collisions = RenameCollisions;
+			} else if(collisions == "rename-all") {
+				o.collisions = RenameAllCollisions;
 			} else if(collisions == "error") {
 				o.collisions = ErrorOnCollisions;
 			} else {
@@ -358,7 +372,56 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	
+	{
+		po::variables_map::const_iterator password = options.find("password");
+		po::variables_map::const_iterator password_file = options.find("password-file");
+		if(password != options.end() && password_file != options.end()) {
+			log_error << "Combining --password and --password-file is not allowed";
+			return ExitUserError;
+		}
+		if(password != options.end()) {
+			o.password = password->second.as<std::string>();
+		}
+		if(password_file != options.end()) {
+			std::istream * is = &std::cin;
+			fs::path file = password_file->second.as<std::string>();
+			util::ifstream ifs;
+			if(file != "-") {
+				ifs.open(file);
+				if(!ifs.is_open()) {
+					log_error << "Could not open password file " << file;
+					return ExitDataError;
+				}
+				is = &ifs;
+			}
+			std::getline(*is, o.password);
+			if(!o.password.empty() && o.password[o.password.size() - 1] == '\n') {
+				o.password.resize(o.password.size() - 1);
+			}
+			if(!o.password.empty() && o.password[o.password.size() - 1] == '\r') {
+				o.password.resize(o.password.size() - 1);
+			}
+			if(!*is) {
+				log_error << "Could not read password file " << file;
+				return ExitDataError;
+			}
+		}
+		if(o.check_password && o.password.empty()) {
+			log_error << "Combining --check-password requires a password";
+			return ExitUserError;
+		}
+	}
+	
 	o.gog = (options.count("gog") != 0);
+	o.gog_galaxy = (options.count("no-gog-galaxy") == 0);
+	
+	o.data_version = (options.count("data-version") != 0);
+	if(o.data_version && explicit_action) {
+		log_error << "Combining --data-version with other options is not allowed";
+		return ExitUserError;
+	}
+	
+	o.extract_unknown = (options.count("no-extract-unknown") == 0);
 	
 	const std::vector<std::string> & files = options["setup-files"]
 	                                         .as< std::vector<std::string> >();
@@ -367,6 +430,9 @@ int main(int argc, char * argv[]) {
 	try {
 		BOOST_FOREACH(const std::string & file, files) {
 			process_file(file, o);
+			if(!o.data_version && files.size() > 1) {
+				std::cout << '\n';
+			}
 		}
 	} catch(const std::ios_base::failure & e) {
 		log_error << "Stream error while extracting files!\n"
@@ -390,7 +456,9 @@ int main(int argc, char * argv[]) {
 	if(!logger::quiet || logger::total_errors || logger::total_warnings) {
 		progress::clear();
 		std::ostream & os = logger::quiet ? std::cerr : std::cout;
-		os << color::green << "Done" << color::reset << std::dec;
+		if(!o.data_version || logger::total_errors || logger::total_warnings) {
+			os << color::green << "Done" << color::reset << std::dec;
+		}
 		if(logger::total_errors || logger::total_warnings) {
 			os << " with ";
 			if(logger::total_errors) {
@@ -407,7 +475,9 @@ int main(int argc, char * argv[]) {
 				   << color::reset;
 			}
 		}
-		os << '.' << std::endl;
+		if(logger::total_errors) {
+			os << '.' << std::endl;
+		}
 	}
 	
 	return logger::total_errors == 0 ? ExitSuccess : ExitDataError;

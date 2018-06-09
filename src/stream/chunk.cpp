@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -20,22 +20,77 @@
 
 #include "chunk.hpp"
 
+#include <cstring>
+
+#include <boost/iostreams/char_traits.hpp>
+#include <boost/iostreams/concepts.hpp>
+#include <boost/iostreams/read.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/range/size.hpp>
 
 #include "release.hpp"
+#include "crypto/arc4.hpp"
+#include "crypto/checksum.hpp"
+#include "crypto/hasher.hpp"
 #include "stream/lzma.hpp"
 #include "stream/restrict.hpp"
 #include "stream/slice.hpp"
 #include "util/log.hpp"
 
+
 namespace io = boost::iostreams;
 
 namespace stream {
 
-static const char chunk_id[4] = { 'z', 'l', 'b', 0x1a };
+namespace {
+
+const char chunk_id[4] = { 'z', 'l', 'b', 0x1a };
+
+#if INNOEXTRACT_HAVE_ARC4
+
+/*!
+ * Filter to en-/decrypt files files stored by Inno Setup.
+ */
+class inno_arc4_crypter : public boost::iostreams::multichar_input_filter {
+	
+private:
+	
+	typedef boost::iostreams::multichar_input_filter base_type;
+	
+public:
+	
+	typedef base_type::char_type char_type;
+	typedef base_type::category category;
+	
+	inno_arc4_crypter(const char * key, size_t length) {
+		
+		arc4.init(key, length);
+		arc4.discard(1000);
+		
+	}
+	
+	template <typename Source>
+	std::streamsize read(Source & src, char * dest, std::streamsize n) {
+		
+		std::streamsize length = boost::iostreams::read(src, dest, n);
+		if(length != EOF) {
+			arc4.crypt(dest, dest, size_t(n));
+		}
+		
+		return length;
+	}
+	
+private:
+	
+	crypto::arc4 arc4;
+	
+};
+
+#endif // INNOEXTRACT_HAVE_ARC4
+
+} // anonymous namespace
 
 bool chunk::operator<(const chunk & o) const {
 	
@@ -47,8 +102,8 @@ bool chunk::operator<(const chunk & o) const {
 		return (size < o.size);
 	} else if(compression != o.compression) {
 		return (compression < o.compression);
-	} else if(encrypted != o.encrypted) {
-		return (encrypted < o.encrypted);
+	} else if(encryption != o.encryption) {
+		return (encryption < o.encryption);
 	}
 	
 	return false;
@@ -59,17 +114,17 @@ bool chunk::operator==(const chunk & o) const {
 	        && offset == o.offset
 	        && size == o.size
 	        && compression == o.compression
-	        && encrypted == o.encrypted);
+	        && encryption == o.encryption);
 }
 
-chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk) {
+chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk , const std::string & key) {
 	
 	if(!base.seek(chunk.first_slice, chunk.offset)) {
 		throw chunk_error("could not seek to chunk start");
 	}
 	
 	char magic[sizeof(chunk_id)];
-	if(base.read(magic, 4) != 4 || memcmp(magic, chunk_id, sizeof(chunk_id))) {
+	if(base.read(magic, 4) != 4 || std::memcmp(magic, chunk_id, sizeof(chunk_id)) != 0) {
 		throw chunk_error("bad chunk magic");
 	}
 	
@@ -90,6 +145,25 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 		default: throw chunk_error("unknown chunk compression");
 	}
 	
+	if(chunk.encryption != Plaintext) {
+		#if INNOEXTRACT_HAVE_ARC4
+		char salt[8];
+		if(base.read(salt, 8) != 8) {
+			throw chunk_error("could not read chunk salt");
+		}
+		crypto::hasher hasher(chunk.encryption == ARC4_SHA1 ? crypto::SHA1 : crypto::MD5);
+		hasher.update(salt, sizeof(salt));
+		hasher.update(key.c_str(), key.length());
+		crypto::checksum checksum = hasher.finalize();
+		const char * salted_key = chunk.encryption == ARC4_SHA1 ? checksum.sha1 : checksum.md5;
+		size_t key_length = chunk.encryption == ARC4_SHA1 ? sizeof(checksum.sha1) : sizeof(checksum.md5);
+		result->push(inno_arc4_crypter(salted_key, key_length), 8192);
+		#else
+		(void)key;
+		throw chunk_error("ARC4 decryption not supported");
+		#endif
+	}
+	
 	result->push(restrict(base, chunk.size));
 	
 	return result;
@@ -104,4 +178,10 @@ NAMES(stream::compression_method, "Compression Method",
 	"lzma1",
 	"lzma2",
 	"unknown",
+)
+
+NAMES(stream::encryption_method, "Encryption Method",
+	"plaintext",
+	"rc4 + md5",
+	"rc4 + sha1",
 )

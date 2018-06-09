@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -54,6 +54,8 @@ struct data_entry {
 		ChunkEncrypted,
 		ChunkCompressed,
 		SolidBreak,
+		Sign,
+		SignOnce,
 		
 		// obsolete:
 		BZipped
@@ -62,6 +64,8 @@ struct data_entry {
 	stream::chunk chunk;
 	
 	stream::file file;
+	
+	boost::uint64_t uncompressed_size;
 	
 	boost::int64_t timestamp;
 	boost::uint32_t timestamp_nsec;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -471,18 +471,9 @@ static void print_header(const setup::header & header) {
 	
 	if(header.options & (setup::header::Password | setup::header::EncryptionUsed)) {
 		std::cout << "Password: " << color::cyan << header.password << color::reset << '\n';
-		setup::salt empty_salt;
-		std::memset(empty_salt, 0, sizeof(empty_salt));
-		BOOST_STATIC_ASSERT(sizeof(empty_salt) == sizeof(header.password_salt));
-		if(memcmp(empty_salt, header.password_salt, sizeof(header.password_salt))) {
-			std::cout << "Password salt: " << color::cyan;
-			std::cout << std::hex;
-			for(std::size_t i = 0; i < std::size_t(boost::size(header.password_salt)); i++) {
-				std::cout << std::setfill('0') << std::setw(2)
-				          << int(boost::uint8_t(header.password_salt[i]));
-			}
-			std::cout << color::reset << '\n';
-			std::cout << std::dec;
+		if(!header.password_salt.empty()) {
+			std::cout << "Password salt: " << color::cyan
+			          << print_hex(header.password_salt) << color::reset << '\n';
 		}
 	}
 	
@@ -555,21 +546,22 @@ static const char * guess_extension(const std::string & data) {
 
 static void print_aux(const setup::info & info) {
 	
-	if(info.wizard_image.empty() && info.wizard_image_small.empty()
+	if(info.wizard_images.empty() && info.wizard_images_small.empty()
 	   && info.decompressor_dll.empty()) {
 		return;
 	}
 	
 	std::cout << '\n';
 	
-	if(!info.wizard_image.empty()) {
-		std::cout << "Wizard image: " << print_bytes(info.wizard_image.length())
-		          << " (" << guess_extension(info.wizard_image) << ")\n";
+	for(size_t i = 0; i < info.wizard_images.size(); i++) {
+		std::cout << "Wizard image #" << (i + 1) << ": " << print_bytes(info.wizard_images[i].length())
+		          << " (" << guess_extension(info.wizard_images[i]) << ")\n";
 	}
 	
-	if(!info.wizard_image_small.empty()) {
-		std::cout << "Wizard small image: " << print_bytes(info.wizard_image_small.length())
-		          << " (" << guess_extension(info.wizard_image_small) << ")\n";
+	for(size_t i = 0; i < info.wizard_images_small.size(); i++) {
+		std::cout << "Wizard small image #" << (i + 1) << ": "
+		          << print_bytes(info.wizard_images_small[i].length())
+		          << " (" << guess_extension(info.wizard_images_small[i]) << ")\n";
 	}
 	
 	if(!info.decompressor_dll.empty()) {

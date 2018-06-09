@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -55,6 +55,7 @@ struct type_entry;
  */
 struct info {
 	
+	// Explicit constructor/destructor required to allow forward-declaring entry types
 	info();
 	~info();
 	
@@ -78,7 +79,8 @@ struct info {
 		WizardImages,
 		DecompressorDll,
 		DecryptDll,
-		NoSkip
+		NoSkip,
+		NoUnknownVersion
 	);
 	
 	setup::version version;
@@ -104,8 +106,8 @@ struct info {
 	
 	//! Images displayed in the installer UI.
 	//! Loading enabled by \c WizardImages
-	std::string wizard_image;
-	std::string wizard_image_small;
+	std::vector<std::string> wizard_images;
+	std::vector<std::string> wizard_images_small;
 	
 	//! Contents of the helper DLL used to decompress setup data in some versions.
 	//! Loading enabled by \c DecompressorDll

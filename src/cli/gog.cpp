@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Daniel Scharrer
+ * Copyright (C) 2014-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -24,6 +24,7 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 #include <signal.h>
 
 #include <boost/foreach.hpp>
@@ -36,9 +37,13 @@
 
 #include "loader/offsets.hpp"
 
+#include "setup/data.hpp"
 #include "setup/info.hpp"
 #include "setup/registry.hpp"
 
+#include "stream/slice.hpp"
+
+#include "util/console.hpp"
 #include "util/boostfs_compat.hpp"
 #include "util/fstream.hpp"
 #include "util/log.hpp"
@@ -80,7 +85,7 @@ std::string get_game_id(const setup::info & info) {
 
 namespace {
 
-static std::string get_verb(const extract_options & o) {
+std::string get_verb(const extract_options & o) {
 	const char * verb = "inspect";
 	if(o.extract) {
 		verb = "extract";
@@ -92,12 +97,12 @@ static std::string get_verb(const extract_options & o) {
 	return verb;
 }
 
-static volatile sig_atomic_t quit_requested = 0;
-static void quit_handler(int /* ignored */) {
+volatile sig_atomic_t quit_requested = 0;
+void quit_handler(int /* ignored */) {
 	quit_requested = 1;
 }
 
-static bool process_file_unrar(const fs::path & file, const extract_options & o,
+bool process_file_unrar(const fs::path & file, const extract_options & o,
                                const std::string & password) {
 	
 	std::vector<const char *> args;
@@ -180,7 +185,7 @@ static bool process_file_unrar(const fs::path & file, const extract_options & o,
 	return true;
 }
 
-static bool process_file_unar(const fs::path & file, const extract_options & o,
+bool process_file_unar(const fs::path & file, const extract_options & o,
                               const std::string & password) {
 	
 	std::string dir = o.output_dir.string();
@@ -235,12 +240,11 @@ static bool process_file_unar(const fs::path & file, const extract_options & o,
 	return true;
 }
 
-static bool process_rar_file(const fs::path & file, const extract_options & o,
-                             const std::string & password) {
+bool process_rar_file(const fs::path & file, const extract_options & o, const std::string & password) {
 	return process_file_unrar(file, o, password) || process_file_unar(file, o, password);
 }
 
-static char hex_char(int c) {
+char hex_char(int c) {
 	if(c < 10) {
 		return char('0' + c);
 	} else {
@@ -284,8 +288,8 @@ public:
 	
 };
 
-static void process_rar_files(const std::vector<fs::path> & files,
-                              const extract_options & o, const setup::info & info) {
+void process_rar_files(const std::vector<fs::path> & files,
+                       const extract_options & o, const setup::info & info) {
 	
 	if((!o.list && !o.test && !o.extract) || files.empty()) {
 		return;
@@ -401,8 +405,6 @@ static void process_rar_files(const std::vector<fs::path> & files,
 	                         + "\": install `unrar` or `unar`");
 }
 
-} // anonymous namespace
-
 void process_bin_files(const std::vector<fs::path> & files, const extract_options & o,
                       const setup::info & info) {
 	
@@ -428,6 +430,7 @@ void process_bin_files(const std::vector<fs::path> & files, const extract_option
 				extract_options new_options = o;
 				new_options.gog = false;
 				new_options.warn_unused = false;
+				std::cout << '\n';
 				process_file(files.front(), new_options);
 				return;
 			}
@@ -437,6 +440,101 @@ void process_bin_files(const std::vector<fs::path> & files, const extract_option
 	
 	throw std::runtime_error("Could not " + get_verb(o) + " \"" + files.front().string()
 	                         + "\": unknown filetype");
+}
+
+size_t probe_bin_file_series(const extract_options & o, const setup::info & info, const fs::path & dir,
+                             const std::string & basename, size_t format = 0, size_t start = 0) {
+	
+	size_t count = 0;
+	
+	std::vector<fs::path> files;
+	
+	for(size_t i = start;; i++) {
+		
+		fs::path file;
+		if(format == 0) {
+			file = dir / basename;
+		} else {
+			file = dir / stream::slice_reader::slice_filename(basename, i, format);
+		}
+		
+		try {
+			if(!fs::is_regular_file(file)) {
+				break;
+			}
+		} catch(...) {
+			break;
+		}
+		
+		if(o.gog) {
+			files.push_back(file);
+		} else {
+			log_warning << file.filename() << " is not part of the installer!";
+			count++;
+		}
+		
+		if(format == 0) {
+			break;
+		}
+		
+	}
+	
+	if(!files.empty()) {
+		process_bin_files(files, o, info);
+	}
+	
+	return count;
+}
+
+} // anonymous namespace
+
+void probe_bin_files(const extract_options & o, const setup::info & info,
+                     const fs::path & setup_file, bool external) {
+	
+	boost::filesystem::path dir = setup_file.parent_path();
+	std::string basename = util::as_string(setup_file.stem());
+	
+	size_t bin_count = 0;
+	bin_count += probe_bin_file_series(o, info, dir, basename + ".bin");
+	bin_count += probe_bin_file_series(o, info, dir, basename + "-0" + ".bin");
+	
+
+	size_t max_slice = 0;
+	if(external) {
+		BOOST_FOREACH(const setup::data_entry & location, info.data_entries) {
+			max_slice = std::max(max_slice, location.chunk.first_slice);
+			max_slice = std::max(max_slice, location.chunk.last_slice);
+		}
+	}
+	
+	size_t slice =  0;
+	size_t format = 1;
+	if(external && info.header.slices_per_disk == 1) {
+		slice = max_slice + 1;
+	}
+	bin_count += probe_bin_file_series(o, info, dir, basename, format, slice);
+	
+	slice = 0;
+	format = 2;
+	if(external && info.header.slices_per_disk != 1) {
+		slice = max_slice + 1;
+		format = info.header.slices_per_disk;
+	}
+	bin_count += probe_bin_file_series(o, info, dir, basename, format, slice);
+	
+	if(bin_count) {
+		const char * verb = "inspecting";
+		if(o.extract) {
+			verb = "extracting";
+		} else if(o.test) {
+			verb = "testing";
+		} else if(o.list) {
+			verb = "listing the contents of";
+		}
+		std::cerr << color::yellow << "Use the --gog option to try " << verb << " "
+		          << (bin_count > 1 ? "these files" : "this file") << ".\n" << color::reset;
+	}
+	
 }
 
 } // namespace gog

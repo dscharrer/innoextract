@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -40,6 +40,7 @@ enum compression_filter {
 	InstructionFilter4108,
 	InstructionFilter5200,
 	InstructionFilter5309,
+	ZlibFilter,
 };
 
 /*!
@@ -52,7 +53,7 @@ enum compression_filter {
 struct file {
 	
 	boost::uint64_t    offset;   //!< Offset of this file within the decompressed chunk.
-	boost::uint64_t    size;     //!< Decompressed size of this file.
+	boost::uint64_t    size;     //!< Pre-filter size of this file in the decompressed chunk.
 	
 	crypto::checksum   checksum; //!< Checksum for the file.
 	

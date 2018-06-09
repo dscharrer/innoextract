@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2018 Daniel Scharrer
+ * Copyright (C) 2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -21,28 +21,42 @@
 /*!
  * \file
  *
- * GOG.com-specific extensions.
+ * Alledged RC4 en-/decryption routines.
  */
-#ifndef INNOEXTRACT_CLI_GOG_HPP
-#define INNOEXTRACT_CLI_GOG_HPP
+#ifndef INNOEXTRACT_CRYPTO_ARC4_HPP
+#define INNOEXTRACT_CRYPTO_ARC4_HPP
 
-#include <string>
-#include <vector>
+#include <stddef.h>
 
-#include <boost/filesystem/path.hpp>
+#include <boost/cstdint.hpp>
 
-namespace setup { struct info; }
+#include "configure.hpp"
 
-struct extract_options;
+#if INNOEXTRACT_HAVE_ARC4
 
-namespace gog {
+namespace crypto {
 
-//! \return the GOG.com game ID for this installer or an empty string
-std::string get_game_id(const setup::info & info);
+//! Alledged RC4 en-/decryption calculation
+struct arc4 {
+	
+	void init(const char * key, size_t length);
+	
+	void discard(size_t length);
+	
+	void crypt(const char * in, char * out, size_t length);
+	
+private:
+	
+	void update();
+	
+	unsigned char state[256];
+	size_t a, b;
+	
+};
 
-void probe_bin_files(const extract_options & o, const setup::info & info,
-                     const boost::filesystem::path & setup_file, bool external);
+} // namespace crypto
 
-} // namespace gog
+#endif // INNOEXTRACT_HAVE_ARC4
 
-#endif // INNOEXTRACT_CLI_GOG_HPP
+#endif // INNOEXTRACT_CRYPTO_ARC4_HPP
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -34,10 +34,6 @@ namespace stream {
 static lzma_stream * init_raw_lzma_stream(lzma_vli filter, lzma_options_lzma & options) {
 	
 	options.preset_dict = NULL;
-	
-	if(options.dict_size > (boost::uint32_t(1) << 28)) {
-		throw lzma_error("inno lzma dict size too large", LZMA_FORMAT_ERROR);
-	}
 	
 	lzma_stream * strm = new lzma_stream;
 	lzma_stream tmp = LZMA_STREAM_INIT;
@@ -110,8 +106,8 @@ bool inno_lzma1_decompressor_impl::filter(const char * & begin_in, const char * 
 		if(properties > (9 * 5 * 5)) {
 			throw lzma_error("inno lzma1 property error", LZMA_FORMAT_ERROR);
 		}
-		options.pb = properties / (9 * 5);
-		options.lp = (properties % (9 * 5)) / 9;
+		options.pb = boost::uint32_t(properties / (9 * 5));
+		options.lp = boost::uint32_t((properties % (9 * 5)) / 9);
 		options.lc = properties % 9;
 		
 		options.dict_size = util::little_endian::load<boost::uint32_t>(header + 1);

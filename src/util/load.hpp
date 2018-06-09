@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Daniel Scharrer
+ * Copyright (C) 2011-2016 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -196,7 +196,7 @@ void discard(T & is, boost::uint64_t bytes) {
  * \param last   Index of the last desired bit (inclusive).
  */
 template <typename T>
-T get_bits(T number, int first, int last) {
+T get_bits(T number, unsigned first, unsigned last) {
 	typedef typename uint_t<int(sizeof(T) * 8)>::exact UT;
 	UT data = UT(number);
 	data = UT(data >> first), last -= first;

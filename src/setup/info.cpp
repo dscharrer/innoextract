@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -22,6 +22,7 @@
 
 #include <cassert>
 #include <istream>
+#include <sstream>
 
 #include <boost/foreach.hpp>
 
@@ -51,19 +52,19 @@ namespace {
 struct no_arg { };
 
 template <class Entry, class Arg>
-static void load_entry(std::istream & is, const setup::version & version,
+void load_entry(std::istream & is, const setup::version & version,
                        Entry & entity, Arg arg) {
 	entity.load(is, version, arg);
 }
 template <class Entry>
-static void load_entry(std::istream & is, const setup::version & version,
+void load_entry(std::istream & is, const setup::version & version,
                                     Entry & entity, no_arg arg) {
 	(void)arg;
 	entity.load(is, version);
 }
 
 template <class Entry, class Arg>
-static void load_entries(std::istream & is, const setup::version & version,
+void load_entries(std::istream & is, const setup::version & version,
                   info::entry_types entry_types, size_t count,
                   std::vector<Entry> & entries, info::entry_types::enum_type entry_type,
                   Arg arg = Arg()) {
@@ -84,30 +85,47 @@ static void load_entries(std::istream & is, const setup::version & version,
 }
 
 template <class Entry>
-static void load_entries(std::istream & is, const setup::version & version,
+void load_entries(std::istream & is, const setup::version & version,
                   info::entry_types entry_types, size_t count,
                   std::vector<Entry> & entries, info::entry_types::enum_type entry_type) {
 	load_entries<Entry, no_arg>(is, version, entry_types, count, entries, entry_type);
 }
 
-static void load_wizard_and_decompressor(std::istream & is, const setup::version & version,
-                                        const setup::header & header,
-                                        setup::info & info, info::entry_types entries) {
+void load_wizard_images(std::istream & is, const setup::version & version,
+                        std::vector<std::string> & images, info::entry_types entries) {
 	
-	(void)entries;
+	size_t count = 1;
+	if(version >= INNO_VERSION(5, 6, 0)) {
+		count = util::load<boost::uint32_t>(is);
+	}
 	
-	info.wizard_image.clear();
-	info.wizard_image_small.clear();
 	if(entries & (info::WizardImages | info::NoSkip)) {
-		is >> util::binary_string(info.wizard_image);
-		if(version >= INNO_VERSION(2, 0, 0)) {
-			is >> util::binary_string(info.wizard_image_small);
+		images.resize(count);
+		for(size_t i = 0; i < count; i++) {
+			is >> util::binary_string(images[i]);
+		}
+		if(version < INNO_VERSION(5, 6, 0) && images[0].empty()) {
+			images.clear();
 		}
 	} else {
-		util::binary_string::skip(is);
-		if(version >= INNO_VERSION(2, 0, 0)) {
+		for(size_t i = 0; i < count; i++) {
 			util::binary_string::skip(is);
 		}
+	}
+	
+}
+
+void load_wizard_and_decompressor(std::istream & is, const setup::version & version,
+                                  const setup::header & header,
+                                  setup::info & info, info::entry_types entries) {
+	
+	info.wizard_images.clear();
+	info.wizard_images_small.clear();
+	
+	load_wizard_images(is, version, info.wizard_images, entries);
+	
+	if(version >= INNO_VERSION(2, 0, 0)) {
+		load_wizard_images(is, version, info.wizard_images_small, entries);
 	}
 	
 	info.decompressor_dll.clear();
@@ -134,15 +152,15 @@ static void load_wizard_and_decompressor(std::istream & is, const setup::version
 	
 }
 
-} // anonymous namespace
-
-static void check_is_end(stream::block_reader::pointer & is, const char * what) {
+void check_is_end(stream::block_reader::pointer & is, const char * what) {
 	is->exceptions(std::ios_base::goodbit);
 	char dummy;
 	if(!is->get(dummy).eof()) {
 		throw std::ios_base::failure(what);
 	}
 }
+
+} // anonymous namespace
 
 void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
 	
@@ -195,6 +213,11 @@ void info::load(std::istream & is, entry_types entries) {
 	version.load(is);
 	
 	if(!version.known) {
+		if(entries & NoUnknownVersion) {
+			std::ostringstream oss;
+			oss << "Unexpected setup data version: " << version;
+			throw std::runtime_error(oss.str());
+		}
 		log_warning << "Unexpected setup data version: "
 		            << color::white << version << color::reset;
 	}
@@ -209,7 +232,7 @@ void info::load(std::istream & is, entry_types entries) {
 		entries |= NoSkip;
 	}
 	if(!version.known || ambiguous) {
-		std::ios_base::streampos start = is.tellg();
+		std::streampos start = is.tellg();
 		try {
 			load(is, entries, version);
 			return;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -149,6 +149,10 @@ static const known_version versions[] = {
 	{ "!!! BlackBox v2?, marked as 5.5.0",  INNO_VERSION_EXT(5, 5,  0, 1), true  },
 	{ "Inno Setup Setup Data (5.5.6)",      INNO_VERSION_EXT(5, 5,  6, 0), false },
 	{ "Inno Setup Setup Data (5.5.6) (u)",  INNO_VERSION_EXT(5, 5,  6, 0), true  },
+	{ "Inno Setup Setup Data (5.5.7)",      INNO_VERSION_EXT(5, 5,  7, 0), false },
+	{ "Inno Setup Setup Data (5.5.7) (u)",  INNO_VERSION_EXT(5, 5,  7, 0), true  },
+	{ "Inno Setup Setup Data (5.6.0)",      INNO_VERSION_EXT(5, 6,  0, 0), false },
+	{ "Inno Setup Setup Data (5.6.0) (u)",  INNO_VERSION_EXT(5, 6,  0, 0), true  },
 };
 
 } // anonymous namespace
@@ -216,7 +220,7 @@ void version::load(std::istream & is) {
 			unsigned b = util::to_unsigned(version_str.data() + 3, 1);
 			unsigned c = util::to_unsigned(version_str.data() + 5, 2);
 			value = INNO_VERSION(a, b, c);
-		} catch(boost::bad_lexical_cast) {
+		} catch(const boost::bad_lexical_cast &) {
 			throw version_error();
 		}
 		
@@ -301,7 +305,7 @@ void version::load(std::istream & is) {
 			value = INNO_VERSION_EXT(a, b, c, d);
 			break;
 			
-		} catch(boost::bad_lexical_cast) {
+		} catch(const boost::bad_lexical_cast &) {
 			continue;
 		}
 	}
@@ -333,6 +337,11 @@ bool version::is_ambiguous() const {
 	
 	if(value == INNO_VERSION(5, 5, 0)) {
 		// might be either 5.5.0 or 5.5.0.1
+		return true;
+	}
+	
+	if(value == INNO_VERSION(5, 5, 7)) {
+		// might be either 5.5.7 or 5.6.0
 		return true;
 	}
 	

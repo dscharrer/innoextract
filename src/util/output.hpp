@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Daniel Scharrer
+ * Copyright (C) 2011-2018 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -105,7 +105,7 @@ std::ostream & operator<<(std::ostream & os, const if_not<T> & s) {
 	}
 }
 
-}
+} // namespace detail
 
 
 template <class T>
@@ -143,11 +143,43 @@ std::ostream & operator<<(std::ostream & os, const print_hex<T> & s) {
 	return os;
 }
 
+struct print_hex_string {
+	
+	const char * data;
+	size_t size;
+	
+	explicit print_hex_string(const char * data, size_t size) : data(data), size(size) { }
+	
+};
+
+inline std::ostream & operator<<(std::ostream & os, const print_hex_string & s) {
+	
+	std::ios_base::fmtflags old = os.flags();
+	char oldfill = os.fill('0');
+	
+	os << std::hex;
+	for(size_t i = 0; i < s.size; i++) {
+		os << std::setw(2) << int(boost::uint8_t(s.data[i]));
+	}
+	
+	os.fill(oldfill);
+	os.setf(old, std::ios_base::basefield);
+	return os;
 }
+
+} // namespace detail
 
 template <class T>
 detail::print_hex<T> print_hex(T value) {
 	return detail::print_hex<T>(value);
+}
+
+inline detail::print_hex_string print_hex(const char * data, size_t size) {
+	return detail::print_hex_string(data, size);
+}
+
+inline detail::print_hex_string print_hex(const std::string & data) {
+	return print_hex(data.c_str(), data.size());
 }
 
 const char * const byte_size_units[] = {
@@ -203,7 +235,7 @@ std::ostream & operator<<(std::ostream & os, const print_bytes<T> & s) {
 	return os << ' ' << byte_size_units[i];
 }
 
-}
+} // namespace detail
 
 template <class T>
 detail::print_bytes<T> print_bytes(T value, int precision = 3) {
