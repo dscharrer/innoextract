@@ -100,8 +100,6 @@ Documentation is also available as a man page:
 
 * Names for data slice/disk files in multi-file installers must follow the standard naming scheme.
 
-* Encrypted installers are not supported.
-
 A perhaps more complete, but Windows-only, tool to extract Inno Setup files is [innounp](http://innounp.sourceforge.net/).
 
 Extracting Windows installer executables created by programs other than Inno Setup is out of the scope of this project. Some of these can be unpacked by the following programs:

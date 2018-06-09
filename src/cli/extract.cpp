@@ -881,8 +881,12 @@ void process_file(const fs::path & file, const extract_options & o) {
 	
 	bool multiple_sections = print_file_info(o, info);
 	
-	if(!o.password.empty()) {
-		std::string password;
+	std::string password;
+	if(o.password.empty()) {
+		if(!o.quiet && (o.list || o.test || o.extract) && (info.header.options & setup::header::EncryptionUsed)) {
+			log_warning << "Setup contains encrypted files, use the --password option to extract them";
+		}
+	} else {
 		util::from_utf8(o.password, password, info.version.codepage());
 		if(info.header.options & setup::header::Password) {
 			crypto::hasher checksum(info.header.password.type);
@@ -894,8 +898,15 @@ void process_file(const fs::path & file, const extract_options & o) {
 				} else {
 					log_error << "Incorrect password provided";
 				}
+				password.clear();
 			}
 		}
+		#if !INNOEXTRACT_HAVE_ARC4
+		if((o.extract || o.test) && (info.header.options & setup::header::EncryptionUsed)) {
+			log_warning << "ARC4 decryption not supported in this build, skipping compressed chunks";
+		}
+		password.clear();
+		#endif
 	}
 	
 	if(!o.list && !o.test && !o.extract) {
@@ -1015,8 +1026,8 @@ void process_file(const fs::path & file, const extract_options & o) {
 		      << ']');
 		
 		stream::chunk_reader::pointer chunk_source;
-		if((o.extract || o.test) && chunk.first.encryption == stream::Plaintext) {
-			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first, std::string());
+		if((o.extract || o.test) && (chunk.first.encryption == stream::Plaintext || !password.empty())) {
+			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first, password);
 		}
 		boost::uint64_t offset = 0;
 		
@@ -1058,7 +1069,11 @@ void process_file(const fs::path & file, const extract_options & o) {
 							named = true;
 						}
 						if(chunk.first.encryption != stream::Plaintext) {
-							std::cout << '"' << color::dim_yellow << output.first->path() << color::reset << '"';
+							if(password.empty()) {
+								std::cout << '"' << color::dim_yellow << output.first->path() << color::reset << '"';
+							} else {
+								std::cout << '"' << color::yellow << output.first->path() << color::reset << '"';
+							}
 						} else {
 							std::cout << '"' << color::white << output.first->path() << color::reset << '"';
 						}
@@ -1069,7 +1084,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 						if(!o.quiet) {
 							print_size_info(file, size);
 						}
-						if(chunk.first.encryption != stream::Plaintext) {
+						if(chunk.first.encryption != stream::Plaintext && password.empty()) {
 							std::cout << " - encrypted";
 						}
 						std::cout << '\n';
