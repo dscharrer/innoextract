@@ -37,6 +37,7 @@ Here is a short summary of the options available in innoextract. Please refer to
     \-\-list\-languages     List languages supported by the installer
     \-\-gog\-game\-id        Determine the GOG.com game ID for this installer
     \-\-show\-password      Show password check information
+    \-\-check\-password     Abort if the password is incorrect
 .fi
 .TP
 .B Modifiers:
@@ -47,6 +48,7 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-L \-\-lowercase          Convert extracted filenames to lower-case
  \-T \-\-timestamps \fITZ\fP      Timezone for file times or "local" or "none"
  \-d \-\-output\-dir \fIDIR\fP     Extract files into the given directory
+ \-P \-\-password \fIPASSWORD\fP  Password for encrypted files
  \-g \-\-gog                Process additional archives from GOG.com installers
 .fi
 .TP
@@ -70,6 +72,11 @@ Here is a short summary of the options available in innoextract. Please refer to
 .TP
 \fB--\fP
 Treat all arguments after this one as files, even if they begin with a dash.
+.TP
+\fB\-\-check\-password\fB
+Abort processing if the password provided using the \fB\-\-password\fP option does not match the checksum stored in the installer.
+
+The password checksum used for this check can be retrieved using the \fB\-\-show\-password\fP option.
 .TP
 \fB\-\-collisions\fP \fIACTION\fP
 Inno Setup installers can contain duplicate files with the same name. This option tells innoextract what to do when such a collisions is encountered. Valid actions are:
@@ -122,7 +129,7 @@ Don't extract files that would have been deleted at the end of the install proce
 This option takes precedence over \fB\-\-include\fP and \fB\-\-language\fP: temporary files are never extracted when using the \fB\-\-exclude\-temp\fP, even if they match the selected language or include expressions.
 .TP
 \fB\-e\fP, \fB\-\-extract\fP
-Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP or \fB\-\-show\-password\fP actions are specified. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
+Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP, \fB\-\-show\-password\fP or \fB\-\-check\-password\fP actions are specified. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
 .TP
 \fB\-g\fP, \fB\-\-gog\fP
 Try to process additional .bin files that have the same basename as the setup but are not actually part of the Inno Setup installer. This is the case for newer multi-part GOG.com installers where these .bin files are RAR archives, potential encrypted with the MD5 checksum of the game ID (see the \fB\-\-gog\-game\-id\fP option).
@@ -191,6 +198,11 @@ Extract all files into the given directory. By default, \fBinnoextract\fP will e
 
 If the specified directory does not exist, it will be created. However, the parent directory must exist or extracting will fail.
 .TP
+\fB\-P\fP, \fB\-\-password \fIPASSWORD\fP
+Specifies the password to decrypt encrypted files. The password is assumed to be encoded as UTF-8 and converted the internal according used in the installer as needed.
+
+Use the \fB\-\-check\-password\fP option to abort processing entirely if the password is incorrect.
+.TP
 \fB\-p\fP, \fB\-\-progress\fP[=\fIENABLE\fP]
 By default \fBinnoextract\fP will try to detect if the terminal supports shell escape codes and enable or disable progress bar output accordingly. Pass \fB1\fP or \fBtrue\fP to \fB\-\-progress\fP to force progress bar output. Pass \fB0\fP or \fBfalse\fP to never show a progress bar.
 .TP
@@ -207,6 +219,8 @@ With \fB\-\-silent\fP option, the checksum name and hash is printed on one line 
 Checksum types can be \fBCRC32\fP, \fBMD5\fP or \fBSHA-1\fP although \fBCRC32\fP is not used in installers with encryption.
 
 The password encoding is either \fBMS-ANSI\fP (Windows-1252) or \fBUTF16-LE\fP.
+
+Use the \fB\-\-password\fP option together with \fB\-\-check\-password\fP to check if a password matches this checksum.
 .TP
 \fB\-s\fP, \fB\-\-silent\fP
 Don't output anything except errors and warnings unless explicitly requested.

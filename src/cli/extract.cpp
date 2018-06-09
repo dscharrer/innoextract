@@ -881,6 +881,23 @@ void process_file(const fs::path & file, const extract_options & o) {
 	
 	bool multiple_sections = print_file_info(o, info);
 	
+	if(!o.password.empty()) {
+		std::string password;
+		util::from_utf8(o.password, password, info.version.codepage());
+		if(info.header.options & setup::header::Password) {
+			crypto::hasher checksum(info.header.password.type);
+			checksum.update(info.header.password_salt.c_str(), info.header.password_salt.length());
+			checksum.update(password.c_str(), password.length());
+			if(checksum.finalize() != info.header.password) {
+				if(o.check_password) {
+					throw std::runtime_error("Incorrect password provided");
+				} else {
+					log_error << "Incorrect password provided";
+				}
+			}
+		}
+	}
+	
 	if(!o.list && !o.test && !o.extract) {
 		return;
 	}

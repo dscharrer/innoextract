@@ -58,6 +58,7 @@ struct extract_options {
 	bool list_languages; //!< List available languages
 	bool gog_game_id; //!< Show the GOG.com game id
 	bool show_password; //!< Show password check information
+	bool check_password; //!< Abort if the provided password is incorrect
 	
 	bool preserve_file_times; //!< Set timestamps of extracted files
 	bool local_timestamps; //!< Use local timezone for setting timestamps
@@ -72,6 +73,8 @@ struct extract_options {
 	setup::filename_map filenames;
 	CollisionAction collisions;
 	std::string default_language;
+	
+	std::string password;
 	
 	boost::filesystem::path output_dir;
 	

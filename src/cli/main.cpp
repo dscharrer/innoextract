@@ -135,6 +135,7 @@ int main(int argc, char * argv[]) {
 		("list-languages", "List languages supported by the installer")
 		("gog-game-id", "Determine the installer's GOG.com game ID")
 		("show-password", "Show password check information")
+		("check-password", "Abort if the password is incorrect")
 	;
 	
 	po::options_description modifiers("Modifiers");
@@ -145,6 +146,7 @@ int main(int argc, char * argv[]) {
 		("lowercase,L", "Convert extracted filenames to lower-case")
 		("timestamps,T", po::value<std::string>(), "Timezone for file times or \"local\" or \"none\"")
 		("output-dir,d", po::value<std::string>(), "Extract files into the given directory")
+		("password,P", po::value<std::string>(), "Password for encrypted files")
 		("gog,g", "Extract additional archives from GOG.com installers")
 	;
 	
@@ -246,8 +248,9 @@ int main(int argc, char * argv[]) {
 	o.list_languages = (options.count("list-languages") != 0);
 	o.gog_game_id = (options.count("gog-game-id") != 0);
 	o.show_password = (options.count("show-password") != 0);
+	o.check_password = (options.count("check-password") != 0);
 	bool explicit_action = o.list || o.test || o.extract || o.list_languages
-	                       || o.gog_game_id || o.show_password;
+	                       || o.gog_game_id || o.show_password || o.check_password;
 	if(!explicit_action) {
 		o.extract = true;
 	}
@@ -359,6 +362,17 @@ int main(int argc, char * argv[]) {
 				log_error << "Could not create output directory " << o.output_dir;
 				return ExitDataError;
 			}
+		}
+	}
+	
+	{
+		po::variables_map::const_iterator password = options.find("password");
+		if(password != options.end()) {
+			o.password = password->second.as<std::string>();
+		}
+		if(o.check_password && o.password.empty()) {
+			log_error << "Combining --check-password requires a password";
+			return ExitUserError;
 		}
 	}
 	
