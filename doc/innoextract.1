@@ -34,6 +34,7 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-t \-\-test               Only verify checksums, don't write anything
  \-e \-\-extract            Extract files (default action)
  \-l \-\-list               Only list files, don't write anything
+ \-i \-\-info               Print information about the installer
     \-\-list\-languages     List languages supported by the installer
     \-\-gog\-game\-id        Determine the GOG.com game ID for this installer
     \-\-show\-password      Show password check information
@@ -173,6 +174,13 @@ The expression is always matched against one or more full path components. Filte
 \fIEXPR\fP may contain one leading path separator, in which case the rest of the expression is matched against the start of the path. Otherwise, the expression is matched against any part of the path.
 
 The \fB\-\-include\fP option may be repeated in order allow files matching against one of multiple patterns. If \fB\-\-include\fP is not used, all files are processed.
+.TP
+\fB\-i\fP \fB\-\-info\fP
+This is a convenience option to enable all actions that print information about the installer.
+
+Scrips should not rely on the output format with this option and should instead enable the individual actions instead.
+
+Currently this option enables \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP and \fB\-\-show\-password\fP.
 .TP
 \fB\-\-language\fP \fILANG\fP
 Extract only language-independent files and files for the given language. By default all files are extracted.

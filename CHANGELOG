@@ -5,6 +5,7 @@ innoextract 1.7 (TDB)
  - Added support for encrypted installers with the --password and --password-file options
  - Added a --show-password option to print password check information
  - Added a --check-password option to abort if the provided password does not match the stored checksum
+ - Added a --info convenience option to print information about the installer
  - Fixed building in paths that contain regex expressions
  - Fixed case-sensitivity in parent directory when creating subdirectories
  - Fixed .bin slice file names used with Inno Setup versions older than 4.1.7
