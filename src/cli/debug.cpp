@@ -471,18 +471,9 @@ static void print_header(const setup::header & header) {
 	
 	if(header.options & (setup::header::Password | setup::header::EncryptionUsed)) {
 		std::cout << "Password: " << color::cyan << header.password << color::reset << '\n';
-		setup::salt empty_salt;
-		std::memset(empty_salt, 0, sizeof(empty_salt));
-		BOOST_STATIC_ASSERT(sizeof(empty_salt) == sizeof(header.password_salt));
-		if(memcmp(empty_salt, header.password_salt, sizeof(header.password_salt))) {
-			std::cout << "Password salt: " << color::cyan;
-			std::cout << std::hex;
-			for(std::size_t i = 0; i < std::size_t(boost::size(header.password_salt)); i++) {
-				std::cout << std::setfill('0') << std::setw(2)
-				          << int(boost::uint8_t(header.password_salt[i]));
-			}
-			std::cout << color::reset << '\n';
-			std::cout << std::dec;
+		if(!header.password_salt.empty()) {
+			std::cout << "Password salt: " << color::cyan
+			          << print_hex(header.password_salt) << color::reset << '\n';
 		}
 	}
 	

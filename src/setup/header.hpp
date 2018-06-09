@@ -195,7 +195,7 @@ struct header {
 	alpha_format image_alpha_format;
 	
 	crypto::checksum password;
-	salt password_salt;
+	std::string password_salt;
 	
 	boost::int64_t extra_disk_space_required;
 	size_t slices_per_disk;

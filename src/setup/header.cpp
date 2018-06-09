@@ -340,9 +340,11 @@ void header::load(std::istream & is, const version & version) {
 		password.type = crypto::SHA1;
 	}
 	if(version >= INNO_VERSION(4, 2, 2)) {
-		is.read(password_salt, std::streamsize(sizeof(password_salt)));
+		password_salt.resize(8);
+		is.read(&password_salt[0], std::streamsize(password_salt.length()));
+		password_salt.insert(0, "PasswordCheckHash");
 	} else {
-		std::memset(password_salt, 0, sizeof(password_salt));
+		password_salt.clear();
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
