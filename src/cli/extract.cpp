@@ -845,6 +845,18 @@ void process_file(const fs::path & file, const extract_options & o) {
 	loader::offsets offsets;
 	offsets.load(ifs);
 	
+	if(o.data_version)  {
+		setup::version version;
+		ifs.seekg(offsets.header_offset);
+		version.load(ifs);
+		if(o.silent) {
+			std::cout << version << '\n';
+		} else {
+			std::cout << color::white << version << color::reset << '\n';
+		}
+		return;
+	}
+	
 #ifdef DEBUG
 	if(logger::debug) {
 		print_offsets(offsets);

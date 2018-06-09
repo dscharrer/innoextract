@@ -138,6 +138,7 @@ int main(int argc, char * argv[]) {
 		("gog-game-id", "Determine the installer's GOG.com game ID")
 		("show-password", "Show password check information")
 		("check-password", "Abort if the password is incorrect")
+		("data-version,V", "Only print the data version")
 	;
 	
 	po::options_description modifiers("Modifiers");
@@ -413,6 +414,12 @@ int main(int argc, char * argv[]) {
 	o.gog = (options.count("gog") != 0);
 	o.gog_galaxy = (options.count("no-gog-galaxy") == 0);
 	
+	o.data_version = (options.count("data-version") != 0);
+	if(o.data_version && explicit_action) {
+		log_error << "Combining --data-version with other options is not allowed";
+		return ExitUserError;
+	}
+	
 	const std::vector<std::string> & files = options["setup-files"]
 	                                         .as< std::vector<std::string> >();
 	
@@ -420,7 +427,7 @@ int main(int argc, char * argv[]) {
 	try {
 		BOOST_FOREACH(const std::string & file, files) {
 			process_file(file, o);
-			if(files.size() > 1) {
+			if(!o.data_version && files.size() > 1) {
 				std::cout << '\n';
 			}
 		}
@@ -446,7 +453,9 @@ int main(int argc, char * argv[]) {
 	if(!logger::quiet || logger::total_errors || logger::total_warnings) {
 		progress::clear();
 		std::ostream & os = logger::quiet ? std::cerr : std::cout;
-		os << color::green << "Done" << color::reset << std::dec;
+		if(!o.data_version || logger::total_errors || logger::total_warnings) {
+			os << color::green << "Done" << color::reset << std::dec;
+		}
 		if(logger::total_errors || logger::total_warnings) {
 			os << " with ";
 			if(logger::total_errors) {
@@ -463,7 +472,9 @@ int main(int argc, char * argv[]) {
 				   << color::reset;
 			}
 		}
-		os << '.' << std::endl;
+		if(logger::total_errors) {
+			os << '.' << std::endl;
+		}
 	}
 	
 	return logger::total_errors == 0 ? ExitSuccess : ExitDataError;

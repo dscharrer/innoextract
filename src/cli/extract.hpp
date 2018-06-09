@@ -52,6 +52,7 @@ struct extract_options {
 	
 	bool warn_unused; //!< Warn if there are unused files
 	
+	bool data_version; //!< Print the data version
 	bool list; //!< List files
 	bool test; //!< Test files (but don't extract)
 	bool extract; //!< Extract files

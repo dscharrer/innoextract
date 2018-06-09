@@ -39,6 +39,7 @@ Here is a short summary of the options available in innoextract. Please refer to
     \-\-gog\-game\-id        Determine the GOG.com game ID for this installer
     \-\-show\-password      Show password check information
     \-\-check\-password     Abort if the password is incorrect
+ \-V \-\-data\-version       Only print the data version
 .fi
 .TP
 .B Modifiers:
@@ -109,17 +110,26 @@ Exit when a collision is detected.
 
 With the "\fBrename\fP" action, steps 1 and 3 are only applied to files that would have been overwritten by the "\fBoverwrite\fP" action while "\fBrename-all\fP" applies them to all files in the collision set.
 .TP
+\fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
+By default
+.B innoextract
+will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Specifically, colors will be enabled if both \fBstdout\fP and \fBstderr\fP point to a TTY and the \fBTERM\fP environment variable is not set to "\fBdumb\fP". Pass \fB1\fP or \fBtrue\fP to \fB\-\-color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
+.TP
+\fB\-V\FP, \fB\-\-data\-version\fP
+Print the Inno Setup data version of the installer and exit immediately.
+
+The version printed using this option is the one stored in the setup file and can differ from the version printed with other actions as the stored data version is not always correct.
+
+This option can be used to determine if a file is an Inno Setup installer without loading any compressed headers.
+
+This option cannot be combined with any other action.
+.TP
 \fB\-\-default\-language\fP \fILANG\fP
 Set a language as the default.
 
 With \fB\-\-collisions\=overwrite\fP (the default) this will change the choice of which file to keep to always prefer the given language. In effect, \fB\-\-default\-language\fP behaves almost like \fB\-\-language\fP, except that files are extracted for all languages if they have different names.
 
 When using the \fB\-\-collisions\=rename\fP option, \fB\-\-default\-language\fP chooses a language for which the files should keep the original name if possible.
-.TP
-\fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
-By default
-.B innoextract
-will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Specifically, colors will be enabled if both \fBstdout\fP and \fBstderr\fP point to a TTY and the \fBTERM\fP environment variable is not set to "\fBdumb\fP". Pass \fB1\fP or \fBtrue\fP to \fB\-\-color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
 .TP
 \fB\-\-dump\fP
 Don't convert Windows paths to UNIX paths and don't substitute constants in paths.
