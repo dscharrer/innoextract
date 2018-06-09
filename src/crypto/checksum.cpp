@@ -52,7 +52,7 @@ NAMES(crypto::checksum_type, "Checksum Type",
 	"Adler32",
 	"CRC32",
 	"MD5",
-	"Sha1",
+	"SHA-1",
 )
 
 std::ostream & operator<<(std::ostream & os, const crypto::checksum & checksum) {
