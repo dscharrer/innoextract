@@ -1014,13 +1014,9 @@ void process_file(const fs::path & file, const extract_options & o) {
 		      << " + " << print_hex(offsets.data_offset) << " + " << print_hex(chunk.first.offset)
 		      << ']');
 		
-		if(chunk.first.encrypted) {
-			log_warning << "Skipping encrypted chunk (unsupported)";
-		}
-		
 		stream::chunk_reader::pointer chunk_source;
-		if((o.extract || o.test) && !chunk.first.encrypted) {
-			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first);
+		if((o.extract || o.test) && chunk.first.encryption == stream::Plaintext) {
+			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first, std::string());
 		}
 		boost::uint64_t offset = 0;
 		
@@ -1061,7 +1057,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 							std::cout << " - ";
 							named = true;
 						}
-						if(chunk.first.encrypted) {
+						if(chunk.first.encryption != stream::Plaintext) {
 							std::cout << '"' << color::dim_yellow << output.first->path() << color::reset << '"';
 						} else {
 							std::cout << '"' << color::white << output.first->path() << color::reset << '"';
@@ -1073,7 +1069,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 						if(!o.quiet) {
 							print_size_info(file, size);
 						}
-						if(chunk.first.encrypted) {
+						if(chunk.first.encryption != stream::Plaintext) {
 							std::cout << " - encrypted";
 						}
 						std::cout << '\n';

@@ -32,6 +32,7 @@
 
 #include <stddef.h>
 #include <ios>
+#include <string>
 
 #include <boost/cstdint.hpp>
 #include <boost/iostreams/chain.hpp>
@@ -60,6 +61,13 @@ enum compression_method {
 	UnknownCompression
 };
 
+//! Encryption methods supported by chunks.
+enum encryption_method {
+	Plaintext,
+	ARC4_MD5,
+	ARC4_SHA1,
+};
+
 /*!
  * Information specifying a compressed chunk.
  *
@@ -76,7 +84,7 @@ struct chunk {
 	boost::uint64_t size;           //! Total compressed size of the chunk.
 	
 	compression_method compression; //!< Compression method used by the chunk.
-	bool encrypted;                 //!< Is the chunk encrypted? Unsupported for now.
+	encryption_method encryption;   //!< Encryption method used by the chunk.
 	
 	bool operator<(const chunk & o) const;
 	bool operator==(const chunk & o) const;
@@ -103,18 +111,21 @@ public:
 	 *
 	 * \param base  The slice reader for the setup file(s).
 	 * \param chunk Information specifying the chunk to read.
+	 * \param key   Key used for encrypted chunks.
 	 *
 	 * \throws chunk_error if the chunk header could not be read or was invalid,
 	 *                     or if the chunk compression is not supported by this build.
 	 *
 	 * \return a pointer to a non-seekable input filter chain for the requested file.
 	 */
-	static pointer get(slice_reader & base, const ::stream::chunk & chunk);
+	static pointer get(slice_reader & base, const ::stream::chunk & chunk, const std::string & key);
 	
 };
 
 } // namespace stream
 
 NAMED_ENUM(stream::compression_method)
+
+NAMED_ENUM(stream::encryption_method)
 
 #endif // INNOEXTRACT_STREAM_CHUNK_HPP
