@@ -257,10 +257,6 @@ int main(int argc, char * argv[]) {
 	if(!explicit_action) {
 		o.extract = true;
 	}
-	if(o.extract && o.test) {
-		log_error << "Combining --extract and --test is not allowed!";
-		return ExitUserError;
-	}
 	if(!o.extract && !o.test) {
 		progress::set_enabled(false);
 	}

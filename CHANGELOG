@@ -10,6 +10,7 @@ innoextract 1.7 (TDB)
  - Fixed .bin slice file names used with Inno Setup versions older than 4.1.7
  - Fixed build with newer libc++ versions
  - Made loading of .bin slice files case-insensitive
+ - The --test option can now be combined with --extract to abort on file checksum errors
  - Now compiles in C++17 mode if supported
 
 innoextract 1.6 (2016-03-24)

@@ -131,7 +131,9 @@ Don't extract files that would have been deleted at the end of the install proce
 This option takes precedence over \fB\-\-include\fP and \fB\-\-language\fP: temporary files are never extracted when using the \fB\-\-exclude\-temp\fP, even if they match the selected language or include expressions.
 .TP
 \fB\-e\fP, \fB\-\-extract\fP
-Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP, \fB\-\-show\-password\fP or \fB\-\-check\-password\fP actions are specified. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
+Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP, \fB\-\-show\-password\fP or \fB\-\-check\-password\fP actions are specified.
+
+Be default innoextract will continue after encountering file checksum errors. The \fB\-\-extract\fP option can be combined with \fB\-\-test\fP to abort on checksum errors.
 .TP
 \fB\-g\fP, \fB\-\-gog\fP
 Try to process additional .bin files that have the same basename as the setup but are not actually part of the Inno Setup installer. This is the case for newer multi-part GOG.com installers where these .bin files are RAR archives, potential encrypted with the MD5 checksum of the game ID (see the \fB\-\-gog\-game\-id\fP option).
@@ -248,7 +250,9 @@ Don't output anything except errors and warnings unless explicitly requested.
 This option can be combined with \fB\-\-list\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
 .TP
 \fB\-t\fP, \fB\-\-test\fP
-Test archive integrity but don't write any output files. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
+Test archive integrity but don't write any output files.
+
+This option can be combined with \fB\-\-extract\fP to abort on file checksum errors.
 .TP
 \fB\-T\fP, \fB\-\-timestamps\fP \fITZ\fP
 Inno Setup installers can contain timestamps in both UTC and 'local' timezones.
