@@ -133,7 +133,8 @@ int main(int argc, char * argv[]) {
 		("extract,e", "Extract files (default action)")
 		("list,l", "Only list files, don't write anything")
 		("list-languages", "List languages supported by the installer")
-		("gog-game-id", "Determine the GOG.com game ID for this installer")
+		("gog-game-id", "Determine the installer's GOG.com game ID")
+		("show-password", "Show password check information")
 	;
 	
 	po::options_description modifiers("Modifiers");
@@ -244,8 +245,9 @@ int main(int argc, char * argv[]) {
 	o.test = (options.count("test") != 0);
 	o.list_languages = (options.count("list-languages") != 0);
 	o.gog_game_id = (options.count("gog-game-id") != 0);
-	bool explicit_action = o.list || o.test || o.extract
-	                       || o.list_languages || o.gog_game_id;
+	o.show_password = (options.count("show-password") != 0);
+	bool explicit_action = o.list || o.test || o.extract || o.list_languages
+	                       || o.gog_game_id || o.show_password;
 	if(!explicit_action) {
 		o.extract = true;
 	}

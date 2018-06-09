@@ -57,6 +57,7 @@ struct extract_options {
 	bool extract; //!< Extract files
 	bool list_languages; //!< List available languages
 	bool gog_game_id; //!< Show the GOG.com game id
+	bool show_password; //!< Show password check information
 	
 	bool preserve_file_times; //!< Set timestamps of extracted files
 	bool local_timestamps; //!< Use local timezone for setting timestamps

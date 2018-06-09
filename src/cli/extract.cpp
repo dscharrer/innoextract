@@ -66,6 +66,7 @@
 
 #include "util/boostfs_compat.hpp"
 #include "util/console.hpp"
+#include "util/encoding.hpp"
 #include "util/fstream.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
@@ -573,7 +574,7 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 	}
 	#endif
 	
-	bool multiple_sections = (o.list_languages + o.gog_game_id + o.list > 1);
+	bool multiple_sections = (o.list_languages + o.gog_game_id + o.list + o.show_password > 1);
 	if(!o.quiet && multiple_sections) {
 		std::cout << '\n';
 	}
@@ -610,6 +611,37 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 			std::cout << "GOG.com game ID is " << color::cyan << id << color::reset << '\n';
 		} else {
 			std::cout << id << '\n';
+		}
+		if((o.silent || !o.quiet) && multiple_sections) {
+			std::cout << '\n';
+		}
+	}
+	
+	if(o.show_password) {
+		if(info.header.options & setup::header::Password) {
+			if(o.silent) {
+				std::cout << info.header.password << '\n';
+			} else {
+				std::cout << "Password hash: " << color::yellow << info.header.password << color::reset << '\n';
+			}
+			if(o.silent) {
+				std::cout << print_hex(info.header.password_salt) << '\n';
+			} else if(!info.header.password_salt.empty()) {
+				std::cout << "Password salt: " << color::yellow
+				          << print_hex(info.header.password_salt) << color::reset;
+				if(!o.quiet) {
+					std::cout << " (hex bytes, prepended to password)";
+				}
+				std::cout << '\n';
+			}
+			if(o.silent) {
+				std::cout << util::encoding_name(info.version.codepage()) << '\n';
+			} else {
+				std::cout << "Password encoding: " << color::yellow
+				          << util::encoding_name(info.version.codepage()) << color::reset << '\n';
+			}
+		} else if(!o.quiet) {
+			std::cout << "Setup is not passworded!\n";
 		}
 		if((o.silent || !o.quiet) && multiple_sections) {
 			std::cout << '\n';

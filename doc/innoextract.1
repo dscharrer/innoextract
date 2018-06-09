@@ -36,6 +36,7 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-l \-\-list               Only list files, don't write anything
     \-\-list\-languages     List languages supported by the installer
     \-\-gog\-game\-id        Determine the GOG.com game ID for this installer
+    \-\-show\-password      Show password check information
 .fi
 .TP
 .B Modifiers:
@@ -121,7 +122,7 @@ Don't extract files that would have been deleted at the end of the install proce
 This option takes precedence over \fB\-\-include\fP and \fB\-\-language\fP: temporary files are never extracted when using the \fB\-\-exclude\-temp\fP, even if they match the selected language or include expressions.
 .TP
 \fB\-e\fP, \fB\-\-extract\fP
-Extract all files to the current directory. This action is enabled by default, unless either \fB\-\-list\fP or \fB\-\-extract\fP is specified. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
+Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP or \fB\-\-show\-password\fP actions are specified. You may only specify one of \fB\-\-extract\fP and \fB\-\-test\fP.
 .TP
 \fB\-g\fP, \fB\-\-gog\fP
 Try to process additional .bin files that have the same basename as the setup but are not actually part of the Inno Setup installer. This is the case for newer multi-part GOG.com installers where these .bin files are RAR archives, potential encrypted with the MD5 checksum of the game ID (see the \fB\-\-gog\-game\-id\fP option).
@@ -195,6 +196,17 @@ By default \fBinnoextract\fP will try to detect if the terminal supports shell e
 .TP
 \fB\-q\fP, \fB\-\-quiet\fP
 Less verbose output.
+.TP
+\fB\-\-show\-password\fP
+Show checksum \fB$c\fP and salt \fB$s\fP used for the password \fB$p\fP check as well as encoding of the password. The checksum is calculated from the salt concatenated with the password:
+
+ \fB$c = hash($s . $p)\fP
+
+With \fB\-\-silent\fP option, the checksum name and hash is printed on one line seperated buy a space followed by the salt encoded as hex bytes and password encoding on separate lines.
+
+Checksum types can be \fBCRC32\fP, \fBMD5\fP or \fBSHA-1\fP although \fBCRC32\fP is not used in installers with encryption.
+
+The password encoding is either \fBMS-ANSI\fP (Windows-1252) or \fBUTF16-LE\fP.
 .TP
 \fB\-s\fP, \fB\-\-silent\fP
 Don't output anything except errors and warnings unless explicitly requested.
