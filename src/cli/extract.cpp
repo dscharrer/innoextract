@@ -590,7 +590,10 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 			}
 			BOOST_FOREACH(const setup::language_entry & language, info.languages) {
 				std::cout << " - " << color::green << language.name << color::reset;
-				std::cout << ": " << color::white << language.language_name << color::reset << '\n';
+				if(!language.language_name.empty()) {
+					std::cout << ": " << color::white << language.language_name << color::reset;
+				}
+				std::cout << '\n';
 			}
 			if(info.languages.empty()) {
 				std::cout << " (none)\n";
@@ -850,7 +853,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 #endif
 	
 	setup::info::entry_types entries = 0;
-	if(o.list || o.test || o.extract) {
+	if(o.list || o.test || o.extract || (o.gog_galaxy && o.list_languages)) {
 		entries |= setup::info::Files;
 		entries |= setup::info::Directories;
 		entries |= setup::info::DataEntries;
@@ -877,6 +880,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 		oss << " ├─ detected setup version: " << info.version << '\n';
 		oss << " └─ error reason: " << e.what();
 		throw format_error(oss.str());
+	}
+	
+	if(o.gog_galaxy && (o.list || o.test || o.extract || o.list_languages)) {
+		gog::parse_galaxy_files(info, o.gog);
 	}
 	
 	bool multiple_sections = print_file_info(o, info);
@@ -911,10 +918,6 @@ void process_file(const fs::path & file, const extract_options & o) {
 	
 	if(!o.list && !o.test && !o.extract) {
 		return;
-	}
-	
-	if(o.gog_galaxy) {
-		gog::parse_galaxy_files(info, o.gog);
 	}
 	
 	if(!o.silent && multiple_sections) {

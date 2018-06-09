@@ -34,6 +34,7 @@
 #include "setup/data.hpp"
 #include "setup/file.hpp"
 #include "setup/info.hpp"
+#include "setup/language.hpp"
 
 #include "util/log.hpp"
 
@@ -261,6 +262,7 @@ void parse_galaxy_files(setup::info & info, bool force) {
 	setup::file_entry * file_start = NULL;
 	size_t remaining_parts = 0;
 	
+	bool has_language_constraints = false;
 	std::set<std::string> all_languages;
 	
 	BOOST_FOREACH(setup::file_entry & file, info.files) {
@@ -389,6 +391,8 @@ void parse_galaxy_files(setup::info & info, bool force) {
 			}
 		}
 		
+		has_language_constraints = has_language_constraints || !file.languages.empty();
+		
 	}
 	
 	if(remaining_parts != 0) {
@@ -463,13 +467,29 @@ void parse_galaxy_files(setup::info & info, bool force) {
 		// component id, ?
 		std::vector<std::string> dependency = parse_function_call(file.check, "check_if_install_dependency");
 		if(!dependency.empty()) {
-			
 			if(file.components.empty() && !dependency[0].empty()) {
 				file.components = dependency[0];
 			}
-			
 		}
 		
+	}
+	
+	if(!all_languages.empty()) {
+		if(!has_language_constraints) {
+			info.languages.clear();
+		}
+		info.languages.reserve(all_languages.size());
+		BOOST_FOREACH(const std::string & name, all_languages) {
+			setup::language_entry language;
+			language.name = name;
+			language.dialog_font_size = 0;
+			language.dialog_font_standard_height = 0;
+			language.title_font_size = 0;
+			language.welcome_font_size = 0;
+			language.copyright_font_size = 0;
+			language.right_to_left = false;
+			info.languages.push_back(language);
+		}
 	}
 	
 }
