@@ -71,6 +71,7 @@
 #include <boost/foreach.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/range/size.hpp>
 
 #include "util/log.hpp"
 #include "util/math.hpp"
@@ -215,6 +216,59 @@ static void to_utf8_fallback(const std::string & from, std::string & to, codepag
 	
 }
 
+bool is_utf8_continuation_byte(unicode_char chr) {
+	return (chr & 0xc0) == 0x80;
+}
+
+template <typename In>
+unicode_char utf8_read(In & it, In end, unicode_char replacement = unicode_char(replacement_char)) {
+	
+	if(it == end) {
+		return unicode_char(-1);
+	}
+	unicode_char chr = boost::uint8_t(*it++);
+	
+	// For multi-byte characters, read the remaining bytes
+	if(chr & (1 << 7)) {
+		
+		if(is_utf8_continuation_byte(chr)) {
+			// Bad start position
+			return replacement;
+		}
+		
+		if(it == end || !is_utf8_continuation_byte(boost::uint8_t(*it))) {
+			// Unexpected end of multi-byte sequence
+			return replacement;
+		}
+		chr &= 0x3f, chr <<= 6, chr |= unicode_char(boost::uint8_t(*it++) & 0x3f);
+		
+		if(chr & (1 << (5 + 6))) {
+			
+			if(it == end || !is_utf8_continuation_byte(boost::uint8_t(*it))) {
+				// Unexpected end of multi-byte sequence
+				return replacement;
+			}
+			chr &= ~unicode_char(1 << (5 + 6)), chr <<= 6, chr |= unicode_char(boost::uint8_t(*it++) & 0x3f);
+			
+			if(chr & (1 << (4 + 6 + 6))) {
+				
+				if(it == end || !is_utf8_continuation_byte(boost::uint8_t(*it))) {
+					// Unexpected end of multi-byte sequence
+					return replacement;
+				}
+				chr &= ~unicode_char(1 << (4 + 6 + 6)), chr <<= 6, chr |= unicode_char(boost::uint8_t(*it++) & 0x3f);
+				
+				if(chr & (1 << (3 + 6 + 6 + 6))) {
+					// Illegal UTF-8 byte
+					return replacement;
+				}
+				
+			}
+		}
+	}
+	
+	return chr;
+}
 
 static size_t utf8_length(unicode_char chr) {
 	if     (chr <  0x80)       return 1;
@@ -328,16 +382,48 @@ static void utf16le_to_utf8(const std::string & from, std::string & to) {
 	
 }
 
-static void windows1252_to_utf8(const std::string & from, std::string & to) {
+void utf8_to_utf16le(const std::string & from, std::string & to) {
 	
-	static unicode_char replacements[] = {
-		0x20ac, replacement_char, 0x201a, 0x192, 0x201e, 0x2026, 0x2020, 0x2021, 0x2c6,
-		0x2030, 0x160, 0x2039, 0x152, replacement_char, 0x17d, replacement_char,
-		replacement_char, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014, 0x2dc,
-		0x2122, 0x161, 0x203a, 0x153, replacement_char, 0x17e, 0x178
-	};
+	to.clear();
+	to.reserve(from.size() * 2); // optimistically, most strings only have ASCII characters
+	
+	bool warn = false;
+	
+	for(std::string::const_iterator i = from.begin(); i != from.end(); ) {
+		
+		unicode_char chr = utf8_read(i, from.end());
+		
+		if((chr >= 0xd800 && chr <= 0xdfff) || chr > 0x10ffff) {
+			chr = replacement_char;
+			warn = true;
+		} else if(chr >= 0x10000) {
+			chr -= 0x10000;
+			unicode_char high_surrogate = 0xd800 + (chr >> 10);
+			to.push_back(char(boost::uint8_t(high_surrogate)));
+			to.push_back(char(boost::uint8_t(high_surrogate >> 8)));
+			chr = 0xdc00 + (chr & 0x3ff);
+		}
+		
+		to.push_back(char(boost::uint8_t(chr)));
+		to.push_back(char(boost::uint8_t(chr >> 8)));
+	}
+	
+	if(warn) {
+		log_warning << "Unexpected data while converting from UTF-8 to UTF-16LE.";
+	}
+	
+}
 
-	BOOST_STATIC_ASSERT(sizeof(replacements) == (160 - 128) * sizeof(*replacements));
+static unicode_char windows1252_replacements[] = {
+	0x20ac, replacement_char, 0x201a, 0x192, 0x201e, 0x2026, 0x2020, 0x2021, 0x2c6,
+	0x2030, 0x160, 0x2039, 0x152, replacement_char, 0x17d, replacement_char,
+	replacement_char, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014, 0x2dc,
+	0x2122, 0x161, 0x203a, 0x153, replacement_char, 0x17e, 0x178
+};
+
+BOOST_STATIC_ASSERT(sizeof(windows1252_replacements) == (160 - 128) * sizeof(*windows1252_replacements));
+
+static void windows1252_to_utf8(const std::string & from, std::string & to) {
 	
 	to.clear();
 	to.reserve(from.size()); // optimistically, most strings only have ASCII characters
@@ -349,7 +435,7 @@ static void windows1252_to_utf8(const std::string & from, std::string & to) {
 		// Windows-1252 maps almost directly to Unicode - yay!
 		unicode_char chr = boost::uint8_t(c);
 		if(chr >= 128 && chr < 160) {
-			chr = replacements[chr - 128];
+			chr = windows1252_replacements[chr - 128];
 			warn = warn || (chr == unicode_char(replacement_char));
 		}
 		
@@ -358,6 +444,42 @@ static void windows1252_to_utf8(const std::string & from, std::string & to) {
 	
 	if(warn) {
 		log_warning << "Unexpected data while converting from Windows-1252 to UTF-8.";
+	}
+	
+}
+
+static void utf8_to_windows1252(const std::string & from, std::string & to) {
+	
+	to.clear();
+	to.reserve(from.size()); // optimistically, most strings only have ASCII characters
+	
+	bool warn = false;
+	
+	for(std::string::const_iterator i = from.begin(); i != from.end(); ) {
+		
+		unicode_char chr = utf8_read(i, from.end());
+		
+		// Windows-1252 maps almost directly to Unicode - yay!
+		if(chr >= 256 || (chr >= 128 && chr < 160)) {
+			size_t i = 0;
+			for(; i < boost::size(windows1252_replacements); i++) {
+				if(chr == windows1252_replacements[i] && windows1252_replacements[i] != replacement_char) {
+					break;
+				}
+			}
+			if(i < boost::size(windows1252_replacements)) {
+				chr = unicode_char(128 + i);
+			} else {
+				chr = replacement_char;
+				warn = true;
+			}
+		}
+		
+		to.push_back(char(boost::uint8_t(chr)));
+	}
+	
+	if(warn) {
+		log_warning << "Unsupported character while converting from UTF-8 to Windows-1252.";
 	}
 	
 }
@@ -571,6 +693,30 @@ void to_utf8(const std::string & from, std::string & to, codepage_id cp) {
 	#endif
 	
 	to_utf8_fallback(from, to, cp);
+	
+}
+
+void from_utf8(const std::string & from, std::string & to, codepage_id codepage) {
+	
+	if(from.empty()) {
+		to.clear();
+		return;
+	}
+	
+	if(codepage == cp_utf8) {
+		to = from;
+		return;
+	}
+	
+	switch(codepage) {
+		case cp_utf16le:     utf8_to_utf16le(from, to); return;
+		case cp_windows1252: utf8_to_windows1252(from, to); return;
+		case cp_iso_8859_1:  utf8_to_windows1252(from, to); return;
+		default: {
+			log_warning << "Unsupported output codepage: " << codepage;
+			to = from;
+		}
+	}
 	
 }
 
