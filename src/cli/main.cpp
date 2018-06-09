@@ -38,6 +38,7 @@
 #include "setup/version.hpp"
 
 #include "util/console.hpp"
+#include "util/fstream.hpp"
 #include "util/log.hpp"
 #include "util/time.hpp"
 #include "util/windows.hpp"
@@ -147,6 +148,7 @@ int main(int argc, char * argv[]) {
 		("timestamps,T", po::value<std::string>(), "Timezone for file times or \"local\" or \"none\"")
 		("output-dir,d", po::value<std::string>(), "Extract files into the given directory")
 		("password,P", po::value<std::string>(), "Password for encrypted files")
+		("password-file", po::value<std::string>(), "File to load password from")
 		("gog,g", "Extract additional archives from GOG.com installers")
 	;
 	
@@ -367,8 +369,37 @@ int main(int argc, char * argv[]) {
 	
 	{
 		po::variables_map::const_iterator password = options.find("password");
+		po::variables_map::const_iterator password_file = options.find("password-file");
+		if(password != options.end() && password_file != options.end()) {
+			log_error << "Combining --password and --password-file is not allowed";
+			return ExitUserError;
+		}
 		if(password != options.end()) {
 			o.password = password->second.as<std::string>();
+		}
+		if(password_file != options.end()) {
+			std::istream * is = &std::cin;
+			fs::path file = password_file->second.as<std::string>();
+			util::ifstream ifs;
+			if(file != "-") {
+				ifs.open(file);
+				if(!ifs.is_open()) {
+					log_error << "Could not open password file " << file;
+					return ExitDataError;
+				}
+				is = &ifs;
+			}
+			std::getline(*is, o.password);
+			if(!o.password.empty() && o.password[o.password.size() - 1] == '\n') {
+				o.password.resize(o.password.size() - 1);
+			}
+			if(!o.password.empty() && o.password[o.password.size() - 1] == '\r') {
+				o.password.resize(o.password.size() - 1);
+			}
+			if(!*is) {
+				log_error << "Could not read password file " << file;
+				return ExitDataError;
+			}
 		}
 		if(o.check_password && o.password.empty()) {
 			log_error << "Combining --check-password requires a password";

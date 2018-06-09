@@ -49,6 +49,7 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-T \-\-timestamps \fITZ\fP      Timezone for file times or "local" or "none"
  \-d \-\-output\-dir \fIDIR\fP     Extract files into the given directory
  \-P \-\-password \fIPASSWORD\fP  Password for encrypted files
+    \-\-password\-file \fIFILE\fP File to load password from
  \-g \-\-gog                Process additional archives from GOG.com installers
 .fi
 .TP
@@ -74,7 +75,7 @@ Here is a short summary of the options available in innoextract. Please refer to
 Treat all arguments after this one as files, even if they begin with a dash.
 .TP
 \fB\-\-check\-password\fB
-Abort processing if the password provided using the \fB\-\-password\fP option does not match the checksum stored in the installer.
+Abort processing if the password provided using the \fB\-\-password\fP or \fB\-\-password\-file\fP option does not match the checksum stored in the installer.
 
 The password checksum used for this check can be retrieved using the \fB\-\-show\-password\fP option.
 .TP
@@ -201,6 +202,17 @@ If the specified directory does not exist, it will be created. However, the pare
 \fB\-P\fP, \fB\-\-password \fIPASSWORD\fP
 Specifies the password to decrypt encrypted files. The password is assumed to be encoded as UTF-8 and converted the internal according used in the installer as needed.
 
+Use the \fB\-\-password-file\fP option to load the password from a file or standard input instead. This option cannot be combined with \fB\-\-password-file\fP.
+
+Use the \fB\-\-check\-password\fP option to abort processing entirely if the password is incorrect.
+.TP
+\fB\-\-password-file\fP \fIFILE\fP
+Load a password form the specified file. Only the first line excluding the terminating carriage return and/or line break is used as the password. The password is assumed to be encoded as UTF-8 and converted the internal according used in the installer as needed.
+
+If the special file name "\fB-\fP" is used, the password will be read from standard input.
+
+Use the \fB\-\-password\fP option to specify the password on the command\-line instead. This option cannot be combined with \fB\-\-password\fP.
+
 Use the \fB\-\-check\-password\fP option to abort processing entirely if the password is incorrect.
 .TP
 \fB\-p\fP, \fB\-\-progress\fP[=\fIENABLE\fP]
@@ -220,7 +232,7 @@ Checksum types can be \fBCRC32\fP, \fBMD5\fP or \fBSHA-1\fP although \fBCRC32\fP
 
 The password encoding is either \fBMS-ANSI\fP (Windows-1252) or \fBUTF16-LE\fP.
 
-Use the \fB\-\-password\fP option together with \fB\-\-check\-password\fP to check if a password matches this checksum.
+Use the \fB\-\-password\fP or \fB\-\-password\-file\fP option together with \fB\-\-check\-password\fP to check if a password matches this checksum.
 .TP
 \fB\-s\fP, \fB\-\-silent\fP
 Don't output anything except errors and warnings unless explicitly requested.
