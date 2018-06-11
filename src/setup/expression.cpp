@@ -31,11 +31,11 @@ namespace setup {
 
 namespace {
 
-static bool is_identifier_start(char c) {
+bool is_identifier_start(char c) {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == '-';
 }
 
-static bool is_identifier(char c) {
+bool is_identifier(char c) {
 	return is_identifier_start(c) || (c >= '0' && c <= '9') || c == '\\';
 }
 
