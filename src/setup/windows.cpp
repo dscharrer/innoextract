@@ -95,7 +95,10 @@ windows_version_name windows_nt_version_names[] = {
 	{ "Windows XP", { 5, 1, 2600 } },
 	{ "Windows XP x64", { 5, 2, 3790 } },
 	{ "Windows Vista", { 6, 0, 6000 } },
-	{ "Windows 7", { 6, 1, 7600 } }
+	{ "Windows 7", { 6, 1, 7600 } },
+	{ "Windows 8", { 6, 2, 0 } },
+	{ "Windows 8.1", { 6, 3, 0 } },
+	{ "Windows 10", { 10, 0, 0 } },
 };
 
 const char * get_version_name(const windows_version::data & version, bool nt = false) {
