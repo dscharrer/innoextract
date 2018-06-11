@@ -41,7 +41,7 @@ namespace stream {
 //! Error thrown if there was en error in an LZMA stream
 struct lzma_error : public std::ios_base::failure {
 	
-	lzma_error(std::string msg, int code)
+	lzma_error(const std::string & msg, int code)
 		: std::ios_base::failure(msg), error_code(code) { }
 	
 	//! \return the liblzma code for the error.
