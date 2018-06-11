@@ -45,7 +45,7 @@ public:
 	
 	static void init(hash_word * state);
 	
-	static void transform(hash_word * digest, const hash_word * data);
+	static void transform(hash_word * state, const hash_word * data);
 };
 
 typedef iterated_hash<sha1_transform> sha1;

@@ -97,8 +97,8 @@ struct windows_version_range {
 	
 };
 
-std::ostream & operator<<(std::ostream & os, const windows_version::data & svd);
-std::ostream & operator<<(std::ostream & os, const windows_version & svd);
+std::ostream & operator<<(std::ostream & os, const windows_version::data & version);
+std::ostream & operator<<(std::ostream & os, const windows_version & version);
 
 } // namespace setup
 

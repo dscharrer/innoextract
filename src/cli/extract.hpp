@@ -82,6 +82,28 @@ struct extract_options {
 	
 	boost::filesystem::path output_dir;
 	
+	extract_options()
+		: quiet(false)
+		, silent(false)
+		, warn_unused(false)
+		, data_version(false)
+		, list(false)
+		, test(false)
+		, extract(false)
+		, list_languages(false)
+		, gog_game_id(false)
+		, show_password(false)
+		, check_password(false)
+		, preserve_file_times(false)
+		, local_timestamps(false)
+		, gog(false)
+		, gog_galaxy(false)
+		, extract_unknown(false)
+		, extract_temp(false)
+		, language_only(false)
+		, collisions(OverwriteCollisions)
+	{ }
+	
 };
 
 void process_file(const boost::filesystem::path & file, const extract_options & o);

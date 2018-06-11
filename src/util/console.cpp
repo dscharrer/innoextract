@@ -357,12 +357,13 @@ bool progress::update(boost::uint64_t delta, bool force) {
 		}
 	}
 	
-	boost::uint64_t time = last_time;
+	boost::uint64_t time;
 	try {
 		boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
 		time = boost::uint64_t((now - start_time).total_microseconds());
 	} catch(...) {
 		// this shouldn't happen, assume no time has passed
+		time = last_time;
 	}
 	
 	#if defined(_WIN32)

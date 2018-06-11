@@ -42,7 +42,6 @@ class hasher : checksum_base<hasher> {
 public:
 	
 	explicit hasher(checksum_type type);
-	hasher(const hasher & o);
 	
 	void update(const char * data, size_t size);
 	

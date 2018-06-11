@@ -39,7 +39,7 @@ namespace stream {
 //! Error thrown by \ref slice_reader if there was a problem.
 struct slice_error : public std::ios_base::failure {
 	
-	explicit slice_error(std::string msg) : std::ios_base::failure(msg) { }
+	explicit slice_error(const std::string & msg) : std::ios_base::failure(msg) { }
 	
 };
 

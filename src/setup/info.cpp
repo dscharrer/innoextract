@@ -162,50 +162,50 @@ void check_is_end(stream::block_reader::pointer & is, const char * what) {
 
 } // anonymous namespace
 
-void info::load(std::istream & ifs, entry_types e, const setup::version & v) {
+void info::load(std::istream & is, entry_types entries, const setup::version & version) {
 	
-	if(e & (Messages | NoSkip)) {
-		e |= Languages;
+	if(entries & (Messages | NoSkip)) {
+		entries |= Languages;
 	}
 	
-	stream::block_reader::pointer is = stream::block_reader::get(ifs, v);
+	stream::block_reader::pointer reader = stream::block_reader::get(is, version);
 	
-	header.load(*is, v);
+	header.load(*reader, version);
 	
-	load_entries(*is, v, e, header.language_count, languages, Languages);
+	load_entries(*reader, version, entries, header.language_count, languages, Languages);
 	
-	if(v < INNO_VERSION(4, 0, 0)) {
-		load_wizard_and_decompressor(*is, v, header, *this, e);
+	if(version < INNO_VERSION(4, 0, 0)) {
+		load_wizard_and_decompressor(*reader, version, header, *this, entries);
 	}
 	
-	load_entries(*is, v, e, header.message_count, messages, Messages, languages);
-	load_entries(*is, v, e, header.permission_count, permissions, Permissions);
-	load_entries(*is, v, e, header.type_count, types, Types);
-	load_entries(*is, v, e, header.component_count, components, Components);
-	load_entries(*is, v, e, header.task_count, tasks, Tasks);
-	load_entries(*is, v, e, header.directory_count, directories, Directories);
-	load_entries(*is, v, e, header.file_count, files, Files);
-	load_entries(*is, v, e, header.icon_count, icons, Icons);
-	load_entries(*is, v, e, header.ini_entry_count, ini_entries, IniEntries);
-	load_entries(*is, v, e, header.registry_entry_count, registry_entries, RegistryEntries);
-	load_entries(*is, v, e, header.delete_entry_count, delete_entries, DeleteEntries);
-	load_entries(*is, v, e, header.uninstall_delete_entry_count, uninstall_delete_entries,
+	load_entries(*reader, version, entries, header.message_count, messages, Messages, languages);
+	load_entries(*reader, version, entries, header.permission_count, permissions, Permissions);
+	load_entries(*reader, version, entries, header.type_count, types, Types);
+	load_entries(*reader, version, entries, header.component_count, components, Components);
+	load_entries(*reader, version, entries, header.task_count, tasks, Tasks);
+	load_entries(*reader, version, entries, header.directory_count, directories, Directories);
+	load_entries(*reader, version, entries, header.file_count, files, Files);
+	load_entries(*reader, version, entries, header.icon_count, icons, Icons);
+	load_entries(*reader, version, entries, header.ini_entry_count, ini_entries, IniEntries);
+	load_entries(*reader, version, entries, header.registry_entry_count, registry_entries, RegistryEntries);
+	load_entries(*reader, version, entries, header.delete_entry_count, delete_entries, DeleteEntries);
+	load_entries(*reader, version, entries, header.uninstall_delete_entry_count, uninstall_delete_entries,
 	             UninstallDeleteEntries);
-	load_entries(*is, v, e, header.run_entry_count, run_entries, RunEntries);
-	load_entries(*is, v, e, header.uninstall_run_entry_count, uninstall_run_entries,
+	load_entries(*reader, version, entries, header.run_entry_count, run_entries, RunEntries);
+	load_entries(*reader, version, entries, header.uninstall_run_entry_count, uninstall_run_entries,
 	             UninstallRunEntries);
 	
-	if(v >= INNO_VERSION(4, 0, 0)) {
-		load_wizard_and_decompressor(*is, v, header, *this, e);
+	if(version >= INNO_VERSION(4, 0, 0)) {
+		load_wizard_and_decompressor(*reader, version, header, *this, entries);
 	}
 	
 	// restart the compression stream
-	check_is_end(is, "unknown data at end of primary header stream");
-	is = stream::block_reader::get(ifs, v);
+	check_is_end(reader, "unknown data at end of primary header stream");
+	reader = stream::block_reader::get(is, version);
 	
-	load_entries(*is, v, e, header.data_entry_count, data_entries, DataEntries);
+	load_entries(*reader, version, entries, header.data_entry_count, data_entries, DataEntries);
 	
-	check_is_end(is, "unknown data at end of secondary header stream");
+	check_is_end(reader, "unknown data at end of secondary header stream");
 }
 
 void info::load(std::istream & is, entry_types entries) {

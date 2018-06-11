@@ -63,9 +63,7 @@ public:
 	
 	/* implicit */ inline flags(enum_type flag) : _flags(Type().set(size_t(flag))) { }
 	
-	/* implicit */ inline flags(Zero = 0) : _flags() { }
-	
-	flags(const flags & o) : _flags(o._flags) { }
+	/* implicit */ inline flags(Zero /* zero */ = 0) : _flags() { }
 	
 	static flags load(Type _flags) {
 		return flags(_flags, true);
@@ -142,11 +140,6 @@ public:
 	
 	flags & operator^=(enum_type flag) {
 		return operator^=(flag);
-	}
-	
-	flags & operator=(flags o) {
-		_flags = o._flags;
-		return *this;
 	}
 	
 	//! Get a set of flags with all possible values set.

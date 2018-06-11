@@ -46,7 +46,7 @@ inline std::ostream & operator<<(std::ostream & os, const quoted & q) {
 	color::shell_command prev = color::current;
 	os << '"' << color::green;
 	for(std::string::const_iterator i = q.str.begin(); i != q.str.end(); ++i) {
-		unsigned char c = (unsigned char)*i;
+		boost::uint8_t c = boost::uint8_t(*i);
 		if(c < ' ' && c != '\t' && c != '\r' && c != '\n') {
 			std::ios_base::fmtflags old = os.flags();
 			os << color::red << '<' << std::hex << std::setfill('0') << std::setw(2)

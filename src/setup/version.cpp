@@ -53,7 +53,7 @@ struct known_legacy_version {
 	
 };
 
-static const known_legacy_version legacy_versions[] = {
+const known_legacy_version legacy_versions[] = {
 	{ "i1.2.10--16\x1a", INNO_VERSION(1, 2, 10), 16 },
 	{ "i1.2.10--32\x1a", INNO_VERSION(1, 2, 10), 32 },
 };
@@ -71,7 +71,7 @@ struct known_version {
 	
 };
 
-static const known_version versions[] = {
+const known_version versions[] = {
 	{ "Inno Setup Setup Data (1.3.21)",     INNO_VERSION_EXT(1, 3, 21, 0), false },
 	{ "Inno Setup Setup Data (1.3.25)",     INNO_VERSION_EXT(1, 3, 25, 0), false },
 	{ "Inno Setup Setup Data (2.0.0)",      INNO_VERSION_EXT(2, 0,  0, 0), false },
@@ -157,19 +157,19 @@ static const known_version versions[] = {
 
 } // anonymous namespace
 
-std::ostream & operator<<(std::ostream & os, const version & v) {
+std::ostream & operator<<(std::ostream & os, const version & version) {
 	
-	os << v.a() << '.' << v.b() << '.' << v.c();
-	if(v.d()) {
-		os << '.' << v.d();
+	os << version.a() << '.' << version.b() << '.' << version.c();
+	if(version.d()) {
+		os << '.' << version.d();
 	}
 	
-	if(v.unicode) {
+	if(version.unicode) {
 		os << " (unicode)";
 	}
 	
-	if(v.bits != 32) {
-		os << " (" << int(v.bits) << "-bit)";
+	if(version.bits != 32) {
+		os << " (" << int(version.bits) << "-bit)";
 	}
 	
 	return os;

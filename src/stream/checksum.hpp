@@ -59,7 +59,6 @@ public:
 		: hasher(type)
 		, output(output)
 	{ }
-	checksum_filter(const checksum_filter & o) : hasher(o.hasher), output(o.output) { }
 	
 	template <typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n) {

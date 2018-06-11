@@ -416,9 +416,12 @@ int main(int argc, char * argv[]) {
 	o.gog_galaxy = (options.count("no-gog-galaxy") == 0);
 	
 	o.data_version = (options.count("data-version") != 0);
-	if(o.data_version && explicit_action) {
-		log_error << "Combining --data-version with other options is not allowed";
-		return ExitUserError;
+	if(o.data_version) {
+		logger::quiet = true;
+		if(explicit_action) {
+			log_error << "Combining --data-version with other options is not allowed";
+			return ExitUserError;
+		}
 	}
 	
 	o.extract_unknown = (options.count("no-extract-unknown") == 0);
@@ -456,9 +459,7 @@ int main(int argc, char * argv[]) {
 	if(!logger::quiet || logger::total_errors || logger::total_warnings) {
 		progress::clear();
 		std::ostream & os = logger::quiet ? std::cerr : std::cout;
-		if(!o.data_version || logger::total_errors || logger::total_warnings) {
-			os << color::green << "Done" << color::reset << std::dec;
-		}
+		os << color::green << "Done" << color::reset << std::dec;
 		if(logger::total_errors || logger::total_warnings) {
 			os << " with ";
 			if(logger::total_errors) {
@@ -475,9 +476,7 @@ int main(int argc, char * argv[]) {
 				   << color::reset;
 			}
 		}
-		if(logger::total_errors) {
-			os << '.' << std::endl;
-		}
+		os << '.' << std::endl;
 	}
 	
 	return logger::total_errors == 0 ? ExitSuccess : ExitDataError;

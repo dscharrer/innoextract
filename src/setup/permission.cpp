@@ -25,9 +25,9 @@
 
 namespace setup {
 
-void permission_entry::load(std::istream & is, const version & v) {
+void permission_entry::load(std::istream & is, const version & version) {
 	
-	(void)v;
+	(void)version;
 	
 	is >> util::binary_string(permissions); // an array of TGrantPermissionEntry's
 	

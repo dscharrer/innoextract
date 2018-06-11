@@ -29,18 +29,18 @@
 
 namespace crypto {
 
-bool checksum::operator==(const checksum & o) const {
+bool checksum::operator==(const checksum & other) const {
 	
-	if(o.type != type) {
+	if(other.type != type) {
 		return false;
 	}
 	
 	switch(type) {
 		case None: return true;
-		case Adler32: return (adler32 == o.adler32);
-		case CRC32: return (crc32 == o.crc32);
-		case MD5: return !memcmp(md5, o.md5, sizeof(md5));
-		case SHA1: return !memcmp(sha1, o.sha1, sizeof(sha1));
+		case Adler32: return (adler32 == other.adler32);
+		case CRC32: return (crc32 == other.crc32);
+		case MD5: return !memcmp(md5, other.md5, sizeof(md5));
+		case SHA1: return !memcmp(sha1, other.sha1, sizeof(sha1));
 		default: return false;
 	};
 }

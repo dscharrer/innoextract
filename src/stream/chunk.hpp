@@ -47,7 +47,7 @@ class slice_reader;
 //! Error thrown by \ref chunk_reader::get if there was a problem.
 struct chunk_error : public std::ios_base::failure {
 	
-	explicit chunk_error(std::string msg) : std::ios_base::failure(msg) { }
+	explicit chunk_error(const std::string & msg) : std::ios_base::failure(msg) { }
 	
 };
 

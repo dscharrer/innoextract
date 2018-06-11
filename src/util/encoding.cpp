@@ -89,7 +89,7 @@ enum known_codepages {
 namespace {
 
 //! Get names for encodings where iconv doesn't have the codepage alias
-static const char * get_encoding_name(codepage_id codepage) {
+const char * get_encoding_name(codepage_id codepage) {
 	switch(codepage) {
 		case   708: return "ISO-8859-6";
 		case   936: return "GBK";
@@ -161,11 +161,11 @@ static const char * get_encoding_name(codepage_id codepage) {
 	}
 }
 
-static const char replacement_char = '_';
-
 typedef boost::uint32_t unicode_char;
 
-static size_t get_encoding_size(codepage_id codepage) {
+const unicode_char replacement_char = '_';
+
+size_t get_encoding_size(codepage_id codepage) {
 	switch(codepage) {
 		case  1200: return 2u; // UTF-16LE
 		case  1201: return 2u; // UTF-16BE
@@ -176,12 +176,12 @@ static size_t get_encoding_size(codepage_id codepage) {
 }
 
 //! Fallback conversion that will at least work for ASCII characters
-static void to_utf8_fallback(const std::string & from, std::string & to, codepage_id cp) {
+void to_utf8_fallback(const std::string & from, std::string & to, codepage_id codepage) {
 	
-	size_t skip = get_encoding_size(cp);
+	size_t skip = get_encoding_size(codepage);
 	
 	size_t shift = 0;
-	switch(cp) {
+	switch(codepage) {
 		case  1201: shift = 1u * 8u; break; // UTF-16BE
 		case 12001: shift = 3u * 8u; break; // UTF-32BE
 		default: break;
@@ -204,14 +204,14 @@ static void to_utf8_fallback(const std::string & from, std::string & to, codepag
 		// replace non-ASCII characters with underscores
 		if((unicode_char(ascii) << shift) != unicode) {
 			warn = true;
-			ascii = replacement_char;
+			ascii = char(replacement_char);
 		}
 		
 		to.push_back(ascii);
 	}
 	
 	if(warn) {
-		log_warning << "Unknown data while converting from CP" << cp << " to UTF-8.";
+		log_warning << "Unknown data while converting from CP" << codepage << " to UTF-8.";
 	}
 	
 }
@@ -221,7 +221,7 @@ bool is_utf8_continuation_byte(unicode_char chr) {
 }
 
 template <typename In>
-unicode_char utf8_read(In & it, In end, unicode_char replacement = unicode_char(replacement_char)) {
+unicode_char utf8_read(In & it, In end, unicode_char replacement = replacement_char) {
 	
 	if(it == end) {
 		return unicode_char(-1);
@@ -270,15 +270,20 @@ unicode_char utf8_read(In & it, In end, unicode_char replacement = unicode_char(
 	return chr;
 }
 
-static size_t utf8_length(unicode_char chr) {
-	if     (chr <  0x80)       return 1;
-	else if(chr <  0x800)      return 2;
-	else if(chr <  0x10000)    return 3;
-	else if(chr <= 0x0010ffff) return 4;
+size_t utf8_length(unicode_char chr) {
+	if(chr < 0x80) {
+		return 1;
+	} else if(chr < 0x800) {
+		return 2;
+	} else if(chr < 0x10000) {
+		return 3;
+	} else if(chr <= 0x0010ffff) {
+		return 4;
+	}
 	return 1;
 }
 
-static void utf8_write(std::string & to, unicode_char chr) {
+void utf8_write(std::string & to, unicode_char chr) {
 	
 	static const boost::uint8_t first_bytes[7] = {
 		0x00, 0x00, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc
@@ -310,16 +315,16 @@ static void utf8_write(std::string & to, unicode_char chr) {
 }
 
 //! \return true c is is the first part of an UTF-16 surrogate pair
-static bool is_utf16_high_surrogate(unicode_char chr) {
+bool is_utf16_high_surrogate(unicode_char chr) {
 	return chr >= 0xd800 && chr <= 0xdbff;
 }
 
 //! \return true c is is the second part of an UTF-16 surrogate pair
-static bool is_utf16_low_surrogate(unicode_char chr) {
+bool is_utf16_low_surrogate(unicode_char chr) {
 	return chr >= 0xdc00 && chr <= 0xdfff;
 }
 
-static void utf16le_to_utf8(const std::string & from, std::string & to) {
+void utf16le_to_utf8(const std::string & from, std::string & to) {
 	
 	if(from.size() % 2 != 0) {
 		log_warning << "Unexpected trailing byte in UTF-16 string.";
@@ -414,7 +419,7 @@ void utf8_to_utf16le(const std::string & from, std::string & to) {
 	
 }
 
-static unicode_char windows1252_replacements[] = {
+unicode_char windows1252_replacements[] = {
 	0x20ac, replacement_char, 0x201a, 0x192, 0x201e, 0x2026, 0x2020, 0x2021, 0x2c6,
 	0x2030, 0x160, 0x2039, 0x152, replacement_char, 0x17d, replacement_char,
 	replacement_char, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014, 0x2dc,
@@ -423,7 +428,7 @@ static unicode_char windows1252_replacements[] = {
 
 BOOST_STATIC_ASSERT(sizeof(windows1252_replacements) == (160 - 128) * sizeof(*windows1252_replacements));
 
-static void windows1252_to_utf8(const std::string & from, std::string & to) {
+void windows1252_to_utf8(const std::string & from, std::string & to) {
 	
 	to.clear();
 	to.reserve(from.size()); // optimistically, most strings only have ASCII characters
@@ -436,7 +441,7 @@ static void windows1252_to_utf8(const std::string & from, std::string & to) {
 		unicode_char chr = boost::uint8_t(c);
 		if(chr >= 128 && chr < 160) {
 			chr = windows1252_replacements[chr - 128];
-			warn = warn || (chr == unicode_char(replacement_char));
+			warn = warn || chr == replacement_char;
 		}
 		
 		utf8_write(to, chr);
@@ -448,7 +453,7 @@ static void windows1252_to_utf8(const std::string & from, std::string & to) {
 	
 }
 
-static void utf8_to_windows1252(const std::string & from, std::string & to) {
+void utf8_to_windows1252(const std::string & from, std::string & to) {
 	
 	to.clear();
 	to.reserve(from.size()); // optimistically, most strings only have ASCII characters
@@ -462,12 +467,12 @@ static void utf8_to_windows1252(const std::string & from, std::string & to) {
 		// Windows-1252 maps almost directly to Unicode - yay!
 		if(chr >= 256 || (chr >= 128 && chr < 160)) {
 			size_t i = 0;
-			for(; i < boost::size(windows1252_replacements); i++) {
+			for(; i < size_t(boost::size(windows1252_replacements)); i++) {
 				if(chr == windows1252_replacements[i] && windows1252_replacements[i] != replacement_char) {
 					break;
 				}
 			}
-			if(i < boost::size(windows1252_replacements)) {
+			if(i < size_t(boost::size(windows1252_replacements))) {
 				chr = unicode_char(128 + i);
 			} else {
 				chr = replacement_char;
@@ -487,9 +492,9 @@ static void utf8_to_windows1252(const std::string & from, std::string & to) {
 #if INNOEXTRACT_HAVE_ICONV
 
 typedef boost::unordered_map<codepage_id, iconv_t> converter_map;
-static converter_map converters;
+converter_map converters;
 
-static iconv_t get_converter(codepage_id codepage) {
+iconv_t get_converter(codepage_id codepage) {
 	
 	// Try to reuse an existing converter if possible
 	converter_map::const_iterator i = converters.find(codepage);
@@ -524,9 +529,9 @@ static iconv_t get_converter(codepage_id codepage) {
 	return converters[codepage] = handle;
 }
 
-static bool to_utf8_iconv(const std::string & from, std::string & to, codepage_id cp) {
+bool to_utf8_iconv(const std::string & from, std::string & to, codepage_id codepage) {
 	
-	iconv_t converter = get_converter(cp);
+	iconv_t converter = get_converter(codepage);
 	if(converter == iconv_t(-1)) {
 		return false;
 	}
@@ -549,7 +554,7 @@ static bool to_utf8_iconv(const std::string & from, std::string & to, codepage_i
 	
 	iconv(converter, NULL, NULL, NULL, NULL);
 	
-	size_t skip = get_encoding_size(cp);
+	size_t skip = get_encoding_size(codepage);
 	
 	bool warn = false;
 	
@@ -567,9 +572,9 @@ static bool to_utf8_iconv(const std::string & from, std::string & to, codepage_i
 			} else if(/*errno == EILSEQ &&*/ insize >= 2) {
 				// invalid byte (sequence) - add a replacement char and try the next byte
 				if(outsize == 0) {
-					to.push_back(replacement_char);
+					to.push_back(char(replacement_char));
 				} else {
-					*outbuf = replacement_char;
+					*outbuf = char(replacement_char);
 					outsize--;
 				}
 				inbuf.buf += skip;
@@ -586,7 +591,7 @@ static bool to_utf8_iconv(const std::string & from, std::string & to, codepage_i
 	}
 	
 	if(warn) {
-		log_warning << "Unexpected data while converting from CP" << cp << " to UTF-8.";
+		log_warning << "Unexpected data while converting from CP" << codepage << " to UTF-8.";
 	}
 	
 	to.resize(outbase);
@@ -598,7 +603,7 @@ static bool to_utf8_iconv(const std::string & from, std::string & to, codepage_i
 
 #if INNOEXTRACT_HAVE_WIN32_CONV
 
-static std::string windows_error_string(DWORD code) {
+std::string windows_error_string(DWORD code) {
 	char * error;
 	DWORD n = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
 	                         NULL, code, 0, reinterpret_cast<char *>(&error), 0,
@@ -615,7 +620,7 @@ static std::string windows_error_string(DWORD code) {
 	}
 }
 
-static bool to_utf8_win32(const std::string & from, std::string & to, codepage_id cp) {
+bool to_utf8_win32(const std::string & from, std::string & to, codepage_id codepage) {
 	
 	int ret = 0;
 	
@@ -623,18 +628,18 @@ static bool to_utf8_win32(const std::string & from, std::string & to, codepage_i
 	const WCHAR * utf16;
 	int utf16_size;
 	std::vector<WCHAR> buffer;
-	if(cp == cp_utf16le) {
+	if(codepage == cp_utf16le) {
 		utf16 = reinterpret_cast<const WCHAR *>(from.data());
 		utf16_size = int(from.size()) / 2;
 	} else {
-		utf16_size = MultiByteToWideChar(cp, 0, from.data(), int(from.length()), NULL, 0);
+		utf16_size = MultiByteToWideChar(codepage, 0, from.data(), int(from.length()), NULL, 0);
 		if(utf16_size > 0) {
 			buffer.resize(size_t(utf16_size));
-			ret = MultiByteToWideChar(cp, 0, from.data(), int(from.length()),
+			ret = MultiByteToWideChar(codepage, 0, from.data(), int(from.length()),
 			                          &buffer.front(), utf16_size);
 		}
 		if(utf16_size <= 0 || ret <= 0) {
-			log_warning << "Error while converting from CP" << cp << " to UTF-16: "
+			log_warning << "Error while converting from CP" << codepage << " to UTF-16: "
 			            << windows_error_string(GetLastError());
 			return false;
 		}
@@ -661,19 +666,19 @@ static bool to_utf8_win32(const std::string & from, std::string & to, codepage_i
 
 } // anonymous namespace
 
-void to_utf8(const std::string & from, std::string & to, codepage_id cp) {
+void to_utf8(const std::string & from, std::string & to, codepage_id codepage) {
 	
 	if(from.empty()) {
 		to.clear();
 		return;
 	}
 	
-	if(cp == cp_utf8 || cp == cp_ascii) {
+	if(codepage == cp_utf8 || codepage == cp_ascii) {
 		to = from;
 		return;
 	}
 	
-	switch(cp) {
+	switch(codepage) {
 		case cp_utf16le:     utf16le_to_utf8(from, to); return;
 		case cp_windows1252: windows1252_to_utf8(from, to); return;
 		case cp_iso_8859_1:  windows1252_to_utf8(from, to); return;
@@ -681,18 +686,18 @@ void to_utf8(const std::string & from, std::string & to, codepage_id cp) {
 	}
 	
 	#if INNOEXTRACT_HAVE_ICONV
-	if(to_utf8_iconv(from, to, cp)) {
+	if(to_utf8_iconv(from, to, codepage)) {
 		return;
 	}
 	#endif
 	
 	#if INNOEXTRACT_HAVE_WIN32_CONV
-	if(to_utf8_win32(from, to, cp)) {
+	if(to_utf8_win32(from, to, codepage)) {
 		return;
 	}
 	#endif
 	
-	to_utf8_fallback(from, to, cp);
+	to_utf8_fallback(from, to, codepage);
 	
 }
 
