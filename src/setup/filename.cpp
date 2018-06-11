@@ -53,7 +53,7 @@ struct is_unsafe_path_char {
 	}
 };
 
-static std::string replace_unsafe_chars(const std::string & str) {
+std::string replace_unsafe_chars(const std::string & str) {
 	std::string result;
 	result.resize(str.size());
 	std::replace_copy_if(str.begin(), str.end(), result.begin(), is_unsafe_path_char(), '$');
