@@ -325,6 +325,15 @@ void print_size_info(const stream::file & file, boost::uint64_t size) {
 	std::cout << " (" << color::dim_cyan << print_bytes(size ? size : file.size) << color::reset << ")";
 }
 
+void print_checksum_info(const stream::file & file, const crypto::checksum * checksum) {
+	
+	if(!checksum || checksum->type == crypto::None) {
+		checksum = &file.checksum;
+	}
+	
+	std::cout << color::dim_magenta << *checksum << color::reset;
+}
+
 bool prompt_overwrite() {
 	return true; // TODO the user always overwrites
 }
@@ -794,6 +803,11 @@ processed_entries filter_entries(const extract_options & o, const setup::info & 
 					if(o.list_sizes) {
 						print_size_info(skip ? newdata.file : olddata.file, skip ? file.size : existing.entry().size);
 					}
+					if(o.list_checksums) {
+						std::cout << ' ';
+						print_checksum_info(skip ? newdata.file : olddata.file,
+						                    skip ? &file.checksum : &existing.entry().checksum);
+					}
 					std::cout << " - " << (skip ? skip : "overwritten") << '\n';
 				}
 				
@@ -1070,6 +1084,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 					
 					bool named = false;
 					boost::uint64_t size = 0;
+					const crypto::checksum * checksum = NULL;
 					BOOST_FOREACH(const output_location & output, output_locations) {
 						if(output.second != 0) {
 							continue;
@@ -1079,6 +1094,12 @@ void process_file(const fs::path & file, const extract_options & o) {
 								log_warning << "Mismatched output sizes";
 							}
 							size = output.first->entry().size;
+						}
+						if(output.first->entry().checksum.type != crypto::None) {
+							if(checksum && *checksum != output.first->entry().checksum) {
+								log_warning << "Mismatched output checksums";
+							}
+							checksum = &output.first->entry().checksum;
 						}
 						if(named) {
 							std::cout << ", ";
@@ -1102,6 +1123,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 						if(o.list_sizes) {
 							print_size_info(file, size);
 						}
+						if(o.list_checksums) {
+							std::cout << ' ';
+							print_checksum_info(file, checksum);
+						}
 						if(chunk.first.encryption != stream::Plaintext && password.empty()) {
 							std::cout << " - encrypted";
 						}
@@ -1115,6 +1140,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 							if(o.list_sizes) {
 								boost::uint64_t size = fileinfo->entry().size;
 								std::cout << color::dim_cyan << (size != 0 ? size : file.size) << color::reset << ' ';
+							}
+							if(o.list_checksums) {
+								print_checksum_info(file, &fileinfo->entry().checksum);
+								std::cout << ' ';
 							}
 							std::cout << color::white << fileinfo->path() << color::reset << '\n';
 						}

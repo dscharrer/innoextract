@@ -35,6 +35,7 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-e \-\-extract            Extract files (default action)
  \-l \-\-list               Only list files, don't write anything
     \-\-list\-sizes         List file sizes
+    \-\-list\-checksums     List file checksums
  \-i \-\-info               Print information about the installer
     \-\-list\-languages     List languages supported by the installer
     \-\-gog\-game\-id        Determine the GOG.com game ID for this installer
@@ -144,7 +145,7 @@ Don't extract files that would have been deleted at the end of the install proce
 This option takes precedence over \fB\-\-include\fP and \fB\-\-language\fP: temporary files are never extracted when using the \fB\-\-exclude\-temp\fP, even if they match the selected language or include expressions.
 .TP
 \fB\-e\fP, \fB\-\-extract\fP
-Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-list\-sizes\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP, \fB\-\-show\-password\fP or \fB\-\-check\-password\fP actions are specified.
+Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-list\-sizes\fP, \fB\-\-list\-checksums\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP, \fB\-\-show\-password\fP or \fB\-\-check\-password\fP actions are specified.
 
 Be default innoextract will continue after encountering file checksum errors. The \fB\-\-extract\fP option can be combined with \fB\-\-test\fP to abort on checksum errors.
 .TP
@@ -219,6 +220,17 @@ This option can be combined with \fB\-\-silent\fP to print only the names of the
 
 The \fB\-\-list\fP action can be combined with \fB\-\-test\fP, \fB\-\-extract\fP, \fB\-\-list\-languages\fP and/or \fB\-\-gog\-game\-id\fP to display the names of the files as they are extracted even with \fB\-\-silent\fP.
 .TP
+\fB\-\-list\-checksums\fP
+List checksums for files contained in the installer.
+
+This option implies the \fB\-\-list\fP action and can be combined with the \fB\-\-list\-sizes\fP option to print both the size and checksum for each file.
+
+With \fB\-\-silent\fP the file checksum will be printed at the start of the line (but after the file size if enabled with the \fB\-\-list\-sizes\fP option) followed by a space. Otherwise the checksum is printed after the file name.
+
+The checksum type can be one of \fBAdler32\fP, \fBCRC32\fP, \fBMD5\fP or \fBSHA-1\fP and is printed in fron of the checksum hash followed by a space. \fBAdler32\fP and \fBCRC32\fP checksums are printed as "\fB0x\fP" followed by the 32-bit hexadecimal value.
+
+Different files in the same installer can have different checksum types if GOG Galaxy file part reassembly is not disabled using the \fB\-\-no\-gog\-galaxy\fP option.
+.TP
 \fB\-\-list\-languages\fP
 List languages supported by the installer.
 
@@ -229,7 +241,7 @@ The \fB\-\-list\-languages\fP action can be combined with \fB\-\-list\fP, \fB\-\
 \fB\-\-list\-sizes\fP
 List uncompressed sizes for files contained in the installer.
 
-This option implies the \fB\-\-list\fP action.
+This option implies the \fB\-\-list\fP action and can be combined with the \fB\-\-list\-checksums\fP option to print both the size and checksum for each file.
 
 With \fB\-\-silent\fP the file size in bytes will be printed at the start of the line followed by a space. Otherwise the size is printed after the file name in a human-friendly format.
 .TP

@@ -53,6 +53,7 @@ struct extract_options {
 	bool warn_unused; //!< Warn if there are unused files
 	
 	bool list_sizes; //!< Show size information for files
+	bool list_checksums; //!< Show checksum information for files
 	
 	bool data_version; //!< Print the data version
 	bool list; //!< List files
@@ -89,6 +90,7 @@ struct extract_options {
 		, silent(false)
 		, warn_unused(false)
 		, list_sizes(false)
+		, list_checksums(false)
 		, data_version(false)
 		, list(false)
 		, test(false)
