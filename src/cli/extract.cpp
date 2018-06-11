@@ -791,7 +791,7 @@ processed_entries filter_entries(const extract_options & o, const setup::info & 
 					const std::string & clobberedpath = skip ? path : existing.path();
 					std::cout << '"' << color::dim_yellow << clobberedpath << color::reset << '"';
 					print_filter_info(skip ? file : existing.entry());
-					if(!o.quiet) {
+					if(o.list_sizes) {
 						print_size_info(skip ? newdata.file : olddata.file, skip ? file.size : existing.entry().size);
 					}
 					std::cout << " - " << (skip ? skip : "overwritten") << '\n';
@@ -1099,7 +1099,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 					}
 					
 					if(named) {
-						if(!o.quiet) {
+						if(o.list_sizes) {
 							print_size_info(file, size);
 						}
 						if(chunk.first.encryption != stream::Plaintext && password.empty()) {
@@ -1111,7 +1111,12 @@ void process_file(const fs::path & file, const extract_options & o) {
 				} else {
 					BOOST_FOREACH(const output_location & output, output_locations) {
 						if(output.second == 0) {
-							std::cout << color::white << output.first->path() << color::reset << '\n';
+							const processed_file * fileinfo = output.first;
+							if(o.list_sizes) {
+								boost::uint64_t size = fileinfo->entry().size;
+								std::cout << color::dim_cyan << (size != 0 ? size : file.size) << color::reset << ' ';
+							}
+							std::cout << color::white << fileinfo->path() << color::reset << '\n';
 						}
 					}
 				}

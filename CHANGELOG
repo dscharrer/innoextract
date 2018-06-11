@@ -6,6 +6,7 @@ innoextract 1.7 (TDB)
  - Added a --show-password option to print password check information
  - Added a --check-password option to abort if the provided password does not match the stored checksum
  - Added a --info (-i) convenience option to print information about the installer
+ - Added a --list-sizes option to print file sizes even with --quiet or --silent
  - Added a --data-version (-V) option to print the data version and exit
  - Added a --no-extract-unknown (-n) option to abort on unknown Inno Setup data versions
  - Fixed building in paths that contain regex expressions

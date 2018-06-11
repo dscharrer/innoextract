@@ -34,6 +34,7 @@ Here is a short summary of the options available in innoextract. Please refer to
  \-t \-\-test               Only verify checksums, don't write anything
  \-e \-\-extract            Extract files (default action)
  \-l \-\-list               Only list files, don't write anything
+    \-\-list\-sizes         List file sizes
  \-i \-\-info               Print information about the installer
     \-\-list\-languages     List languages supported by the installer
     \-\-gog\-game\-id        Determine the GOG.com game ID for this installer
@@ -143,7 +144,7 @@ Don't extract files that would have been deleted at the end of the install proce
 This option takes precedence over \fB\-\-include\fP and \fB\-\-language\fP: temporary files are never extracted when using the \fB\-\-exclude\-temp\fP, even if they match the selected language or include expressions.
 .TP
 \fB\-e\fP, \fB\-\-extract\fP
-Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP, \fB\-\-show\-password\fP or \fB\-\-check\-password\fP actions are specified.
+Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-list\-sizes\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP, \fB\-\-show\-password\fP or \fB\-\-check\-password\fP actions are specified.
 
 Be default innoextract will continue after encountering file checksum errors. The \fB\-\-extract\fP option can be combined with \fB\-\-test\fP to abort on checksum errors.
 .TP
@@ -212,6 +213,8 @@ Show license information.
 \fB\-l\fP, \fB\-\-list\fP
 List files contained in the installer but don't extract anything.
 
+This action also enabled the \fB\-\-list\-sizes\fP action unless either \fB\-\-quiet\fP or \fB\-\-silent\fP is specified.
+
 This option can be combined with \fB\-\-silent\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
 
 The \fB\-\-list\fP action can be combined with \fB\-\-test\fP, \fB\-\-extract\fP, \fB\-\-list\-languages\fP and/or \fB\-\-gog\-game\-id\fP to display the names of the files as they are extracted even with \fB\-\-silent\fP.
@@ -222,6 +225,13 @@ List languages supported by the installer.
 This option can be combined with \fB\-\-silent\fP to print only the identifiers of the languages (one per line) followed by a space and then the language name, without additional syntax that would make consumption by other scripts harder.
 
 The \fB\-\-list\-languages\fP action can be combined with \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-extract\fP and/or \fB\-\-gog\-game\-id\fP to display the available languages before doing anything else. If \fB\-\-silent\fP and \fB\-\-list\-languages\fP are combined with \fB\-\-list\fP and/or \fB\-\-gog\-game\-id\fP, the languages list will be terminated with an empty line and will precede both the game ID and files list.
+.TP
+\fB\-\-list\-sizes\fP
+List uncompressed sizes for files contained in the installer.
+
+This option implies the \fB\-\-list\fP action.
+
+With \fB\-\-silent\fP the file size in bytes will be printed at the start of the line followed by a space. Otherwise the size is printed after the file name in a human-friendly format.
 .TP
 \fB\-L\fP, \fB\-\-lowercase\fP
 Convert filenames stored in the installer to lower-case before extracting.
@@ -267,7 +277,7 @@ The password encoding is either \fBMS-ANSI\fP (Windows-1252) or \fBUTF16-LE\fP.
 Use the \fB\-\-password\fP or \fB\-\-password\-file\fP option together with \fB\-\-check\-password\fP to check if a password matches this checksum.
 .TP
 \fB\-s\fP, \fB\-\-silent\fP
-Don't output anything except errors and warnings unless explicitly requested.
+Don't output anything except errors and warnings unless explicitly requested and use a machine-readable output format.
 
 This option can be combined with \fB\-\-list\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
 .TP

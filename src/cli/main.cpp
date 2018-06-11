@@ -133,6 +133,7 @@ int main(int argc, char * argv[]) {
 		("test,t", "Only verify checksums, don't write anything")
 		("extract,e", "Extract files (default action)")
 		("list,l", "Only list files, don't write anything")
+		("list-sizes", "List file sizes")
 		("info,i", "Print information about the installer")
 		("list-languages", "List languages supported by the installer")
 		("gog-game-id", "Determine the installer's GOG.com game ID")
@@ -248,7 +249,9 @@ int main(int argc, char * argv[]) {
 	}
 	
 	// Main action.
-	o.list = (options.count("list") != 0);
+	o.list_sizes = (options.count("list-sizes") != 0);
+	bool explicit_list = (options.count("list") != 0);
+	o.list = explicit_list || o.list_sizes;
 	o.extract = (options.count("extract") != 0);
 	o.test = (options.count("test") != 0);
 	o.list_languages = (options.count("list-languages") != 0);
@@ -270,6 +273,9 @@ int main(int argc, char * argv[]) {
 	}
 	if(!o.silent && (o.test || o.extract)) {
 		o.list = true;
+	}
+	if(!o.quiet && explicit_list) {
+		o.list_sizes = true;
 	}
 	
 	// Additional actions.
