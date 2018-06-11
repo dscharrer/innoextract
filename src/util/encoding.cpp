@@ -271,10 +271,15 @@ unicode_char utf8_read(In & it, In end, unicode_char replacement = replacement_c
 }
 
 size_t utf8_length(unicode_char chr) {
-	if     (chr <  0x80)       return 1;
-	else if(chr <  0x800)      return 2;
-	else if(chr <  0x10000)    return 3;
-	else if(chr <= 0x0010ffff) return 4;
+	if(chr < 0x80) {
+		return 1;
+	} else if(chr < 0x800) {
+		return 2;
+	} else if(chr < 0x10000) {
+		return 3;
+	} else if(chr <= 0x0010ffff) {
+		return 4;
+	}
 	return 1;
 }
 
