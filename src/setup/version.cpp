@@ -157,19 +157,19 @@ const known_version versions[] = {
 
 } // anonymous namespace
 
-std::ostream & operator<<(std::ostream & os, const version & v) {
+std::ostream & operator<<(std::ostream & os, const version & version) {
 	
-	os << v.a() << '.' << v.b() << '.' << v.c();
-	if(v.d()) {
-		os << '.' << v.d();
+	os << version.a() << '.' << version.b() << '.' << version.c();
+	if(version.d()) {
+		os << '.' << version.d();
 	}
 	
-	if(v.unicode) {
+	if(version.unicode) {
 		os << " (unicode)";
 	}
 	
-	if(v.bits != 32) {
-		os << " (" << int(v.bits) << "-bit)";
+	if(version.bits != 32) {
+		os << " (" << int(version.bits) << "-bit)";
 	}
 	
 	return os;
