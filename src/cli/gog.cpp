@@ -102,8 +102,7 @@ void quit_handler(int /* ignored */) {
 	quit_requested = 1;
 }
 
-bool process_file_unrar(const fs::path & file, const extract_options & o,
-                               const std::string & password) {
+bool process_file_unrar(const std::string & file, const extract_options & o, const std::string & password) {
 	
 	std::vector<const char *> args;
 	args.push_back("unrar");
@@ -151,8 +150,7 @@ bool process_file_unrar(const fs::path & file, const extract_options & o,
 	
 	args.push_back("--");
 	
-	std::string filename = file.string();
-	args.push_back(filename.c_str());
+	args.push_back(file.c_str());
 	
 	std::string dir = o.output_dir.string();
 	if(!dir.empty()) {
@@ -178,15 +176,13 @@ bool process_file_unrar(const fs::path & file, const extract_options & o,
 	}
 	
 	if(ret > 0) {
-		throw std::runtime_error("Could not " + get_verb(o) + " \"" + file.string()
-		                         + "\": unrar failed");
+		throw std::runtime_error("Could not " + get_verb(o) + " \"" + file + "\": unrar failed");
 	}
 	
 	return true;
 }
 
-bool process_file_unar(const fs::path & file, const extract_options & o,
-                              const std::string & password) {
+bool process_file_unar(const std::string & file, const extract_options & o, const std::string & password) {
 	
 	std::string dir = o.output_dir.string();
 	
@@ -222,8 +218,7 @@ bool process_file_unar(const fs::path & file, const extract_options & o,
 	
 	args.push_back("--");
 	
-	std::string filename = file.string();
-	args.push_back(filename.c_str());
+	args.push_back(file.c_str());
 	
 	args.push_back(NULL);
 	
@@ -233,14 +228,13 @@ bool process_file_unar(const fs::path & file, const extract_options & o,
 	}
 	
 	if(ret > 0) {
-		throw std::runtime_error("Could not " + get_verb(o) + " \"" + file.string()
-		                         + "\": unar failed");
+		throw std::runtime_error("Could not " + get_verb(o) + " \"" + file + "\": unar failed");
 	}
 	
 	return true;
 }
 
-bool process_rar_file(const fs::path & file, const extract_options & o, const std::string & password) {
+bool process_rar_file(const std::string & file, const extract_options & o, const std::string & password) {
 	return process_file_unrar(file, o, password) || process_file_unar(file, o, password);
 }
 
@@ -316,7 +310,7 @@ void process_rar_files(const std::vector<fs::path> & files,
 		
 		bool ok = true;
 		BOOST_FOREACH(const fs::path & file, files) {
-			if(!process_rar_file(file, o, password)) {
+			if(!process_rar_file(file.string(), o, password)) {
 				ok = false;
 			}
 		}
@@ -382,7 +376,7 @@ void process_rar_files(const std::vector<fs::path> & files,
 			                         + "\": unable to create .r?? symlinks");
 		}
 		
-		if(process_rar_file(first_file, o, password)) {
+		if(process_rar_file(first_file.string(), o, password)) {
 			return;
 		}
 		
