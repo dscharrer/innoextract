@@ -53,7 +53,7 @@ struct known_legacy_version {
 	
 };
 
-static const known_legacy_version legacy_versions[] = {
+const known_legacy_version legacy_versions[] = {
 	{ "i1.2.10--16\x1a", INNO_VERSION(1, 2, 10), 16 },
 	{ "i1.2.10--32\x1a", INNO_VERSION(1, 2, 10), 32 },
 };
@@ -71,7 +71,7 @@ struct known_version {
 	
 };
 
-static const known_version versions[] = {
+const known_version versions[] = {
 	{ "Inno Setup Setup Data (1.3.21)",     INNO_VERSION_EXT(1, 3, 21, 0), false },
 	{ "Inno Setup Setup Data (1.3.25)",     INNO_VERSION_EXT(1, 3, 25, 0), false },
 	{ "Inno Setup Setup Data (2.0.0)",      INNO_VERSION_EXT(2, 0,  0, 0), false },
