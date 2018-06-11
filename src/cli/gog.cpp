@@ -28,6 +28,7 @@
 #include <signal.h>
 
 #include <boost/foreach.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem/operations.hpp>
 
@@ -246,7 +247,7 @@ char hex_char(int c) {
 	}
 }
 
-class temporary_directory {
+class temporary_directory : private boost::noncopyable {
 	
 	fs::path path;
 	
