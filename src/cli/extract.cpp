@@ -917,9 +917,8 @@ void process_file(const fs::path & file, const extract_options & o) {
 			if(checksum.finalize() != info.header.password) {
 				if(o.check_password) {
 					throw std::runtime_error("Incorrect password provided");
-				} else {
-					log_error << "Incorrect password provided";
 				}
+				log_error << "Incorrect password provided";
 				password.clear();
 			}
 		}
