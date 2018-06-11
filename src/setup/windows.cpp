@@ -123,23 +123,23 @@ const char * get_version_name(const windows_version::data & version, bool nt = f
 
 } // anonymous namespace
 
-std::ostream & operator<<(std::ostream & os, const windows_version::data & v) {
-	os << v.major << '.' << v.minor;
-	if(v.build) {
-		os << v.build;
+std::ostream & operator<<(std::ostream & os, const windows_version::data & version) {
+	os << version.major << '.' << version.minor;
+	if(version.build) {
+		os << version.build;
 	}
 	return os;
 }
 
-std::ostream & operator<<(std::ostream & os, const windows_version & v) {
+std::ostream & operator<<(std::ostream & os, const windows_version & version) {
 	
-	os << v.win_version;
-	if(v.nt_version != v.win_version) {
-		os << "  nt " << v.nt_version;
+	os << version.win_version;
+	if(version.nt_version != version.win_version) {
+		os << "  nt " << version.nt_version;
 	}
 	
-	const char * win_name = get_version_name(v.win_version);
-	const char * nt_name = get_version_name(v.nt_version, true);
+	const char * win_name = get_version_name(version.win_version);
+	const char * nt_name = get_version_name(version.nt_version, true);
 	
 	if(win_name || nt_name) {
 		os << " (";
@@ -155,10 +155,10 @@ std::ostream & operator<<(std::ostream & os, const windows_version & v) {
 		os << ')';
 	}
 	
-	if(v.nt_service_pack.major || v.nt_service_pack.minor) {
-		os << " service pack " << v.nt_service_pack.major;
-		if(v.nt_service_pack.minor) {
-			os << '.' << v.nt_service_pack.minor;
+	if(version.nt_service_pack.major || version.nt_service_pack.minor) {
+		os << " service pack " << version.nt_service_pack.major;
+		if(version.nt_service_pack.minor) {
+			os << '.' << version.nt_service_pack.minor;
 		}
 	}
 	
