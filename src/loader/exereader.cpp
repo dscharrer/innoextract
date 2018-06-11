@@ -45,7 +45,7 @@ enum BinaryType {
 	PEMagic2 = 0x0000, // "\0\0"
 };
 
-static BinaryType determine_binary_type(std::istream & is) {
+BinaryType determine_binary_type(std::istream & is) {
 	
 	boost::uint16_t dos_magic = util::load<boost::uint16_t>(is.seekg(0));
 	if(is.fail() || dos_magic != DOSMagic) {
