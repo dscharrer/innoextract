@@ -258,7 +258,7 @@ extern "C" typedef int (*utimensat_proc)
 	(int fd, const char *path, const struct timespec times[2], int flag);
 #endif
 
-bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t nsec) {
+bool set_file_time(const boost::filesystem::path & path, time sec, boost::uint32_t nsec) {
 	
 #if (INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT || INNOEXTRACT_HAVE_UTIMENSAT) \
     && INNOEXTRACT_HAVE_AT_FDCWD
@@ -266,7 +266,7 @@ bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t
 	// nanosecond precision, for Linux and POSIX.1-2008+ systems
 	
 	struct timespec timens[2];
-	timens[0].tv_sec = to_time_t<time_t>(t, path.string().c_str());
+	timens[0].tv_sec = to_time_t<time_t>(sec, path.string().c_str());
 	timens[0].tv_nsec = boost::int32_t(nsec);
 	timens[1] = timens[0];
 	
@@ -298,7 +298,7 @@ bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t
 		return false;
 	}
 	
-	FILETIME filetime = to_filetime(t, nsec);
+	FILETIME filetime = to_filetime(sec, nsec);
 	
 	bool ret = (SetFileTime(handle, &filetime, &filetime, &filetime) != 0);
 	CloseHandle(handle);
@@ -310,7 +310,7 @@ bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t
 	// microsecond precision, for older POSIX systems (4.3BSD, POSIX.1-2001)
 	
 	struct timeval times[2];
-	times[0].tv_sec = to_time_t<time_t>(t, path.string().c_str());
+	times[0].tv_sec = to_time_t<time_t>(sec, path.string().c_str());
 	times[0].tv_usec = boost::int32_t(nsec / 1000);
 	times[1] = times[0];
 	
@@ -322,7 +322,7 @@ bool set_file_time(const boost::filesystem::path & path, time t, boost::uint32_t
 	
 	try {
 		(void)nsec; // sub-second precision not supported by Boost
-		std::time_t tt = to_time_t<std::time_t>(t, path.string().c_str());
+		std::time_t tt = to_time_t<std::time_t>(sec, path.string().c_str());
 		boost::filesystem::last_write_time(path, tt);
 		return true;
 	} catch(...) {
