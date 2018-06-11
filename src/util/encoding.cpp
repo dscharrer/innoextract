@@ -462,12 +462,12 @@ static void utf8_to_windows1252(const std::string & from, std::string & to) {
 		// Windows-1252 maps almost directly to Unicode - yay!
 		if(chr >= 256 || (chr >= 128 && chr < 160)) {
 			size_t i = 0;
-			for(; i < boost::size(windows1252_replacements); i++) {
+			for(; i < size_t(boost::size(windows1252_replacements)); i++) {
 				if(chr == windows1252_replacements[i] && windows1252_replacements[i] != replacement_char) {
 					break;
 				}
 			}
-			if(i < boost::size(windows1252_replacements)) {
+			if(i < size_t(boost::size(windows1252_replacements))) {
 				chr = unicode_char(128 + i);
 			} else {
 				chr = replacement_char;
