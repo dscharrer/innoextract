@@ -91,25 +91,26 @@ static boost::uint32_t crc32_shifted(boost::uint32_t crc) {
 	return crc >> 8;
 }
 
-void crc32::update(const char * s, size_t n) {
+void crc32::update(const char * data, size_t length) {
 	
-	for(; (size_t(s) % 4 != 0) && n > 0; n--) {
-		crc = crc32_table[crc32_index(crc) ^ boost::uint8_t(*s++)] ^ crc32_shifted(crc);
+	for(; (size_t(data) % 4 != 0) && length > 0; length--) {
+		crc = crc32_table[crc32_index(crc) ^ boost::uint8_t(*data++)] ^ crc32_shifted(crc);
 	}
 	
-	while(n >= 4) {
-		crc ^= util::little_endian::load<boost::uint32_t>(s);
+	while(length >= 4) {
+		crc ^= util::little_endian::load<boost::uint32_t>(data);
 		crc = crc32_table[crc32_index(crc)] ^ crc32_shifted(crc);
 		crc = crc32_table[crc32_index(crc)] ^ crc32_shifted(crc);
 		crc = crc32_table[crc32_index(crc)] ^ crc32_shifted(crc);
 		crc = crc32_table[crc32_index(crc)] ^ crc32_shifted(crc);
-		n -= 4;
-		s += 4;
+		length -= 4;
+		data += 4;
 	}
 	
-	while(n--) {
-		crc = crc32_table[crc32_index(crc) ^ boost::uint8_t(*s++)] ^ crc32_shifted(crc);
+	while(length--) {
+		crc = crc32_table[crc32_index(crc) ^ boost::uint8_t(*data++)] ^ crc32_shifted(crc);
 	}
+	
 }
 
 } // namespace crypto
