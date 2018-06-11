@@ -63,7 +63,7 @@ public:
 	
 	
 	template <typename Source>
-	void close(const Source &) {
+	void close(const Source & /* source */) {
 		addr_bytes_left = 0, addr_offset = 5;
 	}
 	
@@ -103,7 +103,7 @@ public:
 	std::streamsize read(Source & src, char * dest, std::streamsize n);
 	
 	template <typename Source>
-	void close(const Source &) {
+	void close(const Source & /* source */) {
 		offset = 0, flush_bytes = 0;
 	}
 	
