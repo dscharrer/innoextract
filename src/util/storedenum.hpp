@@ -219,7 +219,7 @@ private:
 public:
 	
 	explicit stored_flag_reader(std::istream & _is, size_t pad_bits = 32)
-		: pad_bits(pad_bits), is(_is), pos(0), result(0), bytes(0) { }
+		: pad_bits(pad_bits), is(_is), pos(0), buffer(0), result(0), bytes(0) { }
 	
 	//! Declare the next possible flag.
 	void add(enum_type flag) {
