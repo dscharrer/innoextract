@@ -176,12 +176,12 @@ size_t get_encoding_size(codepage_id codepage) {
 }
 
 //! Fallback conversion that will at least work for ASCII characters
-void to_utf8_fallback(const std::string & from, std::string & to, codepage_id cp) {
+void to_utf8_fallback(const std::string & from, std::string & to, codepage_id codepage) {
 	
-	size_t skip = get_encoding_size(cp);
+	size_t skip = get_encoding_size(codepage);
 	
 	size_t shift = 0;
-	switch(cp) {
+	switch(codepage) {
 		case  1201: shift = 1u * 8u; break; // UTF-16BE
 		case 12001: shift = 3u * 8u; break; // UTF-32BE
 		default: break;
@@ -211,7 +211,7 @@ void to_utf8_fallback(const std::string & from, std::string & to, codepage_id cp
 	}
 	
 	if(warn) {
-		log_warning << "Unknown data while converting from CP" << cp << " to UTF-8.";
+		log_warning << "Unknown data while converting from CP" << codepage << " to UTF-8.";
 	}
 	
 }
@@ -524,9 +524,9 @@ iconv_t get_converter(codepage_id codepage) {
 	return converters[codepage] = handle;
 }
 
-bool to_utf8_iconv(const std::string & from, std::string & to, codepage_id cp) {
+bool to_utf8_iconv(const std::string & from, std::string & to, codepage_id codepage) {
 	
-	iconv_t converter = get_converter(cp);
+	iconv_t converter = get_converter(codepage);
 	if(converter == iconv_t(-1)) {
 		return false;
 	}
@@ -549,7 +549,7 @@ bool to_utf8_iconv(const std::string & from, std::string & to, codepage_id cp) {
 	
 	iconv(converter, NULL, NULL, NULL, NULL);
 	
-	size_t skip = get_encoding_size(cp);
+	size_t skip = get_encoding_size(codepage);
 	
 	bool warn = false;
 	
@@ -586,7 +586,7 @@ bool to_utf8_iconv(const std::string & from, std::string & to, codepage_id cp) {
 	}
 	
 	if(warn) {
-		log_warning << "Unexpected data while converting from CP" << cp << " to UTF-8.";
+		log_warning << "Unexpected data while converting from CP" << codepage << " to UTF-8.";
 	}
 	
 	to.resize(outbase);
@@ -615,7 +615,7 @@ std::string windows_error_string(DWORD code) {
 	}
 }
 
-bool to_utf8_win32(const std::string & from, std::string & to, codepage_id cp) {
+bool to_utf8_win32(const std::string & from, std::string & to, codepage_id codepage) {
 	
 	int ret = 0;
 	
@@ -623,18 +623,18 @@ bool to_utf8_win32(const std::string & from, std::string & to, codepage_id cp) {
 	const WCHAR * utf16;
 	int utf16_size;
 	std::vector<WCHAR> buffer;
-	if(cp == cp_utf16le) {
+	if(codepage == cp_utf16le) {
 		utf16 = reinterpret_cast<const WCHAR *>(from.data());
 		utf16_size = int(from.size()) / 2;
 	} else {
-		utf16_size = MultiByteToWideChar(cp, 0, from.data(), int(from.length()), NULL, 0);
+		utf16_size = MultiByteToWideChar(codepage, 0, from.data(), int(from.length()), NULL, 0);
 		if(utf16_size > 0) {
 			buffer.resize(size_t(utf16_size));
-			ret = MultiByteToWideChar(cp, 0, from.data(), int(from.length()),
+			ret = MultiByteToWideChar(codepage, 0, from.data(), int(from.length()),
 			                          &buffer.front(), utf16_size);
 		}
 		if(utf16_size <= 0 || ret <= 0) {
-			log_warning << "Error while converting from CP" << cp << " to UTF-16: "
+			log_warning << "Error while converting from CP" << codepage << " to UTF-16: "
 			            << windows_error_string(GetLastError());
 			return false;
 		}
@@ -661,19 +661,19 @@ bool to_utf8_win32(const std::string & from, std::string & to, codepage_id cp) {
 
 } // anonymous namespace
 
-void to_utf8(const std::string & from, std::string & to, codepage_id cp) {
+void to_utf8(const std::string & from, std::string & to, codepage_id codepage) {
 	
 	if(from.empty()) {
 		to.clear();
 		return;
 	}
 	
-	if(cp == cp_utf8 || cp == cp_ascii) {
+	if(codepage == cp_utf8 || codepage == cp_ascii) {
 		to = from;
 		return;
 	}
 	
-	switch(cp) {
+	switch(codepage) {
 		case cp_utf16le:     utf16le_to_utf8(from, to); return;
 		case cp_windows1252: windows1252_to_utf8(from, to); return;
 		case cp_iso_8859_1:  windows1252_to_utf8(from, to); return;
@@ -681,18 +681,18 @@ void to_utf8(const std::string & from, std::string & to, codepage_id cp) {
 	}
 	
 	#if INNOEXTRACT_HAVE_ICONV
-	if(to_utf8_iconv(from, to, cp)) {
+	if(to_utf8_iconv(from, to, codepage)) {
 		return;
 	}
 	#endif
 	
 	#if INNOEXTRACT_HAVE_WIN32_CONV
-	if(to_utf8_win32(from, to, cp)) {
+	if(to_utf8_win32(from, to, codepage)) {
 		return;
 	}
 	#endif
 	
-	to_utf8_fallback(from, to, cp);
+	to_utf8_fallback(from, to, codepage);
 	
 }
 
