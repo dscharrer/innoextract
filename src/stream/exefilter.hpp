@@ -64,7 +64,7 @@ public:
 	
 	template <typename Source>
 	void close(const Source & /* source */) {
-		addr_bytes_left = 0, addr_offset = 5;
+		addr = 0, addr_bytes_left = 0, addr_offset = 5;
 	}
 	
 private:
