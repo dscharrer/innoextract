@@ -63,7 +63,7 @@ public:
 	
 	/* implicit */ inline flags(enum_type flag) : _flags(Type().set(size_t(flag))) { }
 	
-	/* implicit */ inline flags(Zero = 0) : _flags() { }
+	/* implicit */ inline flags(Zero /* zero */ = 0) : _flags() { }
 	
 	flags(const flags & o) : _flags(o._flags) { }
 	
