@@ -22,19 +22,6 @@
 
 namespace crypto {
 
-hasher::hasher(const hasher & o) {
-	
-	type = o.type;
-	
-	switch(type) {
-		case crypto::None: break;
-		case crypto::Adler32: adler32 = o.adler32; break;
-		case crypto::CRC32: crc32 = o.crc32; break;
-		case crypto::MD5: md5 = o.md5; break;
-		case crypto::SHA1: sha1 = o.sha1; break;
-	};
-}
-
 hasher::hasher(checksum_type type) : type(type) {
 	
 	switch(type) {
@@ -44,6 +31,7 @@ hasher::hasher(checksum_type type) : type(type) {
 		case crypto::MD5: md5.init(); break;
 		case crypto::SHA1: sha1.init(); break;
 	};
+	
 }
 
 void hasher::update(const char * data, size_t size) {
@@ -55,6 +43,7 @@ void hasher::update(const char * data, size_t size) {
 		case crypto::MD5: md5.update(data, size); break;
 		case crypto::SHA1: sha1.update(data, size); break;
 	};
+	
 }
 
 checksum hasher::finalize() {
