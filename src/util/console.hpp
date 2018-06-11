@@ -118,10 +118,6 @@ public:
 	 * \param show_rate Display the rate at which the progress changes.
 	 */
 	progress(boost::uint64_t max = 0, bool show_rate = true);
-	progress(const progress & o)
-		: max(o.max), value(o.value), show_rate(o.show_rate), start_time(o.start_time),
-		  last_status(o.last_status), last_time(o.last_time),
-		  last_rate(o.last_rate), label(o.label.str()) { }
 	
 	/*!
 	 * Update the progress bar.
