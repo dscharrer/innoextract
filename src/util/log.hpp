@@ -29,6 +29,8 @@
 #include <sstream>
 #include <string>
 
+#include <boost/noncopyable.hpp>
+
 #ifdef DEBUG
 #define debug(...) \
 	if(::logger::debug) \
@@ -46,7 +48,7 @@
 /*!
  * logger class that allows longging via the stream operator.
  */
-class logger {
+class logger : private boost::noncopyable {
 	
 public:
 	
