@@ -288,7 +288,7 @@ void print_filter_info(const setup::item & item, bool temp) {
 	bool first = true;
 	
 	if(!item.languages.empty()) {
-		std::cout << (first ? " [" : ", ");
+		std::cout << " [";
 		first = false;
 		std::cout << color::green << item.languages << color::reset;
 	}
@@ -303,6 +303,7 @@ void print_filter_info(const setup::item & item, bool temp) {
 	if(!first) {
 		std::cout << "]";
 	}
+	
 }
 
 void print_filter_info(const setup::file_entry & file) {
