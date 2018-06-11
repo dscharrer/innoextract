@@ -141,6 +141,7 @@ find_package(Boost REQUIRED COMPONENTS
 	date_time
 	system
 	program_options
+	regex
 )
 check_link_library(Boost Boost_LIBRARIES)
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
