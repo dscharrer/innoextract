@@ -161,9 +161,9 @@ static const char * get_encoding_name(codepage_id codepage) {
 	}
 }
 
-static const char replacement_char = '_';
-
 typedef boost::uint32_t unicode_char;
+
+static const unicode_char replacement_char = '_';
 
 static size_t get_encoding_size(codepage_id codepage) {
 	switch(codepage) {
@@ -204,7 +204,7 @@ static void to_utf8_fallback(const std::string & from, std::string & to, codepag
 		// replace non-ASCII characters with underscores
 		if((unicode_char(ascii) << shift) != unicode) {
 			warn = true;
-			ascii = replacement_char;
+			ascii = char(replacement_char);
 		}
 		
 		to.push_back(ascii);
@@ -221,7 +221,7 @@ bool is_utf8_continuation_byte(unicode_char chr) {
 }
 
 template <typename In>
-unicode_char utf8_read(In & it, In end, unicode_char replacement = unicode_char(replacement_char)) {
+unicode_char utf8_read(In & it, In end, unicode_char replacement = replacement_char) {
 	
 	if(it == end) {
 		return unicode_char(-1);
@@ -436,7 +436,7 @@ static void windows1252_to_utf8(const std::string & from, std::string & to) {
 		unicode_char chr = boost::uint8_t(c);
 		if(chr >= 128 && chr < 160) {
 			chr = windows1252_replacements[chr - 128];
-			warn = warn || (chr == unicode_char(replacement_char));
+			warn = warn || chr == replacement_char;
 		}
 		
 		utf8_write(to, chr);
@@ -567,9 +567,9 @@ static bool to_utf8_iconv(const std::string & from, std::string & to, codepage_i
 			} else if(/*errno == EILSEQ &&*/ insize >= 2) {
 				// invalid byte (sequence) - add a replacement char and try the next byte
 				if(outsize == 0) {
-					to.push_back(replacement_char);
+					to.push_back(char(replacement_char));
 				} else {
-					*outbuf = replacement_char;
+					*outbuf = char(replacement_char);
 					outsize--;
 				}
 				inbuf.buf += skip;
