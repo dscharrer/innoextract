@@ -27,6 +27,7 @@
 #include <iostream>
 #include <signal.h>
 
+#include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -300,8 +301,8 @@ void process_rar_files(const std::vector<fs::path> & files,
 		md5.finalize(hash);
 		password.resize(size_t(boost::size(hash) * 2));
 		for(size_t i = 0; i < size_t(boost::size(hash)); i++) {
-			password[2 * i + 0] = hex_char(((unsigned char)hash[i]) / 16);
-			password[2 * i + 1] = hex_char(((unsigned char)hash[i]) % 16);
+			password[2 * i + 0] = hex_char(boost::uint8_t(hash[i]) / 16);
+			password[2 * i + 1] = hex_char(boost::uint8_t(hash[i]) % 16);
 		}
 	}
 	
