@@ -150,11 +150,11 @@ struct evaluator {
 
 } // anonymous namespace
 
-bool expression_match(const std::string & test, const std::string & expr) {
+bool expression_match(const std::string & test, const std::string & expression) {
 	try {
-		return evaluator(expr, test).eval();
+		return evaluator(expression, test).eval();
 	} catch(const std::runtime_error & error) {
-		log_warning << "Error evaluating \"" << expr << "\": " << error.what();
+		log_warning << "Error evaluating \"" << expression << "\": " << error.what();
 		return true;
 	}
 }
