@@ -365,7 +365,7 @@ bool pe_reader::get_resource_table(boost::uint32_t & entry, boost::uint32_t offs
 	return is_table;
 }
 
-boost::uint32_t pe_reader::find_resource_entry(std::istream & is, boost::uint32_t needle) {
+boost::uint32_t pe_reader::find_resource_entry(std::istream & is, boost::uint32_t id) {
 	
 	// skip: characteristics + timestamp + major version + minor version
 	if(is.seekg(4 + 4 + 2 + 2, std::ios_base::cur).fail()) {
@@ -378,7 +378,7 @@ boost::uint32_t pe_reader::find_resource_entry(std::istream & is, boost::uint32_
 	// Number of id resource entries.
 	boost::uint16_t nbids = util::load<boost::uint16_t>(is);
 	
-	if(needle == Default) {
+	if(id == Default) {
 		boost::uint32_t offset = util::load<boost::uint32_t>(is.seekg(4, std::ios_base::cur));
 		return is.fail() ? 0 : offset;
 	}
@@ -391,14 +391,14 @@ boost::uint32_t pe_reader::find_resource_entry(std::istream & is, boost::uint32_
 	
 	for(size_t i = 0; i < nbids; i++) {
 		
-		boost::uint32_t id = util::load<boost::uint32_t>(is);
-		boost::uint32_t offset = util::load<boost::uint32_t>(is);
+		boost::uint32_t entry_id = util::load<boost::uint32_t>(is);
+		boost::uint32_t entry_offset = util::load<boost::uint32_t>(is);
 		if(is.fail()) {
 			return 0;
 		}
 		
-		if(id == needle) {
-			return offset;
+		if(entry_id == id) {
+			return entry_offset;
 		}
 		
 	}
