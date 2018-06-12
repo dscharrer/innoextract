@@ -421,8 +421,14 @@ configure_file("src/configure.hpp.in" "configure.hpp")
 
 set(VERSION_FILE "${PROJECT_BINARY_DIR}/release.cpp")
 set(VERSION_SOURCES VERSION "VERSION" LICENSE "LICENSE")
-version_file("src/release.cpp.in" "${VERSION_FILE}" "${VERSION_SOURCES}" ".git")
+version_file("src/release.cpp.in" ${VERSION_FILE} "${VERSION_SOURCES}" ".git")
 list(APPEND INNOEXTRACT_SOURCES ${VERSION_FILE})
+
+set(MAN_INPUT "doc/innoextract.1.in")
+set(MAN_FILE "${PROJECT_BINARY_DIR}/innoextract.1")
+set(MAN_SOURCES VERSION "VERSION" CHANGELOG "CHANGELOG")
+version_file(${MAN_INPUT} ${MAN_FILE} "${MAN_SOURCES}" ".git")
+add_custom_target(manpage ALL DEPENDS ${MAN_FILE})
 
 
 # Main targets
@@ -432,7 +438,7 @@ target_link_libraries(innoextract ${LIBRARIES})
 
 install(TARGETS innoextract RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-install(FILES doc/innoextract.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL)
+install(FILES ${MAN_FILE} DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL)
 
 
 # Additional targets.

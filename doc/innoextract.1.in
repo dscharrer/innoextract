@@ -1,6 +1,6 @@
 .\" Manpage for innoextract.
 .\" Contact daniel@constexpr.org to correct errors or typos.
-.TH innoextract 1 "2016-03-02" "1.7-dev"
+.TH innoextract 1 "@CHANGELOG_0_NUMBER@" "@VERSION_0_NUMBER@@GIT_SUFFIX_7@"
 .SH NAME
 innoextract - tool to extract installers created by Inno Setup
 .SH SYNOPSIS
