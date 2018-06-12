@@ -20,6 +20,8 @@
 
 #include "setup/data.hpp"
 
+#include <cstring>
+
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
@@ -80,7 +82,8 @@ void data_entry::load(std::istream & is, const version & version) {
 		boost::uint16_t time = util::load<boost::uint16_t>(is);
 		boost::uint16_t date = util::load<boost::uint16_t>(is);
 		
-		struct tm t = { };
+		struct tm t;
+		std::memset(&t, 0, sizeof(t));
 		t.tm_sec  = util::get_bits(time,  0,  4) * 2;           // [0, 58]
 		t.tm_min  = util::get_bits(time,  5, 10);               // [0, 59]
 		t.tm_hour = util::get_bits(time, 11, 15);               // [0, 23]
