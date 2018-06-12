@@ -147,10 +147,10 @@ This option takes precedence over \fB\-\-include\fP and \fB\-\-language\fP: temp
 \fB\-e\fP, \fB\-\-extract\fP
 Extract all files to the current directory. This action is enabled by default, unless one or more of the \fB\-\-list\fP, \fB\-\-list\-sizes\fP, \fB\-\-list\-checksums\fP, \fB\-\-test\fP, \fB\-\-list\-languages\fP, \fB\-\-gog\-game\-id\fP, \fB\-\-show\-password\fP or \fB\-\-check\-password\fP actions are specified.
 
-Be default innoextract will continue after encountering file checksum errors. The \fB\-\-extract\fP option can be combined with \fB\-\-test\fP to abort on checksum errors.
+By default innoextract will continue after encountering file checksum errors. The \fB\-\-extract\fP option can be combined with \fB\-\-test\fP to abort on checksum errors.
 .TP
 \fB\-n\fP, \fB\-\-no\-extract\-unknown\fP
-By default innoextract will try to extract installers with and unknown Inno Setup data version by treating it as the closest known version. This option tells innoextract to aborts instead.
+By default innoextract will try to extract installers with an unknown Inno Setup data version by treating it as the closest known version. This option tells innoextract to abort instead.
 .TP
 \fB\-g\fP, \fB\-\-gog\fP
 Try to process additional .bin files that have the same basename as the setup but are not actually part of the Inno Setup installer. This is the case for newer multi-part GOG.com installers where these .bin files are RAR archives, potential encrypted with the MD5 checksum of the game ID (see the \fB\-\-gog\-game\-id\fP option).
@@ -161,7 +161,7 @@ The \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-extract\fP and \fB\-\-output\-dir\fP 
 
 Note that is option is geared towards GOG.com installers. Other installers may come be bundled with different extraneous \fI.bin\fP which this option might not be able to handle.
 
-This option also forces re-assembly of GOG Galaxy file parts. See the \fB\-\-no\-gog\-galaxy\fP for details.
+This option also forces re-assembly of GOG Galaxy file parts. See the \fB\-\-no\-gog\-galaxy\fP option for details.
 .TP
 \fB\-\-no\-gog\-galaxy\fP
 Some GOG.com installers contain files in GOG Galaxy format (split into multiple parts that are individually compressed) which are re-assembled using post-install scripts. By default \fBinnoextract\fP will try to re\-assemble such files if it detects a GOG.com installer. This option disables that.
@@ -214,7 +214,7 @@ Show license information.
 \fB\-l\fP, \fB\-\-list\fP
 List files contained in the installer but don't extract anything.
 
-This action also enabled the \fB\-\-list\-sizes\fP action unless either \fB\-\-quiet\fP or \fB\-\-silent\fP is specified.
+This action also enables the \fB\-\-list\-sizes\fP action unless either \fB\-\-quiet\fP or \fB\-\-silent\fP is specified.
 
 This option can be combined with \fB\-\-silent\fP to print only the names of the contained files (one per line) without additional syntax that would make consumption by other scripts harder.
 
@@ -254,14 +254,14 @@ Extract all files into the given directory. By default, \fBinnoextract\fP will e
 If the specified directory does not exist, it will be created. However, the parent directory must exist or extracting will fail.
 .TP
 \fB\-P\fP, \fB\-\-password \fIPASSWORD\fP
-Specifies the password to decrypt encrypted files. The password is assumed to be encoded as UTF-8 and converted the internal according used in the installer as needed.
+Specifies the password to decrypt encrypted files. The password is assumed to be encoded as UTF-8 and converted the internal encoding according used in the installer as needed.
 
 Use the \fB\-\-password-file\fP option to load the password from a file or standard input instead. This option cannot be combined with \fB\-\-password-file\fP.
 
 If this password does not match the checksum stored in the installer, encrypted files will be skipped but unencrypted files will still be extracted. Use the \fB\-\-check\-password\fP option to abort processing entirely if the password is incorrect.
 .TP
 \fB\-\-password-file\fP \fIFILE\fP
-Load a password form the specified file. Only the first line excluding the terminating carriage return and/or line break is used as the password. The password is assumed to be encoded as UTF-8 and converted the internal according used in the installer as needed.
+Load a password form the specified file. Only the first line excluding the terminating carriage return and/or line break is used as the password. The password is assumed to be encoded as UTF-8 and converted the internal encoding according used in the installer as needed.
 
 If the special file name "\fB-\fP" is used, the password will be read from standard input.
 
@@ -280,7 +280,7 @@ Show checksum \fB$c\fP and salt \fB$s\fP used for the password \fB$p\fP check as
 
  \fB$c = hash($s . $p)\fP
 
-With \fB\-\-silent\fP option, the checksum name and hash is printed on one line seperated buy a space followed by the salt encoded as hex bytes and password encoding on separate lines.
+With the \fB\-\-silent\fP option, the checksum name and hash is printed on one line seperated by a space followed by the salt encoded as hex bytes and password encoding on separate lines.
 
 Checksum types can be \fBCRC32\fP, \fBMD5\fP or \fBSHA-1\fP although \fBCRC32\fP is not used in installers with encryption.
 
