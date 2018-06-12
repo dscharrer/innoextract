@@ -1,5 +1,5 @@
 
-innoextract 1.7 (TDB)
+innoextract 1.7 (2018-06-12)
  - Added support for Inno Setup 5.6.0 installers
  - Added support for new GOG installers with GOG Galaxy file parts
  - Added support for encrypted installers with the --password (-P) and --password-file options
