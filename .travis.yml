@@ -1,10 +1,28 @@
 language: cpp
-compiler:
-  - gcc
+matrix:
+  include:
+    - os: linux
+      sudo: required
+      compiler: gcc
+    - os: osx
+      compiler: clang
+addons:
+  apt:
+    packages:
+      - build-essential
+      - cmake
+      - libboost-all-dev
+      - liblzma-dev
 before_install:
- - travis_retry sudo apt-get update
- - travis_retry sudo apt-get install build-essential cmake libboost-all-dev liblzma-dev
-script: mkdir build && cd build && cmake --version && cmake .. && make -j1
+  - if [ "$TRAVIS_OS_NAME" = osx ] ; then brew update ; fi
+  - if [ "$TRAVIS_OS_NAME" = osx ] ; then brew upgrade cmake boost ; fi
+  - if [ "$TRAVIS_OS_NAME" = osx ] ; then brew install xz ; fi
+script:
+  - mkdir build
+  - cd build
+  - cmake --version
+  - cmake .. -DSTRICT_USE=1
+  - make -j1
 branches:
   only:
     - master
