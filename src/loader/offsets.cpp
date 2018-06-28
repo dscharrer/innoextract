@@ -21,6 +21,7 @@
 #include "loader/offsets.hpp"
 
 #include <cstring>
+#include <limits>
 
 #include <boost/cstdint.hpp>
 #include <boost/static_assert.hpp>
@@ -33,6 +34,7 @@
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
+#include "util/output.hpp"
 
 namespace loader {
 
@@ -117,7 +119,8 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 		}
 	}
 	if(!version) {
-		return false;
+		log_warning << "Unexpected setup loader magic: " << print_hex(magic);
+		version = std::numeric_limits<setup::version_constant>::max();
 	}
 	
 	crypto::crc32 checksum;
@@ -126,9 +129,11 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	
 	if(version >= INNO_VERSION(5, 1,  5)) {
 		boost::uint32_t revision = checksum.load<boost::uint32_t>(is);
-		if(is.fail() || revision != 1) {
+		if(is.fail()) {
 			is.clear();
 			return false;
+		} else if(revision != 1) {
+			log_warning << "Unexpected setup loader revision: " << revision;
 		}
 	}
 	
@@ -172,8 +177,7 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 			return false;
 		}
 		if(checksum.finalize() != expected) {
-			log_error << "Loader checksum mismatch!";
-			return false;
+			log_warning << "Setup loader checksum mismatch!";
 		}
 	}
 	
