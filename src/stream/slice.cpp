@@ -231,17 +231,19 @@ std::streamsize slice_reader::read(char * buffer, std::streamsize bytes) {
 		if(read_pos > slice_size) {
 			break;
 		}
-		std::streamsize remaining = std::streamsize(slice_size - read_pos);
+		boost::uint32_t remaining = slice_size - read_pos;
 		if(!remaining) {
 			seek(current_slice + 1);
 			read_pos = boost::uint32_t(is->tellg());
 			if(read_pos > slice_size) {
 				break;
 			}
-			remaining = std::streamsize(slice_size - read_pos);
+			remaining = slice_size - read_pos;
 		}
 		
-		if(is->read(buffer, std::min(remaining, bytes)).fail()) {
+		boost::uint64_t toread = std::min(boost::uint64_t(remaining), boost::uint64_t(bytes));
+		toread = std::min(toread, boost::uint64_t(std::numeric_limits<std::streamsize>::max()));
+		if(is->read(buffer, std::streamsize(toread)).fail()) {
 			break;
 		}
 		
