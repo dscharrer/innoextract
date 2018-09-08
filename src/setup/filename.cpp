@@ -79,7 +79,9 @@ std::string filename_map::expand_variables(it & begin, it end, bool close) const
 		while(pos != end && *pos != '{' && *pos != '}') {
 			++pos;
 		}
+		ptrdiff_t obegin = ptrdiff_t(result.size());
 		result.append(begin, pos);
+		result.erase(std::remove_if(result.begin() + obegin, result.end(), is_unsafe_path_char()), result.end());
 		begin = pos;
 		
 		if(pos == end) {
