@@ -4,6 +4,7 @@ innoextract 1.8 (WIP)
  - Added support for using boost_{zlib,bzip2} when statically linking Boost
  - Fixed extracting files from slices larger than 2 GiB with 32-bit builds
  - Fixed output path for files with absolute paths (canonicalization now strips all unsafe characters)
+ - Fixed output directory being created even when not extracting files
 
 innoextract 1.7 (2018-06-12)
  - Added support for Inno Setup 5.6.0 installers

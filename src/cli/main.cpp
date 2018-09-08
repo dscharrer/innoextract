@@ -370,7 +370,7 @@ int main(int argc, char * argv[]) {
 			 */
 			o.output_dir = i->second.as<std::string>();
 			try {
-				if(!o.output_dir.empty() && !fs::exists(o.output_dir)) {
+				if(o.extract && !o.output_dir.empty() && !fs::exists(o.output_dir)) {
 					fs::create_directory(o.output_dir);
 				}
 			} catch(...) {
