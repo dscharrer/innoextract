@@ -236,6 +236,13 @@ void header::load(std::istream & is, const version & version) {
 	} else {
 		setup_mutex.clear();
 	}
+	if(version >= INNO_VERSION(5, 6, 1)) {
+		is >> util::encoded_string(changes_environment, version.codepage());
+		is >> util::encoded_string(changes_associations, version.codepage());
+	} else {
+		changes_environment.clear();
+		changes_associations.clear();
+	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
@@ -498,7 +505,9 @@ void header::load(std::istream & is, const version & version) {
 		if(version < INNO_VERSION(1, 3, 21)) {
 			flagreader.add(OverwriteUninstRegEntries);
 		}
-		flagreader.add(ChangesAssociations);
+		if(version < INNO_VERSION(5, 6, 1)) {
+			flagreader.add(ChangesAssociations);
+		}
 	}
 	if(version >= INNO_VERSION(1, 3, 21)) {
 		if(version < INNO_VERSION(5, 3, 8)) {
@@ -562,7 +571,7 @@ void header::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(4, 2, 2)) {
 		flagreader.add(EncryptionUsed);
 	}
-	if(version >= INNO_VERSION(5, 0, 4)) {
+	if(version >= INNO_VERSION(5, 0, 4) && version < INNO_VERSION(5, 6, 1)) {
 		flagreader.add(ChangesEnvironment);
 	}
 	if(version >= INNO_VERSION(5, 1, 7) && !version.unicode) {

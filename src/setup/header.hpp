@@ -154,6 +154,8 @@ struct header {
 	std::string uninstallable;
 	std::string close_applications_filter;
 	std::string setup_mutex;
+	std::string changes_environment;
+	std::string changes_associations;
 	std::string license_text;
 	std::string info_before;
 	std::string info_after;
