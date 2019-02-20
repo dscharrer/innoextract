@@ -99,6 +99,9 @@ struct header {
 		RestartApplications,
 		AllowNetworkDrive,
 		ForceCloseApplications,
+		AppNameHasConsts,
+		UsePreviousPrivileges,
+		WizardResizable,
 		
 		// Obsolete flags
 		Uninstallable,
@@ -123,6 +126,11 @@ struct header {
 		Amd64,
 		IA64,
 		ARM64
+	);
+	
+	FLAGS(privileges_required_overrides,
+		Commandline,
+		Dialog
 	);
 	
 	std::string app_name;
@@ -189,6 +197,14 @@ struct header {
 	Color image_back_color;
 	Color small_image_back_color;
 	
+	enum style {
+		ClassicStyle,
+		ModernStyle
+	};
+	style wizard_style;
+	boost::uint32_t wizard_resize_percent_x;
+	boost::uint32_t wizard_resize_percent_y;
+	
 	enum alpha_format {
 		AlphaIgnored,
 		AlphaDefined,
@@ -216,10 +232,6 @@ struct header {
 	};
 	log_mode uninstall_log_mode;
 	
-	enum style {
-		ClassicStyle,
-		ModernStyle
-	};
 	style uninstall_style;
 	
 	enum auto_bool {
@@ -237,6 +249,8 @@ struct header {
 		LowestPrivileges
 	};
 	privilege_level privileges_required;
+	
+	privileges_required_overrides privileges_required_override_allowed;
 	
 	auto_bool show_language_dialog;
 	
@@ -270,6 +284,7 @@ struct header {
 
 NAMED_FLAGS(setup::header::flags)
 NAMED_FLAGS(setup::header::architecture_types)
+NAMED_FLAGS(setup::header::privileges_required_overrides)
 NAMED_ENUM(setup::header::alpha_format)
 NAMED_ENUM(setup::header::install_verbosity)
 NAMED_ENUM(setup::header::log_mode)

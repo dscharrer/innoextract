@@ -136,6 +136,12 @@ STORED_ENUM_MAP(stored_compression_method_3, stream::UnknownCompression,
 	stream::LZMA2
 );
 
+// 6.0.0+
+STORED_FLAGS_MAP(stored_privileges_required_overrides,
+	header::Commandline,
+	header::Dialog
+);
+
 } // anonymous namespace
 
 void header::load(std::istream & is, const version & version) {
@@ -330,6 +336,16 @@ void header::load(std::istream & is, const version & version) {
 		small_image_back_color = 0;
 	}
 	
+	if(version >= INNO_VERSION(6, 0, 0)) {
+		wizard_style = stored_enum<stored_setup_style>(is).get();
+		wizard_resize_percent_x = util::load<boost::uint32_t>(is);
+		wizard_resize_percent_y = util::load<boost::uint32_t>(is);
+	} else {
+		wizard_style = ClassicStyle;
+		wizard_resize_percent_x = 0;
+		wizard_resize_percent_y = 0;
+	}
+	
 	if(version >= INNO_VERSION(5, 5, 7)) {
 		image_alpha_format = stored_enum<stored_alpha_format>(is).get();
 	} else {
@@ -374,10 +390,12 @@ void header::load(std::istream & is, const version & version) {
 		uninstall_log_mode = AppendLog;
 	}
 	
-	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 0)) {
+	if(version >= INNO_VERSION(5, 0, 0)) {
+		uninstall_style = ModernStyle;
+	} else if(version >= INNO_VERSION(2, 0, 0)) {
 		uninstall_style = stored_enum<stored_setup_style>(is).get();
 	} else {
-		uninstall_style = (version < INNO_VERSION(5, 0, 0)) ? ClassicStyle : ModernStyle;
+		uninstall_style = ClassicStyle;
 	}
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
@@ -399,6 +417,12 @@ void header::load(std::istream & is, const version & version) {
 		privileges_required = stored_enum<stored_privileges_1>(is).get();
 	} else if(version >= INNO_VERSION(3, 0, 4)) {
 		privileges_required = stored_enum<stored_privileges_0>(is).get();
+	}
+	
+	if(version >= INNO_VERSION(5, 6, 2)) {
+		privileges_required_override_allowed = stored_flags<stored_privileges_required_overrides>(is).get();
+	} else {
+		privileges_required_override_allowed = 0;
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 10)) {
@@ -599,6 +623,11 @@ void header::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(5, 5, 7)) {
 		flagreader.add(ForceCloseApplications);
 	}
+	if(version >= INNO_VERSION(6, 0, 0)) {
+		flagreader.add(AppNameHasConsts);
+		flagreader.add(UsePreviousPrivileges);
+		flagreader.add(WizardResizable);
+	}
 	
 	options |= flagreader;
 	
@@ -717,6 +746,11 @@ NAMES(setup::header::architecture_types, "Architecture",
 	"ARM64",
 )
 
+NAMES(setup::header::privileges_required_overrides, "Priviledge Override"
+	"commandline",
+	"dialog",
+)
+
 NAMES(setup::header::alpha_format, "Alpha Format",
 	"ignored",
 	"defined",
@@ -735,7 +769,7 @@ NAMES(setup::header::log_mode, "Uninstall Log Mode",
 	"overwrite",
 )
 
-NAMES(setup::header::style, "Uninstall Style",
+NAMES(setup::header::style, "Style",
 	"classic",
 	"modern",
 )
