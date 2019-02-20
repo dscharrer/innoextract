@@ -130,7 +130,7 @@ void init(is_enabled color, is_enabled progress) {
 		&dim_blue, &dim_magenta, &dim_cyan, &dim_white,
 	};
 	
-	if(color == disable || (color == automatic && !is_tty)) {
+	if(color == disable || (color == automatic && (!is_tty || std::getenv("NO_COLOR") != NULL))) {
 		
 		BOOST_FOREACH(shell_command * color, all_colors) {
 			color->command = "";

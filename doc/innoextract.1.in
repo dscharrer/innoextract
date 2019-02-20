@@ -116,7 +116,7 @@ With the "\fBrename\fP" action, steps 1 and 3 are only applied to files that wou
 \fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
 By default
 .B innoextract
-will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Specifically, colors will be enabled if both \fBstdout\fP and \fBstderr\fP point to a TTY and the \fBTERM\fP environment variable is not set to "\fBdumb\fP". Pass \fB1\fP or \fBtrue\fP to \fB\-\-color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
+will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Specifically, colors will be enabled if both \fBstdout\fP and \fBstderr\fP point to a TTY, the \fBTERM\fP environment variable is not set to "\fBdumb\fP" and the \fBNO_COLOR\fP environment is unset. Pass \fB1\fP or \fBtrue\fP to \fB\-\-color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
 .TP
 \fB\-V\FP, \fB\-\-data\-version\fP
 Print the Inno Setup data version of the installer and exit immediately.
