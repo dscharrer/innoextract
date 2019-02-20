@@ -310,7 +310,7 @@ Besides timezones, two special values are accepted:
 .RS
 .HP
 "\fBnone\fP"
-Don't preserve file times for extracted files, both for UTC and 'local' timestamps. The file times wil be left the way the OS set them when creating the output files.
+Don't preserve file times for extracted files, both for UTC and 'local' timestamps. The file times will be left the way the OS set them when creating the output files.
 .HP
 "\fBlocal\fP"
 Use the system timezone for 'local' timestamps. This is the normal Inno Setup behavior, and can be used together with the \fBTZ\fP environment variable.
