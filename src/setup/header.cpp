@@ -419,7 +419,7 @@ void header::load(std::istream & is, const version & version) {
 		privileges_required = stored_enum<stored_privileges_0>(is).get();
 	}
 	
-	if(version >= INNO_VERSION(5, 6, 2)) {
+	if(version >= INNO_VERSION(5, 7, 0)) {
 		privileges_required_override_allowed = stored_flags<stored_privileges_required_overrides>(is).get();
 	} else {
 		privileges_required_override_allowed = 0;
