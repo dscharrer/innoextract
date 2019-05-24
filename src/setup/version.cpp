@@ -158,6 +158,8 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (5.6.2) (u)",  INNO_VERSION_EXT(5, 6,  2, 0), true  }, // Unreleased, used by GOG
 	{ "Inno Setup Setup Data (6.0.0)",      INNO_VERSION_EXT(6, 0,  0, 0), false },
 	{ "Inno Setup Setup Data (6.0.0) (u)",  INNO_VERSION_EXT(6, 0,  0, 0), true  },
+	{ "Inno Setup Setup Data (6.0.2)",      INNO_VERSION_EXT(6, 0,  2, 0), false },
+	{ "Inno Setup Setup Data (6.0.2) (u)",  INNO_VERSION_EXT(6, 0,  2, 0), true  },
 };
 
 } // anonymous namespace
