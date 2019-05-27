@@ -145,13 +145,14 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (5.4.2)",      INNO_VERSION_EXT(5, 4,  2, 0), false },
 	{ "Inno Setup Setup Data (5.4.2) (u)",  INNO_VERSION_EXT(5, 4,  2, 0), true  },
 	{ "Inno Setup Setup Data (5.5.0)",      INNO_VERSION_EXT(5, 5,  0, 0), false },
-	{ "Inno Setup Setup Data (5.5.0) (u)",  INNO_VERSION_EXT(5, 5,  0, 0), true  },
-	{ "!!! BlackBox v2?, marked as 5.5.0",  INNO_VERSION_EXT(5, 5,  0, 1), true  },
+	{ "Inno Setup Setup Data (5.5.0) (u)",  INNO_VERSION_EXT(5, 5,  0, 0), true  }, // !
+	{ "" /* BlackBox v2? */,                INNO_VERSION_EXT(5, 5,  0, 1), true  },
 	{ "Inno Setup Setup Data (5.5.6)",      INNO_VERSION_EXT(5, 5,  6, 0), false },
 	{ "Inno Setup Setup Data (5.5.6) (u)",  INNO_VERSION_EXT(5, 5,  6, 0), true  },
 	{ "Inno Setup Setup Data (5.5.7)",      INNO_VERSION_EXT(5, 5,  7, 0), false },
 	{ "Inno Setup Setup Data (5.5.7) (u)",  INNO_VERSION_EXT(5, 5,  7, 0), true  },
-	{ "Inno Setup Setup Data (5.5.7) (U)",  INNO_VERSION_EXT(5, 5,  7, 0), true  },
+	{ "Inno Setup Setup Data (5.5.7) (U)",  INNO_VERSION_EXT(5, 5,  7, 0), true  }, // !
+	{ "" /* unknown 5.5.7 (u) variant */,   INNO_VERSION_EXT(5, 5,  7, 1), true  }, // !
 	{ "Inno Setup Setup Data (5.6.0)",      INNO_VERSION_EXT(5, 6,  0, 0), false },
 	{ "Inno Setup Setup Data (5.6.0) (u)",  INNO_VERSION_EXT(5, 6,  0, 0), true  },
 	{ "Inno Setup Setup Data (5.6.2)",      INNO_VERSION_EXT(5, 6,  2, 0), false }, // Unreleased, used by GOG
@@ -243,7 +244,7 @@ void version::load(std::istream & is) {
 	
 	
 	for(size_t i = 0; i < size_t(boost::size(versions)); i++) {
-		if(!memcmp(version, versions[i].name, sizeof(version))) {
+		if(versions[i].name[0] != '\0' && !memcmp(version, versions[i].name, sizeof(version))) {
 			value = versions[i].version;
 			bits = 32;
 			unicode = versions[i].unicode;
@@ -345,8 +346,8 @@ bool version::is_ambiguous() const {
 		return true;
 	}
 	
-	if(value == INNO_VERSION(5, 5, 7)) {
-		// might be either 5.5.7 or 5.6.0
+	if(value == INNO_VERSION(5, 5, 7) || value == INNO_VERSION_EXT(5, 5, 7, 1)) {
+		// might be either 5.5.7, an unknown modification of 5.5.7, or 5.6.0
 		return true;
 	}
 	

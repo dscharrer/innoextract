@@ -1,6 +1,7 @@
 
 innoextract 1.8 (WIP)
- - Added preliminary support for Inno Setup 5.6.2 installers
+ - Added support for pre-release Inno Setup 5.6.2 installers used by GOG
+ - Added support for a modified Inno Setup 5.5.7 variant
  - Added support for installers using an alternative setup loader magic
  - Added support for using boost_{zlib,bzip2} when statically linking Boost
  - Added support for an Inno Setup 5.5.7/5.6.0 variant with an uppercase (U) in the data version string

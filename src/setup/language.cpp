@@ -35,19 +35,23 @@ void language_entry::load(std::istream & is, const version & version) {
 	
 	is >> util::encoded_string(language_name, (version >= INNO_VERSION(4, 2, 2)) ? 1200u : 1252u);
 	
-	is >> util::encoded_string(dialog_font, version.codepage());
-	is >> util::encoded_string(title_font, version.codepage());
-	is >> util::encoded_string(welcome_font, version.codepage());
-	is >> util::encoded_string(copyright_font, version.codepage());
+	if(version == INNO_VERSION_EXT(5, 5,  7, 1)) {
+		util::load<boost::uint32_t>(is); // always 0?
+	}
+	
+	is >> util::binary_string(dialog_font);
+	is >> util::binary_string(title_font);
+	is >> util::binary_string(welcome_font);
+	is >> util::binary_string(copyright_font);
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
 		is >> util::binary_string(data);
 	}
 	
 	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> util::ansi_string(license_text);
-		is >> util::ansi_string(info_before);
-		is >> util::ansi_string(info_after);
+		is >> util::binary_string(license_text);
+		is >> util::binary_string(info_before);
+		is >> util::binary_string(info_after);
 	} else {
 		license_text.clear(), info_before.clear(), info_after.clear();
 	}
@@ -74,6 +78,10 @@ void language_entry::load(std::istream & is, const version & version) {
 	title_font_size = util::load<boost::uint32_t>(is);
 	welcome_font_size = util::load<boost::uint32_t>(is);
 	copyright_font_size = util::load<boost::uint32_t>(is);
+	
+	if(version == INNO_VERSION_EXT(5, 5,  7, 1)) {
+		util::load<boost::uint32_t>(is); // always 8 or 9?
+	}
 	
 	if(version >= INNO_VERSION(5, 2, 3)) {
 		right_to_left = util::load_bool(is);
