@@ -226,33 +226,38 @@ void info::load(std::istream & is, entry_types entries) {
 	
 	// Some setup versions didn't increment the data version number when they should have.
 	// To work around this, we try to parse the headers for both data versions.
-	bool ambiguous = version.is_ambiguous();
-	if(ambiguous) {
+	bool ambiguous = !version.known || version.is_ambiguous();
+	if(version.is_ambiguous()) {
 		// Force parsing all headers so that we don't miss any errors.
 		entries |= NoSkip;
 	}
-	if(!version.known || ambiguous) {
-		std::streampos start = is.tellg();
+	
+	std::streampos start = is.tellg();
+	for(;;) {
+		
 		try {
+			
+			// Try to parse headers for this version
 			load(is, entries, version);
 			return;
+			
 		} catch(...) {
-			version.value = version.next();
-			if(!version) {
+			
+			if(!ambiguous || !(version.value = version.next())) {
+				// No more versions to try - report the original version
 				version.value = listed_version;
 				throw;
 			}
+			
+			// Retry with the next version
+			ambiguous = version.is_ambiguous();
 			is.clear();
 			is.seekg(start);
+			
 		}
+		
 	}
 	
-	try {
-		load(is, entries, version);
-	} catch(...) {
-		version.value = listed_version;
-		throw;
-	}
 }
 
 info::info() { }
