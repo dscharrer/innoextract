@@ -50,7 +50,8 @@ struct version {
 	
 	FLAGS(flags,
 		Bits16,
-		Unicode
+		Unicode,
+		ISX
 	);
 	
 	version_constant value;
@@ -78,6 +79,7 @@ struct version {
 	
 	boost::uint16_t bits() const { return (variant & Bits16) ? 16 : 32; }
 	bool is_unicode() const { return (variant & Unicode); }
+	bool is_isx() const { return (variant & ISX); }
 	
 	//! \return the Windows codepage used to encode strings
 	boost::uint32_t codepage() const { return boost::uint32_t(is_unicode() ? 1200 : 1252); }

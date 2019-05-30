@@ -213,13 +213,16 @@ void header::load(std::istream & is, const version & version) {
 	} else {
 		default_user_name.clear(), default_user_organisation.clear();
 	}
-	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
+	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION_EXT(3, 0, 6, 1))) {
 		is >> util::encoded_string(default_serial, version.codepage());
-		if(version < INNO_VERSION(5, 2, 5)) {
-			is >> util::binary_string(compiled_code);
-		}
 	} else {
-		default_serial.clear(), compiled_code.clear();
+		default_serial.clear();
+	}
+	if((version >= INNO_VERSION(4, 0, 0) && version < INNO_VERSION(5, 2, 5)) ||
+	   (version.is_isx() && version >= INNO_VERSION(1, 3, 24))) {
+		is >> util::binary_string(compiled_code);
+	} else {
+		compiled_code.clear();
 	}
 	if(version >= INNO_VERSION(4, 2, 4)) {
 		is >> util::encoded_string(app_readme_file, version.codepage());
@@ -297,12 +300,16 @@ void header::load(std::istream & is, const version & version) {
 		permission_count = 0;
 	}
 	
-	if(version >= INNO_VERSION(2, 0, 0)) {
+	if(version >= INNO_VERSION(2, 0, 0) || version.is_isx()) {
 		type_count = util::load<boost::uint32_t>(is);
 		component_count = util::load<boost::uint32_t>(is);
+	} else {
+		type_count = 0, component_count = 0;
+	}
+	if(version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 17))) {
 		task_count = util::load<boost::uint32_t>(is);
 	} else {
-		type_count = 0, component_count = 0, task_count = 0;
+		task_count = 0;
 	}
 	
 	directory_count = util::load<boost::uint32_t>(is, version.bits());
@@ -338,7 +345,7 @@ void header::load(std::istream & is, const version & version) {
 	} else {
 		image_back_color = 0;
 	}
-	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 4)) {
+	if((version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 4)) || version.is_isx()) {
 		small_image_back_color = util::load<boost::uint32_t>(is);
 	} else {
 		small_image_back_color = 0;
@@ -386,7 +393,8 @@ void header::load(std::istream & is, const version & version) {
 		slices_per_disk = 1;
 	}
 	
-	if(version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 0)) {
+	if((version >= INNO_VERSION(2, 0, 0) && version < INNO_VERSION(5, 0, 0)) ||
+	   (version.is_isx() && version >= INNO_VERSION(1, 3, 4))) {
 		install_mode = stored_enum<stored_install_verbosity>(is).get();
 	} else {
 		install_mode = NormalInstallMode;
@@ -400,7 +408,7 @@ void header::load(std::istream & is, const version & version) {
 	
 	if(version >= INNO_VERSION(5, 0, 0)) {
 		uninstall_style = ModernStyle;
-	} else if(version >= INNO_VERSION(2, 0, 0)) {
+	} else if(version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 13))) {
 		uninstall_style = stored_enum<stored_setup_style>(is).get();
 	} else {
 		uninstall_style = ClassicStyle;
@@ -410,6 +418,11 @@ void header::load(std::istream & is, const version & version) {
 		dir_exists_warning = stored_enum<stored_bool_auto_no_yes>(is).get();
 	} else {
 		dir_exists_warning = Auto;
+	}
+	
+	if(version.is_isx() && version >= INNO_VERSION(2, 0, 10) && version < INNO_VERSION(3, 0, 0)) {
+		boost::int32_t code_line_offset = util::load<boost::int32_t>(is);
+		(void)code_line_offset;
 	}
 	
 	if(version >= INNO_VERSION(3, 0, 0) && version < INNO_VERSION(3, 0, 3)) {
@@ -423,7 +436,7 @@ void header::load(std::istream & is, const version & version) {
 	
 	if(version >= INNO_VERSION(5, 3, 7)) {
 		privileges_required = stored_enum<stored_privileges_1>(is).get();
-	} else if(version >= INNO_VERSION(3, 0, 4)) {
+	} else if(version >= INNO_VERSION(3, 0, 4) || (version.is_isx() && version >= INNO_VERSION(3, 0, 3))) {
 		privileges_required = stored_enum<stored_privileges_0>(is).get();
 	}
 	
@@ -560,8 +573,10 @@ void header::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(1, 3, 20)) {
 		flagreader.add(UpdateUninstallLogAppName);
 	}
-	if(version >= INNO_VERSION(2, 0, 0)) {
+	if(version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 10))) {
 		flagreader.add(UsePreviousSetupType);
+	}
+	if(version >= INNO_VERSION(2, 0, 0)) {
 		flagreader.add(DisableReadyMemo);
 		flagreader.add(AlwaysShowComponentsList);
 		flagreader.add(FlatComponentsList);
@@ -589,7 +604,7 @@ void header::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(3, 0, 3)) {
 		flagreader.add(RestartIfNeededByRun);
 	}
-	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
+	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(3, 0, 3))) {
 		flagreader.add(ShowTasksTreeLines);
 	}
 	if(version >= INNO_VERSION(4, 0, 0) && version < INNO_VERSION(4, 0, 10)) {

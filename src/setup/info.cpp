@@ -124,7 +124,7 @@ void load_wizard_and_decompressor(std::istream & is, const setup::version & vers
 	
 	load_wizard_images(is, version, info.wizard_images, entries);
 	
-	if(version >= INNO_VERSION(2, 0, 0)) {
+	if(version >= INNO_VERSION(2, 0, 0) || version.is_isx()) {
 		load_wizard_images(is, version, info.wizard_images_small, entries);
 	}
 	

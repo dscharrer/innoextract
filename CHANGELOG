@@ -5,6 +5,7 @@ innoextract 1.8 (WIP)
  - Added support for a modified Inno Setup 5.5.7 variant
  - Added support for a modified Inno Setup 5.5.7 variant with an uppercase (U) in the data version
  - Added support for Inno Setup 1.3.x installers with x < 24
+ - Added support for My Inno Setup Extensions installers older than 3.0.6.1
  - Added support for installers using an alternative setup loader magic
  - Added support for using boost_{zlib,bzip2} when statically linking Boost
  - Fixed extracting files from slices larger than 2 GiB with 32-bit builds

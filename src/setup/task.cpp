@@ -39,12 +39,20 @@ void task_entry::load(std::istream & is, const version & version) {
 	} else {
 		languages.clear();
 	}
-	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
+	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 24))) {
 		is >> util::encoded_string(check, version.codepage());
+	} else {
+		check.clear();
+	}
+	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(3, 0, 3))) {
 		level = util::load<boost::int32_t>(is);
+	} else {
+		level = 0;
+	}
+	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(3, 0, 4))) {
 		used = util::load_bool(is);
 	} else {
-		check.clear(), level = 0, used = true;
+		used = true;
 	}
 	
 	winver.load(is, version);

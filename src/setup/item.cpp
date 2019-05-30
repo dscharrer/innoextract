@@ -27,18 +27,22 @@ namespace setup {
 
 void item::load_condition_data(std::istream & is, const version & version) {
 	
-	if(version >= INNO_VERSION(2, 0, 0)) {
+	if(version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 8))) {
 		is >> util::encoded_string(components, version.codepage());
+	} else {
+		components.clear();
+	}
+	if(version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 17))) {
 		is >> util::encoded_string(tasks, version.codepage());
 	} else {
-		components.clear(), tasks.clear();
+		tasks.clear();
 	}
 	if(version >= INNO_VERSION(4, 0, 1)) {
 		is >> util::encoded_string(languages, version.codepage());
 	} else {
 		languages.clear();
 	}
-	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
+	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 24))) {
 		is >> util::encoded_string(check, version.codepage());
 	} else {
 		check.clear();

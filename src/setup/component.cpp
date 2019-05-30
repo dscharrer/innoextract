@@ -63,30 +63,33 @@ void component_entry::load(std::istream & is, const version & version) {
 	} else {
 		languages.clear();
 	}
-	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
+	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 24))) {
 		is >> util::encoded_string(check, version.codepage());
 	} else {
 		check.clear();
 	}
-	
 	if(version >= INNO_VERSION(4, 0, 0)) {
 		extra_disk_pace_required = util::load<boost::uint64_t>(is);
 	} else {
 		extra_disk_pace_required = util::load<boost::uint32_t>(is);
 	}
-	
-	if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
+	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(3, 0, 3))) {
 		level = util::load<boost::int32_t>(is);
+	} else {
+		level = 0;
+	}
+	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(3, 0, 4))) {
 		used = util::load_bool(is);
 	} else {
-		level = 0, used = true;
+		used = true;
 	}
 	
 	winver.load(is, version);
 	
 	if(version >= INNO_VERSION(4, 2, 3)) {
 		options = stored_flags<stored_component_flags_2>(is).get();
-	} else if(version >= INNO_VERSION_EXT(3, 0, 6, 1)) {
+	} else if(version >= INNO_VERSION(3, 0, 8) ||
+		        (version.is_isx() && version >= INNO_VERSION_EXT(3, 0, 6, 1))) {
 		options = stored_flags<stored_component_flags_1>(is).get();
 	} else {
 		options = stored_flags<stored_component_flags_0>(is).get();
@@ -94,7 +97,7 @@ void component_entry::load(std::istream & is, const version & version) {
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
 		size = util::load<boost::uint64_t>(is);
-	} else {
+	} else if(version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 24))) {
 		size = util::load<boost::uint32_t>(is);
 	}
 }

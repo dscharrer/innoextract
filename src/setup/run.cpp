@@ -62,7 +62,7 @@ void run_entry::load(std::istream & is, const version & version) {
 	} else {
 		verb.clear();
 	}
-	if(version >= INNO_VERSION(2, 0, 0)) {
+	if(version >= INNO_VERSION(2, 0, 0) || version.is_isx()) {
 		is >> util::encoded_string(description, version.codepage());
 	}
 	
@@ -83,7 +83,7 @@ void run_entry::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(1, 2, 3)) {
 		flagreader.add(ShellExec);
 	}
-	if(version >= INNO_VERSION(1, 3, 9)) {
+	if(version >= INNO_VERSION(1, 3, 9) || (version.is_isx() && version >= INNO_VERSION(1, 3, 8))) {
 		flagreader.add(SkipIfDoesntExist);
 	}
 	if(version >= INNO_VERSION(2, 0, 0)) {

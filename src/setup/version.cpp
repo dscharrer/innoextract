@@ -28,6 +28,7 @@
 #include <boost/version.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/lexical_cast.hpp>
+#include "boost/algorithm/string.hpp"
 #include <boost/range/begin.hpp>
 #include <boost/range/end.hpp>
 #include <boost/range/size.hpp>
@@ -74,25 +75,39 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (1.3.3)",                      INNO_VERSION_EXT(1, 3,  3, 0), 0 },
 	{ "Inno Setup Setup Data (1.3.9)",                      INNO_VERSION_EXT(1, 3,  9, 0), 0 },
 	{ "Inno Setup Setup Data (1.3.10)",                     INNO_VERSION_EXT(1, 3, 10, 0), 0 },
+	{ "Inno Setup Setup Data (1.3.10) with ISX (1.3.10)",   INNO_VERSION_EXT(1, 3, 10, 0), version::ISX },
+	{ "Inno Setup Setup Data (1.3.12) with ISX (1.3.12.1)", INNO_VERSION_EXT(1, 3, 12, 1), version::ISX },
 	{ "Inno Setup Setup Data (1.3.21)",     /* ambiguous */ INNO_VERSION_EXT(1, 3, 21, 0), 0 },
+	{ "Inno Setup Setup Data (1.3.21) with ISX (1.3.17)",   INNO_VERSION_EXT(1, 3, 21, 0), version::ISX },
 	{ "Inno Setup Setup Data (1.3.24)",                     INNO_VERSION_EXT(1, 3, 24, 0), 0 },
+	{ "Inno Setup Setup Data (1.3.21) with ISX (1.3.24)",   INNO_VERSION_EXT(1, 3, 24, 0), version::ISX },
 	{ "Inno Setup Setup Data (1.3.25)",                     INNO_VERSION_EXT(1, 3, 25, 0), 0 },
+	{ "Inno Setup Setup Data (1.3.25) with ISX (1.3.25)",   INNO_VERSION_EXT(1, 3, 25, 0), version::ISX },
 	{ "Inno Setup Setup Data (2.0.0)",                      INNO_VERSION_EXT(2, 0,  0, 0), 0 },
 	{ "Inno Setup Setup Data (2.0.1)",      /* ambiguous */ INNO_VERSION_EXT(2, 0,  1, 0), 0 },
 	{ "Inno Setup Setup Data (2.0.2)",                      INNO_VERSION_EXT(2, 0,  2, 0), 0 },
 	{ "Inno Setup Setup Data (2.0.5)",                      INNO_VERSION_EXT(2, 0,  5, 0), 0 },
 	{ "Inno Setup Setup Data (2.0.6a)",                     INNO_VERSION_EXT(2, 0,  6, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.6a) with ISX (2.0.3)",    INNO_VERSION_EXT(2, 0,  6, 0), version::ISX },
 	{ "Inno Setup Setup Data (2.0.7)",                      INNO_VERSION_EXT(2, 0,  7, 0), 0 },
 	{ "Inno Setup Setup Data (2.0.8)",                      INNO_VERSION_EXT(2, 0,  8, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.8) with ISX (2.0.3)",     INNO_VERSION_EXT(2, 0,  8, 0), version::ISX },
+	{ "Inno Setup Setup Data (2.0.8) with ISX (2.0.10)",    INNO_VERSION_EXT(2, 0, 10, 0), version::ISX },
 	{ "Inno Setup Setup Data (2.0.11)",                     INNO_VERSION_EXT(2, 0, 11, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.11) with ISX (2.0.11)",   INNO_VERSION_EXT(2, 0, 11, 0), version::ISX },
 	{ "Inno Setup Setup Data (2.0.17)",                     INNO_VERSION_EXT(2, 0, 17, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.17) with ISX (2.0.11)",   INNO_VERSION_EXT(2, 0, 17, 0), version::ISX },
 	{ "Inno Setup Setup Data (2.0.18)",                     INNO_VERSION_EXT(2, 0, 18, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.18) with ISX (2.0.11)",   INNO_VERSION_EXT(2, 0, 18, 0), version::ISX },
 	{ "Inno Setup Setup Data (3.0.0a)",                     INNO_VERSION_EXT(3, 0,  0, 0), 0 },
 	{ "Inno Setup Setup Data (3.0.1)",                      INNO_VERSION_EXT(3, 0,  1, 0), 0 },
+	{ "Inno Setup Setup Data (3.0.1) with ISX (3.0.0)",     INNO_VERSION_EXT(3, 0,  1, 0), version::ISX },
 	{ "Inno Setup Setup Data (3.0.3)",      /* ambiguous */ INNO_VERSION_EXT(3, 0,  3, 0), 0 },
+	{ "Inno Setup Setup Data (3.0.3) with ISX (3.0.3)",     INNO_VERSION_EXT(3, 0,  3, 0), version::ISX },
 	{ "Inno Setup Setup Data (3.0.4)",                      INNO_VERSION_EXT(3, 0,  4, 0), 0 },
+	{ "My Inno Setup Extensions Setup Data (3.0.4)",        INNO_VERSION_EXT(3, 0,  4, 0), version::ISX },
 	{ "Inno Setup Setup Data (3.0.5)",                      INNO_VERSION_EXT(3, 0,  5, 0), 0 },
-	{ "My Inno Setup Extensions Setup Data (3.0.6.1)",      INNO_VERSION_EXT(3, 0,  6, 1), 0 },
+	{ "My Inno Setup Extensions Setup Data (3.0.6.1)",      INNO_VERSION_EXT(3, 0,  6, 1), version::ISX },
 	{ "Inno Setup Setup Data (4.0.0a)",                     INNO_VERSION_EXT(4, 0,  0, 0), 0 },
 	{ "Inno Setup Setup Data (4.0.1)",                      INNO_VERSION_EXT(4, 0,  1, 0), 0 },
 	{ "Inno Setup Setup Data (4.0.3)",                      INNO_VERSION_EXT(4, 0,  3, 0), 0 },
@@ -181,6 +196,10 @@ std::ostream & operator<<(std::ostream & os, const version & version) {
 		os << " (" << int(version.bits()) << "-bit)";
 	}
 	
+	if(version.is_isx()) {
+		os << " (isx)";
+	}
+	
 	return os;
 }
 
@@ -261,6 +280,7 @@ void version::load(std::istream & is) {
 		throw version_error();
 	}
 	
+	value = 0;
 	size_t bracket = version_str.find('(');
 	for(; bracket != std::string::npos; bracket = version_str.find('(', bracket + 1)) {
 		
@@ -308,21 +328,24 @@ void version::load(std::istream & is) {
 				}
 			}
 			
-			value = INNO_VERSION_EXT(a, b, c, d);
-			break;
+			value = std::max(value, INNO_VERSION_EXT(a, b, c, d));
 			
 		} catch(const boost::bad_lexical_cast &) {
 			continue;
 		}
 	}
-	if(bracket == std::string::npos) {
+	if(!value) {
 		throw version_error();
 	}
 	
 	variant = 0;
-	if(version_str.find("(u)") != std::string::npos || version_str.find("(U)") != std::string::npos) {
+	if(boost::contains(version_str, "(u)") || boost::contains(version_str, "(U)")) {
 		variant |= Unicode;
 	}
+	if(boost::contains(version_str, "My Inno Setup Extensions") || boost::contains(version_str, "with ISX")) {
+		variant |= ISX;
+	}
+	
 	known = false;
 }
 
