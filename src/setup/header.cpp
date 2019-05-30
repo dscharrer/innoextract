@@ -263,7 +263,7 @@ void header::load(std::istream & is, const version & version) {
 		is >> util::binary_string(compiled_code);
 	}
 	
-	if(version >= INNO_VERSION(2, 0, 6) && !version.unicode) {
+	if(version >= INNO_VERSION(2, 0, 6) && !version.is_unicode()) {
 		lead_bytes = stored_char_set(is);
 	} else {
 		lead_bytes = 0;
@@ -297,24 +297,24 @@ void header::load(std::istream & is, const version & version) {
 		type_count = 0, component_count = 0, task_count = 0;
 	}
 	
-	directory_count = util::load<boost::uint32_t>(is, version.bits);
-	file_count = util::load<boost::uint32_t>(is, version.bits);
-	data_entry_count = util::load<boost::uint32_t>(is, version.bits);
-	icon_count = util::load<boost::uint32_t>(is, version.bits);
-	ini_entry_count = util::load<boost::uint32_t>(is, version.bits);
-	registry_entry_count = util::load<boost::uint32_t>(is, version.bits);
-	delete_entry_count = util::load<boost::uint32_t>(is, version.bits);
-	uninstall_delete_entry_count = util::load<boost::uint32_t>(is, version.bits);
-	run_entry_count = util::load<boost::uint32_t>(is, version.bits);
-	uninstall_run_entry_count = util::load<boost::uint32_t>(is, version.bits);
+	directory_count = util::load<boost::uint32_t>(is, version.bits());
+	file_count = util::load<boost::uint32_t>(is, version.bits());
+	data_entry_count = util::load<boost::uint32_t>(is, version.bits());
+	icon_count = util::load<boost::uint32_t>(is, version.bits());
+	ini_entry_count = util::load<boost::uint32_t>(is, version.bits());
+	registry_entry_count = util::load<boost::uint32_t>(is, version.bits());
+	delete_entry_count = util::load<boost::uint32_t>(is, version.bits());
+	uninstall_delete_entry_count = util::load<boost::uint32_t>(is, version.bits());
+	run_entry_count = util::load<boost::uint32_t>(is, version.bits());
+	uninstall_run_entry_count = util::load<boost::uint32_t>(is, version.bits());
 	
 	boost::int32_t license_size = 0;
 	boost::int32_t info_before_size = 0;
 	boost::int32_t info_after_size = 0;
 	if(version < INNO_VERSION(1, 3, 21)) {
-		license_size = util::load<boost::int32_t>(is, version.bits);
-		info_before_size = util::load<boost::int32_t>(is, version.bits);
-		info_after_size = util::load<boost::int32_t>(is, version.bits);
+		license_size = util::load<boost::int32_t>(is, version.bits());
+		info_before_size = util::load<boost::int32_t>(is, version.bits());
+		info_after_size = util::load<boost::int32_t>(is, version.bits());
 	}
 	
 	winver.load(is, version);
@@ -484,7 +484,7 @@ void header::load(std::istream & is, const version & version) {
 		(void)util::load<boost::uint8_t>(is);
 	}
 	
-	stored_flag_reader<flags> flagreader(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits());
 	
 	flagreader.add(DisableStartupPrompt);
 	if(version < INNO_VERSION(5, 3, 10)) {
@@ -519,7 +519,7 @@ void header::load(std::istream & is, const version & version) {
 	flagreader.add(Password);
 	flagreader.add(AllowRootDirectory);
 	flagreader.add(DisableFinishedPage);
-	if(version.bits != 16) {
+	if(version.bits() != 16) {
 		if(version < INNO_VERSION(3, 0, 4)) {
 			flagreader.add(AdminPrivilegesRequired);
 		}
@@ -598,7 +598,7 @@ void header::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(5, 0, 4) && version < INNO_VERSION(5, 6, 1)) {
 		flagreader.add(ChangesEnvironment);
 	}
-	if(version >= INNO_VERSION(5, 1, 7) && !version.unicode) {
+	if(version >= INNO_VERSION(5, 1, 7) && !version.is_unicode()) {
 		flagreader.add(ShowUndisplayableLanguages);
 	}
 	if(version >= INNO_VERSION(5, 1, 13)) {

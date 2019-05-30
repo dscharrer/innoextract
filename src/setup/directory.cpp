@@ -77,7 +77,7 @@ void directory_entry::load(std::istream & is, const version & version) {
 	
 	if(version >= INNO_VERSION(5, 2, 0)) {
 		options = stored_flags<stored_inno_directory_options_1>(is).get();
-	} else if(version.bits != 16) {
+	} else if(version.bits() != 16) {
 		options = stored_flags<stored_inno_directory_options_0>(is).get();
 	} else {
 		options = stored_flags<stored_inno_directory_options_0, 16>(is).get();

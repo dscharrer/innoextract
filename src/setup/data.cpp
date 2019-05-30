@@ -33,8 +33,8 @@ namespace setup {
 
 void data_entry::load(std::istream & is, const version & version) {
 	
-	chunk.first_slice = util::load<boost::uint32_t>(is, version.bits);
-	chunk.last_slice = util::load<boost::uint32_t>(is, version.bits);
+	chunk.first_slice = util::load<boost::uint32_t>(is, version.bits());
+	chunk.last_slice = util::load<boost::uint32_t>(is, version.bits());
 	if(version < INNO_VERSION(4, 0, 0)) {
 		if(chunk.first_slice < 1 || chunk.last_slice < 1) {
 			log_warning << "Unexpected slice number: " << chunk.first_slice
@@ -75,7 +75,7 @@ void data_entry::load(std::istream & is, const version & version) {
 		file.checksum.type = crypto::Adler32;
 	}
 	
-	if(version.bits == 16) {
+	if(version.bits() == 16) {
 		
 		// 16-bit installers use the FAT filetime format
 		
@@ -118,7 +118,7 @@ void data_entry::load(std::istream & is, const version & version) {
 	
 	options = 0;
 	
-	stored_flag_reader<flags> flagreader(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits());
 	
 	flagreader.add(VersionInfoValid);
 	flagreader.add(VersionInfoNotValid);

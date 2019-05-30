@@ -65,7 +65,7 @@ void registry_entry::load(std::istream & is, const version & version) {
 	}
 	
 	is >> util::encoded_string(key, version.codepage());
-	if(version.bits != 16) {
+	if(version.bits() != 16) {
 		is >> util::encoded_string(name, version.codepage());
 	} else {
 		name.clear();
@@ -82,7 +82,7 @@ void registry_entry::load(std::istream & is, const version & version) {
 	
 	load_version_data(is, version);
 	
-	if(version.bits != 16) {
+	if(version.bits() != 16) {
 		hive = hive_name(util::load<boost::uint32_t>(is) & ~0x80000000);
 	} else {
 		hive = Unset;
@@ -96,15 +96,15 @@ void registry_entry::load(std::istream & is, const version & version) {
 	
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		type = stored_enum<stored_registry_entry_type_2>(is).get();
-	} else if(version.bits != 16) {
+	} else if(version.bits() != 16) {
 		type = stored_enum<stored_registry_entry_type_1>(is).get();
 	} else {
 		type = stored_enum<stored_registry_entry_type_0>(is).get();
 	}
 	
-	stored_flag_reader<flags> flagreader(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits());
 	
-	if(version.bits != 16) {
+	if(version.bits() != 16) {
 		flagreader.add(CreateValueIfDoesntExist);
 		flagreader.add(UninsDeleteValue);
 	}

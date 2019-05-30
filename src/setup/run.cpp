@@ -78,7 +78,7 @@ void run_entry::load(std::istream & is, const version & version) {
 	
 	wait = stored_enum<stored_run_wait_condition>(is).get();
 	
-	stored_flag_reader<flags> flagreader(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits());
 	
 	flagreader.add(ShellExec);
 	if(version >= INNO_VERSION(1, 3, 21)) {

@@ -58,7 +58,7 @@ void ini_entry::load(std::istream & is, const version & version) {
 	
 	load_version_data(is, version);
 	
-	if(version.bits != 16) {
+	if(version.bits() != 16) {
 		options = stored_flags<stored_ini_flags>(is).get();
 	} else {
 		options = stored_flags<stored_ini_flags, 16>(is).get();

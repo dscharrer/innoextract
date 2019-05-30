@@ -59,7 +59,7 @@ void icon_entry::load(std::istream & is, const version & version) {
 	
 	load_version_data(is, version);
 	
-	icon_index = util::load<boost::int32_t>(is, version.bits);
+	icon_index = util::load<boost::int32_t>(is, version.bits());
 	
 	if(version >= INNO_VERSION(1, 3, 21)) {
 		show_command = util::load<boost::int32_t>(is);
@@ -74,14 +74,14 @@ void icon_entry::load(std::istream & is, const version & version) {
 		hotkey = 0;
 	}
 	
-	stored_flag_reader<flags> flagreader(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits());
 	
 	flagreader.add(NeverUninstall);
 	if(version >= INNO_VERSION(1, 3, 21) && version < INNO_VERSION(1, 3, 26)) {
 		flagreader.add(RunMinimized);
 	}
 	flagreader.add(CreateOnlyIfFileExists);
-	if(version.bits != 16) {
+	if(version.bits() != 16) {
 		flagreader.add(UseAppPaths);
 	}
 	if(version >= INNO_VERSION(5, 0, 3)) {

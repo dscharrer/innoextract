@@ -58,7 +58,7 @@ void language_entry::load(std::istream & is, const version & version) {
 	
 	language_id = util::load<boost::uint32_t>(is);
 	
-	if(version >= INNO_VERSION(4, 2, 2) && (version < INNO_VERSION(5, 3, 0) || !version.unicode)) {
+	if(version >= INNO_VERSION(4, 2, 2) && (version < INNO_VERSION(5, 3, 0) || !version.is_unicode())) {
 		codepage = util::load<boost::uint32_t>(is);
 	} else {
 		codepage = 0;

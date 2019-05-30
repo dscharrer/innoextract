@@ -31,6 +31,8 @@
 
 #include <boost/cstdint.hpp>
 
+#include "util/flags.hpp"
+
 namespace setup {
 
 struct version_error : public std::exception { };
@@ -46,24 +48,26 @@ typedef boost::uint32_t version_constant;
 
 struct version {
 	
+	FLAGS(flags,
+		Bits16,
+		Unicode
+	);
+	
 	version_constant value;
 	
-	boost::uint8_t bits; // 16 or 32
-	
-	bool unicode;
+	flags variant;
 	
 	bool known;
 	
-	version() : value(0), bits(0), unicode(false), known(false) { }
+	version() : value(0), variant(0), known(false) { }
 	
-	version(version_constant value, bool unicode = false,
-	        bool known = false, boost::uint8_t bits = 32)
-		: value(value), bits(bits), unicode(unicode), known(known) { }
+	version(version_constant value, flags variant = 0, bool known = false)
+		: value(value), variant(variant), known(known) { }
 	
 	
 	version(boost::uint8_t a, boost::uint8_t b, boost::uint8_t c, boost::uint8_t d = 0,
-	        bool unicode = false, bool known = false, boost::uint8_t bits = 32)
-		: value(INNO_VERSION_EXT(a, b, c, d)), bits(bits), unicode(unicode), known(known) { }
+	        flags variant = 0, bool known = false)
+		: value(INNO_VERSION_EXT(a, b, c, d)), variant(variant), known(known) { }
 	
 	unsigned int a() const { return  value >> 24;         }
 	unsigned int b() const { return (value >> 16) & 0xff; }
@@ -72,8 +76,11 @@ struct version {
 	
 	void load(std::istream & is);
 	
+	boost::uint16_t bits() const { return (variant & Bits16) ? 16 : 32; }
+	bool is_unicode() const { return (variant & Unicode); }
+	
 	//! \return the Windows codepage used to encode strings
-	boost::uint32_t codepage() const { return boost::uint32_t(unicode ? 1200 : 1252); }
+	boost::uint32_t codepage() const { return boost::uint32_t(is_unicode() ? 1200 : 1252); }
 	
 	//! \return true if the version stored might not be correct
 	bool is_ambiguous() const;

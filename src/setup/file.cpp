@@ -93,8 +93,8 @@ void file_entry::load(std::istream & is, const version & version) {
 	
 	load_version_data(is, version);
 	
-	location = util::load<boost::uint32_t>(is, version.bits);
-	attributes = util::load<boost::uint32_t>(is, version.bits);
+	location = util::load<boost::uint32_t>(is, version.bits());
+	attributes = util::load<boost::uint32_t>(is, version.bits());
 	external_size = (version >= INNO_VERSION(4, 0, 0)) ? util::load<boost::uint64_t>(is)
 	                                                   : util::load<boost::uint32_t>(is);
 	
@@ -114,13 +114,13 @@ void file_entry::load(std::istream & is, const version & version) {
 		permission = boost::int16_t(-1);
 	}
 	
-	stored_flag_reader<flags> flagreader(is, version.bits);
+	stored_flag_reader<flags> flagreader(is, version.bits());
 	
 	flagreader.add(ConfirmOverwrite);
 	flagreader.add(NeverUninstall);
 	flagreader.add(RestartReplace);
 	flagreader.add(DeleteAfterInstall);
-	if(version.bits != 16) {
+	if(version.bits() != 16) {
 		flagreader.add(RegisterServer);
 		flagreader.add(RegisterTypeLib);
 		flagreader.add(SharedFile);
@@ -186,7 +186,7 @@ void file_entry::load(std::istream & is, const version & version) {
 	
 	options |= flagreader;
 	
-	if(version.bits == 16 || version >= INNO_VERSION(5, 0, 0)) {
+	if(version.bits() == 16 || version >= INNO_VERSION(5, 0, 0)) {
 		type = stored_enum<stored_file_type_0>(is).get();
 	} else {
 		type = stored_enum<stored_file_type_1>(is).get();

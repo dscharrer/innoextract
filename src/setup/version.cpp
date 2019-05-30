@@ -46,16 +46,15 @@ struct known_legacy_version {
 	char name[13]; // terminating 0 byte is ignored
 	
 	version_constant version;
-	
-	unsigned char bits;
+	version::flags variant;
 	
 	operator version_constant() const { return version; }
 	
 };
 
 const known_legacy_version legacy_versions[] = {
-	{ "i1.2.10--16\x1a", INNO_VERSION(1, 2, 10), 16 },
-	{ "i1.2.10--32\x1a", INNO_VERSION(1, 2, 10), 32 },
+	{ "i1.2.10--16\x1a", INNO_VERSION(1, 2, 10), version::Bits16 },
+	{ "i1.2.10--32\x1a", INNO_VERSION(1, 2, 10), 0 },
 };
 
 typedef char stored_version[64];
@@ -65,100 +64,101 @@ struct known_version {
 	stored_version name;
 	
 	version_constant version;
-	bool unicode;
+	version::flags variant;
 	
 	operator version_constant() const { return version; }
 	
 };
 
 const known_version versions[] = {
-	{ "Inno Setup Setup Data (1.3.21)",     INNO_VERSION_EXT(1, 3, 21, 0), false },
-	{ "Inno Setup Setup Data (1.3.25)",     INNO_VERSION_EXT(1, 3, 25, 0), false },
-	{ "Inno Setup Setup Data (2.0.0)",      INNO_VERSION_EXT(2, 0,  0, 0), false },
-	{ "Inno Setup Setup Data (2.0.1)",      INNO_VERSION_EXT(2, 0,  1, 0), false },
-	{ "Inno Setup Setup Data (2.0.2)",      INNO_VERSION_EXT(2, 0,  2, 0), false }, // !
-	{ "Inno Setup Setup Data (2.0.5)",      INNO_VERSION_EXT(2, 0,  5, 0), false },
-	{ "Inno Setup Setup Data (2.0.6a)",     INNO_VERSION_EXT(2, 0,  6, 0), false },
-	{ "Inno Setup Setup Data (2.0.7)",      INNO_VERSION_EXT(2, 0,  7, 0), false },
-	{ "Inno Setup Setup Data (2.0.8)",      INNO_VERSION_EXT(2, 0,  8, 0), false },
-	{ "Inno Setup Setup Data (2.0.11)",     INNO_VERSION_EXT(2, 0, 11, 0), false },
-	{ "Inno Setup Setup Data (2.0.17)",     INNO_VERSION_EXT(2, 0, 17, 0), false },
-	{ "Inno Setup Setup Data (2.0.18)",     INNO_VERSION_EXT(2, 0, 18, 0), false },
-	{ "Inno Setup Setup Data (3.0.0a)",     INNO_VERSION_EXT(3, 0,  0, 0), false },
-	{ "Inno Setup Setup Data (3.0.1)",      INNO_VERSION_EXT(3, 0,  1, 0), false },
-	{ "Inno Setup Setup Data (3.0.3)",      INNO_VERSION_EXT(3, 0,  3, 0), false },
-	{ "Inno Setup Setup Data (3.0.4)",      INNO_VERSION_EXT(3, 0,  4, 0), false }, // !
-	{ "Inno Setup Setup Data (3.0.5)",      INNO_VERSION_EXT(3, 0,  5, 0), false },
-	{ "My Inno Setup Extensions Setup Data (3.0.6.1)",
-	                                        INNO_VERSION_EXT(3, 0,  6, 1), false },
-	{ "Inno Setup Setup Data (4.0.0a)",     INNO_VERSION_EXT(4, 0,  0, 0), false },
-	{ "Inno Setup Setup Data (4.0.1)",      INNO_VERSION_EXT(4, 0,  1, 0), false },
-	{ "Inno Setup Setup Data (4.0.3)",      INNO_VERSION_EXT(4, 0,  3, 0), false },
-	{ "Inno Setup Setup Data (4.0.5)",      INNO_VERSION_EXT(4, 0,  5, 0), false },
-	{ "Inno Setup Setup Data (4.0.9)",      INNO_VERSION_EXT(4, 0,  9, 0), false },
-	{ "Inno Setup Setup Data (4.0.10)",     INNO_VERSION_EXT(4, 0, 10, 0), false },
-	{ "Inno Setup Setup Data (4.0.11)",     INNO_VERSION_EXT(4, 0, 11, 0), false },
-	{ "Inno Setup Setup Data (4.1.0)",      INNO_VERSION_EXT(4, 1,  0, 0), false },
-	{ "Inno Setup Setup Data (4.1.2)",      INNO_VERSION_EXT(4, 1,  2, 0), false },
-	{ "Inno Setup Setup Data (4.1.3)",      INNO_VERSION_EXT(4, 1,  3, 0), false },
-	{ "Inno Setup Setup Data (4.1.4)",      INNO_VERSION_EXT(4, 1,  4, 0), false },
-	{ "Inno Setup Setup Data (4.1.5)",      INNO_VERSION_EXT(4, 1,  5, 0), false },
-	{ "Inno Setup Setup Data (4.1.6)",      INNO_VERSION_EXT(4, 1,  6, 0), false },
-	{ "Inno Setup Setup Data (4.1.8)",      INNO_VERSION_EXT(4, 1,  8, 0), false },
-	{ "Inno Setup Setup Data (4.2.0)",      INNO_VERSION_EXT(4, 2,  0, 0), false },
-	{ "Inno Setup Setup Data (4.2.1)",      INNO_VERSION_EXT(4, 2,  1, 0), false },
-	{ "Inno Setup Setup Data (4.2.2)",      INNO_VERSION_EXT(4, 2,  2, 0), false },
-	{ "Inno Setup Setup Data (4.2.3)",      INNO_VERSION_EXT(4, 2,  3, 0), false },
-	{ "Inno Setup Setup Data (4.2.4)",      INNO_VERSION_EXT(4, 2,  4, 0), false }, // !
-	{ "Inno Setup Setup Data (4.2.5)",      INNO_VERSION_EXT(4, 2,  5, 0), false },
-	{ "Inno Setup Setup Data (4.2.6)",      INNO_VERSION_EXT(4, 2,  6, 0), false },
-	{ "Inno Setup Setup Data (5.0.0)",      INNO_VERSION_EXT(5, 0,  0, 0), false },
-	{ "Inno Setup Setup Data (5.0.1)",      INNO_VERSION_EXT(5, 0,  1, 0), false },
-	{ "Inno Setup Setup Data (5.0.3)",      INNO_VERSION_EXT(5, 0,  3, 0), false },
-	{ "Inno Setup Setup Data (5.0.4)",      INNO_VERSION_EXT(5, 0,  4, 0), false },
-	{ "Inno Setup Setup Data (5.1.0)",      INNO_VERSION_EXT(5, 1,  0, 0), false },
-	{ "Inno Setup Setup Data (5.1.2)",      INNO_VERSION_EXT(5, 1,  2, 0), false },
-	{ "Inno Setup Setup Data (5.1.7)",      INNO_VERSION_EXT(5, 1,  7, 0), false },
-	{ "Inno Setup Setup Data (5.1.10)",     INNO_VERSION_EXT(5, 1, 10, 0), false },
-	{ "Inno Setup Setup Data (5.1.13)",     INNO_VERSION_EXT(5, 1, 13, 0), false },
-	{ "Inno Setup Setup Data (5.2.0)",      INNO_VERSION_EXT(5, 2,  0, 0), false },
-	{ "Inno Setup Setup Data (5.2.1)",      INNO_VERSION_EXT(5, 2,  1, 0), false },
-	{ "Inno Setup Setup Data (5.2.3)",      INNO_VERSION_EXT(5, 2,  3, 0), false },
-	{ "Inno Setup Setup Data (5.2.5)",      INNO_VERSION_EXT(5, 2,  5, 0), false },
-	{ "Inno Setup Setup Data (5.2.5) (u)",  INNO_VERSION_EXT(5, 2,  5, 0), true  },
-	{ "Inno Setup Setup Data (5.3.0)",      INNO_VERSION_EXT(5, 3,  0, 0), false },
-	{ "Inno Setup Setup Data (5.3.0) (u)",  INNO_VERSION_EXT(5, 3,  0, 0), true  },
-	{ "Inno Setup Setup Data (5.3.3)",      INNO_VERSION_EXT(5, 3,  3, 0), false },
-	{ "Inno Setup Setup Data (5.3.3) (u)",  INNO_VERSION_EXT(5, 3,  3, 0), true  },
-	{ "Inno Setup Setup Data (5.3.5)",      INNO_VERSION_EXT(5, 3,  5, 0), false },
-	{ "Inno Setup Setup Data (5.3.5) (u)",  INNO_VERSION_EXT(5, 3,  5, 0), true  },
-	{ "Inno Setup Setup Data (5.3.6)",      INNO_VERSION_EXT(5, 3,  6, 0), false },
-	{ "Inno Setup Setup Data (5.3.6) (u)",  INNO_VERSION_EXT(5, 3,  6, 0), true  },
-	{ "Inno Setup Setup Data (5.3.7)",      INNO_VERSION_EXT(5, 3,  7, 0), false },
-	{ "Inno Setup Setup Data (5.3.7) (u)",  INNO_VERSION_EXT(5, 3,  7, 0), true  },
-	{ "Inno Setup Setup Data (5.3.8)",      INNO_VERSION_EXT(5, 3,  8, 0), false },
-	{ "Inno Setup Setup Data (5.3.8) (u)",  INNO_VERSION_EXT(5, 3,  8, 0), true  },
-	{ "Inno Setup Setup Data (5.3.9)",      INNO_VERSION_EXT(5, 3,  9, 0), false },
-	{ "Inno Setup Setup Data (5.3.9) (u)",  INNO_VERSION_EXT(5, 3,  9, 0), true  },
-	{ "Inno Setup Setup Data (5.3.10)",     INNO_VERSION_EXT(5, 3, 10, 0), false },
-	{ "Inno Setup Setup Data (5.3.10) (u)", INNO_VERSION_EXT(5, 3, 10, 0), true  },
-	{ "Inno Setup Setup Data (5.4.2)",      INNO_VERSION_EXT(5, 4,  2, 0), false },
-	{ "Inno Setup Setup Data (5.4.2) (u)",  INNO_VERSION_EXT(5, 4,  2, 0), true  },
-	{ "Inno Setup Setup Data (5.5.0)",      INNO_VERSION_EXT(5, 5,  0, 0), false },
-	{ "Inno Setup Setup Data (5.5.0) (u)",  INNO_VERSION_EXT(5, 5,  0, 0), true  }, // !
-	{ "" /* BlackBox v2? */,                INNO_VERSION_EXT(5, 5,  0, 1), true  },
-	{ "Inno Setup Setup Data (5.5.6)",      INNO_VERSION_EXT(5, 5,  6, 0), false },
-	{ "Inno Setup Setup Data (5.5.6) (u)",  INNO_VERSION_EXT(5, 5,  6, 0), true  },
-	{ "Inno Setup Setup Data (5.5.7)",      INNO_VERSION_EXT(5, 5,  7, 0), false },
-	{ "Inno Setup Setup Data (5.5.7) (u)",  INNO_VERSION_EXT(5, 5,  7, 0), true  },
-	{ "Inno Setup Setup Data (5.5.7) (U)",  INNO_VERSION_EXT(5, 5,  7, 0), true  }, // !
-	{ "" /* unknown 5.5.7 (u) variant */,   INNO_VERSION_EXT(5, 5,  7, 1), true  }, // !
-	{ "Inno Setup Setup Data (5.6.0)",      INNO_VERSION_EXT(5, 6,  0, 0), false },
-	{ "Inno Setup Setup Data (5.6.0) (u)",  INNO_VERSION_EXT(5, 6,  0, 0), true  },
-	{ "Inno Setup Setup Data (5.6.2)",      INNO_VERSION_EXT(5, 6,  2, 0), false }, // Unreleased, used by GOG
-	{ "Inno Setup Setup Data (5.6.2) (u)",  INNO_VERSION_EXT(5, 6,  2, 0), true  }, // Unreleased, used by GOG
-	{ "Inno Setup Setup Data (6.0.0)",      INNO_VERSION_EXT(6, 0,  0, 0), false },
-	{ "Inno Setup Setup Data (6.0.0) (u)",  INNO_VERSION_EXT(6, 0,  0, 0), true  },
+	{ "Inno Setup Setup Data (1.3.21)",                     INNO_VERSION_EXT(1, 3, 21, 0), 0 },
+	{ "Inno Setup Setup Data (1.3.25)",                     INNO_VERSION_EXT(1, 3, 25, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.0)",                      INNO_VERSION_EXT(2, 0,  0, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.1)",      /* ambiguous */ INNO_VERSION_EXT(2, 0,  1, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.2)",                      INNO_VERSION_EXT(2, 0,  2, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.5)",                      INNO_VERSION_EXT(2, 0,  5, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.6a)",                     INNO_VERSION_EXT(2, 0,  6, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.7)",                      INNO_VERSION_EXT(2, 0,  7, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.8)",                      INNO_VERSION_EXT(2, 0,  8, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.11)",                     INNO_VERSION_EXT(2, 0, 11, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.17)",                     INNO_VERSION_EXT(2, 0, 17, 0), 0 },
+	{ "Inno Setup Setup Data (2.0.18)",                     INNO_VERSION_EXT(2, 0, 18, 0), 0 },
+	{ "Inno Setup Setup Data (3.0.0a)",                     INNO_VERSION_EXT(3, 0,  0, 0), 0 },
+	{ "Inno Setup Setup Data (3.0.1)",                      INNO_VERSION_EXT(3, 0,  1, 0), 0 },
+	{ "Inno Setup Setup Data (3.0.3)",      /* ambiguous */ INNO_VERSION_EXT(3, 0,  3, 0), 0 },
+	{ "Inno Setup Setup Data (3.0.4)",                      INNO_VERSION_EXT(3, 0,  4, 0), 0 },
+	{ "Inno Setup Setup Data (3.0.5)",                      INNO_VERSION_EXT(3, 0,  5, 0), 0 },
+	{ "My Inno Setup Extensions Setup Data (3.0.6.1)",      INNO_VERSION_EXT(3, 0,  6, 1), 0 },
+	{ "Inno Setup Setup Data (4.0.0a)",                     INNO_VERSION_EXT(4, 0,  0, 0), 0 },
+	{ "Inno Setup Setup Data (4.0.1)",                      INNO_VERSION_EXT(4, 0,  1, 0), 0 },
+	{ "Inno Setup Setup Data (4.0.3)",                      INNO_VERSION_EXT(4, 0,  3, 0), 0 },
+	{ "Inno Setup Setup Data (4.0.5)",                      INNO_VERSION_EXT(4, 0,  5, 0), 0 },
+	{ "Inno Setup Setup Data (4.0.9)",                      INNO_VERSION_EXT(4, 0,  9, 0), 0 },
+	{ "Inno Setup Setup Data (4.0.10)",                     INNO_VERSION_EXT(4, 0, 10, 0), 0 },
+	{ "Inno Setup Setup Data (4.0.11)",                     INNO_VERSION_EXT(4, 0, 11, 0), 0 },
+	{ "Inno Setup Setup Data (4.1.0)",                      INNO_VERSION_EXT(4, 1,  0, 0), 0 },
+	{ "Inno Setup Setup Data (4.1.2)",                      INNO_VERSION_EXT(4, 1,  2, 0), 0 },
+	{ "Inno Setup Setup Data (4.1.3)",                      INNO_VERSION_EXT(4, 1,  3, 0), 0 },
+	{ "Inno Setup Setup Data (4.1.4)",                      INNO_VERSION_EXT(4, 1,  4, 0), 0 },
+	{ "Inno Setup Setup Data (4.1.5)",                      INNO_VERSION_EXT(4, 1,  5, 0), 0 },
+	{ "Inno Setup Setup Data (4.1.6)",                      INNO_VERSION_EXT(4, 1,  6, 0), 0 },
+	{ "Inno Setup Setup Data (4.1.8)",                      INNO_VERSION_EXT(4, 1,  8, 0), 0 },
+	{ "Inno Setup Setup Data (4.2.0)",                      INNO_VERSION_EXT(4, 2,  0, 0), 0 },
+	{ "Inno Setup Setup Data (4.2.1)",                      INNO_VERSION_EXT(4, 2,  1, 0), 0 },
+	{ "Inno Setup Setup Data (4.2.2)",                      INNO_VERSION_EXT(4, 2,  2, 0), 0 },
+	{ "Inno Setup Setup Data (4.2.3)",      /* ambiguous */ INNO_VERSION_EXT(4, 2,  3, 0), 0 },
+	{ "Inno Setup Setup Data (4.2.4)",                      INNO_VERSION_EXT(4, 2,  4, 0), 0 },
+	{ "Inno Setup Setup Data (4.2.5)",                      INNO_VERSION_EXT(4, 2,  5, 0), 0 },
+	{ "Inno Setup Setup Data (4.2.6)",                      INNO_VERSION_EXT(4, 2,  6, 0), 0 },
+	{ "Inno Setup Setup Data (5.0.0)",                      INNO_VERSION_EXT(5, 0,  0, 0), 0 },
+	{ "Inno Setup Setup Data (5.0.1)",                      INNO_VERSION_EXT(5, 0,  1, 0), 0 },
+	{ "Inno Setup Setup Data (5.0.3)",                      INNO_VERSION_EXT(5, 0,  3, 0), 0 },
+	{ "Inno Setup Setup Data (5.0.4)",                      INNO_VERSION_EXT(5, 0,  4, 0), 0 },
+	{ "Inno Setup Setup Data (5.1.0)",                      INNO_VERSION_EXT(5, 1,  0, 0), 0 },
+	{ "Inno Setup Setup Data (5.1.2)",                      INNO_VERSION_EXT(5, 1,  2, 0), 0 },
+	{ "Inno Setup Setup Data (5.1.7)",                      INNO_VERSION_EXT(5, 1,  7, 0), 0 },
+	{ "Inno Setup Setup Data (5.1.10)",                     INNO_VERSION_EXT(5, 1, 10, 0), 0 },
+	{ "Inno Setup Setup Data (5.1.13)",                     INNO_VERSION_EXT(5, 1, 13, 0), 0 },
+	{ "Inno Setup Setup Data (5.2.0)",                      INNO_VERSION_EXT(5, 2,  0, 0), 0 },
+	{ "Inno Setup Setup Data (5.2.1)",                      INNO_VERSION_EXT(5, 2,  1, 0), 0 },
+	{ "Inno Setup Setup Data (5.2.3)",                      INNO_VERSION_EXT(5, 2,  3, 0), 0 },
+	{ "Inno Setup Setup Data (5.2.5)",                      INNO_VERSION_EXT(5, 2,  5, 0), 0 },
+	{ "Inno Setup Setup Data (5.2.5) (u)",                  INNO_VERSION_EXT(5, 2,  5, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.3.0)",                      INNO_VERSION_EXT(5, 3,  0, 0), 0 },
+	{ "Inno Setup Setup Data (5.3.0) (u)",                  INNO_VERSION_EXT(5, 3,  0, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.3.3)",                      INNO_VERSION_EXT(5, 3,  3, 0), 0 },
+	{ "Inno Setup Setup Data (5.3.3) (u)",                  INNO_VERSION_EXT(5, 3,  3, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.3.5)",                      INNO_VERSION_EXT(5, 3,  5, 0), 0 },
+	{ "Inno Setup Setup Data (5.3.5) (u)",                  INNO_VERSION_EXT(5, 3,  5, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.3.6)",                      INNO_VERSION_EXT(5, 3,  6, 0), 0 },
+	{ "Inno Setup Setup Data (5.3.6) (u)",                  INNO_VERSION_EXT(5, 3,  6, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.3.7)",                      INNO_VERSION_EXT(5, 3,  7, 0), 0 },
+	{ "Inno Setup Setup Data (5.3.7) (u)",                  INNO_VERSION_EXT(5, 3,  7, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.3.8)",                      INNO_VERSION_EXT(5, 3,  8, 0), 0 },
+	{ "Inno Setup Setup Data (5.3.8) (u)",                  INNO_VERSION_EXT(5, 3,  8, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.3.9)",                      INNO_VERSION_EXT(5, 3,  9, 0), 0 },
+	{ "Inno Setup Setup Data (5.3.9) (u)",                  INNO_VERSION_EXT(5, 3,  9, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.3.10)",                     INNO_VERSION_EXT(5, 3, 10, 0), 0 },
+	{ "Inno Setup Setup Data (5.3.10) (u)",                 INNO_VERSION_EXT(5, 3, 10, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.4.2)",                      INNO_VERSION_EXT(5, 4,  2, 0), 0 },
+	{ "Inno Setup Setup Data (5.4.2) (u)",                  INNO_VERSION_EXT(5, 4,  2, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.5.0)",                      INNO_VERSION_EXT(5, 5,  0, 0), 0 },
+	{ "Inno Setup Setup Data (5.5.0) (u)",  /* ambiguous */ INNO_VERSION_EXT(5, 5,  0, 0), version::Unicode },
+	{ "" /* BlackBox v2? */,                                INNO_VERSION_EXT(5, 5,  0, 1), 0 },
+	{ "" /* BlackBox v2? */,                                INNO_VERSION_EXT(5, 5,  0, 1), version::Unicode },
+	{ "Inno Setup Setup Data (5.5.6)",                      INNO_VERSION_EXT(5, 5,  6, 0), 0 },
+	{ "Inno Setup Setup Data (5.5.6) (u)",                  INNO_VERSION_EXT(5, 5,  6, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.5.7)",      /* ambiguous */ INNO_VERSION_EXT(5, 5,  7, 0), 0 },
+	{ "Inno Setup Setup Data (5.5.7) (u)",  /* ambiguous */ INNO_VERSION_EXT(5, 5,  7, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.5.7) (U)",  /* ambiguous */ INNO_VERSION_EXT(5, 5,  7, 0), version::Unicode },
+	{ "" /* unknown 5.5.7 (u) variant */,   /* ambiguous */ INNO_VERSION_EXT(5, 5,  7, 1), 0 },
+	{ "" /* unknown 5.5.7 (u) variant */,   /* ambiguous */ INNO_VERSION_EXT(5, 5,  7, 1), version::Unicode },
+	{ "Inno Setup Setup Data (5.6.0)",                      INNO_VERSION_EXT(5, 6,  0, 0), 0 },
+	{ "Inno Setup Setup Data (5.6.0) (u)",                  INNO_VERSION_EXT(5, 6,  0, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.6.2)",     /* prerelease */ INNO_VERSION_EXT(5, 6,  2, 0), 0 },
+	{ "Inno Setup Setup Data (5.6.2) (u)", /* prerelease */ INNO_VERSION_EXT(5, 6,  2, 0), version::Unicode },
+	{ "Inno Setup Setup Data (6.0.0)",                      INNO_VERSION_EXT(6, 0,  0, 0), 0 },
+	{ "Inno Setup Setup Data (6.0.0) (u)",                  INNO_VERSION_EXT(6, 0,  0, 0), version::Unicode },
 };
 
 } // anonymous namespace
@@ -170,12 +170,12 @@ std::ostream & operator<<(std::ostream & os, const version & version) {
 		os << '.' << version.d();
 	}
 	
-	if(version.unicode) {
+	if(version.is_unicode()) {
 		os << " (unicode)";
 	}
 	
-	if(version.bits != 32) {
-		os << " (" << int(version.bits) << "-bit)";
+	if(version.bits() != 32) {
+		os << " (" << int(version.bits()) << "-bit)";
 	}
 	
 	return os;
@@ -195,8 +195,7 @@ void version::load(std::istream & is) {
 		for(size_t i = 0; i < size_t(boost::size(legacy_versions)); i++) {
 			if(!memcmp(legacy_version, legacy_versions[i].name, sizeof(legacy_version))) {
 				value = legacy_versions[i].version;
-				bits = legacy_versions[i].bits;
-				unicode = false;
+				variant = legacy_versions[i].variant;
 				known = true;
 				debug("known legacy version: \"" << versions[i].name << '"');
 				return;
@@ -212,9 +211,9 @@ void version::load(std::istream & is) {
 		}
 		
 		if(legacy_version[9] == '1' && legacy_version[10] == '6') {
-			bits = 16;
+			variant = Bits16;
 		} else if(legacy_version[9] == '3' && legacy_version[10] == '2') {
-			bits = 32;
+			variant = 0;
 		} else {
 			throw version_error();
 		}
@@ -230,7 +229,6 @@ void version::load(std::istream & is) {
 			throw version_error();
 		}
 		
-		unicode = false;
 		known = false;
 		
 		return;
@@ -246,8 +244,7 @@ void version::load(std::istream & is) {
 	for(size_t i = 0; i < size_t(boost::size(versions)); i++) {
 		if(versions[i].name[0] != '\0' && !memcmp(version, versions[i].name, sizeof(version))) {
 			value = versions[i].version;
-			bits = 32;
-			unicode = versions[i].unicode;
+			variant = versions[i].variant;
 			known = true;
 			debug("known version: \"" << versions[i].name << '"');
 			return;
@@ -319,8 +316,10 @@ void version::load(std::istream & is) {
 		throw version_error();
 	}
 	
-	bits = 32;
-	unicode = (version_str.find("(u)") != std::string::npos || version_str.find("(U)") != std::string::npos);
+	variant = 0;
+	if(version_str.find("(u)") != std::string::npos || version_str.find("(U)") != std::string::npos) {
+		variant |= Unicode;
+	}
 	known = false;
 }
 
@@ -359,12 +358,18 @@ version_constant version::next() {
 	const known_legacy_version * legacy_end = boost::end(legacy_versions);
 	const known_legacy_version * legacy_version;
 	legacy_version = std::upper_bound(boost::begin(legacy_versions), legacy_end, value);
+	while(legacy_version != legacy_end && legacy_version->variant != variant) {
+		legacy_version++;
+	}
 	if(legacy_version != legacy_end) {
 		return legacy_version->version;
 	}
-	
+	 
 	const known_version * end = boost::end(versions);
 	const known_version * version = std::upper_bound(boost::begin(versions), end, value);
+	while(version != end && version->variant != variant) {
+		version++;
+	}
 	if(version != end) {
 		return version->version;
 	}
