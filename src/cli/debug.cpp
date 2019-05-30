@@ -492,7 +492,7 @@ static void print_header(const setup::header & header) {
 	                                                 setup::header::NoPrivileges);
 	std::cout << "Show language dialog: " << color::cyan << header.show_language_dialog
 	          << color::reset << '\n';
-	std::cout << if_not_equal("Danguage detection", header.language_detection,
+	std::cout << if_not_equal("Language detection", header.language_detection,
 	                          setup::header::NoLanguageDetection);
 	std::cout << "Compression: " << color::cyan << header.compression
 	          << color::reset << '\n';
