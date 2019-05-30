@@ -70,7 +70,7 @@ void registry_entry::load(std::istream & is, const version & version) {
 	} else {
 		name.clear();
 	}
-	is >> util::encoded_string(value, version.codepage());
+	is >> util::binary_string(value);
 	
 	load_condition_data(is, version);
 	
