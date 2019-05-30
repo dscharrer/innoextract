@@ -83,6 +83,22 @@ public:
 		return reinterpret_cast<TypesafeBoolean>(_flags.any());
 	}
 	
+	bool operator==(flags o) const {
+		return _flags == o._flags;
+	}
+	
+	bool operator!=(flags o) const {
+		return _flags != o._flags;
+	}
+	
+	bool operator==(Zero /* zero */) const {
+		return _flags == 0;
+	}
+	
+	bool operator!=(Zero /* zero */) const {
+		return _flags != 0;
+	}
+	
 	flags operator~() const {
 		return flags(~_flags);
 	}
