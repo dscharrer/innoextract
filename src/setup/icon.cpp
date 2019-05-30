@@ -77,7 +77,7 @@ void icon_entry::load(std::istream & is, const version & version) {
 	stored_flag_reader<flags> flagreader(is, version.bits);
 	
 	flagreader.add(NeverUninstall);
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 21) && version < INNO_VERSION(1, 3, 26)) {
 		flagreader.add(RunMinimized);
 	}
 	flagreader.add(CreateOnlyIfFileExists);
