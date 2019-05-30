@@ -88,7 +88,7 @@ void run_entry::load(std::istream & is, const version & version) {
 		flagreader.add(PostInstall);
 		flagreader.add(Unchecked);
 		flagreader.add(SkipIfSilent);
-		flagreader.add(Skipif_not_equalSilent);
+		flagreader.add(SkipIfNotSilent);
 	}
 	if(version >= INNO_VERSION(2, 0, 8)) {
 		flagreader.add(HideWizard);

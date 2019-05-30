@@ -45,7 +45,7 @@ struct run_entry : public item {
 		PostInstall,
 		Unchecked,
 		SkipIfSilent,
-		Skipif_not_equalSilent,
+		SkipIfNotSilent,
 		HideWizard,
 		Bits32,
 		Bits64,
