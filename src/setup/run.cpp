@@ -40,14 +40,14 @@ STORED_ENUM_MAP(stored_run_wait_condition, run_entry::WaitUntilTerminated,
 
 void run_entry::load(std::istream & is, const version & version) {
 	
-	if(version < INNO_VERSION(1, 3, 21)) {
+	if(version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
 	is >> util::encoded_string(name, version.codepage());
 	is >> util::encoded_string(parameters, version.codepage());
 	is >> util::encoded_string(working_dir, version.codepage());
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 9)) {
 		is >> util::encoded_string(run_once_id, version.codepage());
 	} else {
 		run_once_id.clear();
@@ -70,7 +70,7 @@ void run_entry::load(std::istream & is, const version & version) {
 	
 	load_version_data(is, version);
 	
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 24)) {
 		show_command = util::load<boost::int32_t>(is);
 	} else {
 		show_command = 0;
@@ -80,8 +80,10 @@ void run_entry::load(std::istream & is, const version & version) {
 	
 	stored_flag_reader<flags> flagreader(is, version.bits());
 	
-	flagreader.add(ShellExec);
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 2, 3)) {
+		flagreader.add(ShellExec);
+	}
+	if(version >= INNO_VERSION(1, 3, 9)) {
 		flagreader.add(SkipIfDoesntExist);
 	}
 	if(version >= INNO_VERSION(2, 0, 0)) {

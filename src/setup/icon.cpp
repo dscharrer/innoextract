@@ -38,7 +38,7 @@ STORED_ENUM_MAP(stored_close_setting, icon_entry::NoSetting,
 
 void icon_entry::load(std::istream & is, const version & version) {
 	
-	if(version < INNO_VERSION(1, 3, 21)) {
+	if(version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
@@ -61,11 +61,15 @@ void icon_entry::load(std::istream & is, const version & version) {
 	
 	icon_index = util::load<boost::int32_t>(is, version.bits());
 	
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 24)) {
 		show_command = util::load<boost::int32_t>(is);
+	} else {
+		show_command = 1;
+	}
+	if(version >= INNO_VERSION(1, 3, 15)) {
 		close_on_exit = stored_enum<stored_close_setting>(is).get();
 	} else {
-		show_command = 1, close_on_exit = NoSetting;
+		close_on_exit = NoSetting;
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 7)) {
@@ -77,7 +81,7 @@ void icon_entry::load(std::istream & is, const version & version) {
 	stored_flag_reader<flags> flagreader(is, version.bits());
 	
 	flagreader.add(NeverUninstall);
-	if(version >= INNO_VERSION(1, 3, 21) && version < INNO_VERSION(1, 3, 26)) {
+	if(version < INNO_VERSION(1, 3, 26)) {
 		flagreader.add(RunMinimized);
 	}
 	flagreader.add(CreateOnlyIfFileExists);

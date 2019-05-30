@@ -71,7 +71,11 @@ struct known_version {
 };
 
 const known_version versions[] = {
-	{ "Inno Setup Setup Data (1.3.21)",                     INNO_VERSION_EXT(1, 3, 21, 0), 0 },
+	{ "Inno Setup Setup Data (1.3.3)",                      INNO_VERSION_EXT(1, 3,  3, 0), 0 },
+	{ "Inno Setup Setup Data (1.3.9)",                      INNO_VERSION_EXT(1, 3,  9, 0), 0 },
+	{ "Inno Setup Setup Data (1.3.10)",                     INNO_VERSION_EXT(1, 3, 10, 0), 0 },
+	{ "Inno Setup Setup Data (1.3.21)",     /* ambiguous */ INNO_VERSION_EXT(1, 3, 21, 0), 0 },
+	{ "Inno Setup Setup Data (1.3.24)",                     INNO_VERSION_EXT(1, 3, 24, 0), 0 },
 	{ "Inno Setup Setup Data (1.3.25)",                     INNO_VERSION_EXT(1, 3, 25, 0), 0 },
 	{ "Inno Setup Setup Data (2.0.0)",                      INNO_VERSION_EXT(2, 0,  0, 0), 0 },
 	{ "Inno Setup Setup Data (2.0.1)",      /* ambiguous */ INNO_VERSION_EXT(2, 0,  1, 0), 0 },
@@ -323,6 +327,11 @@ void version::load(std::istream & is) {
 }
 
 bool version::is_ambiguous() const {
+	
+	if(value == INNO_VERSION(1, 3, 21)) {
+		// might be either 1.3.21 or 1.3.24
+		return true;
+	}
 	
 	if(value == INNO_VERSION(2, 0, 1)) {
 		// might be either 2.0.1 or 2.0.2

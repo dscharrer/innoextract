@@ -60,7 +60,7 @@ STORED_ENUM_MAP(stored_registry_entry_type_2, registry_entry::None,
 
 void registry_entry::load(std::istream & is, const version & version) {
 	
-	if(version < INNO_VERSION(1, 3, 21)) {
+	if(version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
@@ -112,10 +112,14 @@ void registry_entry::load(std::istream & is, const version & version) {
 	flagreader.add(UninsDeleteEntireKey);
 	flagreader.add(UninsDeleteEntireKeyIfEmpty);
 	flagreader.add(PreserveStringType);
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 9)) {
 		flagreader.add(DeleteKey);
 		flagreader.add(DeleteValue);
+	}
+	if(version >= INNO_VERSION(1, 3, 12)) {
 		flagreader.add(NoError);
+	}
+	if(version >= INNO_VERSION(1, 3, 16)) {
 		flagreader.add(DontCreateKey);
 	}
 	if(version >= INNO_VERSION(5, 1, 0)) {

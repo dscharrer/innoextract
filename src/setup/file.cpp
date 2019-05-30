@@ -76,7 +76,7 @@ void file_entry::load(std::istream & is, const version & version) {
 	
 	options = 0;
 	
-	if(version < INNO_VERSION(1, 3, 21)) {
+	if(version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	

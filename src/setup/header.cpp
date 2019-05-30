@@ -148,17 +148,17 @@ void header::load(std::istream & is, const version & version) {
 	
 	options = 0;
 	
-	if(version < INNO_VERSION(1, 3, 21)) {
+	if(version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the setup header
 	}
 	
 	is >> util::encoded_string(app_name, version.codepage());
 	is >> util::encoded_string(app_versioned_name, version.codepage());
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 0)) {
 		is >> util::encoded_string(app_id, version.codepage());
 	}
 	is >> util::encoded_string(app_copyright, version.codepage());
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 0)) {
 		is >> util::encoded_string(app_publisher, version.codepage());
 		is >> util::encoded_string(app_publisher_url, version.codepage());
 	} else {
@@ -169,7 +169,7 @@ void header::load(std::istream & is, const version & version) {
 	} else {
 		app_support_phone.clear();
 	}
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 0)) {
 		is >> util::encoded_string(app_support_url, version.codepage());
 		is >> util::encoded_string(app_updates_url, version.codepage());
 		is >> util::encoded_string(app_version, version.codepage());
@@ -184,20 +184,28 @@ void header::load(std::istream & is, const version & version) {
 		uninstall_icon_name.clear();
 	}
 	is >> util::encoded_string(base_filename, version.codepage());
-	if(version >= INNO_VERSION(1, 3, 21)) {
-		if(version < INNO_VERSION(5, 2, 5)) {
-			is >> util::ansi_string(license_text);
-			is >> util::ansi_string(info_before);
-			is >> util::ansi_string(info_after);
-		}
-		is >> util::encoded_string(uninstall_files_dir, version.codepage());
-		is >> util::encoded_string(uninstall_name, version.codepage());
-		is >> util::encoded_string(uninstall_icon, version.codepage());
-		is >> util::encoded_string(app_mutex, version.codepage());
+	if(version >= INNO_VERSION(1, 3, 0) && version < INNO_VERSION(5, 2, 5)) {
+		is >> util::ansi_string(license_text);
+		is >> util::ansi_string(info_before);
+		is >> util::ansi_string(info_after);
 	} else {
 		license_text.clear(), info_before.clear(), info_after.clear();
-		uninstall_files_dir.clear(), uninstall_name.clear();
-		uninstall_icon.clear(), app_mutex.clear();
+	}
+	if(version >= INNO_VERSION(1, 3, 3)) {
+		is >> util::encoded_string(uninstall_files_dir, version.codepage());
+	} else {
+		uninstall_files_dir.clear();
+	}
+	if(version >= INNO_VERSION(1, 3, 6)) {
+		is >> util::encoded_string(uninstall_name, version.codepage());
+		is >> util::encoded_string(uninstall_icon, version.codepage());
+	} else {
+		uninstall_name.clear(), uninstall_icon.clear();
+	}
+	if(version >= INNO_VERSION(1, 3, 14)) {
+		is >> util::encoded_string(app_mutex, version.codepage());
+	} else {
+		app_mutex.clear();
 	}
 	if(version >= INNO_VERSION(3, 0, 0)) {
 		is >> util::encoded_string(default_user_name, version.codepage());
@@ -311,7 +319,7 @@ void header::load(std::istream & is, const version & version) {
 	boost::int32_t license_size = 0;
 	boost::int32_t info_before_size = 0;
 	boost::int32_t info_after_size = 0;
-	if(version < INNO_VERSION(1, 3, 21)) {
+	if(version < INNO_VERSION(1, 3, 0)) {
 		license_size = util::load<boost::int32_t>(is, version.bits());
 		info_before_size = util::load<boost::int32_t>(is, version.bits());
 		info_after_size = util::load<boost::int32_t>(is, version.bits());
@@ -320,7 +328,7 @@ void header::load(std::istream & is, const version & version) {
 	winver.load(is, version);
 	
 	back_color = util::load<boost::uint32_t>(is);
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 3)) {
 		back_color2 = util::load<boost::uint32_t>(is);
 	} else {
 		back_color2 = 0;
@@ -384,10 +392,10 @@ void header::load(std::istream & is, const version & version) {
 		install_mode = NormalInstallMode;
 	}
 	
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 0)) {
 		uninstall_log_mode = stored_enum<stored_log_mode>(is).get();
 	} else {
-		uninstall_log_mode = AppendLog;
+		uninstall_log_mode = NewLog;
 	}
 	
 	if(version >= INNO_VERSION(5, 0, 0)) {
@@ -398,7 +406,7 @@ void header::load(std::istream & is, const version & version) {
 		uninstall_style = ClassicStyle;
 	}
 	
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 6)) {
 		dir_exists_warning = stored_enum<stored_bool_auto_no_yes>(is).get();
 	} else {
 		dir_exists_warning = Auto;
@@ -494,7 +502,7 @@ void header::load(std::istream & is, const version & version) {
 	if(version < INNO_VERSION(5, 3, 3)) {
 		flagreader.add(DisableDirPage);
 	}
-	if(version < INNO_VERSION(1, 3, 21)) {
+	if(version < INNO_VERSION(1, 3, 6)) {
 		flagreader.add(DisableDirExistsWarning);
 	}
 	if(version < INNO_VERSION(5, 3, 3)) {
@@ -504,7 +512,7 @@ void header::load(std::istream & is, const version & version) {
 	if(version < INNO_VERSION(3, 0, 0) || version >= INNO_VERSION(3, 0, 3)) {
 		flagreader.add(AlwaysRestart);
 	}
-	if(version < INNO_VERSION(1, 3, 21)) {
+	if(version < INNO_VERSION(1, 3, 3)) {
 		flagreader.add(BackSolid);
 	}
 	flagreader.add(AlwaysUsePersonalGroup);
@@ -526,20 +534,26 @@ void header::load(std::istream & is, const version & version) {
 		if(version < INNO_VERSION(3, 0, 0)) {
 			flagreader.add(AlwaysCreateUninstallIcon);
 		}
-		if(version < INNO_VERSION(1, 3, 21)) {
+		if(version < INNO_VERSION(1, 3, 6)) {
 			flagreader.add(OverwriteUninstRegEntries);
 		}
 		if(version < INNO_VERSION(5, 6, 1)) {
 			flagreader.add(ChangesAssociations);
 		}
 	}
-	if(version >= INNO_VERSION(1, 3, 21)) {
-		if(version < INNO_VERSION(5, 3, 8)) {
-			flagreader.add(CreateUninstallRegKey);
-		}
+	if(version >= INNO_VERSION(1, 3, 0) && version < INNO_VERSION(5, 3, 8)) {
+		flagreader.add(CreateUninstallRegKey);
+	}
+	if(version >= INNO_VERSION(1, 3, 1)) {
 		flagreader.add(UsePreviousAppDir);
+	}
+	if(version >= INNO_VERSION(1, 3, 3)) {
 		flagreader.add(BackColorHorizontal);
+	}
+	if(version >= INNO_VERSION(1, 3, 10)) {
 		flagreader.add(UsePreviousGroup);
+	}
+	if(version >= INNO_VERSION(1, 3, 20)) {
 		flagreader.add(UpdateUninstallLogAppName);
 	}
 	if(version >= INNO_VERSION(2, 0, 0)) {
@@ -649,7 +663,7 @@ void header::load(std::istream & is, const version & version) {
 		disable_program_group_page = (options & DisableProgramGroupPage) ? Yes : No;
 	}
 	
-	if(version < INNO_VERSION(1, 3, 21)) {
+	if(version < INNO_VERSION(1, 3, 0)) {
 		if(license_size > 0) {
 			std::string temp;
 			temp.resize(size_t(license_size));

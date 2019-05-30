@@ -34,7 +34,7 @@ const windows_version windows_version::none = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0
 
 void windows_version::data::load(std::istream & is, const version & version) {
 	
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 19)) {
 		build = util::load<boost::uint16_t>(is);
 	} else {
 		build = 0;
@@ -50,7 +50,7 @@ void windows_version::load(std::istream & is, const version & version) {
 	win_version.load(is, version);
 	nt_version.load(is, version);
 	
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(version >= INNO_VERSION(1, 3, 19)) {
 		nt_service_pack.minor = util::load<boost::uint8_t>(is);
 		nt_service_pack.major = util::load<boost::uint8_t>(is);
 	} else {
