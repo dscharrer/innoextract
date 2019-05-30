@@ -525,8 +525,12 @@ void header::load(std::istream & is, const version & version) {
 		flagreader.add(DisableAppendDir);
 	}
 	flagreader.add(Password);
-	flagreader.add(AllowRootDirectory);
-	flagreader.add(DisableFinishedPage);
+	if(version >= INNO_VERSION(1, 2, 6)) {
+		flagreader.add(AllowRootDirectory);
+	}
+	if(version >= INNO_VERSION(1, 2, 14)) {
+		flagreader.add(DisableFinishedPage);
+	}
 	if(version.bits() != 16) {
 		if(version < INNO_VERSION(3, 0, 4)) {
 			flagreader.add(AdminPrivilegesRequired);

@@ -130,8 +130,12 @@ void file_entry::load(std::istream & is, const version & version) {
 	}
 	flagreader.add(CompareTimeStamp);
 	flagreader.add(FontIsNotTrueType);
-	flagreader.add(SkipIfSourceDoesntExist);
-	flagreader.add(OverwriteReadOnly);
+	if(version >= INNO_VERSION(1, 2, 5)) {
+		flagreader.add(SkipIfSourceDoesntExist);
+	}
+	if(version >= INNO_VERSION(1, 2, 6)) {
+		flagreader.add(OverwriteReadOnly);
+	}
 	if(version >= INNO_VERSION(1, 3, 21)) {
 		flagreader.add(OverwriteSameVersion);
 		flagreader.add(CustomDestName);

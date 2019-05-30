@@ -111,7 +111,9 @@ void registry_entry::load(std::istream & is, const version & version) {
 	flagreader.add(UninsClearValue);
 	flagreader.add(UninsDeleteEntireKey);
 	flagreader.add(UninsDeleteEntireKeyIfEmpty);
-	flagreader.add(PreserveStringType);
+	if(version >= INNO_VERSION(1, 2, 6)) {
+		flagreader.add(PreserveStringType);
+	}
 	if(version >= INNO_VERSION(1, 3, 9)) {
 		flagreader.add(DeleteKey);
 		flagreader.add(DeleteValue);
