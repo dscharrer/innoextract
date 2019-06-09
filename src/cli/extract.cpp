@@ -904,6 +904,15 @@ void process_file(const fs::path & file, const extract_options & o) {
 	setup::info info;
 	try {
 		info.load(ifs, entries);
+	} catch(const setup::version_error &) {
+		fs::path headerfile = file;
+		headerfile.replace_extension(".0");
+		if(offsets.header_offset == 0 && headerfile != file && fs::exists(headerfile)) {
+			log_info << "Opening \"" << color::cyan << headerfile.string() << color::reset << '"';
+			process_file(headerfile, o);
+			return;
+		}
+		throw;
 	} catch(const std::ios_base::failure & e) {
 		std::ostringstream oss;
 		oss << "Stream error while parsing setup headers!\n";
