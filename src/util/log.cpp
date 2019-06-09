@@ -51,3 +51,14 @@ logger::~logger() {
 	}
 	
 }
+
+std::streambuf * warning_suppressor::set_streambuf(std::streambuf * streambuf) {
+	return std::cerr.rdbuf(streambuf);
+}
+
+void warning_suppressor::flush() {
+	restore();
+	std::cerr << buffer.str();
+	logger::total_warnings += warnings;
+	logger::total_errors += errors;
+}

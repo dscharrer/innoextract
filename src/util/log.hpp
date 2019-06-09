@@ -91,4 +91,60 @@ public:
 	
 };
 
+class warning_storage {
+	
+protected:
+	
+	
+public:
+	
+};
+
+class warning_suppressor : public warning_storage {
+	
+	std::ostringstream buffer;
+	std::streambuf * streambuf;
+	size_t warnings;
+	size_t errors;
+	
+	static std::streambuf * set_streambuf(std::streambuf * streambuf);
+	
+public:
+	
+	warning_suppressor()
+		: streambuf(set_streambuf(buffer.rdbuf()))
+		, warnings(logger::total_warnings)
+		, errors(logger::total_errors)
+	{ }
+	
+	~warning_suppressor() {
+		restore();
+	}
+	
+	void restore() {
+		
+		if(!streambuf) {
+			return;
+		}
+		
+		set_streambuf(streambuf);
+		streambuf = NULL;
+		
+		size_t new_warnings = logger::total_warnings - warnings;
+		size_t new_errors = logger::total_errors - errors;
+		logger::total_warnings = warnings;
+		logger::total_errors = errors;
+		warnings = new_warnings;
+		errors = new_errors;
+		
+	}
+	
+	void flush();
+	
+	operator bool() {
+		return buffer.tellp() != 0;
+	}
+	
+};
+
 #endif // INNOEXTRACT_UTIL_LOG_HPP
