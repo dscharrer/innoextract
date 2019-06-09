@@ -225,34 +225,63 @@ void info::load(std::istream & is, entry_types entries) {
 	version_constant listed_version = version.value;
 	
 	// Some setup versions didn't increment the data version number when they should have.
-	// To work around this, we try to parse the headers for both data versions.
+	// To work around this, we try to parse the headers for all data versions and use the first
+	// version that parses without warnings or errors.
 	bool ambiguous = !version.known || version.is_ambiguous();
 	if(version.is_ambiguous()) {
 		// Force parsing all headers so that we don't miss any errors.
 		entries |= NoSkip;
 	}
 	
+	bool parsed_without_errors = false;
 	std::streampos start = is.tellg();
 	for(;;) {
+		
+		warning_suppressor warnings;
 		
 		try {
 			
 			// Try to parse headers for this version
 			load(is, entries, version);
+			
+			if(warnings) {
+				// Parsed without errors but with warnings - try other versions first
+				if(!parsed_without_errors) {
+					listed_version = version.value;
+					parsed_without_errors = true;
+				}
+				throw std::exception();
+			}
+			
+			warnings.flush();
 			return;
 			
 		} catch(...) {
 			
-			if(!ambiguous || !(version.value = version.next())) {
-				// No more versions to try - report the original version
-				version.value = listed_version;
-				throw;
+			is.clear();
+			is.seekg(start);
+			
+			version_constant next_version = version.next();
+			
+			if(!ambiguous || !next_version) {
+				if(version.value != listed_version) {
+					// Rewind to a previous version that had better results and report those
+					version.value = listed_version;
+					warnings.restore();
+					load(is, entries, version);
+				} else {
+					// Otherwise. report results for the current version
+					warnings.flush();
+					if(!parsed_without_errors) {
+						throw;
+					}
+				}
+				return;
 			}
 			
 			// Retry with the next version
+			version.value = next_version;
 			ambiguous = version.is_ambiguous();
-			is.clear();
-			is.seekg(start);
 			
 		}
 		
