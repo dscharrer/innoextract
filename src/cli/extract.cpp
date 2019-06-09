@@ -913,7 +913,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 			return;
 		}
 		throw;
-	} catch(const std::ios_base::failure & e) {
+	} catch(const std::exception & e) {
 		std::ostringstream oss;
 		oss << "Stream error while parsing setup headers!\n";
 		oss << " ├─ detected setup version: " << info.version << '\n';
