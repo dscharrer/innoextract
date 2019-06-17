@@ -76,6 +76,8 @@ else(MSVC)
 			# 'external function definition with no prior declaration'
 			# This gets annoying fast with small inline/template functions.
 			add_cxxflag("-wd1418")
+			# 'non-pointer conversion from "int" to "…" may lose significant bits'
+			add_cxxflag("-wd2259")
 		endif()
 		
 	endif(SET_WARNING_FLAGS)
