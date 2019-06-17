@@ -28,11 +28,11 @@
 namespace crypto {
 
 void sha1_transform::init(hash_word * state) {
-	state[0] = 0x67452301L;
-	state[1] = 0xEFCDAB89L;
-	state[2] = 0x98BADCFEL;
-	state[3] = 0x10325476L;
-	state[4] = 0xC3D2E1F0L;
+	state[0] = 0x67452301l;
+	state[1] = 0xefcdab89l;
+	state[2] = 0x98badcfel;
+	state[3] = 0x10325476l;
+	state[4] = 0xc3d2e1f0l;
 }
 
 void sha1_transform::transform(hash_word * state, const hash_word * data) {

@@ -29,10 +29,10 @@
 namespace crypto {
 
 void md5_transform::init(hash_word * state) {
-	state[0] = 0x67452301L;
-	state[1] = 0xefcdab89L;
-	state[2] = 0x98badcfeL;
-	state[3] = 0x10325476L;
+	state[0] = 0x67452301l;
+	state[1] = 0xefcdab89l;
+	state[2] = 0x98badcfel;
+	state[3] = 0x10325476l;
 }
 
 void md5_transform::transform(hash_word * state, const hash_word * data) {
