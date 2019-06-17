@@ -142,7 +142,7 @@ public:
 	void flush();
 	
 	operator bool() {
-		return buffer.tellp() != 0;
+		return buffer.tellp() != std::ostringstream::pos_type(0);
 	}
 	
 };
