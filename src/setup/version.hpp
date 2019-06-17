@@ -78,8 +78,8 @@ struct version {
 	void load(std::istream & is);
 	
 	boost::uint16_t bits() const { return (variant & Bits16) ? 16 : 32; }
-	bool is_unicode() const { return (variant & Unicode); }
-	bool is_isx() const { return (variant & ISX); }
+	bool is_unicode() const { return (variant & Unicode) != 0; }
+	bool is_isx() const { return (variant & ISX) != 0; }
 	
 	//! \return the Windows codepage used to encode strings
 	boost::uint32_t codepage() const { return boost::uint32_t(is_unicode() ? 1200 : 1252); }
