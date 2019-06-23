@@ -38,37 +38,50 @@
 # iconv_USE_STATIC_LIBS  Statically link against libiconv (default: OFF)
 
 include(UseStaticLibs)
-use_static_libs(iconv)
 
-if(APPLE)
-	# Prefer local iconv.h location over the system iconv.h location as /opt/local/include
-	# may be added to the include path by other libraries, resulting in the #include
-	# statements finding the local copy while we will link agains the system lib.
-	# This way we always find both include file and library in /opt/local/ if there is one.
+foreach(static IN ITEMS 1 0)
+	
+	if(static)
+		use_static_libs(iconv)
+	endif()
+	
+	if(APPLE)
+		# Prefer local iconv.h location over the system iconv.h location as /opt/local/include
+		# may be added to the include path by other libraries, resulting in the #include
+		# statements finding the local copy while we will link agains the system lib.
+		# This way we always find both include file and library in /opt/local/ if there is one.
+		find_path(iconv_INCLUDE_DIR iconv.h
+			PATHS /opt/local/include
+			DOC "The directory where iconv.h resides"
+			NO_CMAKE_SYSTEM_PATH
+		)
+	endif(APPLE)
+	
 	find_path(iconv_INCLUDE_DIR iconv.h
 		PATHS /opt/local/include
 		DOC "The directory where iconv.h resides"
-		NO_CMAKE_SYSTEM_PATH
 	)
-endif(APPLE)
-
-find_path(iconv_INCLUDE_DIR iconv.h
-	PATHS /opt/local/include
-	DOC "The directory where iconv.h resides"
-)
-mark_as_advanced(iconv_INCLUDE_DIR)
-
-# Prefer libraries in the same prefix as the include files
-string(REGEX REPLACE "(.*)/include/?" "\\1" iconv_BASE_DIR ${iconv_INCLUDE_DIR})
-
-find_library(iconv_LIBRARY iconv libiconv
-	HINTS "${iconv_BASE_DIR}/lib"
-	PATHS /opt/local/lib
-	DOC "The iconv library"
-)
-mark_as_advanced(iconv_LIBRARY)
-
-use_static_libs_restore()
+	mark_as_advanced(iconv_INCLUDE_DIR)
+	
+	# Prefer libraries in the same prefix as the include files
+	string(REGEX REPLACE "(.*)/include/?" "\\1" iconv_BASE_DIR ${iconv_INCLUDE_DIR})
+	
+	find_library(iconv_LIBRARY iconv libiconv
+		HINTS "${iconv_BASE_DIR}/lib"
+		PATHS /opt/local/lib
+		DOC "The iconv library"
+	)
+	mark_as_advanced(iconv_LIBRARY)
+	
+	if(static)
+		use_static_libs_restore()
+	endif()
+	
+	if(iconv_LIBRARY OR STRICT_USE)
+		break()
+	endif()
+	
+endforeach()
 
 set(iconv_DEFINITIONS)
 if(WIN32 AND iconv_USE_STATIC_LIBS)

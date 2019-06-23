@@ -41,27 +41,40 @@ if(UNIX)
 endif()
 
 include(UseStaticLibs)
-use_static_libs(LZMA _PC_LZMA)
 
-find_path(LZMA_INCLUDE_DIR lzma.h
-	HINTS
-		${_PC_LZMA_INCLUDE_DIRS}
-	DOC "The directory where lzma.h resides"
-)
-mark_as_advanced(LZMA_INCLUDE_DIR)
-
-# Prefer libraries in the same prefix as the include files
-string(REGEX REPLACE "(.*)/include/?" "\\1" LZMA_BASE_DIR ${LZMA_INCLUDE_DIR})
-
-find_library(LZMA_LIBRARY lzma liblzma
-	HINTS
-		${_PC_LZMA_LIBRARY_DIRS}
-		"${LZMA_BASE_DIR}/lib"
-	DOC "The LZMA library"
-)
-mark_as_advanced(LZMA_LIBRARY)
-
-use_static_libs_restore()
+foreach(static IN ITEMS 1 0)
+	
+	if(static)
+		use_static_libs(LZMA _PC_LZMA)
+	endif()
+	
+	find_path(LZMA_INCLUDE_DIR lzma.h
+		HINTS
+			${_PC_LZMA_INCLUDE_DIRS}
+		DOC "The directory where lzma.h resides"
+	)
+	mark_as_advanced(LZMA_INCLUDE_DIR)
+	
+	# Prefer libraries in the same prefix as the include files
+	string(REGEX REPLACE "(.*)/include/?" "\\1" LZMA_BASE_DIR ${LZMA_INCLUDE_DIR})
+	
+	find_library(LZMA_LIBRARY lzma liblzma
+		HINTS
+			${_PC_LZMA_LIBRARY_DIRS}
+			"${LZMA_BASE_DIR}/lib"
+		DOC "The LZMA library"
+	)
+	mark_as_advanced(LZMA_LIBRARY)
+	
+	if(static)
+		use_static_libs_restore()
+	endif()
+	
+	if(LZMA_LIBRARY OR STRICT_USE)
+		break()
+	endif()
+	
+endforeach()
 
 set(LZMA_DEFINITIONS)
 if(WIN32 AND LZMA_USE_STATIC_LIBS)
