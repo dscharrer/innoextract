@@ -448,9 +448,35 @@ void parse_galaxy_files(setup::info & info, bool force) {
 				
 			}
 			
-			if(check.size() >= 2 && !check[1].empty() && check[1] != "32#64#") {
-				log_warning << "Ignoring architecture constraint for GOG Galaxy file " << file.destination
-				            << ": " << check[1];
+			if(check.size() >= 2 && !check[1].empty()) {
+				const setup::file_entry::flags all_arch = setup::file_entry::Bits32 | setup::file_entry::Bits64;
+				setup::file_entry::flags arch = 0;
+				if(check[1] != "32#64#") {
+					std::vector<constraint> architectures = parse_constraints(check[1]);
+					BOOST_FOREACH(const constraint & architecture, architectures) {
+						if(architecture.negated && architectures.size() > 1) {
+							log_warning << "Ignoring architecture for GOG Galaxy file " << file.destination
+							            << ": !" << architecture.name;
+						} else if(architecture.name == "32") {
+							arch |= setup::file_entry::Bits32;
+						} else if(architecture.name == "64") {
+							arch |= setup::file_entry::Bits64;
+						} else {
+							log_warning << "Unknown architecture for GOG Galaxy file " << file.destination
+							            << ": " << architecture.name;
+						}
+						if(architecture.negated && architectures.size() <= 1) {
+							arch = all_arch & ~arch;
+						}
+					}
+					if(arch == all_arch) {
+						arch = 0;
+					}
+				}
+				if((file.options & all_arch) && (file.options & all_arch) != arch) {
+					log_warning << "Overwriting architecture constraints for GOG Galaxy file " << file.destination;
+				}
+				file.options = (file.options & ~all_arch) | arch;
 			}
 			
 			if(check.size() >= 3 && !check[2].empty()) {
