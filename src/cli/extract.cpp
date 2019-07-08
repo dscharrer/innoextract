@@ -482,12 +482,14 @@ bool insert_dirs(DirectoriesMap & processed_directories, const path_filter & inc
 }
 
 bool rename_collision(const extract_options & o, FilesMap & processed_files, const std::string & path,
-                      const processed_file & other, bool common_component, bool common_language, bool first) {
+                      const processed_file & other, bool common_component, bool common_language,
+                      bool common_arch, bool first) {
 	
 	const setup::file_entry & file = other.entry();
 	
 	bool require_number_suffix = !first || (o.collisions == RenameAllCollisions);
 	std::ostringstream oss;
+	const setup::file_entry::flags arch_flags = setup::file_entry::Bits32 | setup::file_entry::Bits64;
 	
 	if(!common_component && !file.components.empty()) {
 		if(setup::is_simple_expression(file.components)) {
@@ -502,6 +504,13 @@ bool rename_collision(const extract_options & o, FilesMap & processed_files, con
 				oss << '@' << file.languages;
 			}
 		}
+	}
+	if(!common_arch && (file.options & arch_flags) == setup::file_entry::Bits32) {
+		require_number_suffix = false;
+		oss << "@32bit";
+	} else if(!common_arch && (file.options & arch_flags) == setup::file_entry::Bits64) {
+		require_number_suffix = false;
+		oss << "@64bit";
 	}
 	
 	size_t i = 0;
@@ -536,23 +545,26 @@ void rename_collisions(const extract_options & o, FilesMap & processed_files,
 		
 		const processed_file & base = processed_files.find(path)->second;
 		const setup::file_entry & file = base.entry();
+		const setup::file_entry::flags arch_flags = setup::file_entry::Bits32 | setup::file_entry::Bits64;
 		
 		bool common_component = true;
 		bool common_language = true;
+		bool common_arch = true;
 		BOOST_FOREACH(const processed_file & other, collision.second) {
 			common_component = common_component && other.entry().components == file.components;
 			common_language = common_language && other.entry().languages == file.languages;
+			common_arch = common_arch && (other.entry().options & arch_flags) == (file.options & arch_flags);
 		}
 		
 		bool ignore_component = common_component || o.collisions != RenameAllCollisions;
 		if(rename_collision(o, processed_files, path, base,
-		                    ignore_component, common_language, true)) {
+		                    ignore_component, common_language, common_arch, true)) {
 			processed_files.erase(path);
 		}
 		
 		BOOST_FOREACH(const processed_file & other, collision.second) {
 			rename_collision(o, processed_files, path, other,
-			                 common_component, common_language, false);
+			                 common_component, common_language, common_arch, false);
 		}
 		
 	}

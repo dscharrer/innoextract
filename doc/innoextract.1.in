@@ -94,10 +94,10 @@ Inno Setup installers can contain duplicate files with the same name. This optio
 Extract only one of the colliding files. The choice is done similar to how Inno Setup overwrites files during installation. This is the default.
 .TP
 "\fBrename\fP"
-Rename files that would be overwritten using the "\fBoverwrite\fP" action by appending a suffix comprised of the file's language, the component it belongs to and/or a number to make the filename unique. The language suffix (if applicable) is also appended to the \fIdefault\fP file that would have been extracted with the "\fBoverwrite\fP" action.
+Rename files that would be overwritten using the "\fBoverwrite\fP" action by appending a suffix comprised of the file's language, it's architecture, the component it belongs to and/or a number to make the filename unique. The language suffix (if applicable) is also appended to the \fIdefault\fP file that would have been extracted with the "\fBoverwrite\fP" action.
 .TP
 "\fBrename-all\fP"
-Rename all colliding files by appending a suffix comprised of the file's language, the component it belongs to and/or a number to make the filename unique. The complete suffix is appended to both files that would have been overwritten using the "\fBoverwrite\fP" action and to those that would have overwritten other files.
+Rename all colliding files by appending a suffix comprised of the file's language, it's architecture, the component it belongs to and/or a number to make the filename unique. The complete suffix is appended to both files that would have been overwritten using the "\fBoverwrite\fP" action and to those that would have overwritten other files.
 .TP
 "\fBerror\fP"
 Exit when a collision is detected.
@@ -107,9 +107,11 @@ Exit when a collision is detected.
 
 1. If the \fBcomponent\fP is not the same for all files in the collision set (all files with the same filename), "\fB#\fP" (without quotes) followed by the component id is appended to all files that are specific to a single component.
 
-2. If the \fBlanguage\fP is not the same for all files in the collision set, "\fB@\fP" (without quotes) followed by the language id is appended to all files that are specific to a single component unless that language matches the default language specified by the \fB--default-language\fP. While the suffix is omitted for the default language, no numbered suffix is added in it's place unless needed to make the filename unique.
+2. If the \fBlanguage\fP is not the same for all files in the collision set, "\fB@\fP" (without quotes) followed by the language id is appended to all files that are specific to a single language unless that language matches the default language specified by the \fB--default-language\fP. While the suffix is omitted for the default language, no numbered suffix is added in it's place unless needed to make the filename unique.
 
-3. If no suffix was added by the previous steps, or if the filename is not yet unique, "\fB$\fP" (without quotes) followed by the lowest integer (starting at 0) to make the filename unique is appended.
+3. If the \fBarchitecture\fP is not the same for all files in the collision set, "\fB@32bit\fP" or "\fB@64bit\fP" (without quotes) is appended to all files that are specific to a single architecture.
+
+4. If no suffix was added by the previous steps, or if the filename is not yet unique, "\fB$\fP" (without quotes) followed by the lowest integer (starting at 0) to make the filename unique is appended.
 
 With the "\fBrename\fP" action, steps 1 and 3 are only applied to files that would have been overwritten by the "\fBoverwrite\fP" action while "\fBrename-all\fP" applies them to all files in the collision set.
 .TP
