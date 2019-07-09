@@ -32,17 +32,24 @@
 
 namespace util {
 
+enum known_codepages {
+	cp_utf16le = 1200,
+	cp_windows1252 = 1252,
+	cp_ascii = 20127,
+	cp_iso_8859_1 = 28591,
+	cp_utf8  = 65001,
+};
+
 typedef boost::uint32_t codepage_id;
 
 /*!
- * Convert a string to UTF-8 from a specified encoding.
- * \param from     The input string to convert.
- * \param to       The output for the converted string.
+ * Convert a string in place to UTF-8 from a specified encoding.
+ * \param data     The input string to convert.
  * \param codepage The Windows codepage number for the input string encoding.
  *
  * \note This function is not thread-safe.
  */
-void to_utf8(const std::string & from, std::string & to, codepage_id codepage = 1252);
+void to_utf8(std::string & data, codepage_id codepage = cp_windows1252);
 
 /*!
  * Convert a string from UTF-8 to a specified encoding.
@@ -52,7 +59,7 @@ void to_utf8(const std::string & from, std::string & to, codepage_id codepage = 
  *
  * \note This function is not thread-safe.
  */
-void from_utf8(const std::string & from, std::string & to, codepage_id codepage = 1252);
+void from_utf8(const std::string & from, std::string & to, codepage_id codepage = cp_windows1252);
 
 std::string encoding_name(codepage_id codepage);
 

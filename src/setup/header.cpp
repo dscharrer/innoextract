@@ -684,22 +684,19 @@ void header::load(std::istream & is, const version & version) {
 	
 	if(version < INNO_VERSION(1, 3, 0)) {
 		if(license_size > 0) {
-			std::string temp;
-			temp.resize(size_t(license_size));
-			is.read(&temp[0], license_size);
-			util::to_utf8(temp, license_text);
+			license_text.resize(size_t(license_size));
+			is.read(&license_text[0], license_size);
+			util::to_utf8(license_text);
 		}
 		if(info_before_size > 0) {
-			std::string temp;
-			temp.resize(size_t(info_before_size));
-			is.read(&temp[0], info_before_size);
-			util::to_utf8(temp, info_before);
+			info_before.resize(size_t(info_before_size));
+			is.read(&info_before[0], info_before_size);
+			util::to_utf8(info_before);
 		}
 		if(info_after_size > 0) {
-			std::string temp;
-			temp.resize(size_t(info_after_size));
-			is.read(&temp[0], info_after_size);
-			util::to_utf8(temp, info_after);
+			info_after.resize(size_t(info_after_size));
+			is.read(&info_after[0], info_after_size);
+			util::to_utf8(info_after);
 		}
 	}
 	

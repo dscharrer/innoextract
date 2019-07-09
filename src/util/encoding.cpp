@@ -78,14 +78,6 @@
 
 namespace util {
 
-enum known_codepages {
-	cp_utf16le = 1200,
-	cp_windows1252 = 1252,
-	cp_ascii = 20127,
-	cp_iso_8859_1 = 28591,
-	cp_utf8  = 65001,
-};
-
 namespace {
 
 //! Get names for encodings where iconv doesn't have the codepage alias
@@ -159,6 +151,41 @@ const char * get_encoding_name(codepage_id codepage) {
 		case 65001: return "UTF-8";
 		default: return NULL;
 	}
+}
+
+//! Check if a codepage is known to be a superset of ASCII - used for optimization only
+bool is_extended_ascii(codepage_id codepage) {
+	switch(codepage) {
+		case 874:
+		case 932:
+		case 936:
+		case 949:
+		case 950:
+		case 1250:
+		case 1251:
+		case 1252:
+		case 1253:
+		case 1254:
+		case 1255:
+		case 1256:
+		case 1257:
+		case 1258:
+		case 1270:
+		case 28591:
+		case 28592:
+		case 28593:
+		case 28594:
+		case 28595:
+		case 28596:
+		case 28597:
+		case 28598:
+		case 28599:
+		case 28603:
+		case 28605:
+		case 38598:
+			return true;
+	}
+	return false;
 }
 
 typedef boost::uint32_t unicode_char;
@@ -664,8 +691,6 @@ bool to_utf8_win32(const std::string & from, std::string & to, codepage_id codep
 
 #endif // INNOEXTRACT_HAVE_WIN32_CONV
 
-} // anonymous namespace
-
 void to_utf8(const std::string & from, std::string & to, codepage_id codepage) {
 	
 	if(from.empty()) {
@@ -699,6 +724,38 @@ void to_utf8(const std::string & from, std::string & to, codepage_id codepage) {
 	
 	to_utf8_fallback(from, to, codepage);
 	
+}
+
+} // anonymous namespace
+
+void to_utf8(std::string & data, codepage_id codepage) {
+	
+	if(data.empty()) {
+		return;
+	}
+	
+	if(codepage == cp_utf8 || codepage == cp_ascii) {
+		// Already UTF-8
+		return;
+	}
+	
+	if(is_extended_ascii(codepage)) {
+		// Already UTF-8 if string contains only ASCII characters
+		bool ascii = true;
+		BOOST_FOREACH(char c, data) {
+			if(boost::uint8_t(c) >= 128) {
+				ascii = false;
+				break;
+			}
+		}
+		if(ascii) {
+			return;
+		}
+	}
+	
+	std::string buffer;
+	to_utf8(data, buffer, codepage);
+	std::swap(data, buffer);
 }
 
 void from_utf8(const std::string & from, std::string & to, codepage_id codepage) {

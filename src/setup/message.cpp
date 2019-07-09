@@ -33,21 +33,18 @@ void message_entry::load(std::istream & is, const version & version,
                          const std::vector<language_entry> & languages) {
 	
 	is >> util::encoded_string(name, version.codepage());
-	std::string raw_value = util::binary_string::load(is);
+	is >> util::binary_string(value);
 	
 	language = util::load<boost::int32_t>(is);
 	
 	boost::uint32_t codepage;
-	if(language < 0) {
+	if(language < 0 || size_t(language) >= languages.size()) {
 		codepage = version.codepage();
-	} else if(size_t(language) >= languages.size()) {
-		value.clear();
-		return;
 	} else {
 		codepage = languages[size_t(language)].codepage;
 	}
 	
-	util::to_utf8(raw_value, value, codepage);
+	util::to_utf8(value, codepage);
 }
 
 } // namespace setup
