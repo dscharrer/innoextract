@@ -130,7 +130,7 @@ void language_entry::load(std::istream & is, const version & version) {
 	is >> util::binary_string(language_name);
 	
 	if(version == INNO_VERSION_EXT(5, 5, 7, 1)) {
-		util::load<boost::uint32_t>(is); // always 0?
+		util::binary_string::skip(is);
 	}
 	
 	is >> util::binary_string(dialog_font);
