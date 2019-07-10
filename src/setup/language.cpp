@@ -37,7 +37,7 @@ struct windows_language {
 	boost::uint16_t language_id;
 	boost::uint16_t codepage;
 	
-	bool operator<(boost::uint32_t language) {
+	bool operator<(boost::uint32_t language) const {
 		return language_id < language;
 	}
 	
