@@ -129,7 +129,7 @@ void language_entry::load(std::istream & is, const version & version) {
 	
 	is >> util::binary_string(language_name);
 	
-	if(version == INNO_VERSION_EXT(5, 5,  7, 1)) {
+	if(version == INNO_VERSION_EXT(5, 5, 7, 1)) {
 		util::load<boost::uint32_t>(is); // always 0?
 	}
 	
@@ -181,7 +181,7 @@ void language_entry::load(std::istream & is, const version & version) {
 	welcome_font_size = util::load<boost::uint32_t>(is);
 	copyright_font_size = util::load<boost::uint32_t>(is);
 	
-	if(version == INNO_VERSION_EXT(5, 5,  7, 1)) {
+	if(version == INNO_VERSION_EXT(5, 5, 7, 1)) {
 		util::load<boost::uint32_t>(is); // always 8 or 9?
 	}
 	
