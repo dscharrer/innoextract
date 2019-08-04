@@ -45,8 +45,9 @@
 
 #include "stream/slice.hpp"
 
-#include "util/console.hpp"
 #include "util/boostfs_compat.hpp"
+#include "util/console.hpp"
+#include "util/encoding.hpp"
 #include "util/fstream.hpp"
 #include "util/log.hpp"
 #include "util/process.hpp"
@@ -73,7 +74,9 @@ std::string get_game_id(const setup::info & info) {
 		}
 		
 		if(boost::iequals(entry.name, "gameID")) {
-			return entry.value;
+			id = entry.value;
+			util::to_utf8(id, info.version.codepage());
+			break;
 		}
 		
 		if(id.empty()) {
