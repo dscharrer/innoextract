@@ -38,8 +38,12 @@ void message_entry::load(std::istream & is, const version & version,
 	language = util::load<boost::int32_t>(is);
 	
 	boost::uint32_t codepage;
-	if(language < 0 || size_t(language) >= languages.size()) {
+	if(language < 0) {
 		codepage = version.codepage();
+	} else if(size_t(language) >= languages.size()) {
+		// Unknown language, don't try to decode
+		value.clear();
+		return;
 	} else {
 		codepage = languages[size_t(language)].codepage;
 	}
