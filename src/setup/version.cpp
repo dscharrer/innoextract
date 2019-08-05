@@ -170,6 +170,7 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (5.5.7)",      /* ambiguous */ INNO_VERSION_EXT(5, 5,  7, 0), 0 },
 	{ "Inno Setup Setup Data (5.5.7) (u)",  /* ambiguous */ INNO_VERSION_EXT(5, 5,  7, 0), version::Unicode },
 	{ "Inno Setup Setup Data (5.5.7) (U)",  /* ambiguous */ INNO_VERSION_EXT(5, 5,  7, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.5.8) (u)", /* unofficial */ INNO_VERSION_EXT(5, 5,  7, 0), version::Unicode },
 	{ "" /* unknown 5.5.7 (u) variant */,   /* ambiguous */ INNO_VERSION_EXT(5, 5,  7, 1), 0 },
 	{ "" /* unknown 5.5.7 (u) variant */,   /* ambiguous */ INNO_VERSION_EXT(5, 5,  7, 1), version::Unicode },
 	{ "Inno Setup Setup Data (5.6.0)",                      INNO_VERSION_EXT(5, 6,  0, 0), 0 },
