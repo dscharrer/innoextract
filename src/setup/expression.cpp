@@ -133,20 +133,26 @@ struct evaluator {
 		return result;
 	}
 	
-	bool eval_expression(bool lazy) {
+	bool eval_expression(bool lazy, bool inner = true) {
 		bool result = eval_term(lazy);
+		if(result && !inner) {
+			return result;
+		}
 		while(token == op_or || token == identifier) {
 			if(token == op_or) {
 				next();
 			}
 			result = eval_term(lazy || result) || result;
+			if(result && !inner) {
+				return result;
+			}
 		}
 		return result;
 	}
 	
 	bool eval() {
 		next();
-		return eval_expression(false);
+		return eval_expression(false, false);
 	}
 	
 };
