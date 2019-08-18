@@ -192,7 +192,7 @@ typedef boost::uint32_t unicode_char;
 
 const unicode_char replacement_char = '_';
 
-size_t get_encoding_size(codepage_id codepage) {
+size_t get_code_unit_size(codepage_id codepage) {
 	switch(codepage) {
 		case  1200: return 2u; // UTF-16LE
 		case  1201: return 2u; // UTF-16BE
@@ -205,7 +205,7 @@ size_t get_encoding_size(codepage_id codepage) {
 //! Fallback conversion that will at least work for ASCII characters
 void to_utf8_fallback(const std::string & from, std::string & to, codepage_id codepage) {
 	
-	size_t skip = get_encoding_size(codepage);
+	size_t skip = get_code_unit_size(codepage);
 	
 	size_t shift = 0;
 	switch(codepage) {
@@ -581,7 +581,7 @@ bool to_utf8_iconv(const std::string & from, std::string & to, codepage_id codep
 	
 	iconv(converter, NULL, NULL, NULL, NULL);
 	
-	size_t skip = get_encoding_size(codepage);
+	size_t skip = get_code_unit_size(codepage);
 	
 	bool warn = false;
 	
