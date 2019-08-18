@@ -125,7 +125,7 @@ struct evaluator {
 		bool result = eval_factor(lazy);
 		while(token == op_and) {
 			next();
-			result = result && eval_factor(lazy || !result);
+			result = eval_factor(lazy || !result) && result;
 		}
 		return result;
 	}
@@ -136,7 +136,7 @@ struct evaluator {
 			if(token == op_or) {
 				next();
 			}
-			result = result || eval_term(lazy || result);
+			result = eval_term(lazy || result) || result;
 		}
 		return result;
 	}

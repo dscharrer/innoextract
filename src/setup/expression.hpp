@@ -30,6 +30,9 @@
 
 namespace setup {
 
+/*
+ * Determine if the given expression is satisfied with (only) the given test variable set to true
+ */
 bool expression_match(const std::string & test, const std::string & expression);
 
 bool is_simple_expression(const std::string & expression);

@@ -14,6 +14,7 @@ innoextract 1.8 (WIP)
  - Fixed extracting files from slices larger than 2 GiB with 32-bit builds
  - Fixed output path for files with absolute paths (canonicalization now strips all unsafe characters)
  - Fixed output directory being created even when not extracting files
+ - Fixed a hang when using the --language option
  - Changed header parsing to select the first version without warnings and failing that the first without errors
 
 innoextract 1.7 (2018-06-12)
