@@ -53,7 +53,8 @@ struct evaluator {
 		paren_right,
 		identifier
 	} token;
-	std::string token_str;
+	const char * token_start;
+	size_t token_length;
 	
 	evaluator(const std::string & expr, const std::string & test)
 		: test(test), expr(expr.c_str()), token(end) { }
@@ -89,7 +90,9 @@ struct evaluator {
 				return (token = op_or);
 			}
 			
-			return (token_str.assign(start, expr), token = identifier);
+			token_start = start;
+			token_length = size_t(expr - start);
+			return (token = identifier);
 			
 		} else {
 			throw std::runtime_error(std::string("unexpected symbol: ") + *expr);
@@ -97,7 +100,7 @@ struct evaluator {
 	}
 	
 	bool eval_identifier(bool lazy) {
-		bool result = lazy || token_str == test;
+		bool result = lazy || test.compare(0, std::string::npos, token_start, token_length) == 0;
 		next();
 		return result;
 	}
