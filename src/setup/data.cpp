@@ -22,6 +22,7 @@
 
 #include <cstring>
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
@@ -31,11 +32,11 @@
 
 namespace setup {
 
-void data_entry::load(std::istream & is, const version & version) {
+void data_entry::load(std::istream & is, const info & i) {
 	
-	chunk.first_slice = util::load<boost::uint32_t>(is, version.bits());
-	chunk.last_slice = util::load<boost::uint32_t>(is, version.bits());
-	if(version < INNO_VERSION(4, 0, 0)) {
+	chunk.first_slice = util::load<boost::uint32_t>(is, i.version.bits());
+	chunk.last_slice = util::load<boost::uint32_t>(is, i.version.bits());
+	if(i.version < INNO_VERSION(4, 0, 0)) {
 		if(chunk.first_slice < 1 || chunk.last_slice < 1) {
 			log_warning << "Unexpected slice number: " << chunk.first_slice
 			            << " to " << chunk.last_slice;
@@ -46,13 +47,13 @@ void data_entry::load(std::istream & is, const version & version) {
 	
 	chunk.offset = util::load<boost::uint32_t>(is);
 	
-	if(version >= INNO_VERSION(4, 0, 1)) {
+	if(i.version >= INNO_VERSION(4, 0, 1)) {
 		file.offset = util::load<boost::uint64_t>(is);
 	} else {
 		file.offset = 0;
 	}
 	
-	if(version >= INNO_VERSION(4, 0, 0)) {
+	if(i.version >= INNO_VERSION(4, 0, 0)) {
 		file.size = util::load<boost::uint64_t>(is);
 		chunk.size = util::load<boost::uint64_t>(is);
 	} else {
@@ -61,13 +62,13 @@ void data_entry::load(std::istream & is, const version & version) {
 	}
 	uncompressed_size = file.size;
 	
-	if(version >= INNO_VERSION(5, 3, 9)) {
+	if(i.version >= INNO_VERSION(5, 3, 9)) {
 		is.read(file.checksum.sha1, std::streamsize(sizeof(file.checksum.sha1)));
 		file.checksum.type = crypto::SHA1;
-	} else if(version >= INNO_VERSION(4, 2, 0)) {
+	} else if(i.version >= INNO_VERSION(4, 2, 0)) {
 		is.read(file.checksum.md5, std::streamsize(sizeof(file.checksum.md5)));
 		file.checksum.type = crypto::MD5;
-	} else if(version >= INNO_VERSION(4, 0, 1)) {
+	} else if(i.version >= INNO_VERSION(4, 0, 1)) {
 		file.checksum.crc32 = util::load<boost::uint32_t>(is);
 		file.checksum.type = crypto::CRC32;
 	} else {
@@ -75,7 +76,7 @@ void data_entry::load(std::istream & is, const version & version) {
 		file.checksum.type = crypto::Adler32;
 	}
 	
-	if(version.bits() == 16) {
+	if(i.version.bits() == 16) {
 		
 		// 16-bit installers use the FAT filetime format
 		
@@ -118,37 +119,37 @@ void data_entry::load(std::istream & is, const version & version) {
 	
 	options = 0;
 	
-	stored_flag_reader<flags> flagreader(is, version.bits());
+	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
 	flagreader.add(VersionInfoValid);
 	flagreader.add(VersionInfoNotValid);
-	if(version >= INNO_VERSION(2, 0, 17) && version < INNO_VERSION(4, 0, 1)) {
+	if(i.version >= INNO_VERSION(2, 0, 17) && i.version < INNO_VERSION(4, 0, 1)) {
 		flagreader.add(BZipped);
 	}
-	if(version >= INNO_VERSION(4, 0, 10)) {
+	if(i.version >= INNO_VERSION(4, 0, 10)) {
 		flagreader.add(TimeStampInUTC);
 	}
-	if(version >= INNO_VERSION(4, 1, 0)) {
+	if(i.version >= INNO_VERSION(4, 1, 0)) {
 		flagreader.add(IsUninstallerExe);
 	}
-	if(version >= INNO_VERSION(4, 1, 8)) {
+	if(i.version >= INNO_VERSION(4, 1, 8)) {
 		flagreader.add(CallInstructionOptimized);
 	}
-	if(version >= INNO_VERSION(4, 2, 0)) {
+	if(i.version >= INNO_VERSION(4, 2, 0)) {
 		flagreader.add(Touch);
 	}
-	if(version >= INNO_VERSION(4, 2, 2)) {
+	if(i.version >= INNO_VERSION(4, 2, 2)) {
 		flagreader.add(ChunkEncrypted);
 	}
-	if(version >= INNO_VERSION(4, 2, 5)) {
+	if(i.version >= INNO_VERSION(4, 2, 5)) {
 		flagreader.add(ChunkCompressed);
 	} else {
 		options |= ChunkCompressed;
 	}
-	if(version >= INNO_VERSION(5, 1, 13)) {
+	if(i.version >= INNO_VERSION(5, 1, 13)) {
 		flagreader.add(SolidBreak);
 	}
-	if(version >= INNO_VERSION(5, 5, 7)) {
+	if(i.version >= INNO_VERSION(5, 5, 7)) {
 		// Actually added in Inno Setup 5.5.9 but the data version was not bumped
 		flagreader.add(Sign);
 		flagreader.add(SignOnce);
@@ -167,7 +168,7 @@ void data_entry::load(std::istream & is, const version & version) {
 	}
 	
 	if(options & ChunkEncrypted) {
-		if(version >= INNO_VERSION(5, 3, 9)) {
+		if(i.version >= INNO_VERSION(5, 3, 9)) {
 			chunk.encryption = stream::ARC4_SHA1;
 		} else {
 			chunk.encryption = stream::ARC4_MD5;
@@ -177,9 +178,9 @@ void data_entry::load(std::istream & is, const version & version) {
 	}
 	
 	if(options & CallInstructionOptimized) {
-		if(version < INNO_VERSION(5, 2, 0)) {
+		if(i.version < INNO_VERSION(5, 2, 0)) {
 			file.filter = stream::InstructionFilter4108;
-		} else if(version < INNO_VERSION(5, 3, 9)) {
+		} else if(i.version < INNO_VERSION(5, 3, 9)) {
 			file.filter = stream::InstructionFilter5200;
 		} else {
 			file.filter = stream::InstructionFilter5309;

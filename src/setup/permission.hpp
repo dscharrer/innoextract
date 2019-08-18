@@ -31,7 +31,7 @@
 
 namespace setup {
 
-struct version;
+struct info;
 
 struct permission_entry {
 	
@@ -39,7 +39,7 @@ struct permission_entry {
 	
 	std::string permissions;
 	
-	void load(std::istream & is, const version & version);
+	void load(std::istream & is, const info & i);
 	
 };
 

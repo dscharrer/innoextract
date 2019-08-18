@@ -42,54 +42,32 @@
 #include "setup/task.hpp"
 #include "setup/type.hpp"
 #include "stream/block.hpp"
+#include "util/fstream.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
+#include "util/output.hpp"
 
 namespace setup {
 
-namespace {
-
-struct no_arg { };
-
-template <class Entry, class Arg>
-void load_entry(std::istream & is, const setup::version & version,
-                       Entry & entity, Arg arg) {
-	entity.load(is, version, arg);
-}
 template <class Entry>
-void load_entry(std::istream & is, const setup::version & version,
-                                    Entry & entity, no_arg arg) {
-	(void)arg;
-	entity.load(is, version);
-}
-
-template <class Entry, class Arg>
-void load_entries(std::istream & is, const setup::version & version,
-                  info::entry_types entry_types, size_t count,
-                  std::vector<Entry> & entries, info::entry_types::enum_type entry_type,
-                  Arg arg = Arg()) {
+void info::load_entries(std::istream & is, info::entry_types entry_types, size_t count,
+                        std::vector<Entry> & entries, info::entry_types::enum_type entry_type) {
 	
 	entries.clear();
 	if(entry_types & entry_type) {
 		entries.resize(count);
 		for(size_t i = 0; i < count; i++) {
-			Entry & entry = entries[i];
-			load_entry(is, version, entry, arg);
+			entries[i].load(is, *this);
 		}
 	} else {
 		for(size_t i = 0; i < count; i++) {
 			Entry entry;
-			load_entry(is, version, entry, arg);
+			entry.load(is, *this);
 		}
 	}
 }
 
-template <class Entry>
-void load_entries(std::istream & is, const setup::version & version,
-                  info::entry_types entry_types, size_t count,
-                  std::vector<Entry> & entries, info::entry_types::enum_type entry_type) {
-	load_entries<Entry, no_arg>(is, version, entry_types, count, entries, entry_type);
-}
+namespace {
 
 void load_wizard_images(std::istream & is, const setup::version & version,
                         std::vector<std::string> & images, info::entry_types entries) {
@@ -162,9 +140,11 @@ void check_is_end(stream::block_reader::pointer & is, const char * what) {
 
 } // anonymous namespace
 
-void info::load(std::istream & is, entry_types entries, const setup::version & version) {
+void info::try_load(std::istream & is, entry_types entries, util::codepage_id force_codepage) {
 	
-	if(entries & (Messages | NoSkip)) {
+	debug("trying to load setup headers for version " << version);
+	
+	if((entries & (Messages | NoSkip)) || (!version.is_unicode() && !force_codepage)) {
 		entries |= Languages;
 	}
 	
@@ -172,27 +152,52 @@ void info::load(std::istream & is, entry_types entries, const setup::version & v
 	
 	header.load(*reader, version);
 	
-	load_entries(*reader, version, entries, header.language_count, languages, Languages);
+	load_entries(*reader, entries, header.language_count, languages, Languages);
+	
+	if(version.is_unicode()) {
+		// Unicode installers are always UTF16-LE, do not allow users to override that.
+		codepage = util::cp_utf16le;
+	} else if(force_codepage) {
+		codepage = force_codepage;
+	} else if(languages.empty()) {
+		codepage = util::cp_windows1252;
+	} else {
+		// Non-Unicode installers do not have a defined codepage but instead just assume the
+		// codepage of the system the installer is run on.
+		// Look at the list of available languages to guess a suitable codepage.
+		codepage = languages[0].codepage;
+		BOOST_FOREACH(const language_entry & language, languages) {
+			if(language.codepage == util::cp_windows1252) {
+				codepage = util::cp_windows1252;
+				break;
+			}
+		}
+	}
+	
+	header.decode(codepage);
+	BOOST_FOREACH(language_entry & language, languages) {
+		language.decode(codepage);
+	}
 	
 	if(version < INNO_VERSION(4, 0, 0)) {
 		load_wizard_and_decompressor(*reader, version, header, *this, entries);
 	}
 	
-	load_entries(*reader, version, entries, header.message_count, messages, Messages, languages);
-	load_entries(*reader, version, entries, header.permission_count, permissions, Permissions);
-	load_entries(*reader, version, entries, header.type_count, types, Types);
-	load_entries(*reader, version, entries, header.component_count, components, Components);
-	load_entries(*reader, version, entries, header.task_count, tasks, Tasks);
-	load_entries(*reader, version, entries, header.directory_count, directories, Directories);
-	load_entries(*reader, version, entries, header.file_count, files, Files);
-	load_entries(*reader, version, entries, header.icon_count, icons, Icons);
-	load_entries(*reader, version, entries, header.ini_entry_count, ini_entries, IniEntries);
-	load_entries(*reader, version, entries, header.registry_entry_count, registry_entries, RegistryEntries);
-	load_entries(*reader, version, entries, header.delete_entry_count, delete_entries, DeleteEntries);
-	load_entries(*reader, version, entries, header.uninstall_delete_entry_count, uninstall_delete_entries,
+	load_entries(*reader, entries, header.message_count, messages, Messages);
+	load_entries(*reader, entries, header.permission_count, permissions, Permissions);
+	load_entries(*reader, entries, header.type_count, types, Types);
+	load_entries(*reader, entries, header.component_count, components, Components);
+	load_entries(*reader, entries, header.task_count, tasks, Tasks);
+	load_entries(*reader, entries, header.directory_count, directories, Directories);
+	load_entries(*reader, entries, header.file_count, files, Files);
+	load_entries(*reader, entries, header.icon_count, icons, Icons);
+	load_entries(*reader, entries, header.ini_entry_count, ini_entries, IniEntries);
+	load_entries(*reader, entries, header.registry_entry_count, registry_entries, RegistryEntries);
+	load_entries(*reader, entries, header.delete_entry_count, delete_entries, DeleteEntries);
+	load_entries(*reader, entries, header.uninstall_delete_entry_count, uninstall_delete_entries,
 	             UninstallDeleteEntries);
-	load_entries(*reader, version, entries, header.run_entry_count, run_entries, RunEntries);
-	load_entries(*reader, version, entries, header.uninstall_run_entry_count, uninstall_run_entries,
+	load_entries(*reader, entries, header.run_entry_count, run_entries, RunEntries);
+	load_entries(*reader, entries, header.uninstall_run_entry_count, uninstall_run_entries,
 	             UninstallRunEntries);
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
@@ -203,12 +208,12 @@ void info::load(std::istream & is, entry_types entries, const setup::version & v
 	check_is_end(reader, "unknown data at end of primary header stream");
 	reader = stream::block_reader::get(is, version);
 	
-	load_entries(*reader, version, entries, header.data_entry_count, data_entries, DataEntries);
+	load_entries(*reader, entries, header.data_entry_count, data_entries, DataEntries);
 	
 	check_is_end(reader, "unknown data at end of secondary header stream");
 }
 
-void info::load(std::istream & is, entry_types entries) {
+void info::load(std::istream & is, entry_types entries, util::codepage_id force_codepage) {
 	
 	version.load(is);
 	
@@ -242,7 +247,7 @@ void info::load(std::istream & is, entry_types entries) {
 		try {
 			
 			// Try to parse headers for this version
-			load(is, entries, version);
+			try_load(is, entries, force_codepage);
 			
 			if(warnings) {
 				// Parsed without errors but with warnings - try other versions first
@@ -268,7 +273,7 @@ void info::load(std::istream & is, entry_types entries) {
 					// Rewind to a previous version that had better results and report those
 					version.value = listed_version;
 					warnings.restore();
-					load(is, entries, version);
+					try_load(is, entries, force_codepage);
 				} else {
 					// Otherwise. report results for the current version
 					warnings.flush();
@@ -289,7 +294,7 @@ void info::load(std::istream & is, entry_types entries) {
 	
 }
 
-info::info() { }
+info::info() : codepage(0) { }
 info::~info() { }
 
 } // namespace setup

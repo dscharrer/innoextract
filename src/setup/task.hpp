@@ -35,7 +35,7 @@
 
 namespace setup {
 
-struct version;
+struct info;
 
 struct task_entry {
 	
@@ -63,7 +63,7 @@ struct task_entry {
 	
 	flags options;
 	
-	void load(std::istream & is, const version & version);
+	void load(std::istream & is, const info & i);
 	
 };
 

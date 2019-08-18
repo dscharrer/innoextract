@@ -36,6 +36,7 @@
 #include "crypto/checksum.hpp"
 #include "setup/windows.hpp"
 #include "stream/chunk.hpp"
+#include "util/encoding.hpp"
 #include "util/enum.hpp"
 #include "util/flags.hpp"
 
@@ -277,6 +278,8 @@ struct header {
 	flags options;
 	
 	void load(std::istream & is, const version & version);
+	
+	void decode(util::codepage_id codepage);
 	
 };
 

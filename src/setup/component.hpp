@@ -37,7 +37,7 @@
 
 namespace setup {
 
-struct version;
+struct info;
 
 struct component_entry {
 	
@@ -68,7 +68,7 @@ struct component_entry {
 	
 	boost::uint64_t size;
 	
-	void load(std::istream & is, const version & version);
+	void load(std::istream & is, const info & i);
 	
 };
 

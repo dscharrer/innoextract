@@ -35,7 +35,7 @@
 
 namespace setup {
 
-struct version;
+struct info;
 
 struct ini_entry : public item {
 	
@@ -54,7 +54,7 @@ struct ini_entry : public item {
 	
 	flags options;
 	
-	void load(std::istream & is, const version & version);
+	void load(std::istream & is, const info & i);
 	
 };
 

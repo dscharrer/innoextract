@@ -28,12 +28,10 @@
 
 #include <string>
 #include <iosfwd>
-#include <vector>
 
 namespace setup {
 
-struct version;
-struct language_entry;
+struct info;
 
 struct message_entry {
 	
@@ -48,8 +46,7 @@ struct message_entry {
 	// Index into the default language entry list or -1.
 	int language;
 	
-	void load(std::istream & is, const version & version,
-	          const std::vector<language_entry> & languages);
+	void load(std::istream & is, const info & i);
 	
 };
 

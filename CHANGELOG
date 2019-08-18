@@ -9,6 +9,7 @@ innoextract 1.8 (WIP)
  - Added support for installers using an alternative setup loader magic
  - Added support for using boost_{zlib,bzip2} when statically linking Boost
  - Added support for automatically reading external setup.0 files
+ - Encoding for non-Unicode installers is now determined from the languages supported by the installer
  - Implemented parsing of GOG Galaxy architecture constraints
  - The architecture-specific suffixes @32bit and @64bit are now used to disambiguate colliding files
  - Fixed extracting files from slices larger than 2 GiB with 32-bit builds

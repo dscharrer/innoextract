@@ -20,6 +20,7 @@
 
 #include "setup/icon.hpp"
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
@@ -36,65 +37,65 @@ STORED_ENUM_MAP(stored_close_setting, icon_entry::NoSetting,
 
 } // anonymous namespace
 
-void icon_entry::load(std::istream & is, const version & version) {
+void icon_entry::load(std::istream & is, const info & i) {
 	
-	if(version < INNO_VERSION(1, 3, 0)) {
+	if(i.version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(name, version.codepage());
-	is >> util::encoded_string(filename, version.codepage());
-	is >> util::encoded_string(parameters, version.codepage());
-	is >> util::encoded_string(working_dir, version.codepage());
-	is >> util::encoded_string(icon_file, version.codepage());
-	is >> util::encoded_string(comment, version.codepage());
+	is >> util::encoded_string(name, i.codepage);
+	is >> util::encoded_string(filename, i.codepage);
+	is >> util::encoded_string(parameters, i.codepage);
+	is >> util::encoded_string(working_dir, i.codepage);
+	is >> util::encoded_string(icon_file, i.codepage);
+	is >> util::encoded_string(comment, i.codepage);
 	
-	load_condition_data(is, version);
+	load_condition_data(is, i);
 	
-	if(version >= INNO_VERSION(5, 3, 5)) {
-		is >> util::encoded_string(app_user_model_id, version.codepage());
+	if(i.version >= INNO_VERSION(5, 3, 5)) {
+		is >> util::encoded_string(app_user_model_id, i.codepage);
 	} else {
 		app_user_model_id.clear();
 	}
 	
-	load_version_data(is, version);
+	load_version_data(is, i.version);
 	
-	icon_index = util::load<boost::int32_t>(is, version.bits());
+	icon_index = util::load<boost::int32_t>(is, i.version.bits());
 	
-	if(version >= INNO_VERSION(1, 3, 24)) {
+	if(i.version >= INNO_VERSION(1, 3, 24)) {
 		show_command = util::load<boost::int32_t>(is);
 	} else {
 		show_command = 1;
 	}
-	if(version >= INNO_VERSION(1, 3, 15)) {
+	if(i.version >= INNO_VERSION(1, 3, 15)) {
 		close_on_exit = stored_enum<stored_close_setting>(is).get();
 	} else {
 		close_on_exit = NoSetting;
 	}
 	
-	if(version >= INNO_VERSION(2, 0, 7)) {
+	if(i.version >= INNO_VERSION(2, 0, 7)) {
 		hotkey = util::load<boost::uint16_t>(is);
 	} else {
 		hotkey = 0;
 	}
 	
-	stored_flag_reader<flags> flagreader(is, version.bits());
+	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
 	flagreader.add(NeverUninstall);
-	if(version < INNO_VERSION(1, 3, 26)) {
+	if(i.version < INNO_VERSION(1, 3, 26)) {
 		flagreader.add(RunMinimized);
 	}
 	flagreader.add(CreateOnlyIfFileExists);
-	if(version.bits() != 16) {
+	if(i.version.bits() != 16) {
 		flagreader.add(UseAppPaths);
 	}
-	if(version >= INNO_VERSION(5, 0, 3)) {
+	if(i.version >= INNO_VERSION(5, 0, 3)) {
 		flagreader.add(FolderShortcut);
 	}
-	if(version >= INNO_VERSION(5, 4, 2)) {
+	if(i.version >= INNO_VERSION(5, 4, 2)) {
 		flagreader.add(ExcludeFromShowInNewInstall);
 	}
-	if(version >= INNO_VERSION(5, 5, 0)) {
+	if(i.version >= INNO_VERSION(5, 5, 0)) {
 		flagreader.add(PreventPinning);
 	}
 	

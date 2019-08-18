@@ -31,6 +31,7 @@
 
 #include "setup/header.hpp"
 #include "setup/version.hpp"
+#include "util/encoding.hpp"
 #include "util/flags.hpp"
 
 namespace setup {
@@ -85,6 +86,8 @@ struct info {
 	
 	setup::version version;
 	
+	util::codepage_id codepage;
+	
 	setup::header header;
 	
 	std::vector<component_entry>  components;               //! \c Components
@@ -126,7 +129,9 @@ struct info {
 	 *                \ref loader::offsets::header_offset.
 	 * \param entries What kinds of entries to load.
 	 */
-	void load(std::istream & is, entry_types entries);
+	void load(std::istream & is, entry_types entries, util::codepage_id force_codepage = 0);
+	
+private:
 	
 	/*!
 	 * Load setup headers for a specific version.
@@ -141,7 +146,11 @@ struct info {
 	 *
 	 * This function does not set the \ref version member.
 	 */
-	void load(std::istream & is, entry_types entries, const setup::version & version);
+	void try_load(std::istream & is, entry_types entries, util::codepage_id force_codepage);
+	
+	template <class Entry>
+	void load_entries(std::istream & is, entry_types entry_types, size_t count,
+	                  std::vector<Entry> & entries, entry_types::enum_type entry_type);
 	
 };
 

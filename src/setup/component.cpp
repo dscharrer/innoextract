@@ -20,6 +20,7 @@
 
 #include "setup/component.hpp"
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
@@ -53,51 +54,52 @@ STORED_FLAGS_MAP(stored_component_flags_2,
 
 } // anonymous namespace
 
-void component_entry::load(std::istream & is, const version & version) {
+void component_entry::load(std::istream & is, const info & i) {
 	
-	is >> util::encoded_string(name, version.codepage());
-	is >> util::encoded_string(description, version.codepage());
-	is >> util::encoded_string(types, version.codepage());
-	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> util::encoded_string(languages, version.codepage());
+	is >> util::encoded_string(name, i.codepage);
+	is >> util::encoded_string(description, i.codepage);
+	is >> util::encoded_string(types, i.codepage);
+	if(i.version >= INNO_VERSION(4, 0, 1)) {
+		is >> util::encoded_string(languages, i.codepage);
 	} else {
 		languages.clear();
 	}
-	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 24))) {
-		is >> util::encoded_string(check, version.codepage());
+	if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(1, 3, 24))) {
+		is >> util::encoded_string(check, i.codepage);
 	} else {
 		check.clear();
 	}
-	if(version >= INNO_VERSION(4, 0, 0)) {
+	if(i.version >= INNO_VERSION(4, 0, 0)) {
 		extra_disk_pace_required = util::load<boost::uint64_t>(is);
 	} else {
 		extra_disk_pace_required = util::load<boost::uint32_t>(is);
 	}
-	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(3, 0, 3))) {
+	if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(3, 0, 3))) {
 		level = util::load<boost::int32_t>(is);
 	} else {
 		level = 0;
 	}
-	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(3, 0, 4))) {
+	if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(3, 0, 4))) {
 		used = util::load_bool(is);
 	} else {
 		used = true;
 	}
 	
-	winver.load(is, version);
+	winver.load(is, i.version);
 	
-	if(version >= INNO_VERSION(4, 2, 3)) {
+	if(i.version >= INNO_VERSION(4, 2, 3)) {
 		options = stored_flags<stored_component_flags_2>(is).get();
-	} else if(version >= INNO_VERSION(3, 0, 8) ||
-		        (version.is_isx() && version >= INNO_VERSION_EXT(3, 0, 6, 1))) {
+	} else if(i.version >= INNO_VERSION(3, 0, 8) ||
+		        (i.version.is_isx() && i.version >= INNO_VERSION_EXT(3, 0, 6, 1))) {
 		options = stored_flags<stored_component_flags_1>(is).get();
 	} else {
 		options = stored_flags<stored_component_flags_0>(is).get();
 	}
 	
-	if(version >= INNO_VERSION(4, 0, 0)) {
+	if(i.version >= INNO_VERSION(4, 0, 0)) {
 		size = util::load<boost::uint64_t>(is);
-	} else if(version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 24))) {
+	} else if(i.version >= INNO_VERSION(2, 0, 0) ||
+		        (i.version.is_isx() && i.version >= INNO_VERSION(1, 3, 24))) {
 		size = util::load<boost::uint32_t>(is);
 	}
 }

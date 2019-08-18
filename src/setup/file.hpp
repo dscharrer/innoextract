@@ -39,7 +39,7 @@
 
 namespace setup {
 
-struct version;
+struct info;
 
 struct file_entry : public item {
 	
@@ -113,7 +113,7 @@ struct file_entry : public item {
 	crypto::checksum checksum;
 	boost::uint64_t size;
 	
-	void load(std::istream & is, const version & version);
+	void load(std::istream & is, const info & i);
 	
 };
 

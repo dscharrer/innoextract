@@ -20,6 +20,7 @@
 
 #include "setup/type.hpp"
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
@@ -51,35 +52,35 @@ NAMED_FLAGS(setup::type_flags)
 
 namespace setup {
 
-void type_entry::load(std::istream & is, const version & version) {
+void type_entry::load(std::istream & is, const info & i) {
 	
 	USE_FLAG_NAMES(setup::type_flags)
 	
-	is >> util::encoded_string(name, version.codepage());
-	is >> util::encoded_string(description, version.codepage());
-	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> util::encoded_string(languages, version.codepage());
+	is >> util::encoded_string(name, i.codepage);
+	is >> util::encoded_string(description, i.codepage);
+	if(i.version >= INNO_VERSION(4, 0, 1)) {
+		is >> util::encoded_string(languages, i.codepage);
 	} else {
 		languages.clear();
 	}
-	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 24))) {
-		is >> util::encoded_string(check, version.codepage());
+	if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(1, 3, 24))) {
+		is >> util::encoded_string(check, i.codepage);
 	} else {
 		check.clear();
 	}
 	
-	winver.load(is, version);
+	winver.load(is, i.version);
 	
 	type_flags options = stored_flags<stored_type_flags>(is).get();
 	custom_type = ((options & CustomSetupType) != 0);
 	
-	if(version >= INNO_VERSION(4, 0, 3)) {
+	if(i.version >= INNO_VERSION(4, 0, 3)) {
 		type = stored_enum<stored_setup_type>(is).get();
 	} else {
 		type = User;
 	}
 	
-	if(version >= INNO_VERSION(4, 0, 0)) {
+	if(i.version >= INNO_VERSION(4, 0, 0)) {
 		size = util::load<boost::uint64_t>(is);
 	} else {
 		size = util::load<boost::uint32_t>(is);

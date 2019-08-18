@@ -75,7 +75,7 @@ std::string get_game_id(const setup::info & info) {
 		
 		if(boost::iequals(entry.name, "gameID")) {
 			id = entry.value;
-			util::to_utf8(id, info.version.codepage());
+			util::to_utf8(id, info.codepage);
 			break;
 		}
 		

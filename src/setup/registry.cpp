@@ -22,6 +22,7 @@
 
 #include <boost/cstdint.hpp>
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
@@ -58,73 +59,73 @@ STORED_ENUM_MAP(stored_registry_entry_type_2, registry_entry::None,
 
 } // anonymous namespace
 
-void registry_entry::load(std::istream & is, const version & version) {
+void registry_entry::load(std::istream & is, const info & i) {
 	
-	if(version < INNO_VERSION(1, 3, 0)) {
+	if(i.version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(key, version.codepage());
-	if(version.bits() != 16) {
-		is >> util::encoded_string(name, version.codepage());
+	is >> util::encoded_string(key, i.codepage);
+	if(i.version.bits() != 16) {
+		is >> util::encoded_string(name, i.codepage);
 	} else {
 		name.clear();
 	}
 	is >> util::binary_string(value);
 	
-	load_condition_data(is, version);
+	load_condition_data(is, i);
 	
-	if(version >= INNO_VERSION(4, 0, 11) && version < INNO_VERSION(4, 1, 0)) {
-		is >> util::encoded_string(permissions, version.codepage());
+	if(i.version >= INNO_VERSION(4, 0, 11) && i.version < INNO_VERSION(4, 1, 0)) {
+		is >> util::binary_string(permissions);
 	} else {
 		permissions.clear();
 	}
 	
-	load_version_data(is, version);
+	load_version_data(is, i.version);
 	
-	if(version.bits() != 16) {
+	if(i.version.bits() != 16) {
 		hive = hive_name(util::load<boost::uint32_t>(is) & ~0x80000000);
 	} else {
 		hive = Unset;
 	}
 	
-	if(version >= INNO_VERSION(4, 1, 0)) {
+	if(i.version >= INNO_VERSION(4, 1, 0)) {
 		permission = util::load<boost::int16_t>(is);
 	} else {
 		permission = -1;
 	}
 	
-	if(version >= INNO_VERSION(5, 2, 5)) {
+	if(i.version >= INNO_VERSION(5, 2, 5)) {
 		type = stored_enum<stored_registry_entry_type_2>(is).get();
-	} else if(version.bits() != 16) {
+	} else if(i.version.bits() != 16) {
 		type = stored_enum<stored_registry_entry_type_1>(is).get();
 	} else {
 		type = stored_enum<stored_registry_entry_type_0>(is).get();
 	}
 	
-	stored_flag_reader<flags> flagreader(is, version.bits());
+	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
-	if(version.bits() != 16) {
+	if(i.version.bits() != 16) {
 		flagreader.add(CreateValueIfDoesntExist);
 		flagreader.add(UninsDeleteValue);
 	}
 	flagreader.add(UninsClearValue);
 	flagreader.add(UninsDeleteEntireKey);
 	flagreader.add(UninsDeleteEntireKeyIfEmpty);
-	if(version >= INNO_VERSION(1, 2, 6)) {
+	if(i.version >= INNO_VERSION(1, 2, 6)) {
 		flagreader.add(PreserveStringType);
 	}
-	if(version >= INNO_VERSION(1, 3, 9)) {
+	if(i.version >= INNO_VERSION(1, 3, 9)) {
 		flagreader.add(DeleteKey);
 		flagreader.add(DeleteValue);
 	}
-	if(version >= INNO_VERSION(1, 3, 12)) {
+	if(i.version >= INNO_VERSION(1, 3, 12)) {
 		flagreader.add(NoError);
 	}
-	if(version >= INNO_VERSION(1, 3, 16)) {
+	if(i.version >= INNO_VERSION(1, 3, 16)) {
 		flagreader.add(DontCreateKey);
 	}
-	if(version >= INNO_VERSION(5, 1, 0)) {
+	if(i.version >= INNO_VERSION(5, 1, 0)) {
 		flagreader.add(Bits32);
 		flagreader.add(Bits64);
 	}

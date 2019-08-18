@@ -34,7 +34,7 @@
 
 namespace setup {
 
-struct version;
+struct info;
 
 struct delete_entry : public item {
 	
@@ -48,7 +48,7 @@ struct delete_entry : public item {
 	
 	target_type type;
 	
-	void load(std::istream & is, const version & version);
+	void load(std::istream & is, const info & i);
 	
 };
 

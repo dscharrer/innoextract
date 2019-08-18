@@ -35,7 +35,7 @@
 
 namespace setup {
 
-struct version;
+struct info;
 
 struct run_entry : public item {
 	
@@ -72,7 +72,7 @@ struct run_entry : public item {
 	
 	flags options;
 	
-	void load(std::istream & is, const version & version);
+	void load(std::istream & is, const info & i);
 	
 };
 

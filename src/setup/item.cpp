@@ -20,37 +20,38 @@
 
 #include "setup/item.hpp"
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 
 namespace setup {
 
-void item::load_condition_data(std::istream & is, const version & version) {
+void item::load_condition_data(std::istream & is, const info & i) {
 	
-	if(version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 8))) {
-		is >> util::encoded_string(components, version.codepage());
+	if(i.version >= INNO_VERSION(2, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(1, 3, 8))) {
+		is >> util::encoded_string(components, i.codepage);
 	} else {
 		components.clear();
 	}
-	if(version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 17))) {
-		is >> util::encoded_string(tasks, version.codepage());
+	if(i.version >= INNO_VERSION(2, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(1, 3, 17))) {
+		is >> util::encoded_string(tasks, i.codepage);
 	} else {
 		tasks.clear();
 	}
-	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> util::encoded_string(languages, version.codepage());
+	if(i.version >= INNO_VERSION(4, 0, 1)) {
+		is >> util::encoded_string(languages, i.codepage);
 	} else {
 		languages.clear();
 	}
-	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 24))) {
-		is >> util::encoded_string(check, version.codepage());
+	if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(1, 3, 24))) {
+		is >> util::encoded_string(check, i.codepage);
 	} else {
 		check.clear();
 	}
 	
-	if(version >= INNO_VERSION(4, 1, 0)) {
-		is >> util::encoded_string(after_install, version.codepage());
-		is >> util::encoded_string(before_install, version.codepage());
+	if(i.version >= INNO_VERSION(4, 1, 0)) {
+		is >> util::encoded_string(after_install, i.codepage);
+		is >> util::encoded_string(before_install, i.codepage);
 	} else {
 		after_install.clear(), before_install.clear();
 	}

@@ -660,10 +660,10 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 				std::cout << '\n';
 			}
 			if(o.silent) {
-				std::cout << util::encoding_name(info.version.codepage()) << '\n';
+				std::cout << util::encoding_name(info.codepage) << '\n';
 			} else {
 				std::cout << "Password encoding: " << color::yellow
-				          << util::encoding_name(info.version.codepage()) << color::reset << '\n';
+				          << util::encoding_name(info.codepage) << color::reset << '\n';
 			}
 		} else if(!o.quiet) {
 			std::cout << "Setup is not passworded!\n";
@@ -945,7 +945,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 			log_warning << "Setup contains encrypted files, use the --password option to extract them";
 		}
 	} else {
-		util::from_utf8(o.password, password, info.version.codepage());
+		util::from_utf8(o.password, password, info.codepage);
 		if(info.header.options & setup::header::Password) {
 			crypto::hasher checksum(info.header.password.type);
 			checksum.update(info.header.password_salt.c_str(), info.header.password_salt.length());

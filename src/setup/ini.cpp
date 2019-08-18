@@ -22,6 +22,7 @@
 
 #include <boost/cstdint.hpp>
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
@@ -40,25 +41,25 @@ STORED_FLAGS_MAP(stored_ini_flags,
 
 } // anonymous namespace
 
-void ini_entry::load(std::istream & is, const version & version) {
+void ini_entry::load(std::istream & is, const info & i) {
 	
-	if(version < INNO_VERSION(1, 3, 0)) {
+	if(i.version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(inifile, version.codepage());
+	is >> util::encoded_string(inifile, i.codepage);
 	if(inifile.empty()) {
 		inifile = "{windows}/WIN.INI";
 	}
-	is >> util::encoded_string(section, version.codepage());
-	is >> util::encoded_string(key, version.codepage());
-	is >> util::encoded_string(value, version.codepage());
+	is >> util::encoded_string(section, i.codepage);
+	is >> util::encoded_string(key, i.codepage);
+	is >> util::encoded_string(value, i.codepage);
 	
-	load_condition_data(is, version);
+	load_condition_data(is, i);
 	
-	load_version_data(is, version);
+	load_version_data(is, i.version);
 	
-	if(version.bits() != 16) {
+	if(i.version.bits() != 16) {
 		options = stored_flags<stored_ini_flags>(is).get();
 	} else {
 		options = stored_flags<stored_ini_flags, 16>(is).get();

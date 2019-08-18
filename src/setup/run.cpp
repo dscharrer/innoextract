@@ -22,6 +22,7 @@
 
 #include <boost/cstdint.hpp>
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
@@ -38,39 +39,39 @@ STORED_ENUM_MAP(stored_run_wait_condition, run_entry::WaitUntilTerminated,
 
 } // anonymous namespace
 
-void run_entry::load(std::istream & is, const version & version) {
+void run_entry::load(std::istream & is, const info & i) {
 	
-	if(version < INNO_VERSION(1, 3, 0)) {
+	if(i.version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(name, version.codepage());
-	is >> util::encoded_string(parameters, version.codepage());
-	is >> util::encoded_string(working_dir, version.codepage());
-	if(version >= INNO_VERSION(1, 3, 9)) {
-		is >> util::encoded_string(run_once_id, version.codepage());
+	is >> util::encoded_string(name, i.codepage);
+	is >> util::encoded_string(parameters, i.codepage);
+	is >> util::encoded_string(working_dir, i.codepage);
+	if(i.version >= INNO_VERSION(1, 3, 9)) {
+		is >> util::encoded_string(run_once_id, i.codepage);
 	} else {
 		run_once_id.clear();
 	}
-	if(version >= INNO_VERSION(2, 0, 2)) {
-		is >> util::encoded_string(status_message, version.codepage());
+	if(i.version >= INNO_VERSION(2, 0, 2)) {
+		is >> util::encoded_string(status_message, i.codepage);
 	} else {
 		status_message.clear();
 	}
-	if(version >= INNO_VERSION(5, 1, 13)) {
-		is >> util::encoded_string(verb, version.codepage());
+	if(i.version >= INNO_VERSION(5, 1, 13)) {
+		is >> util::encoded_string(verb, i.codepage);
 	} else {
 		verb.clear();
 	}
-	if(version >= INNO_VERSION(2, 0, 0) || version.is_isx()) {
-		is >> util::encoded_string(description, version.codepage());
+	if(i.version >= INNO_VERSION(2, 0, 0) || i.version.is_isx()) {
+		is >> util::encoded_string(description, i.codepage);
 	}
 	
-	load_condition_data(is, version);
+	load_condition_data(is, i);
 	
-	load_version_data(is, version);
+	load_version_data(is, i.version);
 	
-	if(version >= INNO_VERSION(1, 3, 24)) {
+	if(i.version >= INNO_VERSION(1, 3, 24)) {
 		show_command = util::load<boost::int32_t>(is);
 	} else {
 		show_command = 0;
@@ -78,28 +79,28 @@ void run_entry::load(std::istream & is, const version & version) {
 	
 	wait = stored_enum<stored_run_wait_condition>(is).get();
 	
-	stored_flag_reader<flags> flagreader(is, version.bits());
+	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
-	if(version >= INNO_VERSION(1, 2, 3)) {
+	if(i.version >= INNO_VERSION(1, 2, 3)) {
 		flagreader.add(ShellExec);
 	}
-	if(version >= INNO_VERSION(1, 3, 9) || (version.is_isx() && version >= INNO_VERSION(1, 3, 8))) {
+	if(i.version >= INNO_VERSION(1, 3, 9) || (i.version.is_isx() && i.version >= INNO_VERSION(1, 3, 8))) {
 		flagreader.add(SkipIfDoesntExist);
 	}
-	if(version >= INNO_VERSION(2, 0, 0)) {
+	if(i.version >= INNO_VERSION(2, 0, 0)) {
 		flagreader.add(PostInstall);
 		flagreader.add(Unchecked);
 		flagreader.add(SkipIfSilent);
 		flagreader.add(SkipIfNotSilent);
 	}
-	if(version >= INNO_VERSION(2, 0, 8)) {
+	if(i.version >= INNO_VERSION(2, 0, 8)) {
 		flagreader.add(HideWizard);
 	}
-	if(version >= INNO_VERSION(5, 1, 10)) {
+	if(i.version >= INNO_VERSION(5, 1, 10)) {
 		flagreader.add(Bits32);
 		flagreader.add(Bits64);
 	}
-	if(version >= INNO_VERSION(5, 2, 0)) {
+	if(i.version >= INNO_VERSION(5, 2, 0)) {
 		flagreader.add(RunAsOriginalUser);
 	}
 	

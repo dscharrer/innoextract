@@ -20,6 +20,7 @@
 
 #include "setup/file.hpp"
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
@@ -70,35 +71,35 @@ NAMES(setup::file_copy_mode, "File Copy Mode",
 
 namespace setup {
 
-void file_entry::load(std::istream & is, const version & version) {
+void file_entry::load(std::istream & is, const info & i) {
 	
 	USE_ENUM_NAMES(file_copy_mode)
 	
 	options = 0;
 	
-	if(version < INNO_VERSION(1, 3, 0)) {
+	if(i.version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(source, version.codepage());
-	is >> util::encoded_string(destination, version.codepage());
-	is >> util::encoded_string(install_font_name, version.codepage());
-	if(version >= INNO_VERSION(5, 2, 5)) {
-		is >> util::encoded_string(strong_assembly_name, version.codepage());
+	is >> util::encoded_string(source, i.codepage);
+	is >> util::encoded_string(destination, i.codepage);
+	is >> util::encoded_string(install_font_name, i.codepage);
+	if(i.version >= INNO_VERSION(5, 2, 5)) {
+		is >> util::encoded_string(strong_assembly_name, i.codepage);
 	} else {
 		strong_assembly_name.clear();
 	}
 	
-	load_condition_data(is, version);
+	load_condition_data(is, i);
 	
-	load_version_data(is, version);
+	load_version_data(is, i.version);
 	
-	location = util::load<boost::uint32_t>(is, version.bits());
-	attributes = util::load<boost::uint32_t>(is, version.bits());
-	external_size = (version >= INNO_VERSION(4, 0, 0)) ? util::load<boost::uint64_t>(is)
-	                                                   : util::load<boost::uint32_t>(is);
+	location = util::load<boost::uint32_t>(is, i.version.bits());
+	attributes = util::load<boost::uint32_t>(is, i.version.bits());
+	external_size = (i.version >= INNO_VERSION(4, 0, 0)) ? util::load<boost::uint64_t>(is)
+	                                                     : util::load<boost::uint32_t>(is);
 	
-	if(version < INNO_VERSION(3, 0, 5)) {
+	if(i.version < INNO_VERSION(3, 0, 5)) {
 		file_copy_mode copyMode = stored_enum<stored_file_copy_mode>(is).get();
 		switch(copyMode) {
 			case cmNormal: options |= PromptIfOlder; break;
@@ -108,89 +109,90 @@ void file_entry::load(std::istream & is, const version & version) {
 		}
 	}
 	
-	if(version >= INNO_VERSION(4, 1, 0)) {
+	if(i.version >= INNO_VERSION(4, 1, 0)) {
 		permission = util::load<boost::int16_t>(is);
 	} else {
 		permission = boost::int16_t(-1);
 	}
 	
-	stored_flag_reader<flags> flagreader(is, version.bits());
+	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
 	flagreader.add(ConfirmOverwrite);
 	flagreader.add(NeverUninstall);
 	flagreader.add(RestartReplace);
 	flagreader.add(DeleteAfterInstall);
-	if(version.bits() != 16) {
+	if(i.version.bits() != 16) {
 		flagreader.add(RegisterServer);
 		flagreader.add(RegisterTypeLib);
 		flagreader.add(SharedFile);
 	}
-	if(version < INNO_VERSION(2, 0, 0) && !version.is_isx()) {
+	if(i.version < INNO_VERSION(2, 0, 0) && !i.version.is_isx()) {
 		flagreader.add(IsReadmeFile);
 	}
 	flagreader.add(CompareTimeStamp);
 	flagreader.add(FontIsNotTrueType);
-	if(version >= INNO_VERSION(1, 2, 5)) {
+	if(i.version >= INNO_VERSION(1, 2, 5)) {
 		flagreader.add(SkipIfSourceDoesntExist);
 	}
-	if(version >= INNO_VERSION(1, 2, 6)) {
+	if(i.version >= INNO_VERSION(1, 2, 6)) {
 		flagreader.add(OverwriteReadOnly);
 	}
-	if(version >= INNO_VERSION(1, 3, 21)) {
+	if(i.version >= INNO_VERSION(1, 3, 21)) {
 		flagreader.add(OverwriteSameVersion);
 		flagreader.add(CustomDestName);
 	}
-	if(version >= INNO_VERSION(1, 3, 25)) {
+	if(i.version >= INNO_VERSION(1, 3, 25)) {
 		flagreader.add(OnlyIfDestFileExists);
 	}
-	if(version >= INNO_VERSION(2, 0, 5)) {
+	if(i.version >= INNO_VERSION(2, 0, 5)) {
 		flagreader.add(NoRegError);
 	}
-	if(version >= INNO_VERSION(3, 0, 1)) {
+	if(i.version >= INNO_VERSION(3, 0, 1)) {
 		flagreader.add(UninsRestartDelete);
 	}
-	if(version >= INNO_VERSION(3, 0, 5)) {
+	if(i.version >= INNO_VERSION(3, 0, 5)) {
 		flagreader.add(OnlyIfDoesntExist);
 		flagreader.add(IgnoreVersion);
 		flagreader.add(PromptIfOlder);
 	}
-	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION_EXT(3, 0, 6, 1))) {
+	if(i.version >= INNO_VERSION(4, 0, 0) ||
+	   (i.version.is_isx() && i.version >= INNO_VERSION_EXT(3, 0, 6, 1))) {
 		flagreader.add(DontCopy);
 	}
-	if(version >= INNO_VERSION(4, 0, 5)) {
+	if(i.version >= INNO_VERSION(4, 0, 5)) {
 		flagreader.add(UninsRemoveReadOnly);
 	}
-	if(version >= INNO_VERSION(4, 1, 8)) {
+	if(i.version >= INNO_VERSION(4, 1, 8)) {
 		flagreader.add(RecurseSubDirsExternal);
 	}
-	if(version >= INNO_VERSION(4, 2, 1)) {
+	if(i.version >= INNO_VERSION(4, 2, 1)) {
 		flagreader.add(ReplaceSameVersionIfContentsDiffer);
 	}
-	if(version >= INNO_VERSION(4, 2, 5)) {
+	if(i.version >= INNO_VERSION(4, 2, 5)) {
 		flagreader.add(DontVerifyChecksum);
 	}
-	if(version >= INNO_VERSION(5, 0, 3)) {
+	if(i.version >= INNO_VERSION(5, 0, 3)) {
 		flagreader.add(UninsNoSharedFilePrompt);
 	}
-	if(version >= INNO_VERSION(5, 1, 0)) {
+	if(i.version >= INNO_VERSION(5, 1, 0)) {
 		flagreader.add(CreateAllSubDirs);
 	}
-	if(version >= INNO_VERSION(5, 1, 2)) {
+	if(i.version >= INNO_VERSION(5, 1, 2)) {
 		flagreader.add(Bits32);
 		flagreader.add(Bits64);
 	}
-	if(version >= INNO_VERSION(5, 2, 0)) {
+	if(i.version >= INNO_VERSION(5, 2, 0)) {
 		flagreader.add(ExternalSizePreset);
 		flagreader.add(SetNtfsCompression);
 		flagreader.add(UnsetNtfsCompression);
 	}
-	if(version >= INNO_VERSION(5, 2, 5)) {
+	if(i.version >= INNO_VERSION(5, 2, 5)) {
 		flagreader.add(GacInstall);
 	}
 	
 	options |= flagreader;
 	
-	if(version.bits() == 16 || version >= INNO_VERSION(5, 0, 0)) {
+	if(i.version.bits() == 16 || i.version >= INNO_VERSION(5, 0, 0)) {
 		type = stored_enum<stored_file_type_0>(is).get();
 	} else {
 		type = stored_enum<stored_file_type_1>(is).get();

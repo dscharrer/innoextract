@@ -31,9 +31,11 @@
 
 #include <boost/cstdint.hpp>
 
+#include "util/encoding.hpp"
+
 namespace setup {
 
-struct version;
+struct info;
 
 struct language_entry {
 	
@@ -60,7 +62,9 @@ struct language_entry {
 	
 	bool right_to_left;
 	
-	void load(std::istream & is, const version & version);
+	void load(std::istream & is, const info & i);
+	
+	void decode(util::codepage_id codepage);
 	
 };
 

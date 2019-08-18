@@ -20,6 +20,7 @@
 
 #include "setup/directory.hpp"
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
@@ -45,39 +46,39 @@ STORED_FLAGS_MAP(stored_inno_directory_options_1,
 
 } // anonymous namespace
 
-void directory_entry::load(std::istream & is, const version & version) {
+void directory_entry::load(std::istream & is, const info & i) {
 	
-	if(version < INNO_VERSION(1, 3, 0)) {
+	if(i.version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(name, version.codepage());
+	is >> util::encoded_string(name, i.codepage);
 	
-	load_condition_data(is, version);
+	load_condition_data(is, i);
 	
-	if(version >= INNO_VERSION(4, 0, 11) && version < INNO_VERSION(4, 1, 0)) {
-		is >> util::encoded_string(permissions, version.codepage());
+	if(i.version >= INNO_VERSION(4, 0, 11) && i.version < INNO_VERSION(4, 1, 0)) {
+		is >> util::binary_string(permissions);
 	} else {
 		permissions.clear();
 	}
 	
-	if(version >= INNO_VERSION(2, 0, 11)) {
+	if(i.version >= INNO_VERSION(2, 0, 11)) {
 		attributes = util::load<boost::uint32_t>(is);
 	} else {
 		attributes = 0;
 	}
 	
-	load_version_data(is, version);
+	load_version_data(is, i.version);
 	
-	if(version >= INNO_VERSION(4, 1, 0)) {
+	if(i.version >= INNO_VERSION(4, 1, 0)) {
 		permission = util::load<boost::int16_t>(is);
 	} else {
 		permission = boost::int16_t(-1);
 	}
 	
-	if(version >= INNO_VERSION(5, 2, 0)) {
+	if(i.version >= INNO_VERSION(5, 2, 0)) {
 		options = stored_flags<stored_inno_directory_options_1>(is).get();
-	} else if(version.bits() != 16) {
+	} else if(i.version.bits() != 16) {
 		options = stored_flags<stored_inno_directory_options_0>(is).get();
 	} else {
 		options = stored_flags<stored_inno_directory_options_0, 16>(is).get();

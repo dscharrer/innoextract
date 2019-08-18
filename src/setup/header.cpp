@@ -26,7 +26,6 @@
 #include <boost/static_assert.hpp>
 
 #include "setup/version.hpp"
-#include "util/encoding.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
 
@@ -152,38 +151,40 @@ void header::load(std::istream & is, const version & version) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the setup header
 	}
 	
-	is >> util::encoded_string(app_name, version.codepage());
-	is >> util::encoded_string(app_versioned_name, version.codepage());
+	is >> util::binary_string(app_name);
+	is >> util::binary_string(app_versioned_name);
 	if(version >= INNO_VERSION(1, 3, 0)) {
-		is >> util::encoded_string(app_id, version.codepage());
+		is >> util::binary_string(app_id);
+	} else {
+		app_id.clear();
 	}
-	is >> util::encoded_string(app_copyright, version.codepage());
+	is >> util::binary_string(app_copyright);
 	if(version >= INNO_VERSION(1, 3, 0)) {
-		is >> util::encoded_string(app_publisher, version.codepage());
-		is >> util::encoded_string(app_publisher_url, version.codepage());
+		is >> util::binary_string(app_publisher);
+		is >> util::binary_string(app_publisher_url);
 	} else {
 		app_publisher.clear(), app_publisher_url.clear();
 	}
 	if(version >= INNO_VERSION(5, 1, 13)) {
-		is >> util::encoded_string(app_support_phone, version.codepage());
+		is >> util::binary_string(app_support_phone);
 	} else {
 		app_support_phone.clear();
 	}
 	if(version >= INNO_VERSION(1, 3, 0)) {
-		is >> util::encoded_string(app_support_url, version.codepage());
-		is >> util::encoded_string(app_updates_url, version.codepage());
-		is >> util::encoded_string(app_version, version.codepage());
+		is >> util::binary_string(app_support_url);
+		is >> util::binary_string(app_updates_url);
+		is >> util::binary_string(app_version);
 	} else {
 		app_support_url.clear(), app_updates_url.clear(), app_version.clear();
 	}
-	is >> util::encoded_string(default_dir_name, version.codepage());
-	is >> util::encoded_string(default_group_name, version.codepage());
+	is >> util::binary_string(default_dir_name);
+	is >> util::binary_string(default_group_name);
 	if(version < INNO_VERSION(3, 0, 0)) {
 		is >> util::ansi_string(uninstall_icon_name);
 	} else {
 		uninstall_icon_name.clear();
 	}
-	is >> util::encoded_string(base_filename, version.codepage());
+	is >> util::binary_string(base_filename);
 	if(version >= INNO_VERSION(1, 3, 0) && version < INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
@@ -192,29 +193,29 @@ void header::load(std::istream & is, const version & version) {
 		license_text.clear(), info_before.clear(), info_after.clear();
 	}
 	if(version >= INNO_VERSION(1, 3, 3)) {
-		is >> util::encoded_string(uninstall_files_dir, version.codepage());
+		is >> util::binary_string(uninstall_files_dir);
 	} else {
 		uninstall_files_dir.clear();
 	}
 	if(version >= INNO_VERSION(1, 3, 6)) {
-		is >> util::encoded_string(uninstall_name, version.codepage());
-		is >> util::encoded_string(uninstall_icon, version.codepage());
+		is >> util::binary_string(uninstall_name);
+		is >> util::binary_string(uninstall_icon);
 	} else {
 		uninstall_name.clear(), uninstall_icon.clear();
 	}
 	if(version >= INNO_VERSION(1, 3, 14)) {
-		is >> util::encoded_string(app_mutex, version.codepage());
+		is >> util::binary_string(app_mutex);
 	} else {
 		app_mutex.clear();
 	}
 	if(version >= INNO_VERSION(3, 0, 0)) {
-		is >> util::encoded_string(default_user_name, version.codepage());
-		is >> util::encoded_string(default_user_organisation, version.codepage());
+		is >> util::binary_string(default_user_name);
+		is >> util::binary_string(default_user_organisation);
 	} else {
 		default_user_name.clear(), default_user_organisation.clear();
 	}
 	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION_EXT(3, 0, 6, 1))) {
-		is >> util::encoded_string(default_serial, version.codepage());
+		is >> util::binary_string(default_serial);
 	} else {
 		default_serial.clear();
 	}
@@ -225,37 +226,37 @@ void header::load(std::istream & is, const version & version) {
 		compiled_code.clear();
 	}
 	if(version >= INNO_VERSION(4, 2, 4)) {
-		is >> util::encoded_string(app_readme_file, version.codepage());
-		is >> util::encoded_string(app_contact, version.codepage());
-		is >> util::encoded_string(app_comments, version.codepage());
-		is >> util::encoded_string(app_modify_path, version.codepage());
+		is >> util::binary_string(app_readme_file);
+		is >> util::binary_string(app_contact);
+		is >> util::binary_string(app_comments);
+		is >> util::binary_string(app_modify_path);
 	} else {
 		app_readme_file.clear(), app_contact.clear();
 		app_comments.clear(), app_modify_path.clear();
 	}
 	if(version >= INNO_VERSION(5, 3, 8)) {
-		is >> util::encoded_string(create_uninstall_registry_key, version.codepage());
+		is >> util::binary_string(create_uninstall_registry_key);
 	} else {
 		create_uninstall_registry_key.clear();
 	}
 	if(version >= INNO_VERSION(5, 3, 10)) {
-		is >> util::encoded_string(uninstallable, version.codepage());
+		is >> util::binary_string(uninstallable);
 	} else {
 		uninstallable.clear();
 	}
 	if(version >= INNO_VERSION(5, 5, 0)) {
-		is >> util::encoded_string(close_applications_filter, version.codepage());
+		is >> util::binary_string(close_applications_filter);
 	} else {
 		close_applications_filter.clear();
 	}
 	if(version >= INNO_VERSION(5, 5, 6)) {
-		is >> util::encoded_string(setup_mutex, version.codepage());
+		is >> util::binary_string(setup_mutex);
 	} else {
 		setup_mutex.clear();
 	}
 	if(version >= INNO_VERSION(5, 6, 1)) {
-		is >> util::encoded_string(changes_environment, version.codepage());
-		is >> util::encoded_string(changes_associations, version.codepage());
+		is >> util::binary_string(changes_environment);
+		is >> util::binary_string(changes_associations);
 	} else {
 		changes_environment.clear();
 		changes_associations.clear();
@@ -699,6 +700,41 @@ void header::load(std::istream & is, const version & version) {
 			util::to_utf8(info_after);
 		}
 	}
+	
+}
+
+void header::decode(util::codepage_id codepage) {
+	
+	util::to_utf8(app_name, codepage);
+	util::to_utf8(app_versioned_name, codepage);
+	util::to_utf8(app_id, codepage);
+	util::to_utf8(app_copyright, codepage);
+	util::to_utf8(app_publisher, codepage);
+	util::to_utf8(app_publisher_url, codepage);
+	util::to_utf8(app_support_phone, codepage);
+	util::to_utf8(app_support_url, codepage);
+	util::to_utf8(app_updates_url, codepage);
+	util::to_utf8(app_version, codepage);
+	util::to_utf8(default_dir_name, codepage);
+	util::to_utf8(default_group_name, codepage);
+	util::to_utf8(base_filename, codepage);
+	util::to_utf8(uninstall_files_dir, codepage);
+	util::to_utf8(uninstall_name, codepage);
+	util::to_utf8(uninstall_icon, codepage);
+	util::to_utf8(app_mutex, codepage);
+	util::to_utf8(default_user_name, codepage);
+	util::to_utf8(default_user_organisation, codepage);
+	util::to_utf8(default_serial, codepage);
+	util::to_utf8(app_readme_file, codepage);
+	util::to_utf8(app_contact, codepage);
+	util::to_utf8(app_comments, codepage);
+	util::to_utf8(app_modify_path, codepage);
+	util::to_utf8(create_uninstall_registry_key, codepage);
+	util::to_utf8(uninstallable, codepage);
+	util::to_utf8(close_applications_filter, codepage);
+	util::to_utf8(setup_mutex, codepage);
+	util::to_utf8(changes_environment, codepage);
+	util::to_utf8(changes_associations, codepage);
 	
 }
 

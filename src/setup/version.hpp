@@ -81,9 +81,6 @@ struct version {
 	bool is_unicode() const { return (variant & Unicode) != 0; }
 	bool is_isx() const { return (variant & ISX) != 0; }
 	
-	//! \return the Windows codepage used to encode strings
-	boost::uint32_t codepage() const { return boost::uint32_t(is_unicode() ? 1200 : 1252); }
-	
 	//! \return true if the version stored might not be correct
 	bool is_ambiguous() const;
 	

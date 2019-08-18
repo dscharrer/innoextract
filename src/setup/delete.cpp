@@ -20,6 +20,7 @@
 
 #include "setup/delete.hpp"
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
@@ -36,17 +37,17 @@ STORED_ENUM_MAP(delete_target_type_map, delete_entry::Files,
 
 } // anonymous namespace
 
-void delete_entry::load(std::istream & is, const version & version) {
+void delete_entry::load(std::istream & is, const info & i) {
 	
-	if(version < INNO_VERSION(1, 3, 0)) {
+	if(i.version < INNO_VERSION(1, 3, 0)) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(name, version.codepage());
+	is >> util::encoded_string(name, i.codepage);
 	
-	load_condition_data(is, version);
+	load_condition_data(is, i);
 	
-	load_version_data(is, version);
+	load_version_data(is, i.version);
 	
 	type = stored_enum<delete_target_type_map>(is).get();
 }

@@ -39,7 +39,7 @@
 
 namespace setup {
 
-struct version;
+struct info;
 
 struct data_entry {
 	
@@ -79,7 +79,7 @@ struct data_entry {
 	 *
 	 * \note This function may not be thread-safe on all operating systems.
 	 */
-	void load(std::istream & is, const version & version);
+	void load(std::istream & is, const info & i);
 	
 };
 

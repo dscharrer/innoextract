@@ -20,14 +20,13 @@
 
 #include "setup/permission.hpp"
 
-#include "setup/version.hpp"
 #include "util/load.hpp"
 
 namespace setup {
 
-void permission_entry::load(std::istream & is, const version & version) {
+void permission_entry::load(std::istream & is, const info & i) {
 	
-	(void)version;
+	(void)i;
 	
 	is >> util::binary_string(permissions); // an array of TGrantPermissionEntry's
 	

@@ -33,6 +33,7 @@
 
 namespace setup {
 
+struct info;
 struct version;
 
 struct item {
@@ -49,7 +50,7 @@ struct item {
 	
 protected:
 	
-	void load_condition_data(std::istream & is, const version & version);
+	void load_condition_data(std::istream & is, const info & i);
 	
 	void load_version_data(std::istream & is, const version & version) {
 		winver.load(is, version);

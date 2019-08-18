@@ -36,7 +36,7 @@
 
 namespace setup {
 
-struct version;
+struct info;
 
 struct registry_entry : public item {
 	
@@ -90,7 +90,7 @@ struct registry_entry : public item {
 	
 	flags options;
 	
-	void load(std::istream & is, const version & version);
+	void load(std::istream & is, const info & i);
 	
 };
 

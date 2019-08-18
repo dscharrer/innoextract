@@ -22,52 +22,53 @@
 
 #include <boost/cstdint.hpp>
 
+#include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
 #include "util/storedenum.hpp"
 
 namespace setup {
 
-void task_entry::load(std::istream & is, const version & version) {
+void task_entry::load(std::istream & is, const info & i) {
 	
-	is >> util::encoded_string(name, version.codepage());
-	is >> util::encoded_string(description, version.codepage());
-	is >> util::encoded_string(group_description, version.codepage());
-	is >> util::encoded_string(components, version.codepage());
-	if(version >= INNO_VERSION(4, 0, 1)) {
-		is >> util::encoded_string(languages, version.codepage());
+	is >> util::encoded_string(name, i.codepage);
+	is >> util::encoded_string(description, i.codepage);
+	is >> util::encoded_string(group_description, i.codepage);
+	is >> util::encoded_string(components, i.codepage);
+	if(i.version >= INNO_VERSION(4, 0, 1)) {
+		is >> util::encoded_string(languages, i.codepage);
 	} else {
 		languages.clear();
 	}
-	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 24))) {
-		is >> util::encoded_string(check, version.codepage());
+	if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(1, 3, 24))) {
+		is >> util::encoded_string(check, i.codepage);
 	} else {
 		check.clear();
 	}
-	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(3, 0, 3))) {
+	if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(3, 0, 3))) {
 		level = util::load<boost::int32_t>(is);
 	} else {
 		level = 0;
 	}
-	if(version >= INNO_VERSION(4, 0, 0) || (version.is_isx() && version >= INNO_VERSION(3, 0, 4))) {
+	if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(3, 0, 4))) {
 		used = util::load_bool(is);
 	} else {
 		used = true;
 	}
 	
-	winver.load(is, version);
+	winver.load(is, i.version);
 	
 	stored_flag_reader<flags> flagreader(is);
 	
 	flagreader.add(Exclusive);
 	flagreader.add(Unchecked);
-	if(version >= INNO_VERSION(2, 0, 5)) {
+	if(i.version >= INNO_VERSION(2, 0, 5)) {
 		flagreader.add(Restart);
 	}
-	if(version >= INNO_VERSION(2, 0, 6)) {
+	if(i.version >= INNO_VERSION(2, 0, 6)) {
 		flagreader.add(CheckedOnce);
 	}
-	if(version >= INNO_VERSION(4, 2, 3)) {
+	if(i.version >= INNO_VERSION(4, 2, 3)) {
 		flagreader.add(DontInheritCheck);
 	}
 	
