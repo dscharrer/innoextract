@@ -27,6 +27,7 @@
 #include "setup/version.hpp"
 #include "util/encoding.hpp"
 #include "util/load.hpp"
+#include "util/log.hpp"
 
 namespace setup {
 
@@ -41,7 +42,9 @@ void message_entry::load(std::istream & is, const info & i) {
 	if(language < 0) {
 		codepage = i.codepage;
 	} else if(size_t(language) >= i.languages.size()) {
-		// Unknown language, don't try to decode
+		if(!i.languages.empty()) {
+			log_warning << "Language index out of bounds: " << language;
+		}
 		value.clear();
 		return;
 	} else {
