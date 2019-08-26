@@ -37,6 +37,7 @@
 
 #if INNOEXTRACT_HAVE_POSIX_SPAWNP
 #include <spawn.h>
+extern "C" {
 #if defined(__FreeBSD__) && defined(__GNUC__) && __GNUC__ >= 4
 /*
  * When combining -flto and -fvisibility=hidden we and up with a hidden
@@ -46,6 +47,7 @@ extern char ** environ __attribute__((visibility("default")));
 #else
 extern char ** environ;
 #endif
+}
 #else
 #include <unistd.h>
 #endif
