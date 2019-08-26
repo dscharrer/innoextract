@@ -30,6 +30,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/cstdint.hpp>
 #include <boost/filesystem/path.hpp>
 
 #include "setup/filename.hpp"
@@ -76,6 +77,8 @@ struct extract_options {
 	bool language_only; //!< Extract files not associated with any language
 	std::string language; //!< Extract only files for this language
 	std::vector<std::string> include; //!< Extract only files matching these patterns
+	
+	boost::uint32_t codepage;
 	
 	setup::filename_map filenames;
 	CollisionAction collisions;

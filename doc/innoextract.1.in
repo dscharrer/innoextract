@@ -46,6 +46,7 @@ Here is a short summary of the options available in innoextract. Please refer to
 .TP
 .B Modifiers:
 .nf
+    \-\-codepage \fICODEPAGE\fP  Encoding for ANSI strings
     \-\-collisions \fIACTION\fP  How to handle duplicate files
     \-\-default\-language   Default language for renaming
     \-\-dump               Dump contents without converting filenames
@@ -84,6 +85,13 @@ Treat all arguments after this one as files, even if they begin with a dash.
 Abort processing if the password provided using the \fB\-\-password\fP or \fB\-\-password\-file\fP option does not match the checksum stored in the installer.
 
 The password checksum used for this check can be retrieved using the \fB\-\-show\-password\fP option.
+.TP
+\fB\-\-codepage\fP \fICODEPAGE\fP
+Non-Unicode versions of Inno Setup store strings in an unspecified encoding. By default, \fBinnoextract\fP will guess the encoding from the installer's language list, falling back to Windows-1252. This option can be used to override that guess by specifying a non-zero Windows codepage number to use.
+
+On non-Windows platforms, \fBinnoextract\fP will ignore the system locale and always use UTF-8 as the filesystem and standard output encoding - the \fB\-\-codepage\fP option only changes the input encoding. However, using codepage number "\fB65001\fP" instructs \fBinnoextract\fP to assume all strings are already encoded as UTF-8 and to output them without conversion.
+
+This option has no effect with Unicode-enabled installers, which always use UTF-16LE. Invalid UTF-16 data is represented using the WTF-8 encoding which is a straightforward extension of UTF-8 to represent unpaired UTF-16 surrogate code units.
 .TP
 \fB\-\-collisions\fP \fIACTION\fP
 Inno Setup installers can contain duplicate files with the same name. This option tells innoextract what to do when such a collisions is encountered. Valid actions are:

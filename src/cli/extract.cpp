@@ -915,7 +915,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 	ifs.seekg(offsets.header_offset);
 	setup::info info;
 	try {
-		info.load(ifs, entries);
+		info.load(ifs, entries, o.codepage);
 	} catch(const setup::version_error &) {
 		fs::path headerfile = file;
 		headerfile.replace_extension(".0");
