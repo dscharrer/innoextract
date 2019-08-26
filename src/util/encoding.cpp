@@ -83,106 +83,150 @@ namespace {
 //! Get names for encodings where iconv doesn't have the codepage alias
 const char * get_encoding_name(codepage_id codepage) {
 	switch(codepage) {
-		case   708: return "ISO-8859-6";
-		case   936: return "GBK";
-		case   949: return "UHC";
-		case   950: return "BIG5";
-		// iconv's behavior for "UTF-16" is platform-dependent if there is no BOM.
-		// There never is any BOM in Inno Setup files and it's always little-endian,
-		// so we specify the exact encoding.
-		case  1200: return "UTF-16LE";
-		case  1201: return "UTF-16BE";
-		case  1252: return "MS-ANSI";
-		case  1361: return "JOHAB";
-		case 10000: return "MACINTOSH";
-		case 10002: return "BIG5";
-		case 10008: return "GB2312";
-		case 12000: return "UTF-32LE";
-		case 12001: return "UTF-32BE";
-		case 20003: return "IBM5550";
-		case 20127: return "US-ASCII";
-		case 20261: return "T.61";
-		case 20269: return "ISO_6937";
-		case 20273: return "IBM273";
-		case 20277: return "IBM277";
-		case 20278: return "IBM278";
-		case 20280: return "IBM280";
-		case 20284: return "IBM284";
-		case 20285: return "IBM285";
-		case 20290: return "IBM290";
-		case 20297: return "IBM297";
-		case 20420: return "IBM420";
-		case 20423: return "IBM423";
-		case 20424: return "IBM424";
-		case 20866: return "KOI8-R";
-		case 20871: return "IBM871";
-		case 20880: return "IBM880";
-		case 20905: return "IBM905";
-		case 20924: return "IBM1047";
-		case 20932: return "EUC-JP-MS";
-		case 20936: return "EUC-CN";
-		case 21025: return "IBM1025";
-		case 21866: return "KOI8-U";
-		case 28591: return "ISO-8859-1";
-		case 28592: return "ISO-8859-2";
-		case 28593: return "ISO-8859-3";
-		case 28594: return "ISO-8859-4";
-		case 28595: return "ISO-8859-5";
-		case 28596: return "ISO-8859-6";
-		case 28597: return "ISO-8859-7";
-		case 28598: return "ISO-8859-8";
-		case 28599: return "ISO-8859-9";
-		case 28603: return "ISO-8859-13";
-		case 28605: return "ISO-8859-15";
-		case 38598: return "ISO-8859-8";
-		case 50220: return "ISO-2022-JP";
-		case 50221: return "ISO-2022-JP-2";
-		case 50222: return "ISO-2022-JP-3";
-		case 50225: return "ISO-2022-KR";
-		case 50227: return "ISO-2022-CN";
-		case 50229: return "ISO-2022-CN-EXT";
-		case 50930: return "EBCDIC-JP-E";
-		case 51932: return "EUC-JP";
-		case 51936: return "EUC-CN";
-		case 51949: return "EUC-KR";
-		case 51950: return "EUC-CN";
-		case 54936: return "GB18030";
-		case 65000: return "UTF-7";
-		case 65001: return "UTF-8";
+		case cp_ascii:        return "US-ASCII";
+		case cp_big5:         return "BIG5";
+		case cp_big5_eten:    return "BIG5";
+		case cp_big5_hkscs:   return "BIG5-HKSCS";
+		case cp_cns:          return "EUC-TW";
+		case cp_dos708:       return "ISO-8859-6";
+		case cp_euc_cn:       return "EUC-CN";
+		case cp_euc_jp:       return "EUC-JP";
+		case cp_euc_jp_ms:    return "EUC-JP-MS";
+		case cp_euc_kr:       return "EUC-KR";
+		case cp_euc_tw:       return "EUC-TW";
+		case cp_gb2312_80:    return "GB2312";
+		case cp_gb2312_hz:    return "GB2312";
+		case cp_gb18030:      return "GB18030";
+		case cp_gbk:          return "GBK";
+		case cp_ia5:          return "ISO_646.IRV:1991";
+		case cp_ia5_de:       return "ISO646-DE";
+		case cp_ia5_no2:      return "ISO646-NO2";
+		case cp_ia5_se2:      return "ISO646-SE2";
+		case cp_ibm273:       return "IBM273";
+		case cp_ibm277:       return "IBM277";
+		case cp_ibm278:       return "IBM278";
+		case cp_ibm280:       return "IBM280";
+		case cp_ibm284:       return "IBM284";
+		case cp_ibm285:       return "IBM285";
+		case cp_ibm290:       return "IBM290";
+		case cp_ibm297:       return "IBM297";
+		case cp_ibm420:       return "IBM420";
+		case cp_ibm423:       return "IBM423";
+		case cp_ibm424:       return "IBM424";
+		case cp_ibm833:       return "IBM833";
+		case cp_ibm838:       return "IBM1160";
+		case cp_ibm871:       return "IBM871";
+		case cp_ibm880:       return "IBM880";
+		case cp_ibm905:       return "IBM905";
+		case cp_ibm924:       return "IBM1047";
+		case cp_ibm930:       return "IBM930";
+		case cp_ibm931:       return "IBM931";
+		case cp_ibm933:       return "IBM933";
+		case cp_ibm935:       return "IBM935";
+		case cp_ibm936:       return "IBM936";
+		case cp_ibm937:       return "IBM937";
+		case cp_ibm939:       return "IBM939";
+		case cp_ibm1025:      return "IBM1025";
+		case cp_iso_2022_cn:  return "ISO-2022-CN";
+		case cp_iso_2022_cn2: return "ISO-2022-CN-EXT";
+		case cp_iso_2022_jp:  return "ISO-2022-JP";
+		case cp_iso_2022_jp2: return "ISO-2022-JP-2";
+		case cp_iso_2022_jp3: return "ISO-2022-JP-3";
+		case cp_iso_2022_kr:  return "ISO-2022-KR";
+		case cp_iso_6937:     return "ISO_6937";
+		case cp_iso_8859_10:  return "ISO-8859-10";
+		case cp_iso_8859_11:  return "ISO-8859-11";
+		case cp_iso_8859_13:  return "ISO-8859-13";
+		case cp_iso_8859_14:  return "ISO-8859-14";
+		case cp_iso_8859_15:  return "ISO-8859-15";
+		case cp_iso_8859_1:   return "ISO-8859-1";
+		case cp_iso_8859_2:   return "ISO-8859-2";
+		case cp_iso_8859_3:   return "ISO-8859-3";
+		case cp_iso_8859_4:   return "ISO-8859-4";
+		case cp_iso_8859_5:   return "ISO-8859-5";
+		case cp_iso_8859_6:   return "ISO-8859-6";
+		case cp_iso_8859_6i:  return "ISO-8859-6";
+		case cp_iso_8859_7:   return "ISO-8859-7";
+		case cp_iso_8859_8:   return "ISO-8859-8";
+		case cp_iso_8859_8i:  return "ISO-8859-8";
+		case cp_iso_8859_9:   return "ISO-8859-9";
+		case cp_johab:        return "JOHAB";
+		case cp_koi8_r:       return "KOI8-R";
+		case cp_koi8_u:       return "KOI8-U";
+		case cp_macarabic:    return "MACARABIC";
+		case cp_macchinese1:  return "BIG5";
+		case cp_macchinese2:  return "EUC-CN";
+		case cp_maccroatian:  return "MACCROATIAN";
+		case cp_maccyrillic:  return "MACCYRILLIC";
+		case cp_macgreek:     return "MACGREEK";
+		case cp_machebrew:    return "MACHEBREW";
+		case cp_maciceland:   return "MACICELAND";
+		case cp_macjapanese:  return "SHIFT-JIS";
+		case cp_mackorean:    return "EUC-KR";
+		case cp_macroman2:    return "MACCENTRALEUROPE";
+		case cp_macroman:     return "MACINTOSH";
+		case cp_macromania:   return "MACROMANIA";
+		case cp_macthai:      return "MACTHAI";
+		case cp_macturkish:   return "MACTURKISH";
+		case cp_macukraine:   return "MACUKRAINE";
+		case cp_shift_jis:    return "SHIFT-JIS";
+		case cp_t61:          return "T.61";
+		case cp_uhc:          return "UHC";
+		case cp_utf7:         return "UTF-7";
+		case cp_utf8:         return "UTF-8";
+		case cp_utf16be:      return "UTF-16BE";
+		case cp_utf16le:      return "UTF-16LE"; // "UTF-16" is platform-dependent without a BOM
+		case cp_utf32be:      return "UTF-32BE";
+		case cp_utf32le:      return "UTF-32LE";
+		case cp_wansung:      return "EUC-KR";
+		case cp_windows1250:  return "MS-EE";
+		case cp_windows1251:  return "MS-CYRL";
+		case cp_windows1252:  return "MS-ANSI";
+		case cp_windows1253:  return "MS-GREEK";
+		case cp_windows1254:  return "MS-TURK";
+		case cp_windows1255:  return "MS-HEBR";
+		case cp_windows1256:  return "MS-ARAB";
 		default: return NULL;
 	}
 }
 
 //! Check if a codepage is known to be a superset of ASCII - used for optimization only
 bool is_extended_ascii(codepage_id codepage) {
+	
+	// cp_ascii and cp_utf8 are handled separately
+	
+	if(codepage >= cp_windows1250 && codepage <= cp_windows1270) {
+		return true;
+	}
+	
+	if(codepage >= cp_iso_8859_1 && codepage <= cp_iso_8859_15) {
+		return true;
+	}
+	
 	switch(codepage) {
-		case 874:
-		case 932:
-		case 936:
-		case 949:
-		case 950:
-		case 1250:
-		case 1251:
-		case 1252:
-		case 1253:
-		case 1254:
-		case 1255:
-		case 1256:
-		case 1257:
-		case 1258:
-		case 1270:
-		case 28591:
-		case 28592:
-		case 28593:
-		case 28594:
-		case 28595:
-		case 28596:
-		case 28597:
-		case 28598:
-		case 28599:
-		case 28603:
-		case 28605:
-		case 38598:
+		case cp_big5:
+		case cp_big5_eten:
+		case cp_big5_hkscs:
+		case cp_cns:
+		case cp_dos708:
+		case cp_euc_cn:
+		case cp_euc_tw:
+		case cp_gb18030:
+		case cp_gbk:
+		case cp_iso_6937:
+		case cp_iso_8859_6i:
+		case cp_iso_8859_8i:
+		case cp_koi8_r:
+		case cp_koi8_u:
+		case cp_macarabic:
+		case cp_macchinese1:
+		case cp_macchinese2:
+		case cp_maccyrillic:
+		case cp_macgreek:
+		case cp_maciceland:
+		case cp_macroman:
+		case cp_uhc:
+		case cp_windows874:
 			return true;
 	}
 	return false;
@@ -194,10 +238,10 @@ const unicode_char replacement_char = '_';
 
 size_t get_code_unit_size(codepage_id codepage) {
 	switch(codepage) {
-		case  1200: return 2u; // UTF-16LE
-		case  1201: return 2u; // UTF-16BE
-		case 12000: return 4u; // UTF-32LE
-		case 12001: return 4u; // UTF-32BE
+		case cp_utf16le: return 2u;
+		case cp_utf16be: return 2u;
+		case cp_utf32le: return 4u;
+		case cp_utf32be: return 4u;
 		default:    return 1u;
 	}
 }
@@ -209,8 +253,8 @@ void to_utf8_fallback(const std::string & from, std::string & to, codepage_id co
 	
 	size_t shift = 0;
 	switch(codepage) {
-		case  1201: shift = 1u * 8u; break; // UTF-16BE
-		case 12001: shift = 3u * 8u; break; // UTF-32BE
+		case cp_utf16be: shift = 1u * 8u; break;
+		case cp_utf32be: shift = 3u * 8u; break;
 		default: break;
 	}
 	
