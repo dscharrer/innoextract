@@ -592,10 +592,12 @@ void utf8_to_windows1252(const std::string & from, std::string & to) {
 typedef boost::unordered_map<codepage_id, iconv_t> converter_map;
 converter_map converters;
 
-iconv_t get_converter(codepage_id codepage) {
+iconv_t get_converter(codepage_id codepage, bool reverse) {
+	
+	boost::uint32_t key = codepage | (reverse ? 0x80000000 : 0);
 	
 	// Try to reuse an existing converter if possible
-	converter_map::const_iterator i = converters.find(codepage);
+	converter_map::const_iterator i = converters.find(key);
 	if(i != converters.end()) {
 		return i->second;
 	}
@@ -604,7 +606,7 @@ iconv_t get_converter(codepage_id codepage) {
 	
 	const char * encoding = get_encoding_name(codepage);
 	if(encoding) {
-		handle = iconv_open("UTF-8", encoding);
+		handle = reverse ? iconv_open(encoding, "UTF-8") : iconv_open("UTF-8", encoding);
 	}
 	
 	// Otherwise, try a few different codepage name prefixes
@@ -613,7 +615,7 @@ iconv_t get_converter(codepage_id codepage) {
 		BOOST_FOREACH(const char * prefix, prefixes) {
 			std::ostringstream oss;
 			oss << prefix << std::setfill('0') << std::setw(3) << codepage;
-			handle = iconv_open("UTF-8", oss.str().c_str());
+			handle = reverse ? iconv_open(oss.str().c_str(), "UTF-8") : iconv_open("UTF-8", oss.str().c_str());
 			if(handle != iconv_t(-1)) {
 				break;
 			}
@@ -624,12 +626,12 @@ iconv_t get_converter(codepage_id codepage) {
 		log_warning << "Could not get codepage " << codepage << " -> UTF-8 converter.";
 	}
 	
-	return converters[codepage] = handle;
+	return converters[key] = handle;
 }
 
-bool to_utf8_iconv(const std::string & from, std::string & to, codepage_id codepage) {
+bool utf8_iconv(const std::string & from, std::string & to, codepage_id codepage, bool reverse) {
 	
-	iconv_t converter = get_converter(codepage);
+	iconv_t converter = get_converter(codepage, reverse);
 	if(converter == iconv_t(-1)) {
 		return false;
 	}
@@ -689,12 +691,24 @@ bool to_utf8_iconv(const std::string & from, std::string & to, codepage_id codep
 	}
 	
 	if(warn) {
-		log_warning << "Unexpected data while converting from CP" << codepage << " to UTF-8.";
+		if(reverse) {
+			log_warning << "Unexpected data while converting from UTF-8 to CP" << codepage << ".";
+		} else {
+			log_warning << "Unexpected data while converting from CP" << codepage << " to UTF-8.";
+		}
 	}
 	
 	to.resize(outbase);
 	
 	return true;
+}
+
+bool to_utf8_iconv(const std::string & from, std::string & to, codepage_id codepage) {
+	return utf8_iconv(from, to, codepage, false);
+}
+
+bool from_utf8_iconv(const std::string & from, std::string & to, codepage_id codepage) {
+	return utf8_iconv(from, to, codepage, true);
 }
 
 #endif // INNOEXTRACT_HAVE_ICONV
@@ -734,6 +748,28 @@ bool to_utf8_win32(const std::string & from, std::string & to, codepage_id codep
 	}
 	
 	utf16le_to_utf8(buffer, to);
+	
+	return true;
+}
+
+bool from_utf8_win32(const std::string & from, std::string & to, codepage_id codepage) {
+	
+	std::string buffer;
+	utf8_to_utf16le(from, buffer);
+	
+	// Convert from UTF-16LE to the target codepage
+	LPCWSTR data = reinterpret_cast<LPCWSTR>(buffer.c_str());
+	int size = int(buffer.size() / 2);
+	int ret = WideCharToMultiByte(codepage, 0, data, size, NULL, 0,  NULL, NULL);
+	if(ret > 0) {
+		to.resize(size_t(ret));
+		ret = WideCharToMultiByte(codepage, 0, data, size, &to[0], ret, NULL, NULL);
+	}
+	if(ret <= 0) {
+		log_warning << "Error while converting from UTF-16 to CP" << codepage << ": "
+		            << windows_error_string(GetLastError());
+		return false;
+	}
 	
 	return true;
 }
@@ -796,6 +832,18 @@ void from_utf8(const std::string & from, std::string & to, codepage_id codepage)
 		case cp_windows1252: utf8_to_windows1252(from, to); return;
 		default: break;
 	}
+	
+	#if INNOEXTRACT_HAVE_ICONV
+	if(from_utf8_iconv(from, to, codepage)) {
+		return;
+	}
+	#endif
+	
+	#if INNOEXTRACT_HAVE_WIN32_CONV
+	if(from_utf8_win32(from, to, codepage)) {
+		return;
+	}
+	#endif
 	
 	log_warning << "Unsupported output codepage: " << codepage;
 	to = from;

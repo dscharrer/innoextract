@@ -286,8 +286,6 @@ With the \fB\-\-silent\fP option, the checksum name and hash is printed on one l
 
 Checksum types can be \fBCRC32\fP, \fBMD5\fP or \fBSHA-1\fP although \fBCRC32\fP is not used in installers with encryption.
 
-The password encoding is either \fBMS-ANSI\fP (Windows-1252) or \fBUTF16-LE\fP.
-
 Use the \fB\-\-password\fP or \fB\-\-password\-file\fP option together with \fB\-\-check\-password\fP to check if a password matches this checksum.
 .TP
 \fB\-s\fP, \fB\-\-silent\fP
