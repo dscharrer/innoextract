@@ -146,6 +146,16 @@ enum known_codepages {
 typedef boost::uint32_t codepage_id;
 
 /*!
+ * Convert a possibly broken UTF-16 string to WTF-8, an extension of UTF-8.
+ */
+void utf16le_to_wtf8(const std::string & from, std::string & to);
+
+/*!
+ * Convert WTF-8 to UTF-16 while preserving unpaired surrogates.
+ */
+void wtf8_to_utf16le(const std::string & from, std::string & to);
+
+/*!
  * Convert a string in place to UTF-8 from a specified encoding.
  * \param data     The input string to convert.
  * \param codepage The Windows codepage number for the input string encoding.

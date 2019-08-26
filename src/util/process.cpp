@@ -60,6 +60,8 @@ extern char ** environ;
 
 #endif
 
+#include "util/encoding.hpp"
+
 namespace util {
 
 #if defined(_WIN32) || !(INNOEXTRACT_HAVE_POSIX_SPAWNP \
@@ -87,15 +89,6 @@ static std::string format_command_line(const char * const args[]) {
 }
 #endif
 
-#if defined(_WIN32)
-static WCHAR * utf8_to_wchar(const char * string) {
-	int n = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
-	WCHAR * wstr = new WCHAR[n];
-	MultiByteToWideChar(CP_UTF8, 0, string, -1, wstr, n);
-	return wstr;
-}
-#endif
-
 int run(const char * const args[]) {
 	
 	std::cout.flush();
@@ -104,8 +97,12 @@ int run(const char * const args[]) {
 #if defined(_WIN32)
 	
 	// Format the command line arguments
-	WCHAR * exe = utf8_to_wchar(args[0]);
-	WCHAR * cmdline = utf8_to_wchar(format_command_line(args + 1).c_str());
+	std::string exe;
+	wtf8_to_utf16le(args[0], exe);
+	exe.push_back('\0');
+	std::string cmdline;
+	wtf8_to_utf16le(format_command_line(args + 1), exe);
+	cmdline.push_back('\0');
 	
 	STARTUPINFO si;
 	memset(&si, 0, sizeof(STARTUPINFO));
@@ -114,10 +111,8 @@ int run(const char * const args[]) {
 	PROCESS_INFORMATION pi;
 	memset(&pi, 0, sizeof(PROCESS_INFORMATION));
 	
-	bool success = (CreateProcessW(exe, cmdline, 0, 0, 0, 0, 0, 0, &si, &pi) != 0);
-	
-	delete[] cmdline;
-	delete[] exe;
+	bool success = (CreateProcessW(reinterpret_cast<LPCWSTR>(exe.c_str()),
+	                               reinterpret_cast<LPWSTR>(&cmdline[0]), 0, 0, 0, 0, 0, 0, &si, &pi) != 0);
 	
 	if(!success) {
 		return -1; // Could not start process

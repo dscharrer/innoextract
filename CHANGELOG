@@ -17,6 +17,7 @@ innoextract 1.8 (WIP)
  - Fixed output directory being created even when not extracting files
  - Fixed a hang when using the --language option
  - Changed header parsing to select the first version without warnings and failing that the first without errors
+ - Changed filesystem and output encoding to WTF-8 (extended UTF-8) to represent broken UTF-16 data
 
 innoextract 1.7 (2018-06-12)
  - Added support for Inno Setup 5.6.0 installers

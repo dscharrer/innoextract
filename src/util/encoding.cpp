@@ -422,7 +422,9 @@ bool is_utf16_low_surrogate(unicode_char chr) {
 	return chr >= 0xdc00 && chr <= 0xdfff;
 }
 
-void utf16le_to_utf8(const std::string & from, std::string & to) {
+} // anonymous namespace
+
+void utf16le_to_wtf8(const std::string & from, std::string & to) {
 	
 	if(from.size() % 2 != 0) {
 		log_warning << "Unexpected trailing byte in UTF-16 string.";
@@ -435,48 +437,29 @@ void utf16le_to_utf8(const std::string & from, std::string & to) {
 	
 	std::string::const_iterator it = from.begin();
 	std::string::const_iterator end = from.end();
+	if(from.size() % 2 != 0) {
+		end--;
+	}
 	while(it != end) {
 		
 		unicode_char chr = boost::uint8_t(*it++);
-		if(it == end) {
-			warn = true;
-			utf8_write(to, replacement_char);
-			break;
-		}
 		chr |= unicode_char(boost::uint8_t(*it++)) << 8;
 		
 		// If it's a surrogate pair, convert to a single UTF-32 character
-		if(is_utf16_high_surrogate(chr)) {
-			if(it == end) {
-				warn = true;
-				utf8_write(to, replacement_char);
-				break;
-			}
-			unicode_char d = boost::uint8_t(*it++);
-			if(it == end) {
-				warn = true;
-				utf8_write(to, replacement_char);
-				break;
-			}
-			d |= unicode_char(boost::uint8_t(*it++)) << 8;
+		if(is_utf16_high_surrogate(chr) && it != end) {
+			unicode_char d = boost::uint8_t(*it);
+			d |= unicode_char(boost::uint8_t(*(it + 1))) << 8;
 			if(is_utf16_low_surrogate(d)) {
 				chr = ((chr - 0xd800) << 10) + (d - 0xdc00) + 0x0010000;
-			} else {
-				warn = true;
-				utf8_write(to, replacement_char);
-				continue;
+				it += 2;
 			}
-		}
-		
-		// Replace invalid characters
-		if(chr > 0x0010FFFF) {
-			warn = true;
-			// Invalid character (greater than the maximum unicode value)
-			utf8_write(to, replacement_char);
-			continue;
 		}
 		
 		utf8_write(to, chr);
+	}
+	if(end != from.end()) {
+		warn = true;
+		utf8_write(to, replacement_char);
 	}
 	
 	if(warn) {
@@ -485,21 +468,16 @@ void utf16le_to_utf8(const std::string & from, std::string & to) {
 	
 }
 
-void utf8_to_utf16le(const std::string & from, std::string & to) {
+void wtf8_to_utf16le(const std::string & from, std::string & to) {
 	
 	to.clear();
 	to.reserve(from.size() * 2); // optimistically, most strings only have ASCII characters
-	
-	bool warn = false;
 	
 	for(std::string::const_iterator i = from.begin(); i != from.end(); ) {
 		
 		unicode_char chr = utf8_read(i, from.end());
 		
-		if((chr >= 0xd800 && chr <= 0xdfff) || chr > 0x10ffff) {
-			chr = replacement_char;
-			warn = true;
-		} else if(chr >= 0x10000) {
+		if(chr >= 0x10000) {
 			chr -= 0x10000;
 			unicode_char high_surrogate = 0xd800 + (chr >> 10);
 			to.push_back(char(boost::uint8_t(high_surrogate)));
@@ -511,11 +489,9 @@ void utf8_to_utf16le(const std::string & from, std::string & to) {
 		to.push_back(char(boost::uint8_t(chr >> 8)));
 	}
 	
-	if(warn) {
-		log_warning << "Unexpected data while converting from UTF-8 to UTF-16LE.";
-	}
-	
 }
+
+namespace {
 
 unicode_char windows1252_replacements[] = {
 	0x20ac, replacement_char, 0x201a, 0x192, 0x201e, 0x2026, 0x2020, 0x2021, 0x2c6,
@@ -732,7 +708,7 @@ std::string windows_error_string(DWORD code) {
 }
 
 bool to_utf8_win32(const std::string & from, std::string & to, codepage_id codepage) {
-	
+	 
 	// Convert from the source codepage to UTF-16LE
 	std::string buffer;
 	int ret = MultiByteToWideChar(codepage, 0, from.data(), int(from.length()), NULL, 0);
@@ -747,7 +723,7 @@ bool to_utf8_win32(const std::string & from, std::string & to, codepage_id codep
 		return false;
 	}
 	
-	utf16le_to_utf8(buffer, to);
+	utf16le_to_wtf8(buffer, to);
 	
 	return true;
 }
@@ -755,7 +731,7 @@ bool to_utf8_win32(const std::string & from, std::string & to, codepage_id codep
 bool from_utf8_win32(const std::string & from, std::string & to, codepage_id codepage) {
 	
 	std::string buffer;
-	utf8_to_utf16le(from, buffer);
+	wtf8_to_utf16le(from, buffer);
 	
 	// Convert from UTF-16LE to the target codepage
 	LPCWSTR data = reinterpret_cast<LPCWSTR>(buffer.c_str());
@@ -779,7 +755,7 @@ bool from_utf8_win32(const std::string & from, std::string & to, codepage_id cod
 void to_utf8(const std::string & from, std::string & to, codepage_id codepage) {
 	
 	switch(codepage) {
-		case cp_utf16le:     utf16le_to_utf8(from, to); return;
+		case cp_utf16le:     utf16le_to_wtf8(from, to); return;
 		case cp_windows1252: windows1252_to_utf8(from, to); return;
 		case cp_iso_8859_1:  windows1252_to_utf8(from, to); return;
 		default: break;
@@ -828,7 +804,7 @@ void from_utf8(const std::string & from, std::string & to, codepage_id codepage)
 	}
 	
 	switch(codepage) {
-		case cp_utf16le:     utf8_to_utf16le(from, to); return;
+		case cp_utf16le:     wtf8_to_utf16le(from, to); return;
 		case cp_windows1252: utf8_to_windows1252(from, to); return;
 		default: break;
 	}

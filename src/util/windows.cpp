@@ -34,6 +34,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include <wchar.h>
 #include <windows.h>
 #include <shellapi.h>
 
@@ -53,6 +54,7 @@ namespace { typedef boost::filesystem::detail::utf8_codecvt_facet utf8_codecvt; 
 #endif
 
 #include "util/ansi.hpp"
+#include "util/encoding.hpp"
 
 // Disable telemetry added in Visual Studio 2015
 #if defined(_MSC_VER) && _MSC_VER >= 1900
@@ -505,17 +507,16 @@ int main() {
 	// Convert the UTF-16 command-line parameters to UTF-8
 	int argc = 0;
 	char ** argv = NULL;
+	std::vector<std::string> args;
 	{
 		wchar_t ** wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
-		
+		args.resize(size_t(argc));
 		argv = new char *[argc + 1];
 		argv[argc] = NULL;
-		for(int i = 0; i < argc; i++) {
-			int n = WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, NULL, 0,  NULL, NULL);
-			argv[i] = new char[n];
-			WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, argv[i], n, NULL, NULL);
+		for(size_t i = 0; i < args.size(); i++) {
+			util::utf16le_to_wtf8(std::string(reinterpret_cast<char *>(wargv[i]), wcslen(wargv[i]) * 2), args[i]);
+			argv[i] = &args[i][0];
 		}
-		
 		LocalFree(wargv);
 	}
 	
