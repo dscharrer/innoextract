@@ -221,7 +221,8 @@ endif()
 
 # Older glibc versions won't provide some useful symbols by default - request them
 # This flag is currently also set by gcc when compiling C++, but not for plain C
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+check_symbol_exists(__GLIBC__ "features.h" HAVE_GLIBC)
+if(HAVE_GLIBC)
 	set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE=1")
 	add_definitions(-D_GNU_SOURCE=1)
 endif()
