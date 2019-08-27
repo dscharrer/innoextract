@@ -128,6 +128,7 @@ struct info {
 	 *                identifier whose position is given by
 	 *                \ref loader::offsets::header_offset.
 	 * \param entries What kinds of entries to load.
+	 * \param force_codepage Windows codepage to use for strings in ANSI installers.
 	 */
 	void load(std::istream & is, entry_types entries, util::codepage_id force_codepage = 0);
 	
@@ -142,7 +143,7 @@ private:
 	 *                identifier whose position is given by
 	 *                \ref loader::offsets::header_offset.
 	 * \param entries What kinds of entries to load.
-	 * \param version The setup data version of the headers.
+	 * \param force_codepage Windows codepage to use for strings in ANSI installers.
 	 *
 	 * This function does not set the \ref version member.
 	 */
