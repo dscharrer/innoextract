@@ -37,6 +37,7 @@
 
 #if INNOEXTRACT_HAVE_POSIX_SPAWNP
 #include <spawn.h>
+#if !INNOEXTRACT_HAVE_UNISTD_ENVIRON
 extern "C" {
 #if defined(__FreeBSD__) && defined(__GNUC__) && __GNUC__ >= 4
 /*
@@ -48,7 +49,10 @@ extern char ** environ __attribute__((visibility("default")));
 extern char ** environ;
 #endif
 }
-#else
+#endif
+#endif
+
+#if INNOEXTRACT_HAVE_UNISTD_ENVIRON || (INNOEXTRACT_HAVE_FORK && INNOEXTRACT_HAVE_EXECVP)
 #include <unistd.h>
 #endif
 
