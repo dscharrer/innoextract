@@ -30,6 +30,7 @@
 
 #if defined(_WIN32)
 #include <windows.h>
+#include <time.h>
 #endif
 
 #if INNOEXTRACT_HAVE_DLSYM
@@ -85,12 +86,12 @@ static void set_timezone(const char * value) {
 	
 	const char * variable = "TZ";
 	
-#if defined(_WIN32)
+	#if defined(_WIN32)
 	
 	SetEnvironmentVariableA(variable, value);
 	_tzset();
 	
-#else
+	#else
 	
 	if(value) {
 		setenv(variable, value, 1);
@@ -99,7 +100,7 @@ static void set_timezone(const char * value) {
 	}
 	tzset();
 	
-#endif
+	#endif
 	
 }
 
@@ -107,7 +108,7 @@ time parse_time(std::tm tm) {
 	
 	tm.tm_isdst = 0;
 	
-#if defined(_WIN32)
+	#if defined(_WIN32)
 	
 	// Windows
 	
@@ -126,13 +127,13 @@ time parse_time(std::tm tm) {
 	}
 	return from_filetime(ft);
 	
-#elif INNOEXTRACT_HAVE_TIMEGM
+	#elif INNOEXTRACT_HAVE_TIMEGM
 	
 	// GNU / BSD extension
 	
 	return timegm(&tm);
 	
-#else
+	#else
 	
 	// Standard, but not thread-safe - should be OK for our use though
 	
@@ -146,7 +147,7 @@ time parse_time(std::tm tm) {
 	
 	return ret;
 	
-#endif
+	#endif
 	
 }
 
@@ -166,7 +167,7 @@ std::tm format_time(time t) {
 	
 	std::tm ret;
 	
-#if defined(_WIN32)
+	#if defined(_WIN32)
 	
 	// Windows
 	
@@ -187,14 +188,14 @@ std::tm format_time(time t) {
 	}
 	ret.tm_isdst = -1;
 	
-#elif INNOEXTRACT_HAVE_GMTIME_R
+	#elif INNOEXTRACT_HAVE_GMTIME_R
 	
 	// POSIX.1
 	
 	time_t tt = to_time_t<time_t>(t);
 	gmtime_r(&tt, &ret);
 	
-#else
+	#else
 	
 	// Standard C++
 	
@@ -208,7 +209,7 @@ std::tm format_time(time t) {
 		ret.tm_isdst = -1;
 	}
 	
-#endif
+	#endif
 	
 	return ret;
 }
@@ -220,7 +221,11 @@ time to_local_time(time t) {
 	
 	// ... and interpret it as local time
 	time.tm_isdst = 0;
+	#if defined(_WIN32)
+	return _mktime64(&time);
+	#else
 	return std::mktime(&time);
+	#endif
 }
 
 void set_local_timezone(std::string timezone) {
@@ -260,8 +265,8 @@ extern "C" typedef int (*utimensat_proc)
 
 bool set_file_time(const boost::filesystem::path & path, time sec, boost::uint32_t nsec) {
 	
-#if (INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT || INNOEXTRACT_HAVE_UTIMENSAT) \
-    && INNOEXTRACT_HAVE_AT_FDCWD
+	#if (INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT || INNOEXTRACT_HAVE_UTIMENSAT) \
+	    && INNOEXTRACT_HAVE_AT_FDCWD
 	
 	// nanosecond precision, for Linux and POSIX.1-2008+ systems
 	
@@ -270,22 +275,22 @@ bool set_file_time(const boost::filesystem::path & path, time sec, boost::uint32
 	timens[0].tv_nsec = boost::int32_t(nsec);
 	timens[1] = timens[0];
 	
-#endif
+	#endif
 	
-#if INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
+	#if INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
 	
 	static utimensat_proc utimensat_func = (utimensat_proc)dlsym(RTLD_DEFAULT, "utimensat");
 	if(utimensat_func) {
 		return (utimensat_func(AT_FDCWD, path.string().c_str(), timens, 0) == 0);
 	}
 	
-#endif
+	#endif
 	
-#if INNOEXTRACT_HAVE_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
+	#if INNOEXTRACT_HAVE_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
 	
 	return (utimensat(AT_FDCWD, path.string().c_str(), timens, 0) == 0);
 	
-#elif defined(_WIN32)
+	#elif defined(_WIN32)
 	
 	// 100-nanosecond precision, for Windows
 	
@@ -305,7 +310,7 @@ bool set_file_time(const boost::filesystem::path & path, time sec, boost::uint32
 	
 	return ret;
 	
-#elif INNOEXTRACT_HAVE_UTIMES
+	#elif INNOEXTRACT_HAVE_UTIMES
 	
 	// microsecond precision, for older POSIX systems (4.3BSD, POSIX.1-2001)
 	
@@ -316,7 +321,7 @@ bool set_file_time(const boost::filesystem::path & path, time sec, boost::uint32
 	
 	return (utimes(path.string().c_str(), times) == 0);
 	
-#else
+	#else
 	
 	// fallback with second precision or worse
 	
@@ -329,7 +334,7 @@ bool set_file_time(const boost::filesystem::path & path, time sec, boost::uint32
 		return false;
 	}
 	
-#endif
+	#endif
 	
 }
 
