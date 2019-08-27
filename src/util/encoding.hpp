@@ -70,7 +70,7 @@ enum known_codepages {
 	cp_macturkish   = 10081, // turkish
 	cp_maccroatian  = 10082, // latin
 	cp_utf32le      = 12000,
-	cp_utf32be      = 12001, 
+	cp_utf32be      = 12001,
 	cp_cns          = 20000, // chinese
 	cp_big5_eten    = 20002, // chinese
 	cp_ia5          = 20105, // latin
