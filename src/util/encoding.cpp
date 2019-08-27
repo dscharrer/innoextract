@@ -438,7 +438,7 @@ void utf16le_to_wtf8(const std::string & from, std::string & to) {
 	std::string::const_iterator it = from.begin();
 	std::string::const_iterator end = from.end();
 	if(from.size() % 2 != 0) {
-		end--;
+		--end;
 	}
 	while(it != end) {
 		
