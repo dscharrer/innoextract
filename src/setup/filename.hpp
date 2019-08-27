@@ -52,7 +52,7 @@ class filename_map : public std::map<std::string, std::string> {
 	typedef std::string::const_iterator it;
 	
 	std::string expand_variables(it & begin, it end, bool close = false) const;
-	std::string shorten_path(const std::string & path) const;
+	static std::string shorten_path(const std::string & path);
 	
 public:
 	

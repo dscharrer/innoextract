@@ -116,7 +116,7 @@ std::string filename_map::expand_variables(it & begin, it end, bool close) const
 	return result;
 }
 
-std::string filename_map::shorten_path(const std::string & path) const {
+std::string filename_map::shorten_path(const std::string & path) {
 	
 	std::string result;
 	result.reserve(path.size());
