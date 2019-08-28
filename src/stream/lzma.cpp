@@ -18,8 +18,6 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define INNOEXTRACT_HAVE_LZMA 1
-
 #include "stream/lzma.hpp"
 
 #include <boost/cstdint.hpp>

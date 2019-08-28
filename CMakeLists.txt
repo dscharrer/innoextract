@@ -11,6 +11,12 @@ endif()
 
 # Define configuration options
 
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+	set(MACOS 1)
+else()
+	set(MACOS 0)
+endif()
+
 macro(suboption _var _comment _type _default)
 	if(NOT DEFINED ${_var})
 		set(${_var} "${_default}")
@@ -19,22 +25,43 @@ macro(suboption _var _comment _type _default)
 	endif()
 endmacro()
 
-option(STRICT_USE "Abort if there are missing optional dependencies"  OFF)
+option(DEVELOPER "Use build settings suitable for developers" OFF)
+option(CONTINUOUS_INTEGRATION "Use build settings suitable for CI" OFF)
+
+# Components
 option(USE_ARC4 "Build ARC4 decryption support" ON)
+
+# Optional dependencies
 option(USE_LZMA "Build LZMA decompression support" ON)
-set(WITH_CONV CACHE STRING "The library to use for charset conversions")
-option(DEBUG_EXTRA "Expensive debug options" OFF)
-option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
-option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
-suboption(CXX_STD_VERSION "Maximum C++ standard version to enable" STRING 2017)
 option(USE_DYNAMIC_UTIMENSAT "Dynamically load utimensat if not available at compile time" OFF)
 
-set(default_DEBUG OFF)
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+# Alternative dependencies
+set(WITH_CONV CACHE STRING "The library to use for charset conversions")
+
+# Build types
+option(DEBUG_EXTRA "Expensive debug options" OFF)
+option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
+option(SET_NOISY_WARNING_FLAGS "Enable noisy compiler warnings" OFF)
+option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
+suboption(USE_LDGOLD "Use the Gold linker" BOOL ${SET_OPTIMIZATION_FLAGS})
+set(default_FASTLINK OFF)
+if(DEVELOPER OR CONTINUOUS_INTEGRATION)
+	set(default_FASTLINK ON)
+endif()
+suboption(FASTLINK "Optimize (incremental) linking speed" BOOL ${default_FASTLINK})
+set(default_USE_LTO OFF)
+if(SET_OPTIMIZATION_FLAGS AND NOT FASTLINK)
+	set(default_USE_LTO ON)
+endif()
+suboption(USE_LTO "Use link-time code generation" BOOL ${default_USE_LTO})
+suboption(WERROR "Turn warnings into errors" BOOL ${CONTINUOUS_INTEGRATION})
+suboption(CXX_STD_VERSION "Maximum C++ standard version to enable" STRING 2017)
+if(DEVELOPER OR CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(default_DEBUG ON)
+else()
+	set(default_DEBUG OFF)
 endif()
 suboption(DEBUG "Build with debug output" BOOL ${default_DEBUG})
-
 if(DEBUG)
 	add_definitions(-DDEBUG=1)
 endif()
@@ -50,15 +77,22 @@ option(BZip2_USE_STATIC_LIBS "Statically link libbz2"    ${USE_STATIC_LIBS})
 option(Boost_USE_STATIC_LIBS "Statically link Boost"     ${USE_STATIC_LIBS})
 option(iconv_USE_STATIC_LIBS "Statically link libiconv"  ${USE_STATIC_LIBS})
 
+# Make optional dependencies required
+suboption(STRICT_USE "Abort if there are missing optional dependencies" BOOL ${CONTINUOUS_INTEGRATION})
+if(STRICT_USE)
+	set(OPTIONAL_DEPENDENCY REQUIRED)
+else()
+	set(OPTIONAL_DEPENDENCY)
+endif()
 
 # Install destinations
 if(CMAKE_VERSION VERSION_LESS 2.8.5)
 	set(CMAKE_INSTALL_DATAROOTDIR "share" CACHE
-			STRING "read-only architecture-independent data root (share) (relative to prefix).")
+	    STRING "read-only architecture-independent data root (share) (relative to prefix).")
 	set(CMAKE_INSTALL_BINDIR "bin" CACHE
-			STRING "user executables (bin) (relative to prefix).")
+	    STRING "user executables (bin) (relative to prefix).")
 	set(CMAKE_INSTALL_MANDIR "${CMAKE_INSTALL_DATAROOTDIR}/man" CACHE
-			STRING "man documentation (DATAROOTDIR/man) (relative to prefix).")
+	    STRING "man documentation (DATAROOTDIR/man) (relative to prefix).")
 	mark_as_advanced(
 		CMAKE_INSTALL_DATAROOTDIR
 		CMAKE_INSTALL_BINDIR
@@ -221,10 +255,12 @@ endif()
 
 # Older glibc versions won't provide some useful symbols by default - request them
 # This flag is currently also set by gcc when compiling C++, but not for plain C
-check_symbol_exists(__GLIBC__ "features.h" HAVE_GLIBC)
-if(HAVE_GLIBC)
-	set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE=1")
-	add_definitions(-D_GNU_SOURCE=1)
+if(NOT WIN32)
+	check_symbol_exists(__GLIBC__ "features.h" HAVE_GLIBC)
+	if(HAVE_GLIBC)
+		set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE=1")
+		add_definitions(-D_GNU_SOURCE=1)
+	endif()
 endif()
 
 if(WIN32)

@@ -21,7 +21,7 @@ script:
   - mkdir build
   - cd build
   - cmake --version
-  - cmake .. -DSTRICT_USE=1
+  - cmake .. -Werror=dev -Werror=deprecated -DCONTINUOUS_INTEGRATION=1
   - make -j1
 branches:
   only:
