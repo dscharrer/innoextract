@@ -62,13 +62,13 @@ struct version {
 	
 	version() : value(0), variant(0), known(false) { }
 	
-	version(version_constant value, flags variant = 0, bool known = false)
-		: value(value), variant(variant), known(known) { }
+	version(version_constant v, flags type = 0, bool is_known = false)
+		: value(v), variant(type), known(is_known) { }
 	
 	
 	version(boost::uint8_t a, boost::uint8_t b, boost::uint8_t c, boost::uint8_t d = 0,
-	        flags variant = 0, bool known = false)
-		: value(INNO_VERSION_EXT(a, b, c, d)), variant(variant), known(known) { }
+	        flags type = 0, bool is_known = false)
+		: value(INNO_VERSION_EXT(a, b, c, d)), variant(type), known(is_known) { }
 	
 	unsigned int a() const { return  value >> 24;         }
 	unsigned int b() const { return (value >> 16) & 0xff; }
