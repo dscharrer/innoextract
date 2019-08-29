@@ -198,6 +198,18 @@ else(MSVC)
 			add_cxxflag("-Wold-style-cast")
 		endif()
 		
+		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5
+		   AND NOT SET_NOISY_WARNING_FLAGS)
+			# In older GCC versions this warning is too strict
+		elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5
+		       AND NOT SET_NOISY_WARNING_FLAGS)
+			# In older Clang verstions this warns on BOOST_SCOPE_EXIT
+		elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND NOT SET_NOISY_WARNING_FLAGS)
+			# For icc this warning is too strict
+		else()
+			add_cxxflag("-Wshadow")
+		endif()
+		
 		add_ldflag("-Wl,--no-undefined")
 		
 		if(SET_NOISY_WARNING_FLAGS)
@@ -208,7 +220,6 @@ else(MSVC)
 			add_cxxflag("-Wduplicated-branches")
 			add_cxxflag("-Wstrict-aliasing=1") # has false positives
 			add_cxxflag("-Wuseless-cast") # has false positives
-			add_cxxflag("-Wshadow")
 			add_cxxflag("-Wsign-promo")
 			# add_cxxflag("-Wnull-dereference") not that useful without deduction path
 			
