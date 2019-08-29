@@ -148,7 +148,7 @@ struct print_hex_string {
 	const char * data;
 	size_t size;
 	
-	explicit print_hex_string(const char * data, size_t size) : data(data), size(size) { }
+	explicit print_hex_string(const char * string, size_t length) : data(string), size(length) { }
 	
 };
 
@@ -202,7 +202,7 @@ struct print_bytes {
 	T value;
 	int precision;
 	
-	explicit print_bytes(T data, int precision = 3) : value(data), precision(precision) { }
+	explicit print_bytes(T data, int min_digits = 3) : value(data), precision(min_digits) { }
 	
 	bool operator==(const print_bytes & o) const { return value == o.value; }
 	bool operator!=(const print_bytes & o) const { return value != o.value; }
@@ -222,8 +222,7 @@ std::ostream & operator<<(std::ostream & os, const print_bytes<T> & s) {
 		i++;
 	}
 	
-	if((whole >= 100 && s.precision <= 3) || (whole >= 10 && s.precision <= 2)
-	   || s.precision <= 1) {
+	if((whole >= 100 && s.precision <= 3) || (whole >= 10 && s.precision <= 2) || s.precision <= 1) {
 		os << whole;
 	} else {
 		float num = float(whole) + (float(frac) / 1024.f);
