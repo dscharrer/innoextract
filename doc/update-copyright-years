@@ -34,7 +34,7 @@ for file ; do
 			continue ;;
 	esac
 	
-	c="$(grep -P "(^|[^a-zA-Z0-9_])Copyright( \\([cC]\\))? (\\d{4}\\-)?\\d{4} $copyright" "$file")"
+	c="$(grep -P "(^|[^a-zA-Z0-9_])Copyright( \\([cC]\\))? (\\d{4}\\-)?\\d{4} $copyright" "$path")"
 	
 	if [ -z "$c" ] ; then
 		case "$file" in
@@ -42,7 +42,7 @@ for file ; do
 				# These files don't have to contain copyright information
 				;;
 			*.*|scripts/*)
-				c="$(grep -P "(^|[^a-zA-Z0-9_])Copyright( \([cC]\))?[ \:].*public domain" "$file")"
+				c="$(grep -P "(^|[^a-zA-Z0-9_])Copyright( \([cC]\))?[ \:].*public domain" "$path")"
 				[ -z "$c" ] && printf 'No copyright info found in %s, skipping\n' "$file" ;;
 		esac
 		continue
@@ -64,7 +64,7 @@ for file ; do
 		COPYING|LICENSE)
 			new_year="$(git --git-dir="$repo/.git" log -1 --format=%cd --date=short)" ;;
 		*)
-			new_year="$(git --git-dir="$repo/.git" log -1 --format=%cd --date=short -- "$path")"
+			new_year="$(git --git-dir="$repo/.git" log -1 --format=%cd --date=short -- "$file")"
 	esac
 	new_year="${new_year%%-*}"
 	if [ -z "$new_year" ] || printf '%s\n' "$new_year" | grep -P '[^0-9]' > /dev/null ; then
