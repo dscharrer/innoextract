@@ -22,7 +22,7 @@
 
 #include "configure.hpp"
 
-#if INNOEXTRACT_HAVE_TIMEGM || INNOEXTRACT_HAVE_GMTIME_R
+#if INNOEXTRACT_HAVE_TIMEGM || INNOEXTRACT_HAVE_GMTIME_R || defined(_WIN32)
 #include <time.h>
 #endif
 
@@ -30,7 +30,6 @@
 
 #if defined(_WIN32)
 #include <windows.h>
-#include <time.h>
 #endif
 
 #if INNOEXTRACT_HAVE_DLSYM
