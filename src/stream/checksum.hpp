@@ -55,9 +55,9 @@ public:
 	 * \param output Location to store the final checksum at.
 	 * \param type   The type of checksum to calculate.
 	 */
-	checksum_filter(crypto::checksum * output, crypto::checksum_type type)
+	checksum_filter(crypto::checksum * dest, crypto::checksum_type type)
 		: hasher(type)
-		, output(output)
+		, output(dest)
 	{ }
 	
 	template <typename Source>
