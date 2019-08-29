@@ -290,13 +290,13 @@ int main(int argc, char * argv[]) {
 		o.preserve_file_times = true, o.local_timestamps = false;
 		po::variables_map::const_iterator i = options.find("timestamps");
 		if(i != options.end()) {
-			std::string timezone = i->second.as<std::string>();
-			if(boost::iequals(timezone, "none")) {
+			std::string timezone_name = i->second.as<std::string>();
+			if(boost::iequals(timezone_name, "none")) {
 				o.preserve_file_times = false;
-			} else if(!boost::iequals(timezone, "UTC")) {
+			} else if(!boost::iequals(timezone_name, "UTC")) {
 				o.local_timestamps = true;
-				if(!boost::iequals(timezone, "local")) {
-					util::set_local_timezone(timezone);
+				if(!boost::iequals(timezone_name, "local")) {
+					util::set_local_timezone(timezone_name);
 				}
 			}
 		}
