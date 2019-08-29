@@ -846,27 +846,27 @@ processed_entries filter_entries(const extract_options & o, const setup::info & 
 
 } // anonymous namespace
 
-void process_file(const fs::path & file, const extract_options & o) {
+void process_file(const fs::path & installer, const extract_options & o) {
 	
 	bool is_directory;
 	try {
-		is_directory = fs::is_directory(file);
+		is_directory = fs::is_directory(installer);
 	} catch(...) {
-		throw std::runtime_error("Could not open file \"" + file.string()
+		throw std::runtime_error("Could not open file \"" + installer.string()
 		                         + "\": access denied");
 	}
 	if(is_directory) {
-		throw std::runtime_error("Input file \"" + file.string() + "\" is a directory!");
+		throw std::runtime_error("Input file \"" + installer.string() + "\" is a directory!");
 	}
 	
 	util::ifstream ifs;
 	try {
-		ifs.open(file, std::ios_base::in | std::ios_base::binary);
+		ifs.open(installer, std::ios_base::in | std::ios_base::binary);
 		if(!ifs.is_open()) {
 			throw std::exception();
 		}
 	} catch(...) {
-		throw std::runtime_error("Could not open file \"" + file.string() + '"');
+		throw std::runtime_error("Could not open file \"" + installer.string() + '"');
 	}
 	
 	loader::offsets offsets;
@@ -917,9 +917,9 @@ void process_file(const fs::path & file, const extract_options & o) {
 	try {
 		info.load(ifs, entries, o.codepage);
 	} catch(const setup::version_error &) {
-		fs::path headerfile = file;
+		fs::path headerfile = installer;
 		headerfile.replace_extension(".0");
-		if(offsets.header_offset == 0 && headerfile != file && fs::exists(headerfile)) {
+		if(offsets.header_offset == 0 && headerfile != installer && fs::exists(headerfile)) {
 			log_info << "Opening \"" << color::cyan << headerfile.string() << color::reset << '"';
 			process_file(headerfile, o);
 			return;
@@ -1053,8 +1053,8 @@ void process_file(const fs::path & file, const extract_options & o) {
 		if(offsets.data_offset) {
 			slice_reader.reset(new stream::slice_reader(&ifs, offsets.data_offset));
 		} else {
-			fs::path dir = file.parent_path();
-			std::string basename = util::as_string(file.stem());
+			fs::path dir = installer.parent_path();
+			std::string basename = util::as_string(installer.stem());
 			std::string basename2 = info.header.base_filename;
 			// Prevent access to unexpected files
 			std::replace(basename2.begin(), basename2.end(), '/', '_');
@@ -1200,8 +1200,8 @@ void process_file(const fs::path & file, const extract_options & o) {
 			// Open output files
 			boost::ptr_vector<file_output> single_outputs;
 			std::vector<file_output *> outputs;
-			BOOST_FOREACH(const output_location & location, output_locations) {
-				const processed_file * fileinfo = location.first;
+			BOOST_FOREACH(const output_location & output_loc, output_locations) {
+				const processed_file * fileinfo = output_loc.first;
 				try {
 					
 					if(!o.extract && fileinfo->entry().checksum.type == crypto::None) {
@@ -1228,7 +1228,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 					
 					outputs.push_back(output);
 					
-					output->seek(location.second);
+					output->seek(output_loc.second);
 					
 				} catch(boost::bad_pointer &) {
 					// should never happen
@@ -1274,10 +1274,10 @@ void process_file(const fs::path & file, const extract_options & o) {
 				// Verify output checksum if available
 				if(output->file()->entry().checksum.type != crypto::None) {
 					if(output->has_checksum()) {
-						crypto::checksum checksum = output->checksum();
-						if(checksum != output->file()->entry().checksum) {
+						crypto::checksum output_checksum = output->checksum();
+						if(output_checksum != output->file()->entry().checksum) {
 							log_warning << "Output checksum mismatch for " << output->file()->path() << ":\n"
-							            << " ├─ actual:   " << checksum << '\n'
+							            << " ├─ actual:   " << output_checksum << '\n'
 							            << " └─ expected: " << output->file()->entry().checksum;
 							if(o.test) {
 								throw std::runtime_error("Integrity test failed!");
@@ -1331,7 +1331,7 @@ void process_file(const fs::path & file, const extract_options & o) {
 	}
 	
 	if(o.warn_unused || o.gog) {
-		gog::probe_bin_files(o, info, file, offsets.data_offset == 0);
+		gog::probe_bin_files(o, info, installer, offsets.data_offset == 0);
 	}
 	
 }
