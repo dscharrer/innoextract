@@ -2,8 +2,8 @@ project(innoextract)
 
 cmake_minimum_required(VERSION 2.8)
 
-if(CMAKE_VERSION VERSION_GREATER 3.4)
-	cmake_policy(VERSION 3.4)
+if(CMAKE_VERSION VERSION_GREATER 3.15)
+	cmake_policy(VERSION 3.15)
 else()
 	cmake_policy(VERSION ${CMAKE_VERSION})
 endif()
@@ -180,6 +180,10 @@ check_link_library(Boost Boost_LIBRARIES)
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
+if(NOT Boost_VERSION_MACRO)
+	# CMP0093 changed Boost_VERSION to x.y.z format and provide the old format in Boost_VERSION_MACRO
+	set(Boost_VERSION_MACRO ${Boost_VERSION})
+endif()
 
 has_static_libs(Boost Boost_LIBRARIES)
 if(Boost_HAS_STATIC_LIBS)
@@ -236,7 +240,7 @@ endif()
 
 # Set compiler flags
 
-if(Boost_VERSION LESS 104800)
+if(Boost_VERSION_MACRO LESS 104800)
 	# Older Boost versions don't work with C++11
 elseif(NOT CXX_STD_VERSION LESS 2011)
 	enable_cxx_version(${CXX_STD_VERSION})
