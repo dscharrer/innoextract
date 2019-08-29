@@ -167,19 +167,19 @@ public:
 	
 	flag_type get() {
 		
-		boost::uint64_t bits = this->lower_bits();
+		boost::uint64_t set_bits = this->lower_bits();
 		flag_type result = 0;
 		
 		for(size_t i = 0; i < this->size; i++) {
-			if(bits & (boost::uint64_t(1) << i)) {
+			if(set_bits & (boost::uint64_t(1) << i)) {
 				result |= Mapping::values[i];
-				bits &= ~(boost::uint64_t(1) << i);
+				set_bits &= ~(boost::uint64_t(1) << i);
 			}
 		}
 		
-		if(bits) {
+		if(set_bits) {
 			log_warning << "Unexpected " << enum_names<enum_type>::name << " flags: "
-			            << std::hex << bits << std::dec;
+			            << std::hex << set_bits << std::dec;
 		}
 		
 		return result;
@@ -204,7 +204,7 @@ private:
 	
 	const size_t pad_bits;
 	
-	std::istream & is;
+	std::istream & stream;
 	
 	typedef boost::uint8_t stored_type;
 	static const size_t stored_bits = sizeof(stored_type) * 8;
@@ -218,15 +218,15 @@ private:
 	
 public:
 	
-	explicit stored_flag_reader(std::istream & _is, size_t pad_bits = 32)
-		: pad_bits(pad_bits), is(_is), pos(0), buffer(0), result(0), bytes(0) { }
+	explicit stored_flag_reader(std::istream & is, size_t padding_bits = 32)
+		: pad_bits(padding_bits), stream(is), pos(0), buffer(0), result(0), bytes(0) { }
 	
 	//! Declare the next possible flag.
 	void add(enum_type flag) {
 		
 		if(pos == 0) {
 			bytes++;
-			buffer = util::load<stored_type>(is);
+			buffer = util::load<stored_type>(stream);
 		}
 		
 		if(buffer & (stored_type(1) << pos)) {
@@ -239,7 +239,7 @@ public:
 	operator flag_type() const {
 		if(bytes == 3 && pad_bits == 32) {
 			// 3-byte sets are padded to 4 bytes
-			(void)util::load<stored_type>(is);
+			(void)util::load<stored_type>(stream);
 		}
 		return result;
 	}
@@ -251,8 +251,8 @@ class stored_flag_reader<flags<Enum> > : public stored_flag_reader<Enum> {
 	
 public:
 	
-	explicit stored_flag_reader(std::istream & is, size_t pad_bits = 32)
-		: stored_flag_reader<Enum>(is, pad_bits) { }
+	explicit stored_flag_reader(std::istream & is, size_t padding_bits = 32)
+		: stored_flag_reader<Enum>(is, padding_bits) { }
 	
 };
 
