@@ -68,7 +68,6 @@ static time from_filetime(FILETIME ft) {
 
 static FILETIME to_filetime(time t, boost::uint32_t nsec = 0) {
 	
-	static const boost::int64_t FiletimeOffset = 0x19DB1DED53E8000ll;
 	boost::int64_t time = boost::int64_t(t) * 10000000 + boost::int64_t(nsec) / 100;
 	
 	time += FiletimeOffset;
