@@ -50,14 +50,14 @@
 namespace setup {
 
 template <class Entry>
-void info::load_entries(std::istream & is, info::entry_types entry_types, size_t count,
-                        std::vector<Entry> & entries, info::entry_types::enum_type entry_type) {
+void info::load_entries(std::istream & is, entry_types entries, size_t count,
+                        std::vector<Entry> & result, entry_types::enum_type entry_type) {
 	
-	entries.clear();
-	if(entry_types & entry_type) {
-		entries.resize(count);
+	result.clear();
+	if(entries & entry_type) {
+		result.resize(count);
 		for(size_t i = 0; i < count; i++) {
-			entries[i].load(is, *this);
+			result[i].load(is, *this);
 		}
 	} else {
 		for(size_t i = 0; i < count; i++) {
