@@ -90,7 +90,7 @@ void iterated_hash<T>::update(const char * data, size_t length) {
 	
 	if(num != 0) { // process left over data
 		if(num + length >= block_size) {
-			std::memcpy(buffer + num, data, block_size-num);
+			std::memcpy(buffer + num, data, block_size - num);
 			hash(buffer, block_size);
 			data += (block_size - num);
 			length -= (block_size - num);
@@ -131,10 +131,10 @@ size_t iterated_hash<T>::hash(const char * input, size_t length) {
 		
 		do {
 			
-			hash_word buffer[block_size / sizeof(hash_word)];
-			byte_order::load(input, buffer, size_t(boost::size(buffer)));
+			hash_word aligned_buffer[block_size / sizeof(hash_word)];
+			byte_order::load(input, aligned_buffer, size_t(boost::size(aligned_buffer)));
 			
-			transform::transform(state, buffer);
+			transform::transform(state, aligned_buffer);
 			
 			input += block_size;
 			length -= block_size;
