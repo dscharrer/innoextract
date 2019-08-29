@@ -37,15 +37,16 @@ namespace crypto {
 //! Adler-32 checksum calculations
 struct adler32 : public checksum_base<adler32> {
 	
-	void init() { s1 = 1, s2 = 0; }
+	void init() { state = 1; }
 	
 	void update(const char * data, size_t length);
 	
-	boost::uint32_t finalize() const { return (boost::uint32_t(s2) << 16) | s1; }
+	boost::uint32_t finalize() const { return state; }
 	
 private:
 	
-	boost::uint16_t s1, s2;
+	boost::uint32_t state;
+	
 };
 
 } // namespace crypto

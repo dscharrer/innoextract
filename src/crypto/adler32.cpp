@@ -29,8 +29,8 @@ void adler32::update(const char * data, size_t length) {
 	
 	const boost::uint_fast32_t base = 65521;
 	
-	boost::uint_fast32_t s1 = this->s1;
-	boost::uint_fast32_t s2 = this->s2;
+	boost::uint_fast32_t s1 = boost::uint16_t(state);
+	boost::uint_fast32_t s2 = boost::uint16_t(state >> 16);
 	
 	if(length % 8 != 0) {
 		
@@ -70,8 +70,8 @@ void adler32::update(const char * data, size_t length) {
 		}
 	}
 	
-	this->s1 = boost::uint16_t(s1);
-	this->s2 = boost::uint16_t(s2);
+	state  = (boost::uint32_t(s2) << 16) | boost::uint16_t(s1);
+	
 }
 
 } // namespace crypto
