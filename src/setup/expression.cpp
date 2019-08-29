@@ -56,8 +56,8 @@ struct evaluator {
 	const char * token_start;
 	size_t token_length;
 	
-	evaluator(const std::string & expr, const std::string & test)
-		: test(test), expr(expr.c_str()), token(end) { }
+	evaluator(const std::string & expression, const std::string & variable)
+		: test(variable), expr(expression.c_str()), token(end) { }
 	
 	token_type next() {
 		
