@@ -64,7 +64,7 @@ struct language_entry {
 	
 	void load(std::istream & is, const info & i);
 	
-	void decode(util::codepage_id codepage);
+	void decode(util::codepage_id cp);
 	
 };
 

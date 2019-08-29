@@ -195,9 +195,9 @@ void language_entry::load(std::istream & is, const info & i) {
 	
 }
 
-void language_entry::decode(util::codepage_id codepage) {
+void language_entry::decode(util::codepage_id cp) {
 	
-	util::to_utf8(name, codepage);
+	util::to_utf8(name, cp);
 	if(name.empty()) {
 		name = "default";
 	}
