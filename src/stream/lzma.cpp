@@ -106,7 +106,7 @@ bool inno_lzma1_decompressor_impl::filter(const char * & begin_in, const char * 
 		}
 		options.pb = boost::uint32_t(properties / (9 * 5));
 		options.lp = boost::uint32_t((properties % (9 * 5)) / 9);
-		options.lc = properties % 9;
+		options.lc = boost::uint32_t(properties % 9);
 		
 		options.dict_size = util::little_endian::load<boost::uint32_t>(header + 1);
 		
