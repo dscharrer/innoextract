@@ -180,7 +180,8 @@ struct constraint {
 	std::string name;
 	bool negated;
 	
-	explicit constraint(const std::string & name, bool negated = false) : name(name), negated(negated) { }
+	explicit constraint(const std::string & constraint_name, bool is_negated = false)
+		: name(constraint_name), negated(is_negated) { }
 	
 };
 
