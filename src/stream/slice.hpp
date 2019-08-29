@@ -77,7 +77,7 @@ class slice_reader : public boost::iostreams::source {
 	
 	void seek(size_t slice);
 	bool open_file(const path_type & file);
-	bool open_file_case_insensitive(const path_type & dir, const path_type & filename);
+	bool open_file_case_insensitive(const path_type & dirname, const path_type & filename);
 	void open(size_t slice);
 	
 public:
@@ -89,15 +89,15 @@ public:
 	 * Construct a \ref slice_reader to read from data inside the setup file.
 	 * Seeking to anything except the zeroeth slice is not allowed.
 	 *
-	 * \param istream     A seekable input stream for the setup executable.
-	 *                    The initial read position of the stream is ignored.
-	 * \param data_offset The offset within the given stream where the setup data starts.
-	 *                    This offset is given by \ref loader::offsets::data_offset.
+	 * \param istream A seekable input stream for the setup executable.
+	 *                The initial read position of the stream is ignored.
+	 * \param offset  The offset within the given stream where the setup data starts.
+	 *                This offset is given by \ref loader::offsets::data_offset.
 	 *
 	 * The constructed reader will allow reading the byte range [data_offset, file end)
 	 * from the setup executable and provide this as the range [0, file end - data_offset).
 	 */
-	slice_reader(std::istream * istream, boost::uint32_t data_offset);
+	slice_reader(std::istream * istream, boost::uint32_t offset);
 	
 	/*!
 	 * Construct a \ref slice_reader to read from external data slices (aka disks).
@@ -109,13 +109,13 @@ public:
 	 * The disk number is given by \code slice / slices_per_disk + 1 \endcode while
 	 * the sliceletter is the ASCII char \code 'a' + (slice % slices_per_disk) \endcode.
 	 *
-	 * \param dir             The directory containing the slice files.
-	 * \param basename        The base name for slice files.
-	 * \param basename2       Alternative base name for slice files.
-	 * \param slices_per_disk How many slices are grouped into one disk. Must not be \c 0.
+	 * \param dirname          The directory containing the slice files.
+	 * \param basename         The base name for slice files.
+	 * \param basename2        Alternative base name for slice files.
+	 * \param disk_slice_count How many slices are grouped into one disk. Must not be \c 0.
 	 */
-	slice_reader(const path_type & dir, const std::string & basename, const std::string & basename2,
-	             size_t slices_per_disk);
+	slice_reader(const path_type & dirname, const std::string & basename, const std::string & basename2,
+	             size_t disk_slice_count);
 	
 	/*!
 	 * Attempt to seek to an offset within a slice.

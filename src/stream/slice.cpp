@@ -44,8 +44,8 @@ const char slice_ids[][8] = {
 
 } // anonymous namespace
 
-slice_reader::slice_reader(std::istream * istream, boost::uint32_t data_offset)
-	: data_offset(data_offset),
+slice_reader::slice_reader(std::istream * istream, boost::uint32_t offset)
+	: data_offset(offset),
 	  slices_per_disk(1), current_slice(0), slice_size(0),
 	  is(istream) {
 	
@@ -59,11 +59,11 @@ slice_reader::slice_reader(std::istream * istream, boost::uint32_t data_offset)
 	}
 }
 
-slice_reader::slice_reader(const path_type & dir, const std::string & basename,
-                           const std::string & basename2, size_t slices_per_disk)
+slice_reader::slice_reader(const path_type & dirname, const std::string & basename,
+                           const std::string & basename2, size_t disk_slice_count)
 	: data_offset(0),
-	  dir(dir), base_file(basename), base_file2(basename2),
-	  slices_per_disk(slices_per_disk), current_slice(0), slice_size(0),
+	  dir(dirname), base_file(basename), base_file2(basename2),
+	  slices_per_disk(disk_slice_count), current_slice(0), slice_size(0),
 	  is(&ifs) { }
 
 void slice_reader::seek(size_t slice) {
@@ -157,12 +157,12 @@ std::string slice_reader::slice_filename(const std::string & basename, size_t sl
 	return oss.str();
 }
 
-bool slice_reader::open_file_case_insensitive(const path_type & dir, const path_type & filename) {
+bool slice_reader::open_file_case_insensitive(const path_type & dirname, const path_type & filename) {
 	
 	boost::filesystem::directory_iterator end;
-	for(boost::filesystem::directory_iterator i(dir); i != end; ++i) {
+	for(boost::filesystem::directory_iterator i(dirname); i != end; ++i) {
 		path_type actual_filename = i->path().filename();
-		if(boost::iequals(actual_filename.string(), filename.string()) && open_file(dir / actual_filename)) {
+		if(boost::iequals(actual_filename.string(), filename.string()) && open_file(dirname / actual_filename)) {
 			return true;
 		}
 	}
