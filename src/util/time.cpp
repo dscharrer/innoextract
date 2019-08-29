@@ -279,7 +279,7 @@ bool set_file_time(const boost::filesystem::path & path, time sec, boost::uint32
 	
 	#if INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT && INNOEXTRACT_HAVE_AT_FDCWD
 	
-	static utimensat_proc utimensat_func = (utimensat_proc)dlsym(RTLD_DEFAULT, "utimensat");
+	static utimensat_proc utimensat_func = reinterpret_cast<utimensat_proc>(dlsym(RTLD_DEFAULT, "utimensat"));
 	if(utimensat_func) {
 		return (utimensat_func(AT_FDCWD, path.string().c_str(), timens, 0) == 0);
 	}
@@ -295,8 +295,8 @@ bool set_file_time(const boost::filesystem::path & path, time sec, boost::uint32
 	// 100-nanosecond precision, for Windows
 	
 	// Prevent unused function warnings
-	(void)(HANDLE(*)(LPCSTR))open_file;
-	(void)(HANDLE(*)(LPCWSTR))open_file;
+	(void)static_cast<HANDLE(*)(LPCSTR)>(open_file);
+	(void)static_cast<HANDLE(*)(LPCWSTR)>(open_file);
 	
 	HANDLE handle = open_file(path.c_str());
 	if(handle == INVALID_HANDLE_VALUE) {
