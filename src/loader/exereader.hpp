@@ -81,7 +81,7 @@ public:
 	/*!
 	 * \brief Find where a resource with a given ID is stored in a NE or PE binary.
 	 *
-	 * Resources are addressed using a (\pname{name}, \pname{type}, \pname{language}) tuple.
+	 * Resources are addressed using a (name, type, language) tuple.
 	 *
 	 * \param is       a seekable stream of the binary containing the resource
 	 * \param name     the user-defined name of the resource
