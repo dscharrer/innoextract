@@ -93,11 +93,11 @@ public:
 	typedef base_type::category category;
 	
 	/*!
-	 * \param flip_high_byte true if the high byte of addresses is flipped if bit 23 is set.
-	 *                       This optimization is used in Inno Setup 5.3.9 and later.
+	 * \param flip_high_bytes true if the high byte of addresses is flipped if bit 23 is set.
+	 *                        This optimization is used in Inno Setup 5.3.9 and later.
 	 */
-	explicit inno_exe_decoder_5200(bool flip_high_byte)
-		: flip_high_byte(flip_high_byte) { close(0); }
+	explicit inno_exe_decoder_5200(bool flip_high_bytes)
+		: flip_high_byte(flip_high_bytes) { close(0); }
 	
 	template <typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n);
