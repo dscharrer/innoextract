@@ -113,11 +113,11 @@ class progress {
 public:
 	
 	/*!
-	 * \param max       Maximumum progress values.
-	 *                  If this value is \c 0, the progress bar will be unbounded.
-	 * \param show_rate Display the rate at which the progress changes.
+	 * \param max_value       Maximumum progress values.
+	 *                        If this value is \c 0, the progress bar will be unbounded.
+	 * \param show_value_rate Display the rate at which the progress changes.
 	 */
-	progress(boost::uint64_t max = 0, bool show_rate = true);
+	progress(boost::uint64_t max_value = 0, bool show_value_rate = true);
 	
 	/*!
 	 * Update the progress bar.

@@ -123,18 +123,26 @@ void init(is_enabled color, is_enabled progress) {
 	
 	// Initialize color output
 	
-	shell_command * const all_colors[] = {
-		&reset, &current,
-		&black, &red, &green, &yellow, &blue, &magenta, &cyan, &white,
-		&dim_black, &dim_red, &dim_green, &dim_yellow,
-		&dim_blue, &dim_magenta, &dim_cyan, &dim_white,
-	};
-	
 	if(color == disable || (color == automatic && (!is_tty || std::getenv("NO_COLOR") != NULL))) {
 		
-		BOOST_FOREACH(shell_command * color, all_colors) {
-			color->command = "";
-		}
+		reset.command = "";
+		current.command = "";
+		black.command = "";
+		red.command = "";
+		green.command = "";
+		yellow.command = "";
+		blue.command = "";
+		magenta.command = "";
+		cyan.command = "";
+		white.command = "";
+		dim_black.command = "";
+		dim_red.command = "";
+		dim_green.command = "";
+		dim_yellow.command = "";
+		dim_blue.command = "";
+		dim_magenta.command = "";
+		dim_cyan.command = "";
+		dim_white.command = "";
 		
 	} else {
 		
@@ -333,8 +341,8 @@ void progress::show_unbounded(float value, const std::string & label) {
 	progress_cleared = false;
 }
 
-progress::progress(boost::uint64_t max, bool show_rate)
-	: max(max), value(0), show_rate(show_rate),
+progress::progress(boost::uint64_t max_value, bool show_value_rate)
+	: max(max_value), value(0), show_rate(show_value_rate),
 	  start_time(boost::posix_time::microsec_clock::universal_time()),
 	  last_status(-1.f), last_time(0), last_rate(0.f) { }
 
