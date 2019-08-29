@@ -45,8 +45,8 @@ public:
 	restricted_source(const restricted_source & o)
 		: base(o.base), remaining(o.remaining) { }
 	
-	restricted_source(BaseSource & base, boost::uint64_t size)
-		: base(base), remaining(size) { }
+	restricted_source(BaseSource & source, boost::uint64_t size)
+		: base(source), remaining(size) { }
 	
 	std::streamsize read(char * buffer, std::streamsize bytes) {
 		
