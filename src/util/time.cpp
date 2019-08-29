@@ -215,14 +215,14 @@ std::tm format_time(time t) {
 time to_local_time(time t) {
 	
 	// Format time as UTC ...
-	std::tm time = format_time(t);
+	std::tm datetime = format_time(t);
 	
 	// ... and interpret it as local time
-	time.tm_isdst = 0;
+	datetime.tm_isdst = 0;
 	#if defined(_WIN32)
-	return _mktime64(&time);
+	return _mktime64(&datetime);
 	#else
-	return std::mktime(&time);
+	return std::mktime(&datetime);
 	#endif
 }
 
