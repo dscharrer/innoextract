@@ -49,7 +49,7 @@ public:
 	
 private:
 	
-	checksum_type type;
+	checksum_type active_type;
 	
 	union {
 		crypto::adler32 adler32;

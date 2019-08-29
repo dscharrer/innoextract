@@ -22,9 +22,9 @@
 
 namespace crypto {
 
-hasher::hasher(checksum_type type) : type(type) {
+hasher::hasher(checksum_type type) : active_type(type) {
 	
-	switch(type) {
+	switch(active_type) {
 		case crypto::None: break;
 		case crypto::Adler32: adler32.init(); break;
 		case crypto::CRC32: crc32.init(); break;
@@ -36,7 +36,7 @@ hasher::hasher(checksum_type type) : type(type) {
 
 void hasher::update(const char * data, size_t size) {
 	
-	switch(type) {
+	switch(active_type) {
 		case crypto::None: break;
 		case crypto::Adler32: adler32.update(data, size); break;
 		case crypto::CRC32: crc32.update(data, size); break;
@@ -50,9 +50,9 @@ checksum hasher::finalize() {
 	
 	checksum result;
 	
-	result.type = type;
+	result.type = active_type;
 	
-	switch(type) {
+	switch(active_type) {
 		case crypto::None: break;
 		case crypto::Adler32: result.adler32 = adler32.finalize(); break;
 		case crypto::CRC32: result.crc32 = crc32.finalize(); break;
