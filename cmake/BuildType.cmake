@@ -82,9 +82,6 @@ if(MSVC)
 		# Enable linker optimization in release
 		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Oi /Os")
 		
-		# Enable multiprocess build
-		add_definitions(/MP)
-		
 	endif()
 	
 	foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE)
@@ -126,8 +123,10 @@ if(MSVC)
 	endif()
 	
 	# Always build with debug information
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
+	if(NOT MSVC_VERSION LESS 1700)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
+	endif()
 	
 else(MSVC)
 	
