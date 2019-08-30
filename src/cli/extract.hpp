@@ -114,6 +114,6 @@ struct extract_options {
 	
 };
 
-void process_file(const boost::filesystem::path & file, const extract_options & o);
+void process_file(const boost::filesystem::path & installer, const extract_options & o);
 
 #endif // INNOEXTRACT_CLI_EXTRACT_HPP
