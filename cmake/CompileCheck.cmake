@@ -1,5 +1,5 @@
 
-# Copyright (C) 2011-2017 Daniel Scharrer
+# Copyright (C) 2011-2019 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -35,6 +35,8 @@ function(check_compile RESULT FILE FLAG TYPE)
 		return()
 	endif()
 	
+	string(REGEX REPLACE "[^a-zA-Z0-9]" "\\\\\\0" escaped_flag ${FLAG} )
+	
 	# CMake already has a check_cxx_compiler_flag macro in CheckCXXCompilerFlag, but
 	# it prints the result variable in the output (which is ugly!) and also uses it
 	# as a key to cache checks - so it would need to be unique for each flag.
@@ -44,9 +46,11 @@ function(check_compile RESULT FILE FLAG TYPE)
 	set(fail_regexps
 		"warning:"                                     # general
 		"unrecognized .*option"                        # GNU
+		"${escaped_flag}.* not supported"              # GNU
 		"unknown .*option"                             # Clang
 		"ignoring unknown option"                      # MSVC
 		"warning D9002"                                # MSVC, any lang
+		"warning #[0-9]*:"                             # Intel
 		"option.*not supported"                        # Intel
 		"invalid argument .*option"                    # Intel
 		"ignoring option .*argument required"          # Intel
@@ -75,10 +79,10 @@ function(check_compile RESULT FILE FLAG TYPE)
 	# Check if we can compile and link a simple file with the new flags
 	try_compile(
 		check_compiler_flag ${PROJECT_BINARY_DIR} ${FILE}
-		CMAKE_FLAGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
-		            "-DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}"
-		            "-DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}"
-		            "-DCMAKE_MODULE_LINKER_FLAGS=${CMAKE_MODULE_LINKER_FLAGS}"
+		CMAKE_FLAGS "-DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}"
+		            "-DCMAKE_EXE_LINKER_FLAGS:STRING=${CMAKE_EXE_LINKER_FLAGS}"
+		            "-DCMAKE_SHARED_LINKER_FLAGS:STRING=${CMAKE_SHARED_LINKER_FLAGS}"
+		            "-DCMAKE_MODULE_LINKER_FLAGS:STRING=${CMAKE_MODULE_LINKER_FLAGS}"
 		OUTPUT_VARIABLE ERRORLOG
 	)
 	
