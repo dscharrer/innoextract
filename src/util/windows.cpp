@@ -376,10 +376,10 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 	
 public:
 	
-	windows_console_sink(HANDLE handle, const utf8_codecvt * codecvt)
-		: handle(handle)
+	windows_console_sink(HANDLE console_handle, const utf8_codecvt * converter)
+		: handle(console_handle)
 		, buffer(256)
-		, codecvt(codecvt)
+		, codecvt(converter)
 		, initial_attributes(get_attributes())
 		, default_attributes(get_default_attributes())
 		, attributes(initial_attributes)
