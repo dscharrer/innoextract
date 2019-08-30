@@ -111,21 +111,21 @@ public:
 	template <typename Source>
 	std::streamsize read(Source & src, char * dest, std::streamsize n) {
 		
-		std::streamsize read = 0;
+		std::streamsize nread = 0;
 		while(n) {
 			
 			if(pos == length && !read_chunk(src)) {
-				return read ? read : EOF;
+				return nread ? nread : EOF;
 			}
 			
 			std::streamsize size = std::min(n, std::streamsize(length - pos));
 			
-			std::copy(buffer + pos, buffer + pos + size, dest + read);
+			std::copy(buffer + pos, buffer + pos + size, dest + nread);
 			
-			pos += size_t(size), n -= size, read += size;
+			pos += size_t(size), n -= size, nread += size;
 		}
 		
-		return read;
+		return nread;
 	}
 	
 private:
