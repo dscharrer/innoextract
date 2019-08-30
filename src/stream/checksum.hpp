@@ -52,8 +52,8 @@ public:
 	typedef base_type::category category;
 	
 	/*!
-	 * \param output Location to store the final checksum at.
-	 * \param type   The type of checksum to calculate.
+	 * \param dest Location to store the final checksum at.
+	 * \param type The type of checksum to calculate.
 	 */
 	checksum_filter(crypto::checksum * dest, crypto::checksum_type type)
 		: hasher(type)

@@ -91,8 +91,8 @@ struct encoded_string {
 	codepage_id codepage;
 	
 	/*!
-	 * \param target   The std::string object to receive the loaded UTF-8 string.
-	 * \param codepage The Windows codepage for the encoding of the stored string.
+	 * \param target  The std::string object to receive the loaded UTF-8 string.
+	 * \param cp      The Windows codepage for the encoding of the stored string.
 	 */
 	encoded_string(std::string & target, codepage_id cp) : data(target), codepage(cp) { }
 	
