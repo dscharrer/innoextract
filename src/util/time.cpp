@@ -68,13 +68,11 @@ static time from_filetime(FILETIME ft) {
 
 static FILETIME to_filetime(time t, boost::uint32_t nsec = 0) {
 	
-	boost::int64_t time = boost::int64_t(t) * 10000000 + boost::int64_t(nsec) / 100;
-	
-	time += FiletimeOffset;
+	boost::int64_t filetime64 = boost::int64_t(t) * 10000000 + boost::int64_t(nsec) / 100 + FiletimeOffset;
 	
 	FILETIME filetime;
-	filetime.dwLowDateTime = DWORD(time);
-	filetime.dwHighDateTime = DWORD(time >> 32);
+	filetime.dwLowDateTime = DWORD(filetime64);
+	filetime.dwHighDateTime = DWORD(filetime64 >> 32);
 	return filetime;
 }
 
