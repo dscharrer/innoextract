@@ -96,8 +96,8 @@ bool chunk::operator<(const chunk & o) const {
 	
 	if(first_slice != o.first_slice) {
 		return (first_slice < o.first_slice);
-	} else if(offset != o.offset) {
-		return (offset < o.offset);
+	} else if(sort_offset != o.sort_offset) {
+		return (sort_offset < o.sort_offset);
 	} else if(size != o.size) {
 		return (size < o.size);
 	} else if(compression != o.compression) {
@@ -111,7 +111,7 @@ bool chunk::operator<(const chunk & o) const {
 
 bool chunk::operator==(const chunk & o) const {
 	return (first_slice == o.first_slice
-	        && offset == o.offset
+	        && sort_offset == o.sort_offset
 	        && size == o.size
 	        && compression == o.compression
 	        && encryption == o.encryption);

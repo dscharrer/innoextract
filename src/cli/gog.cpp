@@ -498,7 +498,7 @@ void probe_bin_files(const extract_options & o, const setup::info & info,
 	bin_count += probe_bin_file_series(o, info, dir, basename + "-0" + ".bin");
 	
 
-	size_t max_slice = 0;
+	boost::uint32_t max_slice = 0;
 	if(external) {
 		BOOST_FOREACH(const setup::data_entry & location, info.data_entries) {
 			max_slice = std::max(max_slice, location.chunk.first_slice);
@@ -509,14 +509,14 @@ void probe_bin_files(const extract_options & o, const setup::info & info,
 	size_t slice =  0;
 	size_t format = 1;
 	if(external && info.header.slices_per_disk == 1) {
-		slice = max_slice + 1;
+		slice = size_t(max_slice) + 1;
 	}
 	bin_count += probe_bin_file_series(o, info, dir, basename, format, slice);
 	
 	slice = 0;
 	format = 2;
 	if(external && info.header.slices_per_disk != 1) {
-		slice = max_slice + 1;
+		slice = size_t(max_slice) + 1;
 		format = info.header.slices_per_disk;
 	}
 	bin_count += probe_bin_file_series(o, info, dir, basename, format, slice);

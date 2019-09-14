@@ -45,7 +45,7 @@ void data_entry::load(std::istream & is, const info & i) {
 		}
 	}
 	
-	chunk.offset = util::load<boost::uint32_t>(is);
+	chunk.sort_offset = chunk.offset = util::load<boost::uint32_t>(is);
 	
 	if(i.version >= INNO_VERSION(4, 0, 1)) {
 		file.offset = util::load<boost::uint64_t>(is);
@@ -158,7 +158,7 @@ void data_entry::load(std::istream & is, const info & i) {
 	options |= flagreader;
 	
 	if(options & ChunkCompressed) {
-		chunk.compression = stream::UnknownCompression;
+		chunk.compression = i.header.compression;
 	} else {
 		chunk.compression = stream::Stored;
 	}

@@ -127,10 +127,10 @@ class file_output : private boost::noncopyable {
 	
 	fs::path path_;
 	const processed_file * file_;
-	util::ofstream stream_;
+	util::fstream stream_;
 	
 	crypto::hasher checksum_;
-	bool checksum_valid_;
+	boost::uint64_t checksum_position_;
 	
 	boost::uint64_t position_;
 	boost::uint64_t total_written_;
@@ -143,14 +143,18 @@ public:
 		: path_(dir / f->path())
 		, file_(f)
 		, checksum_(f->entry().checksum.type)
-		, checksum_valid_(f->entry().checksum.type != crypto::None)
+		, checksum_position_(f->entry().checksum.type == crypto::None ? boost::uint64_t(-1) : 0)
 		, position_(0)
 		, total_written_(0)
 		, write_(write)
 	{
 		if(write_) {
 			try {
-				stream_.open(path_, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+				std::ios_base::openmode flags = std::ios_base::out | std::ios_base::binary | std::ios_base::trunc;
+				if(file_->is_multipart()) {
+					flags |= std::ios_base::in;
+				}
+				stream_.open(path_, flags);
 				if(!stream_.is_open()) {
 					throw std::exception();
 				}
@@ -166,8 +170,9 @@ public:
 			stream_.write(data, std::streamsize(n));
 		}
 		
-		if(checksum_valid_) {
+		if(checksum_position_ == position_) {
 			checksum_.update(data, n);
+			checksum_position_ += n;
 		}
 		
 		position_ += n;
@@ -182,33 +187,23 @@ public:
 			return;
 		}
 		
-		checksum_valid_ = false;
-		
 		debug("seeking output from " << print_hex(position_) << " to " << print_hex(new_position));
 		
 		if(!write_) {
+			position_ = new_position;
 			return;
 		}
 		
-		const boost::uint64_t max = boost::uint64_t(std::numeric_limits<util::ofstream::off_type>::max() / 4);
+		const boost::uint64_t max = boost::uint64_t(std::numeric_limits<util::fstream::off_type>::max() / 4);
 		
 		if(new_position <= max) {
-			stream_.seekp(util::ofstream::off_type(new_position), std::ios_base::beg);
+			stream_.seekp(util::fstream::off_type(new_position), std::ios_base::beg);
 		} else {
-			if(new_position > position_) {
-				boost::uint64_t diff = new_position - position_;
-				while(diff > max) {
-					stream_.seekp(util::ofstream::off_type(max), std::ios_base::cur);
-					diff -= max;
-				}
-				stream_.seekp(util::ofstream::off_type(diff), std::ios_base::cur);
-			} else {
-				boost::uint64_t diff = position_ - new_position;
-				while(diff > max) {
-					stream_.seekp(-util::ofstream::off_type(max), std::ios_base::cur);
-					diff -= max;
-				}
-				stream_.seekp(-util::ofstream::off_type(diff), std::ios_base::cur);
+			util::fstream::off_type sign = (new_position > position_) ? 1 : -1;
+			boost::uint64_t diff = (new_position > position_) ? new_position - position_ : position_ - new_position;
+			while(diff > 0) {
+				stream_.seekp(sign * util::fstream::off_type(std::min(diff, max)), std::ios_base::cur);
+				diff -= std::min(diff, max);
 			}
 		}
 		
@@ -232,7 +227,44 @@ public:
 	}
 	
 	bool has_checksum() const {
-		return checksum_valid_ && position_ == file_->entry().size;
+		return checksum_position_ == file_->entry().size;
+	}
+	
+	bool calculate_checksum() {
+		
+		if(has_checksum()) {
+			return true;
+		}
+		
+		if(!write_) {
+			return false;
+		}
+		
+		debug("calculating output checksum for " << path_);
+		
+		const boost::uint64_t max = boost::uint64_t(std::numeric_limits<util::fstream::off_type>::max() / 4);
+		
+		boost::uint64_t diff = checksum_position_;
+		stream_.seekg(util::fstream::off_type(std::min(diff, max)), std::ios_base::beg);
+		diff -= std::min(diff, max);
+		while(diff > 0) {
+			stream_.seekg(util::fstream::off_type(std::min(diff, max)), std::ios_base::cur);
+			diff -= std::min(diff, max);
+		}
+		
+		while(!stream_.eof()) {
+			char buffer[8192];
+			std::streamsize n = stream_.read(buffer, sizeof(buffer)).gcount();
+			checksum_.update(buffer, size_t(n));
+			checksum_position_ += boost::uint64_t(n);
+		}
+		
+		if(!has_checksum()) {
+			log_warning << "Could not read back " << path_ << " to calculate output checksum for multi-part file";
+			return false;
+		}
+		
+		return true;
 	}
 	
 	crypto::checksum checksum() {
@@ -1024,9 +1056,22 @@ void process_file(const fs::path & installer, const extract_options & o) {
 		files_for_location[file.entry().location].push_back(output_location(&file, 0));
 		if(o.test || o.extract) {
 			boost::uint64_t offset = info.data_entries[file.entry().location].uncompressed_size;
+			boost::uint32_t sort_slice = info.data_entries[file.entry().location].chunk.first_slice;
+			boost::uint32_t sort_offset = info.data_entries[file.entry().location].chunk.sort_offset;
 			BOOST_FOREACH(boost::uint32_t location, file.entry().additional_locations) {
+				setup::data_entry & data = info.data_entries[location];
 				files_for_location[location].push_back(output_location(&file, offset));
-				offset += info.data_entries[location].uncompressed_size;
+				offset += data.uncompressed_size;
+				if(data.chunk.first_slice > sort_slice ||
+				   (data.chunk.first_slice == sort_slice && data.chunk.sort_offset > sort_offset)) {
+					sort_slice = data.chunk.first_slice;
+					sort_offset = data.chunk.sort_offset;
+				} else if(data.chunk.first_slice == sort_slice && data.chunk.sort_offset == data.chunk.offset) {
+					data.chunk.sort_offset = ++sort_offset;
+				} else {
+					// Could not reorder chunk - no point in trying to reordder the remaining chunks
+					sort_slice = boost::uint32_t(-1);
+				}
 			}
 		}
 	}
@@ -1037,15 +1082,11 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	typedef std::map<stream::chunk, Files> Chunks;
 	Chunks chunks;
 	for(size_t i = 0; i < info.data_entries.size(); i++) {
-		if(files_for_location[i].empty()) {
-			continue;
+		if(!files_for_location[i].empty()) {
+			setup::data_entry & location = info.data_entries[i];
+			chunks[location.chunk][location.file] = i;
+			total_size += location.uncompressed_size;
 		}
-		setup::data_entry & location = info.data_entries[i];
-		if(location.chunk.compression == stream::UnknownCompression) {
-			location.chunk.compression = info.header.compression;
-		}
-		chunks[location.chunk][location.file] = i;
-		total_size += location.uncompressed_size;
 	}
 	
 	boost::scoped_ptr<stream::slice_reader> slice_reader;
@@ -1272,20 +1313,15 @@ void process_file(const fs::path & installer, const extract_options & o) {
 				}
 				
 				// Verify output checksum if available
-				if(output->file()->entry().checksum.type != crypto::None) {
-					if(output->has_checksum()) {
-						crypto::checksum output_checksum = output->checksum();
-						if(output_checksum != output->file()->entry().checksum) {
-							log_warning << "Output checksum mismatch for " << output->file()->path() << ":\n"
-							            << " ├─ actual:   " << output_checksum << '\n'
-							            << " └─ expected: " << output->file()->entry().checksum;
-							if(o.test) {
-								throw std::runtime_error("Integrity test failed!");
-							}
+				if(output->file()->entry().checksum.type != crypto::None && output->calculate_checksum()) {
+					crypto::checksum output_checksum = output->checksum();
+					if(output_checksum != output->file()->entry().checksum) {
+						log_warning << "Output checksum mismatch for " << output->file()->path() << ":\n"
+						            << " ├─ actual:   " << output_checksum << '\n'
+						            << " └─ expected: " << output->file()->entry().checksum;
+						if(o.test) {
+							throw std::runtime_error("Integrity test failed!");
 						}
-					} else {
-						// This should not happen
-						log_warning << "Could not verify output checksum of file " << output->file()->path();
 					}
 				}
 				

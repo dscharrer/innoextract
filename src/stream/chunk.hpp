@@ -77,8 +77,10 @@ enum encryption_method {
  */
 struct chunk {
 	
-	size_t first_slice;             //!< Slice where the chunk starts.
-	size_t last_slice;              //!< Slice where the chunk ends.
+	boost::uint32_t first_slice;    //!< Slice where the chunk starts.
+	boost::uint32_t last_slice;     //!< Slice where the chunk ends.
+	
+	boost::uint32_t sort_offset;
 	
 	boost::uint32_t offset;         //!< Offset of the compressed chunk in firstSlice.
 	boost::uint64_t size;           //! Total compressed size of the chunk.
