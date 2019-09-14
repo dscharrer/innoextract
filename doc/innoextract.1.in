@@ -102,10 +102,10 @@ Inno Setup installers can contain duplicate files with the same name. This optio
 Extract only one of the colliding files. The choice is done similar to how Inno Setup overwrites files during installation. This is the default.
 .TP
 "\fBrename\fP"
-Rename files that would be overwritten using the "\fBoverwrite\fP" action by appending a suffix comprised of the file's language, it's architecture, the component it belongs to and/or a number to make the filename unique. The language suffix (if applicable) is also appended to the \fIdefault\fP file that would have been extracted with the "\fBoverwrite\fP" action.
+Rename files that would be overwritten using the "\fBoverwrite\fP" action by appending a suffix comprised of the file's language, its architecture, the component it belongs to and/or a number to make the filename unique. The language suffix (if applicable) is also appended to the \fIdefault\fP file that would have been extracted with the "\fBoverwrite\fP" action.
 .TP
 "\fBrename-all\fP"
-Rename all colliding files by appending a suffix comprised of the file's language, it's architecture, the component it belongs to and/or a number to make the filename unique. The complete suffix is appended to both files that would have been overwritten using the "\fBoverwrite\fP" action and to those that would have overwritten other files.
+Rename all colliding files by appending a suffix comprised of the file's language, its architecture, the component it belongs to and/or a number to make the filename unique. The complete suffix is appended to both files that would have been overwritten using the "\fBoverwrite\fP" action and to those that would have overwritten other files.
 .TP
 "\fBerror\fP"
 Exit when a collision is detected.
@@ -126,7 +126,7 @@ With the "\fBrename\fP" action, steps 1 and 3 are only applied to files that wou
 \fB\-c\fP, \fB\-\-color\fP[=\fIENABLE\fP]
 By default
 .B innoextract
-will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Specifically, colors will be enabled if both \fBstdout\fP and \fBstderr\fP point to a TTY, the \fBTERM\fP environment variable is not set to "\fBdumb\fP" and the \fBNO_COLOR\fP environment is unset. Pass \fB1\fP or \fBtrue\fP to \fB\-\-color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
+will try to detect if the terminal supports shell escape codes and enable or disable color output accordingly. Specifically, colors will be enabled if both \fBstdout\fP and \fBstderr\fP point to a TTY, the \fBTERM\fP environment variable is not set to "\fBdumb\fP" and the \fBNO_COLOR\fP environment variable is unset. Pass \fB1\fP or \fBtrue\fP to \fB\-\-color\fP to force color output. Pass \fB0\fP or \fBfalse\fP to never output color codes.
 .TP
 \fB\-V\FP, \fB\-\-data\-version\fP
 Print the Inno Setup data version of the installer and exit immediately.
