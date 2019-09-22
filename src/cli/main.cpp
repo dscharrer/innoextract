@@ -374,14 +374,6 @@ int main(int argc, char * argv[]) {
 			 * See https://svn.boost.org/trac/boost/ticket/8535
 			 */
 			o.output_dir = i->second.as<std::string>();
-			try {
-				if(o.extract && !o.output_dir.empty() && !fs::exists(o.output_dir)) {
-					fs::create_directory(o.output_dir);
-				}
-			} catch(...) {
-				log_error << "Could not create output directory " << o.output_dir;
-				return ExitDataError;
-			}
 		}
 	}
 	

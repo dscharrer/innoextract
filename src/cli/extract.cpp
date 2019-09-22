@@ -1008,8 +1008,12 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	
 	processed_entries processed = filter_entries(o, info);
 	
-	if(o.extract && !o.output_dir.empty()) {
-		fs::create_directories(o.output_dir);
+	try {
+		if(o.extract && !o.output_dir.empty() && !fs::exists(o.output_dir)) {
+			fs::create_directory(o.output_dir);
+		}
+	} catch(...) {
+		throw std::runtime_error("Could not create output directory \"" + o.output_dir.string() + '"');
 	}
 	
 	if(o.list || o.extract) {
