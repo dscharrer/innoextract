@@ -191,8 +191,3 @@ function(add_ldflag FLAG)
 	endif()
 	
 endfunction(add_ldflag)
-
-function(force_recheck_library LIBRARY_NAME)
-	unset(FIND_PACKAGE_MESSAGE_DETAILS_${ARGV1} CACHE)
-	unset(FIND_PACKAGE_MESSAGE_DETAILS_${LIBRARY_NAME} CACHE)
-endfunction()

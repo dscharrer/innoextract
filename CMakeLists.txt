@@ -135,21 +135,6 @@ if(USE_STATIC_LIBS AND NOT MSVC)
 	add_ldflag("-static-libgcc")
 endif()
 
-# Force re-checking libraries if the compiler or compiler flags change
-if((NOT LAST_CMAKE_CXX_FLAGS STREQUAL CMAKE_CXX_FLAGS)
-   OR (NOT LAST_CMAKE_CXX_COMPILER STREQUAL CMAKE_CXX_COMPILER))
-	force_recheck_library(LZMA)
-	force_recheck_library(Boost)
-	force_recheck_library(ZLIB)
-	force_recheck_library(BZip2)
-	force_recheck_library(iconv)
-	unset(Boost_INCLUDE_DIR CACHE)
-	set(LAST_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE INTERNAL
-	    "The last C++ compiler flags")
-	set(LAST_CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE INTERNAL
-	    "The last C++ compiler")
-endif()
-
 unset(LIBRARIES)
 
 if(USE_ARC4)
