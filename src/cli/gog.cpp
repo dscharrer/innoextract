@@ -253,12 +253,17 @@ char hex_char(int c) {
 
 class temporary_directory : private boost::noncopyable {
 	
+	fs::path parent;
 	fs::path path;
 	
 public:
 	
 	explicit temporary_directory(const fs::path & base) {
 		try {
+			if(!base.empty() && !fs::exists(base)) {
+				fs::create_directory(base);
+				parent = base;
+			}
 			size_t tmpnum = 0;
 			std::ostringstream oss;
 			do {
@@ -266,7 +271,7 @@ public:
 				oss << "innoextract-tmp-" << tmpnum++;
 				path = base / oss.str();
 			} while(fs::exists(path));
-			fs::create_directories(path);
+			fs::create_directory(path);
 		} catch(...) {
 			path = fs::path();
 			throw std::runtime_error("Could not create temporary directory!");
@@ -277,6 +282,9 @@ public:
 		if(!path.empty()) {
 			try {
 				fs::remove_all(path);
+				if(!parent.empty()) {
+					fs::remove(parent);
+				}
 			} catch(...) {
 				log_error << "Could not remove temporary directory " << path << '!';
 			}

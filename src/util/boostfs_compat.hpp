@@ -31,30 +31,6 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
-#if !defined(BOOST_FILESYSTEM_VERSION) || BOOST_FILESYSTEM_VERSION < 3
-
-namespace boost { namespace filesystem {
-
-inline bool create_directories(const path & p) {
-	
-	if(p.empty()) {
-		return true;
-	}
-	
-	path parent = p.parent_path();
-	if(!exists(parent)) {
-		if(!create_directories(parent)) {
-			return false;
-		}
-	}
-	
-	return create_directory(p);
-}
-
-} } // namespace boost::filesystem
-
-#endif
-
 namespace util {
 
 inline const std::string & as_string(const std::string & path) {
