@@ -1,33 +1,33 @@
 
 # innoextract - A tool to unpack installers created by Inno Setup
 
-[Inno Setup](http://www.jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. innoextract allows to extract such installers under non-Windows systems without running the actual installer using wine. innoextract currently supports installers created by Inno Setup 1.2.10 to 5.6.0.
+[Inno Setup](http://jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. innoextract allows to extract such installers under non-Windows systems without running the actual installer using wine. innoextract currently supports installers created by Inno Setup 1.2.10 to 5.6.0.
 
 In addition to standard Inno Setup installers, innoextract also supports some modified Inno Setup variants including Martijn Laan's My Inno Setup Extensions 3.0.6.1 as well as GOG.com's Inno Setup-based game installers.
 
 innoextract is available under the ZLIB license - see the LICENSE file.
 
-See the website for [Linux packages](http://constexpr.org/innoextract/#packages).
+See the website for [Linux packages](https://constexpr.org/innoextract/#packages).
 
 ## Contact
 
-[Website](http://constexpr.org/innoextract/)
+[Website](https://constexpr.org/innoextract/)
 
-Author: [Daniel Scharrer](http://constexpr.org/)
+Author: [Daniel Scharrer](https://constexpr.org/)
 
 ## Dependencies
 
-* **[Boost](http://www.boost.org/) 1.37** or newer
-* **liblzma** from [xz-utils](http://tukaani.org/xz/) *(optional)*
-* **iconv** (*optional*, either as part of the system libc, as is the case with [glibc](http://www.gnu.org/software/libc/) and [uClibc](http://www.uclibc.org/), or as a separate [libiconv](http://www.gnu.org/software/libiconv/))
+* **[Boost](https://www.boost.org/) 1.37** or newer
+* **liblzma** from [xz-utils](https://tukaani.org/xz/) *(optional)*
+* **iconv** (*optional*, either as part of the system libc, as is the case with [glibc](https://www.gnu.org/software/libc/) and [uClibc](https://uclibc.org/), or as a separate [libiconv](https://www.gnu.org/software/libiconv/))
 
 For Boost you will need the headers as well as the `iostreams`, `filesystem`, `date_time`, `system` and `program_options` libraries. Older Boost version may work but are not actively supported. The boost `iostreams` library needs to be build with zlib and bzip2 support.
 
 While innoextract can be built without liblzma by manually setting `-DUSE_LZMA=OFF`, it is highly recommended and you won't be able to extract most installers created by newer Inno Setup versions without it.
 
-To build innoextract you will also need **[CMake](http://cmake.org/) 2.8** and a working C++ compiler, as well as the development headers for liblzma and boost.
+To build innoextract you will also need **[CMake](https://cmake.org/) 2.8** and a working C++ compiler, as well as the development headers for liblzma and boost.
 
-See the Website for [operating system-specific instructions](http://constexpr.org/innoextract/install).
+See the Website for [operating system-specific instructions](https://constexpr.org/innoextract/install).
 
 ## Compile and install
 
@@ -115,10 +115,10 @@ A perhaps more complete, but Windows-only, tool to extract Inno Setup files is [
 
 Extracting Windows installer executables created by programs other than Inno Setup is out of the scope of this project. Some of these can be unpacked by the following programs:
 
-* [cabextract](http://www.cabextract.org.uk/)
+* [cabextract](https://cabextract.org.uk/)
 
 * [unshield](https://github.com/twogood/unshield)
 
 ## Disclaimer
 
-This project is in no way associated with Inno Setup or [www.jrsoftware.org](http://www.jrsoftware.org/).
+This project is in no way associated with Inno Setup or [jrsoftware.org](http://jrsoftware.org/).

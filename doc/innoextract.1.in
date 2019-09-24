@@ -358,12 +358,12 @@ Names for data slice/disk files in multi-file installers must follow the standar
 \fBcabextract\fP(1), \fBunar\fP(1), \fBunrar\fP(1), \fBunshield\fP(1), \fBtzset\fP(3)
 .SH BUGS
 .PP
-Please report bugs to http://innoextract.constexpr.org/issues.
+Please report bugs to https://innoextract.constexpr.org/issues.
 .SH CREDITS
 .PP
 \fBinnoextract\fP is distributed under the zlib/libpng license.  See the LICENSE file for details.
 .PP
-A website is available at http://constexpr.org/innoextract/.
+A website is available at https://constexpr.org/innoextract/.
 .PP
 This program uses the excellent lzma/xz decompression library written by Lasse Collin.
 .SH AUTHOR
