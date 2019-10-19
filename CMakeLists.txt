@@ -1,12 +1,10 @@
-project(innoextract)
+cmake_minimum_required(VERSION 2.8...3.15)
 
-cmake_minimum_required(VERSION 2.8)
-
-if(CMAKE_VERSION VERSION_GREATER 3.15)
-	cmake_policy(VERSION 3.15)
-else()
+if(CMAKE_VERSION VERSION_LESS 3.12)
 	cmake_policy(VERSION ${CMAKE_VERSION})
 endif()
+
+project(innoextract)
 
 
 # Define configuration options
