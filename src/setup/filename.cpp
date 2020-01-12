@@ -37,7 +37,7 @@ struct is_path_separator {
 
 struct is_unsafe_path_char {
 	bool operator()(char c) {
-		if(c < 32) {
+		if(static_cast<unsigned char>(c) < 32) {
 			return true;
 		}
 		switch(c) {
@@ -81,7 +81,8 @@ std::string filename_map::expand_variables(it & begin, it end, bool close) const
 		}
 		ptrdiff_t obegin = ptrdiff_t(result.size());
 		result.append(begin, pos);
-		result.erase(std::remove_if(result.begin() + obegin, result.end(), is_unsafe_path_char()), result.end());
+		std::replace_copy_if(result.begin() + obegin, result.end(), result.begin() + obegin,
+		                     is_unsafe_path_char(), '$');
 		begin = pos;
 		
 		if(pos == end) {
