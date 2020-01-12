@@ -43,11 +43,11 @@ void icon_entry::load(std::istream & is, const info & i) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(name, i.codepage);
-	is >> util::encoded_string(filename, i.codepage);
-	is >> util::encoded_string(parameters, i.codepage);
-	is >> util::encoded_string(working_dir, i.codepage);
-	is >> util::encoded_string(icon_file, i.codepage);
+	is >> util::encoded_string(name, i.codepage, i.header.lead_bytes);
+	is >> util::encoded_string(filename, i.codepage, i.header.lead_bytes);
+	is >> util::encoded_string(parameters, i.codepage, i.header.lead_bytes);
+	is >> util::encoded_string(working_dir, i.codepage, i.header.lead_bytes);
+	is >> util::encoded_string(icon_file, i.codepage, i.header.lead_bytes);
 	is >> util::encoded_string(comment, i.codepage);
 	
 	load_condition_data(is, i);

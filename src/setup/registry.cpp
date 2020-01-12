@@ -65,7 +65,7 @@ void registry_entry::load(std::istream & is, const info & i) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(key, i.codepage);
+	is >> util::encoded_string(key, i.codepage, i.header.lead_bytes);
 	if(i.version.bits() != 16) {
 		is >> util::encoded_string(name, i.codepage);
 	} else {

@@ -81,11 +81,11 @@ void file_entry::load(std::istream & is, const info & i) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(source, i.codepage);
-	is >> util::encoded_string(destination, i.codepage);
-	is >> util::encoded_string(install_font_name, i.codepage);
+	is >> util::encoded_string(source, i.codepage, i.header.lead_bytes);
+	is >> util::encoded_string(destination, i.codepage, i.header.lead_bytes);
+	is >> util::encoded_string(install_font_name, i.codepage, i.header.lead_bytes);
 	if(i.version >= INNO_VERSION(5, 2, 5)) {
-		is >> util::encoded_string(strong_assembly_name, i.codepage);
+		is >> util::encoded_string(strong_assembly_name, i.codepage, i.header.lead_bytes);
 	} else {
 		strong_assembly_name.clear();
 	}

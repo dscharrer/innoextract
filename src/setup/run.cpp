@@ -45,9 +45,9 @@ void run_entry::load(std::istream & is, const info & i) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(name, i.codepage);
-	is >> util::encoded_string(parameters, i.codepage);
-	is >> util::encoded_string(working_dir, i.codepage);
+	is >> util::encoded_string(name, i.codepage, i.header.lead_bytes);
+	is >> util::encoded_string(parameters, i.codepage, i.header.lead_bytes);
+	is >> util::encoded_string(working_dir, i.codepage, i.header.lead_bytes);
 	if(i.version >= INNO_VERSION(1, 3, 9)) {
 		is >> util::encoded_string(run_once_id, i.codepage);
 	} else {

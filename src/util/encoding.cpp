@@ -752,13 +752,38 @@ bool from_utf8_win32(const std::string & from, std::string & to, codepage_id cod
 
 #endif // INNOEXTRACT_HAVE_WIN32_CONV
 
-void to_utf8(const std::string & from, std::string & to, codepage_id codepage) {
+void to_utf8(const std::string & from, std::string & to, codepage_id codepage,
+             const std::bitset<256> * lead_bytes) {
 	
 	switch(codepage) {
 		case cp_utf16le:     utf16le_to_wtf8(from, to); return;
 		case cp_windows1252: windows1252_to_utf8(from, to); return;
 		case cp_iso_8859_1:  windows1252_to_utf8(from, to); return;
 		default: break;
+	}
+	
+	if(lead_bytes) {
+		std::string buffer;
+		for(size_t start = 0; start < from.length();) {
+			size_t end = start;
+			while(end < from.length()) {
+				if(lead_bytes->test(static_cast<unsigned char>(from[end]))) {
+					end = std::min(from.length(), end + 2);
+				} else if(from[end] != 0x5C) {
+					end++;
+				} else {
+					break;
+				}
+			}
+			buffer = from.substr(start, end - start);
+			util::to_utf8(buffer, codepage, NULL);
+			to.append(buffer);
+			if(end < from.length()) {
+				to.push_back('\\');
+			}
+			start = end + 1;
+		}
+		return;
 	}
 	
 	#if INNOEXTRACT_HAVE_ICONV
@@ -779,7 +804,7 @@ void to_utf8(const std::string & from, std::string & to, codepage_id codepage) {
 
 } // anonymous namespace
 
-void to_utf8(std::string & data, codepage_id codepage) {
+void to_utf8(std::string & data, codepage_id codepage, const std::bitset<256> * lead_bytes) {
 	
 	if(data.empty() || is_utf8(data, codepage)) {
 		// Already UTF-8
@@ -787,7 +812,7 @@ void to_utf8(std::string & data, codepage_id codepage) {
 	}
 	
 	std::string buffer;
-	to_utf8(data, buffer, codepage);
+	to_utf8(data, buffer, codepage, lead_bytes);
 	std::swap(data, buffer);
 }
 

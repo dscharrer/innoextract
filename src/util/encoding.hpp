@@ -26,6 +26,7 @@
 #ifndef INNOEXTRACT_UTIL_ENCODING_HPP
 #define INNOEXTRACT_UTIL_ENCODING_HPP
 
+#include <bitset>
 #include <string>
 
 #include <boost/cstdint.hpp>
@@ -157,12 +158,14 @@ void wtf8_to_utf16le(const std::string & from, std::string & to);
 
 /*!
  * Convert a string in place to UTF-8 from a specified encoding.
- * \param data     The input string to convert.
- * \param codepage The Windows codepage number for the input string encoding.
+ * \param data       The input string to convert.
+ * \param codepage   The Windows codepage number for the input string encoding.
+ * \param lead_bytes Preserve 0x5C path separators.
  *
  * \note This function is not thread-safe.
  */
-void to_utf8(std::string & data, codepage_id codepage = cp_windows1252);
+void to_utf8(std::string & data, codepage_id codepage = cp_windows1252,
+             const std::bitset<256> * lead_bytes = NULL);
 
 /*!
  * Convert a string from UTF-8 to a specified encoding.

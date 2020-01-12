@@ -52,7 +52,7 @@ void directory_entry::load(std::istream & is, const info & i) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(name, i.codepage);
+	is >> util::encoded_string(name, i.codepage, i.header.lead_bytes);
 	
 	load_condition_data(is, i);
 	

@@ -26,6 +26,7 @@
 #ifndef INNOEXTRACT_UTIL_LOAD_HPP
 #define INNOEXTRACT_UTIL_LOAD_HPP
 
+#include <bitset>
 #include <cstring>
 #include <istream>
 #include <string>
@@ -89,34 +90,46 @@ struct encoded_string {
 	
 	std::string & data;
 	codepage_id codepage;
+	const std::bitset<256> * lead_byte_set;
 	
 	/*!
-	 * \param target  The std::string object to receive the loaded UTF-8 string.
-	 * \param cp      The Windows codepage for the encoding of the stored string.
+	 * \param target     The std::string object to receive the loaded UTF-8 string.
+	 * \param cp         The Windows codepage for the encoding of the stored string.
 	 */
-	encoded_string(std::string & target, codepage_id cp) : data(target), codepage(cp) { }
+	encoded_string(std::string & target, codepage_id cp)
+		: data(target), codepage(cp), lead_byte_set(NULL) { }
+	
+	/*!
+	 * \param target     The std::string object to receive the loaded UTF-8 string.
+	 * \param cp         The Windows codepage for the encoding of the stored string.
+	 * \param lead_bytes Preserve 0x5C path separators.
+	 */
+	encoded_string(std::string & target, codepage_id cp, const std::bitset<256> & lead_bytes)
+		: data(target), codepage(cp), lead_byte_set(&lead_bytes) { }
 	
 	/*!
 	 * Load and convert a length-prefixed string
 	 *
 	 * \note This function is not thread-safe.
 	 */
-	static void load(std::istream & is, std::string & target, codepage_id codepage);
+	static void load(std::istream & is, std::string & target, codepage_id codepage,
+	                 const std::bitset<256> * lead_bytes = NULL);
 	
 	/*!
 	 * Load and convert a length-prefixed string
 	 *
 	 * \note This function is not thread-safe.
 	 */
-	static std::string load(std::istream & is, codepage_id codepage) {
+	static std::string load(std::istream & is, codepage_id codepage,
+	                        const std::bitset<256> * lead_bytes = NULL) {
 		std::string target;
-		load(is, target, codepage);
+		load(is, target, codepage, lead_bytes);
 		return target;
 	}
 	
 };
 inline std::istream & operator>>(std::istream & is, const encoded_string & str) {
-	encoded_string::load(is, str.data, str.codepage);
+	encoded_string::load(is, str.data, str.codepage, str.lead_byte_set);
 	return is;
 }
 

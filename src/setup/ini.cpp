@@ -47,13 +47,13 @@ void ini_entry::load(std::istream & is, const info & i) {
 		(void)util::load<boost::uint32_t>(is); // uncompressed size of the entry
 	}
 	
-	is >> util::encoded_string(inifile, i.codepage);
+	is >> util::encoded_string(inifile, i.codepage, i.header.lead_bytes);
 	if(inifile.empty()) {
 		inifile = "{windows}/WIN.INI";
 	}
-	is >> util::encoded_string(section, i.codepage);
+	is >> util::encoded_string(section, i.codepage, i.header.lead_bytes);
 	is >> util::encoded_string(key, i.codepage);
-	is >> util::encoded_string(value, i.codepage);
+	is >> util::encoded_string(value, i.codepage, i.header.lead_bytes);
 	
 	load_condition_data(is, i);
 	

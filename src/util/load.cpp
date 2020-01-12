@@ -54,9 +54,10 @@ void binary_string::skip(std::istream & is) {
 	discard(is, length);
 }
 
-void encoded_string::load(std::istream & is, std::string & target, codepage_id codepage) {
+void encoded_string::load(std::istream & is, std::string & target, codepage_id codepage,
+                          const std::bitset<256> * lead_bytes) {
 	binary_string::load(is, target);
-	to_utf8(target, codepage);
+	to_utf8(target, codepage, lead_bytes);
 }
 
 unsigned to_unsigned(const char * chars, size_t count) {
