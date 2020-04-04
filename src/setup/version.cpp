@@ -160,7 +160,9 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (5.3.10)",                     INNO_VERSION_EXT(5, 3, 10, 0), 0 },
 	{ "Inno Setup Setup Data (5.3.10) (u)",                 INNO_VERSION_EXT(5, 3, 10, 0), version::Unicode },
 	{ "Inno Setup Setup Data (5.4.2)",                      INNO_VERSION_EXT(5, 4,  2, 0), 0 },
-	{ "Inno Setup Setup Data (5.4.2) (u)",                  INNO_VERSION_EXT(5, 4,  2, 0), version::Unicode },
+	{ "Inno Setup Setup Data (5.4.2) (u)",  /* ambiguous */ INNO_VERSION_EXT(5, 4,  2, 0), version::Unicode },
+	{ "" /* BlackBox v1? */,                                INNO_VERSION_EXT(5, 4,  2, 1), 0 },
+	{ "" /* BlackBox v1? */,                                INNO_VERSION_EXT(5, 4,  2, 1), version::Unicode },
 	{ "Inno Setup Setup Data (5.5.0)",                      INNO_VERSION_EXT(5, 5,  0, 0), 0 },
 	{ "Inno Setup Setup Data (5.5.0) (u)",  /* ambiguous */ INNO_VERSION_EXT(5, 5,  0, 0), version::Unicode },
 	{ "" /* BlackBox v2? */,                                INNO_VERSION_EXT(5, 5,  0, 1), 0 },
@@ -369,6 +371,11 @@ bool version::is_ambiguous() const {
 	
 	if(value == INNO_VERSION(4, 2, 3)) {
 		// might be either 4.2.3 or 4.2.4
+		return true;
+	}
+	
+	if(value == INNO_VERSION(5, 4, 2)) {
+		// might be either 5.5.0 or 5.5.0.1
 		return true;
 	}
 	

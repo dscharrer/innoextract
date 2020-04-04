@@ -493,10 +493,10 @@ void header::load(std::istream & is, const version & version) {
 		uninstall_display_size = 0;
 	}
 	
-	if(version == INNO_VERSION_EXT(5, 5, 0, 1)) {
+	if(version == INNO_VERSION_EXT(5, 4,  2, 1) || version == INNO_VERSION_EXT(5, 5, 0, 1)) {
 		/*
 		 * This is needed to extract an Inno Setup variant (BlackBox v2?) that uses
-		 * the 5.5.0 (unicode) data version string while the format differs:
+		 * the 5.4.2 or 5.5.0 (unicode) data version string while the format differs:
 		 * The language entries are off by one byte and the EncryptionUsed flag
 		 * gets set while there is no decrypt_dll.
 		 * I'm not sure where exactly this byte goes, but it's after the compression

@@ -1,5 +1,6 @@
 
 innoextract 1.9 (TBD)
+ - Added support for a modified Inno Setup 5.4.2 variant
  - Fixed output directory being created for unsupported installers
  - Fixed some safe non-ASCII characters being stripped from filenames
  - Fixed handling of path separators in Japanese and Korean installers
