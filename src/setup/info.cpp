@@ -150,10 +150,13 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 	
 	stream::block_reader::pointer reader = stream::block_reader::get(is, version);
 	
+	debug("loading main header");
 	header.load(*reader, version);
 	
+	debug("loading languages");
 	load_entries(*reader, entries, header.language_count, languages, Languages);
 	
+	debug("determining encoding");
 	if(version.is_unicode()) {
 		// Unicode installers are always UTF16-LE, do not allow users to override that.
 		codepage = util::cp_utf16le;
@@ -180,27 +183,43 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 	}
 	
 	if(version < INNO_VERSION(4, 0, 0)) {
+		debug("loading images and plugins");
 		load_wizard_and_decompressor(*reader, version, header, *this, entries);
 	}
 	
+	debug("loading messages");
 	load_entries(*reader, entries, header.message_count, messages, Messages);
+	debug("loading permissions");
 	load_entries(*reader, entries, header.permission_count, permissions, Permissions);
+	debug("loading types");
 	load_entries(*reader, entries, header.type_count, types, Types);
+	debug("loading components");
 	load_entries(*reader, entries, header.component_count, components, Components);
+	debug("loading tasks");
 	load_entries(*reader, entries, header.task_count, tasks, Tasks);
+	debug("loading directories");
 	load_entries(*reader, entries, header.directory_count, directories, Directories);
+	debug("loading files");
 	load_entries(*reader, entries, header.file_count, files, Files);
+	debug("loading icons");
 	load_entries(*reader, entries, header.icon_count, icons, Icons);
+	debug("loading ini entries");
 	load_entries(*reader, entries, header.ini_entry_count, ini_entries, IniEntries);
+	debug("loading registry entries");
 	load_entries(*reader, entries, header.registry_entry_count, registry_entries, RegistryEntries);
+	debug("loading delete entries");
 	load_entries(*reader, entries, header.delete_entry_count, delete_entries, DeleteEntries);
+	debug("loading uninstall delete entries");
 	load_entries(*reader, entries, header.uninstall_delete_entry_count, uninstall_delete_entries,
 	             UninstallDeleteEntries);
+	debug("loading run entries");
 	load_entries(*reader, entries, header.run_entry_count, run_entries, RunEntries);
+	debug("loading uninstall run entries");
 	load_entries(*reader, entries, header.uninstall_run_entry_count, uninstall_run_entries,
 	             UninstallRunEntries);
 	
 	if(version >= INNO_VERSION(4, 0, 0)) {
+		debug("loading images and plugins");
 		load_wizard_and_decompressor(*reader, version, header, *this, entries);
 	}
 	
@@ -208,6 +227,7 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 	check_is_end(reader, "unknown data at end of primary header stream");
 	reader = stream::block_reader::get(is, version);
 	
+	debug("loading data entries");
 	load_entries(*reader, entries, header.data_entry_count, data_entries, DataEntries);
 	
 	check_is_end(reader, "unknown data at end of secondary header stream");
