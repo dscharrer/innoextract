@@ -51,6 +51,11 @@ namespace loader {
 struct offsets {
 	
 	/*!
+	 * True if we have some indication that this is an Inno Setup file
+	 */
+	bool found_magic;
+	
+	/*!
 	 * Offset of compressed `setup.e32` (the actual installer code)
 	 *
 	 * A value of \c 0 means there is no setup.e32 embedded in this file

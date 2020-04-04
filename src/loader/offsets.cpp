@@ -78,6 +78,8 @@ bool offsets::load_from_exe_file(std::istream & is) {
 	
 	debug("found Inno magic at " << print_hex(SetupLoaderHeaderOffset));
 	
+	found_magic = true;
+	
 	boost::uint32_t offset_table_offset = util::load<boost::uint32_t>(is);
 	boost::uint32_t not_offset_table_offset = util::load<boost::uint32_t>(is);
 	if(is.fail() || offset_table_offset != ~not_offset_table_offset) {
@@ -101,6 +103,8 @@ bool offsets::load_from_exe_resource(std::istream & is) {
 	}
 	
 	debug("found loader header resource at " << print_hex(resource.offset));
+	
+	found_magic = true;
 	
 	return load_offsets_at(is, resource.offset);
 }
@@ -142,6 +146,7 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 		boost::uint32_t revision = checksum.load<boost::uint32_t>(is);
 		if(is.fail()) {
 			is.clear();
+			debug("could not read loader header revision");
 			return false;
 		} else if(revision != 1) {
 			log_warning << "Unexpected setup loader revision: " << revision;
@@ -198,6 +203,8 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 }
 
 void offsets::load(std::istream & is) {
+	
+	found_magic = false;
 	
 	/*
 	 * Try to load the offset table by following a pointer at a constant offset.

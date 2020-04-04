@@ -976,6 +976,13 @@ void process_file(const fs::path & installer, const extract_options & o) {
 			process_file(headerfile, o);
 			return;
 		}
+		if(offsets.found_magic) {
+			if(offsets.header_offset == 0) {
+				throw format_error("Could not determine location of setup headers!");
+			} else {
+				throw format_error("Could not determine setup data version!");
+			}
+		}
 		throw;
 	} catch(const std::exception & e) {
 		std::ostringstream oss;
