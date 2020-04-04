@@ -141,6 +141,9 @@ int main(int argc, char * argv[]) {
 		("show-password", "Show password check information")
 		("check-password", "Abort if the password is incorrect")
 		("data-version,V", "Only print the data version")
+		#ifdef DEBUG
+		("dump-headers", "Dump decompressed setup headers")
+		#endif
 	;
 	
 	po::options_description modifiers("Modifiers");
@@ -175,7 +178,7 @@ int main(int argc, char * argv[]) {
 		("color,c", po::value<bool>()->implicit_value(true), "Enable/disable color output")
 		("progress,p", po::value<bool>()->implicit_value(true), "Enable/disable the progress bar")
 		#ifdef DEBUG
-			("debug", "Output debug information")
+		("debug", "Output debug information")
 		#endif
 	;
 	
@@ -428,6 +431,16 @@ int main(int argc, char * argv[]) {
 			return ExitUserError;
 		}
 	}
+	
+	#ifdef DEBUG
+	o.dump_headers = (options.count("dump-headers") != 0);
+	if(o.dump_headers) {
+		if(explicit_action || o.data_version) {
+			log_error << "Combining --dump-headers with other options is not allowed";
+			return ExitUserError;
+		}
+	}
+	#endif
 	
 	o.extract_unknown = (options.count("no-extract-unknown") == 0);
 	

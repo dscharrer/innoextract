@@ -30,6 +30,8 @@
 
 #include "configure.hpp"
 
+#include "cli/extract.hpp"
+
 #ifdef DEBUG
 
 namespace loader { struct offsets; }
@@ -37,6 +39,8 @@ namespace setup { struct info; }
 
 void print_offsets(const loader::offsets & offsets);
 void print_info(const setup::info & info);
+
+void dump_headers(std::istream & is, const loader::offsets & offsets, const extract_options & o);
 
 #endif // DEBUG
 

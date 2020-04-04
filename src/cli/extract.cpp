@@ -876,6 +876,18 @@ processed_entries filter_entries(const extract_options & o, const setup::info & 
 	return processed;
 }
 
+void create_output_directory(const extract_options & o) {
+	
+	try {
+		if(!o.output_dir.empty() && !fs::exists(o.output_dir)) {
+			fs::create_directory(o.output_dir);
+		}
+	} catch(...) {
+		throw std::runtime_error("Could not create output directory \"" + o.output_dir.string() + '"');
+	}
+	
+}
+
 } // anonymous namespace
 
 void process_file(const fs::path & installer, const extract_options & o) {
@@ -904,6 +916,13 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	loader::offsets offsets;
 	offsets.load(ifs);
 	
+	#ifdef DEBUG
+	if(logger::debug) {
+		print_offsets(offsets);
+		std::cout << '\n';
+	}
+	#endif
+	
 	if(o.data_version)  {
 		setup::version version;
 		ifs.seekg(offsets.header_offset);
@@ -916,12 +935,13 @@ void process_file(const fs::path & installer, const extract_options & o) {
 		return;
 	}
 	
-#ifdef DEBUG
-	if(logger::debug) {
-		print_offsets(offsets);
-		std::cout << '\n';
+	#ifdef DEBUG
+	if(o.dump_headers)  {
+		create_output_directory(o);
+		dump_headers(ifs, offsets, o);
+		return;
 	}
-#endif
+	#endif
 	
 	setup::info::entry_types entries = 0;
 	if(o.list || o.test || o.extract || (o.gog_galaxy && o.list_languages)) {
@@ -1008,12 +1028,8 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	
 	processed_entries processed = filter_entries(o, info);
 	
-	try {
-		if(o.extract && !o.output_dir.empty() && !fs::exists(o.output_dir)) {
-			fs::create_directory(o.output_dir);
-		}
-	} catch(...) {
-		throw std::runtime_error("Could not create output directory \"" + o.output_dir.string() + '"');
+	if(o.extract) {
+		create_output_directory(o);
 	}
 	
 	if(o.list || o.extract) {

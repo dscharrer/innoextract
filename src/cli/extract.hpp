@@ -57,6 +57,9 @@ struct extract_options {
 	bool list_checksums; //!< Show checksum information for files
 	
 	bool data_version; //!< Print the data version
+	#ifdef DEBUG
+	bool dump_headers; //!< Dump setup headers
+	#endif
 	bool list; //!< List files
 	bool test; //!< Test files (but don't extract)
 	bool extract; //!< Extract files

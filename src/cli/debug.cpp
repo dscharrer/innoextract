@@ -24,9 +24,11 @@
 #include <iostream>
 
 #include <boost/foreach.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/range/size.hpp>
 
 #include "loader/offsets.hpp"
+
 #include "setup/component.hpp"
 #include "setup/data.hpp"
 #include "setup/delete.hpp"
@@ -45,11 +47,16 @@
 #include "setup/task.hpp"
 #include "setup/type.hpp"
 #include "setup/version.hpp"
+
 #include "stream/block.hpp"
+
+#include "util/fstream.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
 #include "util/output.hpp"
 #include "util/time.hpp"
+
+namespace fs = boost::filesystem;
 
 void print_offsets(const loader::offsets & offsets) {
 	
@@ -598,4 +605,55 @@ void print_info(const setup::info & info) {
 	print_aux(info);
 	
 	std::cout.setf(old, std::ios_base::boolalpha);
+}
+
+static void dump_headers(std::istream & is, const setup::version & version, const extract_options & o, int i) {
+	
+	std::string filename;
+	{
+		std::ostringstream oss;
+		oss << "headers" << i << ".bin";
+		filename = oss.str();
+	}
+	
+	const char * type = (i == 0 ? "primary" : "secondary");
+	if(!o.quiet) {
+		std::cout << "Dumping " << type << " setup headers to \""
+		          << color::white << filename << color::reset << "\"\n";
+	} else if(!o.silent) {
+		std::cout << filename << '\n';
+	}
+	
+	fs::path path = o.output_dir / filename;
+	util::ofstream ofs;
+	try {
+		ofs.open(path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
+		if(!ofs.is_open()) {
+			throw std::exception();
+		}
+	} catch(...) {
+		throw std::runtime_error("Could not open output file \"" + path.string() + '"');
+	}
+	
+	try {
+		ofs << stream::block_reader::get(is, version)->rdbuf();
+	} catch(const std::exception & e) {
+		std::ostringstream oss;
+		oss << "Stream error while dumping " << type << " setup headers!\n";
+		oss << " ├─ detected setup version: " << version << '\n';
+		oss << " └─ error reason: " << e.what();
+		throw format_error(oss.str());
+	}
+	
+}
+
+void dump_headers(std::istream & is, const loader::offsets & offsets, const extract_options & o) {
+	
+	setup::version version;
+	is.seekg(offsets.header_offset);
+	version.load(is);
+	
+	dump_headers(is, version, o, 0);
+	dump_headers(is, version, o, 1);
+	
 }
