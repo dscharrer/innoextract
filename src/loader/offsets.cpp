@@ -62,7 +62,7 @@ const setup_loader_version known_setup_loader_versions[] = {
 const int ResourceNameInstaller = 11111;
 
 const boost::uint32_t SetupLoaderHeaderOffset = 0x30;
-const boost::uint32_t SetupLoaderHeaderMagic = 0x6f6e6e49;
+const boost::uint32_t SetupLoaderHeaderMagic = 0x6f6e6e49; // "Inno"
 
 } // anonymous namespace
 
@@ -76,12 +76,18 @@ bool offsets::load_from_exe_file(std::istream & is) {
 		return false;
 	}
 	
+	debug("found Inno magic at " << print_hex(SetupLoaderHeaderOffset));
+	
 	boost::uint32_t offset_table_offset = util::load<boost::uint32_t>(is);
 	boost::uint32_t not_offset_table_offset = util::load<boost::uint32_t>(is);
 	if(is.fail() || offset_table_offset != ~not_offset_table_offset) {
 		is.clear();
+		debug("header offset checksum: " << print_hex(not_offset_table_offset) << " != ~"
+		                                 << print_hex(offset_table_offset));
 		return false;
 	}
+	
+	debug("found loader header at " << print_hex(offset_table_offset));
 	
 	return load_offsets_at(is, offset_table_offset);
 }
@@ -94,6 +100,8 @@ bool offsets::load_from_exe_resource(std::istream & is) {
 		return false;
 	}
 	
+	debug("found loader header resource at " << print_hex(resource.offset));
+	
 	return load_offsets_at(is, resource.offset);
 }
 
@@ -101,12 +109,14 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	
 	if(is.seekg(pos).fail()) {
 		is.clear();
+		debug("could not seek to loader header");
 		return false;
 	}
 	
 	char magic[12];
 	if(is.read(magic, std::streamsize(sizeof(magic))).fail()) {
 		is.clear();
+		debug("could not read loader header magic");
 		return false;
 	}
 	
@@ -115,6 +125,7 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 		BOOST_STATIC_ASSERT(sizeof(known_setup_loader_versions[i].magic) == sizeof(magic));
 		if(!memcmp(magic, known_setup_loader_versions[i].magic, sizeof(magic))) {
 			version = known_setup_loader_versions[i].version;
+			debug("found loader header magic version " << setup::version(version));
 			break;
 		}
 	}
@@ -167,6 +178,7 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	
 	if(is.fail()) {
 		is.clear();
+		debug("could not read loader header");
 		return false;
 	}
 	
@@ -174,6 +186,7 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 		boost::uint32_t expected = util::load<boost::uint32_t>(is);
 		if(is.fail()) {
 			is.clear();
+			debug("could not read loader header checksum");
 			return false;
 		}
 		if(checksum.finalize() != expected) {
