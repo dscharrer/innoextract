@@ -83,7 +83,7 @@ Install options:
 | `CMAKE_INSTALL_PREFIX`      | `/usr/local`         | Where to install innoextract.
 | `CMAKE_INSTALL_BINDIR`      | `bin`                | Location for binaries (relative to prefix).
 | `CMAKE_INSTALL_DATAROOTDIR` | `share`              | Location for data files (relative to prefix).
-| `CMAKE_INSTALL_MANDIR`      | `man`                | Location for man pages (relative to dataroot).
+| `CMAKE_INSTALL_MANDIR`      | `man`                | Location for man pages (relative to datarootdir).
 
 Set options by passing `-D<option>=<value>` to cmake.
 
