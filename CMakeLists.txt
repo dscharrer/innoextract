@@ -470,6 +470,12 @@ set(MAN_SOURCES VERSION "VERSION" CHANGELOG "CHANGELOG")
 version_file(${MAN_INPUT} ${MAN_FILE} "${MAN_SOURCES}" ".git")
 add_custom_target(manpage ALL DEPENDS ${MAN_FILE})
 
+set(README_INPUT "README.md.in")
+set(README_FILE "README.md")
+set(README_SOURCES VERSION "VERSION")
+version_file(${README_INPUT} ${README_FILE} "${README_SOURCES}" ".git")
+add_custom_target(readme ALL DEPENDS ${README_FILE})
+
 
 # Main targets
 
