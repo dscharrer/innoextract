@@ -523,3 +523,12 @@ print_configuration("Charset conversion"
 	1                             "builtin"
 )
 message("")
+
+if(DEVELOPER)
+	file(READ "README.md" readme)
+	parse_version_file("VERSION" "VERSION")
+	string(REPLACE "${VERSION_2}" "" readme_without_version "${readme}")
+	if(readme_without_version STREQUAL readme)
+		message(WARNING "Could not find '${VERSION_2}' in README.md.")
+	endif()
+endif()
