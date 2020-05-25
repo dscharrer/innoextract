@@ -38,12 +38,12 @@
 
 const char innoextract_name[] = "${VERSION_0_NAME}";
 
-const char innoextract_version[] = "${VERSION_0_NUMBER}${GIT_SUFFIX_7}";
+const char innoextract_version[] = "${VERSION_0_STRING}${VERSION_SUFFIX}${GIT_SUFFIX_7}";
 
 const char innosetup_versions[] = "${VERSION_2}";
 
 const char innoextract_bugs[] = "${VERSION_4}";
 
-const char innoextract_copyright[] = "${LICENSE_0_STRING}";
+const char innoextract_copyright[] = "${LICENSE_0_LINE}";
 
 const char innoextract_license[] = "${LICENSE_TAIL}";

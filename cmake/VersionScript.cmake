@@ -1,5 +1,5 @@
 
-# Copyright (C) 2011-2016 Daniel Scharrer
+# Copyright (C) 2011-2020 Daniel Scharrer
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the author(s) be held liable for any damages
@@ -26,102 +26,29 @@ if((NOT DEFINED INPUT) OR (NOT DEFINED OUTPUT) OR (NOT DEFINED VERSION_SOURCES) 
 	message(SEND_ERROR "Invalid arguments.")
 endif()
 
+include("${CMAKE_CURRENT_LIST_DIR}/VersionString.cmake")
+
 # configure_file doesn't handle newlines correctly - pre-escape variables
-function(escape_var VAR)
+macro(_version_escape var string)
 	# Escape the escape character and quotes
-	string(REGEX REPLACE "([\\\\\"])" "\\\\\\1" escaped "${${VAR}}")
+	string(REGEX REPLACE "([\\\\\"])" "\\\\\\1" ${var} "${string}")
 	# Pull newlines out of string
-	string(REGEX REPLACE "\n" "\\\\n\"\n\t\"" escaped "${escaped}")
-	set(${VAR} "${escaped}" PARENT_SCOPE)
-endfunction(escape_var)
+	string(REGEX REPLACE "\n" "\\\\n\"\n\t\"" ${var} "${${var}}")
+endmacro()
 
 set(var "")
 foreach(arg IN LISTS VERSION_SOURCES)
-	
 	if(var STREQUAL "")
 		set(var ${arg})
 	else()
-		
-		file(READ "${arg}" ${var})
-		string(STRIP "${${var}}" ${var})
-		string(REGEX REPLACE "\r\n" "\n" ${var} "${${var}}")
-		string(REGEX REPLACE "\r" "\n" ${var} "${${var}}")
-		
-		# Split the version file into lines.
-		string(REGEX MATCHALL "[^\r\n]+" lines "${${var}}")
-		set(${var}_COUNT 0)
-		foreach(line IN LISTS lines)
-			
-			set(${var}_${${var}_COUNT} "${line}")
-			escape_var(${var}_${${var}_COUNT})
-			
-			# Find the first and last spaces
-			string(STRIP "${line}" line)
-			string(LENGTH "${line}" line_length)
-			set(first_space -1)
-			set(last_space ${line_length})
-			foreach(i RANGE ${line_length})
-				if(i LESS line_length)
-					string(SUBSTRING "${line}" ${i} 1 line_char)
-					if(line_char STREQUAL " ")
-						set(last_space ${i})
-						if(first_space EQUAL -1)
-							set(first_space ${i})
-						endif()
-					endif()
-				endif()
-			endforeach()
-			
-			if(first_space GREATER -1)
-				
-				# Get everything before the first space
-				string(SUBSTRING "${line}" 0 ${first_space} line_name)
-				string(STRIP "${line_name}" ${var}_${${var}_COUNT}_SHORTNAME)
-				escape_var(${var}_${${var}_COUNT}_SHORTNAME)
-				
-				# Get everything after the first space
-				math(EXPR num_length "${line_length} - ${first_space}")
-				string(SUBSTRING "${line}" ${first_space} ${num_length} line_num)
-				string(STRIP "${line_num}" ${var}_${${var}_COUNT}_STRING)
-				escape_var(${var}_${${var}_COUNT}_STRING)
-				
-			endif()
-			
-			if(line MATCHES " ([0-9]\\.[^ ]* \\+ )?[^ ]*$")
-				string(REGEX REPLACE " (([0-9]\\.[^ ]* \\+ )?[^ ]*)$" ""
-				       ${var}_${${var}_COUNT}_NAME "${line}")
-				string(LENGTH ${${var}_${${var}_COUNT}_NAME} begin)
-				math(EXPR begin "${begin} + 1")
-				math(EXPR length "${line_length} - ${begin}")
-				string(SUBSTRING "${line}" "${begin}" "${length}" ${var}_${${var}_COUNT}_NUMBER)
-				
-			else()
-				set(${var}_${${var}_COUNT}_NAME "${line}")
-				set(${var}_${${var}_COUNT}_NUMBER)
-			endif()
-			escape_var(${var}_${${var}_COUNT}_NAME)
-			escape_var(${var}_${${var}_COUNT}_NUMBER)
-			
-			math(EXPR ${var}_COUNT "${${var}_COUNT} + 1")
-		endforeach()
-		
-		string(REGEX REPLACE "\n\n.*$" "" ${var}_HEAD "${${var}}")
-		string(STRIP "${${var}_HEAD}" ${var}_HEAD)
-		string(REGEX MATCH "\n\n.*" ${var}_TAIL "${${var}}")
-		string(STRIP "${${var}_TAIL}" ${var}_TAIL)
-		
-		escape_var(${var})
-		escape_var(${var}_HEAD)
-		escape_var(${var}_TAIL)
-		
+		parse_version_file(${var} "${arg}" ON)
 		set(var "")
 	endif()
-	
 endforeach()
 
 # Check for a git directory and fill in the git commit hash if one exists.
 unset(GIT_COMMIT)
-if(EXISTS "${GIT_DIR}")
+if(NOT GIT_DIR STREQUAL "")
 	
 	unset(git_head)
 	
