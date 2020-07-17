@@ -521,7 +521,7 @@ int main() {
 	}
 	
 	// Tell boost::filesystem to interpret our path strings as UTF-8
-	boost::filesystem::path::imbue(std::locale(std::locale(), &util::codecvt));
+	boost::filesystem::path::imbue(std::locale(std::locale(), new std::codecvt_utf8_utf16<wchar_t>()));
 	
 	// Enable UTF-8 output and ANSI escape sequences
 	util::console_wrapper wrapped;
