@@ -180,6 +180,7 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (5.6.2)",     /* prerelease */ INNO_VERSION_EXT(5, 6,  2, 0), 0 },
 	{ "Inno Setup Setup Data (5.6.2) (u)", /* prerelease */ INNO_VERSION_EXT(5, 6,  2, 0), version::Unicode },
 	{ "Inno Setup Setup Data (6.0.0) (u)",                  INNO_VERSION_EXT(6, 0,  0, 0), version::Unicode },
+	{ "Inno Setup Setup Data (6.1.0) (u)",                  INNO_VERSION_EXT(6, 1,  0, 0), version::Unicode },
 };
 
 } // anonymous namespace

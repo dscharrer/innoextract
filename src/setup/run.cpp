@@ -103,6 +103,9 @@ void run_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(5, 2, 0)) {
 		flagreader.add(RunAsOriginalUser);
 	}
+	if(i.version >= INNO_VERSION(6, 1, 0)) {
+		flagreader.add(DontLogParameters);
+	}
 	
 	options = flagreader;
 }

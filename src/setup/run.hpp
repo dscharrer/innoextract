@@ -49,7 +49,8 @@ struct run_entry : public item {
 		HideWizard,
 		Bits32,
 		Bits64,
-		RunAsOriginalUser
+		RunAsOriginalUser,
+		DontLogParameters
 	);
 	
 	enum wait_condition {

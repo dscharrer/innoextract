@@ -48,6 +48,7 @@ struct icon_entry : public item {
 		FolderShortcut,
 		ExcludeFromShowInNewInstall,
 		PreventPinning,
+		HasAppUserModelToastActivatorCLSID,
 		// obsolete options:
 		RunMinimized
 	);
@@ -65,6 +66,7 @@ struct icon_entry : public item {
 	std::string icon_file;
 	std::string comment;
 	std::string app_user_model_id;
+	std::string app_user_model_toast_activator_clsid;
 	
 	int icon_index;
 	

@@ -58,6 +58,14 @@ void icon_entry::load(std::istream & is, const info & i) {
 		app_user_model_id.clear();
 	}
 	
+	if(i.version >= INNO_VERSION(6, 1, 0)) {
+		const size_t guid_size = 16;
+		app_user_model_toast_activator_clsid.resize(guid_size);
+		is.read(&app_user_model_toast_activator_clsid[0], std::streamsize(guid_size));
+	} else {
+		app_user_model_toast_activator_clsid.clear();
+	}
+	
 	load_version_data(is, i.version);
 	
 	icon_index = util::load<boost::int32_t>(is, i.version.bits());
@@ -97,6 +105,9 @@ void icon_entry::load(std::istream & is, const info & i) {
 	}
 	if(i.version >= INNO_VERSION(5, 5, 0)) {
 		flagreader.add(PreventPinning);
+	}
+	if(i.version >= INNO_VERSION(6, 1, 0)) {
+		flagreader.add(HasAppUserModelToastActivatorCLSID);
 	}
 	
 	options = flagreader;
