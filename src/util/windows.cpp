@@ -381,7 +381,7 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 	
 public:
 	
-	windows_console_sink(HANDLE console_handle)
+	explicit windows_console_sink(HANDLE console_handle)
 		: handle(console_handle)
 		, initial_attributes(get_attributes())
 		, default_attributes(get_default_attributes())
