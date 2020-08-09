@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2019 Daniel Scharrer
+ * Copyright (C) 2013-2020 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
