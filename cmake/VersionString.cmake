@@ -17,7 +17,8 @@
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 
-set(VERSION_STRING_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/VersionScript.cmake")
+get_filename_component(VERSION_SCRIPT_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(VERSION_STRING_SCRIPT "${VERSION_SCRIPT_DIR}/VersionScript.cmake")
 
 # Create a rule to generate a version string at compile time.
 #

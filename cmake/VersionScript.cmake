@@ -26,7 +26,8 @@ if((NOT DEFINED INPUT) OR (NOT DEFINED OUTPUT) OR (NOT DEFINED VERSION_SOURCES) 
 	message(SEND_ERROR "Invalid arguments.")
 endif()
 
-include("${CMAKE_CURRENT_LIST_DIR}/VersionString.cmake")
+get_filename_component(VERSION_SCRIPT_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+include("${VERSION_SCRIPT_DIR}/VersionString.cmake")
 
 # configure_file doesn't handle newlines correctly - pre-escape variables
 macro(_version_escape var string)

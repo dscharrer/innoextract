@@ -21,7 +21,8 @@ include(CheckCXXSourceCompiles)
 include(CompileCheck)
 
 set(CXX_VERSION 2003)
-set(CXX_CHECK_DIR "${CMAKE_CURRENT_LIST_DIR}/check")
+get_filename_component(CXX_CHECK_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(CXX_CHECK_DIR "${CXX_CHECK_DIR}/check")
 
 function(enable_cxx_version version)
 	
