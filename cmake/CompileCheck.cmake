@@ -131,7 +131,7 @@ function(check_flag RESULT FLAG TYPE)
 endfunction(check_flag)
 
 macro(strip_warning_flags VAR)
-	string(REGEX REPLACE "(^| )\\-(W[^ ]*|pedantic)" "" ${VAR} "${${VAR}}")
+	string(REGEX REPLACE "(^| )\\-(W[^ l][^ ]*|Wl[^,][^ ]*|pedantic)" "" ${VAR} "${${VAR}}")
 endmacro()
 
 function(check_builtin RESULT EXPR)
