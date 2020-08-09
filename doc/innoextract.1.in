@@ -167,7 +167,7 @@ Try to process additional .bin files that have the same basename as the setup bu
 
 Extracting these RAR archives requires rar, unrar or lsar/unar command-line utilities to be in the PATH.
 
-The \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-extract\fP and \fB\-\-output\-dir\fP options are passed along to unrar/unar, but other options may be ignored for the RAR files. For multi-part RAR archives, the \fB\-\-test\fP requires a writable output directory for temporary files which can be specific using the \fB\-\-output\-dir\fP option. If the output directory does not exist it will be created and then removed after testing is done. Parent directories are not created. Temporary files created inside the directory are always removed.
+The \fB\-\-list\fP, \fB\-\-test\fP, \fB\-\-extract\fP and \fB\-\-output\-dir\fP options are passed along to unrar/unar, but other options may be ignored for the RAR files. For multi-part RAR archives, the \fB\-\-test\fP requires a writable output directory for temporary files which can be specified using the \fB\-\-output\-dir\fP option. If the output directory does not exist it will be created and then removed after testing is done. Parent directories are not created. Temporary files created inside the directory are always removed.
 
 Note that is option is geared towards GOG.com installers. Other installers may come be bundled with different extraneous \fI.bin\fP which this option might not be able to handle.
 
