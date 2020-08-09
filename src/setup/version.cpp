@@ -280,7 +280,7 @@ void version::load(std::istream & is) {
 	char * end = std::find(version_string, version_string + boost::size(version_string), '\0');
 	std::string version_str(version_string, end);
 	debug("unknown version: \"" << version_str << '"');
-	if(version_str.find("Inno Setup") == std::string::npos) {
+	if(!boost::contains(version_str, "Inno Setup")) {
 		throw version_error();
 	}
 	
