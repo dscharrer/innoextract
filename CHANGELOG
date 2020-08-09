@@ -7,6 +7,7 @@ innoextract 1.9 (TBD)
  - Fixed handling of path separators in Japanese and Korean installers
  - Fixed build with newer Boost versions
  - Windows: Fixed heap corruption
+ - Windows: Fixed garbled output
 
 innoextract 1.8 (2019-09-15)
  - Added support for Inno Setup 6.0.0 installers

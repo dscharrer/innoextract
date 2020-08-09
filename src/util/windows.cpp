@@ -75,9 +75,8 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 	const HANDLE handle;
 	
 	//! Buffer for charset conversions
-	std::vector<wchar_t> buffer;
-	const utf8_codecvt * codecvt;
-	utf8_codecvt::state_type codecvt_state;
+	std::string in_buffer;
+	std::string out_buffer;
 	
 	//! Initial console display attributes
 	WORD initial_attributes;
@@ -236,6 +235,10 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 	}
 	
 	void handle_command(CommandType type, const char * codes, const char * end) {
+		if(!in_buffer.empty()) {
+			output_text(in_buffer.c_str(), in_buffer.c_str() + in_buffer.size());
+			in_buffer.clear();
+		}
 		switch(type) {
 			case EL:  erase_in_line(codes, end); break;
 			case SGR: select_graphic_rendition(codes, end); break;
@@ -249,7 +252,7 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 		}
 	}
 	
-	void handle_deferred_clear(wchar_t * & begin, wchar_t * end) {
+	void handle_deferred_clear(LPCWSTR & begin, LPCWSTR end) {
 		
 		CONSOLE_SCREEN_BUFFER_INFO info;
 		if(!GetConsoleScreenBufferInfo(handle, &info)) {
@@ -265,8 +268,8 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 				break;
 			}
 			
-			wchar_t * cr = std::find(begin, end, L'\r');
-			wchar_t * ln = std::find(begin, cr, L'\n');
+			LPCWSTR cr = std::find(begin, end, L'\r');
+			LPCWSTR ln = std::find(begin, cr, L'\n');
 			
 			// Insert an empty line before the "cleared" line
 			if(clear_line == info.dwCursorPosition.Y) {
@@ -338,7 +341,29 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 		
 	}
 	
+	void output_text(const char * begin, const char * end) {
+		
+		wtf8_to_utf16le(begin, end, out_buffer);
+		
+		LPCWSTR obegin = reinterpret_cast<LPCWSTR>(out_buffer.c_str());
+		LPCWSTR oend = obegin + out_buffer.size() / 2;
+		
+		if(deferred_clear) {
+			handle_deferred_clear(obegin, oend);
+		}
+		
+		DWORD count;
+		WriteConsoleW(handle, obegin, DWORD(oend - obegin), &count, NULL);
+		
+	}
+	
 	void handle_text(const char * s, size_t n) {
+		
+		if(!in_buffer.empty()) {
+			in_buffer.append(s, n);
+			s = in_buffer.c_str();
+			n = in_buffer.size();
+		}
 		
 		const char * end = s + n;
 		
@@ -346,40 +371,18 @@ class windows_console_sink : public util::ansi_console_parser<windows_console_si
 			return;
 		}
 		
-		for(;;) {
-			
-			wchar_t * obegin = &buffer.front();
-			wchar_t * oend = obegin + buffer.size();
-			wchar_t * onext = obegin;
-			
-			std::codecvt_base::result res;
-			res = codecvt->in(codecvt_state, s, end, s, obegin, oend, onext);
-			
-			if(deferred_clear) {
-				handle_deferred_clear(obegin, onext);
-			}
-			
-			DWORD count;
-			WriteConsoleW(handle, obegin, DWORD(onext - obegin), &count, NULL);
-			
-			if(res != std::codecvt_base::partial) {
-				break;
-			}
-			
-			if(onext == oend) {
-				buffer.resize(buffer.size() * 2);
-			}
-			
-		}
+		const char * e = wtf8_find_end(s, end);
+		
+		output_text(s, e);
+		
+		in_buffer.assign(e, end);
 		
 	}
 	
 public:
 	
-	windows_console_sink(HANDLE console_handle, const utf8_codecvt * converter)
+	windows_console_sink(HANDLE console_handle)
 		: handle(console_handle)
-		, buffer(256)
-		, codecvt(converter)
 		, initial_attributes(get_attributes())
 		, default_attributes(get_default_attributes())
 		, attributes(initial_attributes)
@@ -389,6 +392,9 @@ public:
 	{ }
 	
 	~windows_console_sink() {
+		if(!in_buffer.empty()) {
+			output_text(in_buffer.c_str(), in_buffer.c_str() + in_buffer.size());
+		}
 		if(deferred_clear) {
 			CONSOLE_SCREEN_BUFFER_INFO info;
 			if(GetConsoleScreenBufferInfo(handle, &info)) {
@@ -399,9 +405,6 @@ public:
 	}
 	
 };
-
-// UTF8 -> UTF-16 converter
-static utf8_codecvt codecvt;
 
 typedef boost::iostreams::stream_buffer<windows_console_sink> console_buffer;
 struct console_buffer_info {
@@ -440,7 +443,7 @@ static bool is_console(HANDLE handle) {
 static void init_console(std::ostream & os, console_buffer_info & info, DWORD n) {
 	info.handle = GetStdHandle(n);
 	if(is_console(info.handle)) {
-		info.buf = new console_buffer(info.handle, &codecvt);
+		info.buf = new console_buffer(info.handle);
 		info.orig_buf = os.rdbuf(info.buf);
 	} else {
 		info.handle = NULL;
