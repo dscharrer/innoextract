@@ -468,14 +468,41 @@ void utf16le_to_wtf8(const std::string & from, std::string & to) {
 	
 }
 
-void wtf8_to_utf16le(const std::string & from, std::string & to) {
+const char * wtf8_find_end(const char * begin, const char * end) {
+	
+	const char * i = end;
+	while(i != begin && is_utf8_continuation_byte(boost::uint8_t(*(i - 1)))) {
+		i--;
+	}
+	
+	if(i != begin) {
+		unicode_char chr = boost::uint8_t(*(i - 1));
+		size_t expected = 0;
+		if(chr & (1 << 7)) {
+			expected++;
+			if(chr & (1 << (5 + 6))) {
+				expected++;
+				if(chr & (1 << (4 + 6 + 6))) {
+					expected++;
+				}
+			}
+		}
+		if(expected > size_t(end - i)) {
+			return i - 1;
+		}
+	}
+	
+	return end;
+}
+
+void wtf8_to_utf16le(const char * begin, const char * end, std::string & to) {
 	
 	to.clear();
-	to.reserve(from.size() * 2); // optimistically, most strings only have ASCII characters
+	to.reserve(size_t(end - begin) * 2); // optimistically, most strings only have ASCII characters
 	
-	for(std::string::const_iterator i = from.begin(); i != from.end(); ) {
+	for(const char * i = begin; i != end; ) {
 		
-		unicode_char chr = utf8_read(i, from.end());
+		unicode_char chr = utf8_read(i, end);
 		
 		if(chr >= 0x10000) {
 			chr -= 0x10000;
@@ -489,6 +516,10 @@ void wtf8_to_utf16le(const std::string & from, std::string & to) {
 		to.push_back(char(boost::uint8_t(chr >> 8)));
 	}
 	
+}
+
+void wtf8_to_utf16le(const std::string & from, std::string & to) {
+	return wtf8_to_utf16le(from.c_str(), from.c_str() + from.size(), to);
 }
 
 namespace {

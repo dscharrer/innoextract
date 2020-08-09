@@ -152,6 +152,16 @@ typedef boost::uint32_t codepage_id;
 void utf16le_to_wtf8(const std::string & from, std::string & to);
 
 /*!
+ * Find the end of the last complete WTF-8 character in a string.
+ */
+const char * wtf8_find_end(const char * begin, const char * end);
+
+/*!
+ * Convert WTF-8 to UTF-16 while preserving unpaired surrogates.
+ */
+void wtf8_to_utf16le(const char * begin, const char * end, std::string & to);
+
+/*!
  * Convert WTF-8 to UTF-16 while preserving unpaired surrogates.
  */
 void wtf8_to_utf16le(const std::string & from, std::string & to);
