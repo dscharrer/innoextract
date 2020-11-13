@@ -455,17 +455,17 @@ create_source_groups(ALL_INNOEXTRACT_SOURCES)
 
 # Prepare generated files
 
-include_directories(src ${CMAKE_CURRENT_BINARY_DIR})
+include_directories(src ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
-configure_file("src/configure.hpp.in" "configure.hpp")
+configure_file("src/configure.hpp.in" "generated/configure.hpp")
 
-set(VERSION_FILE "${PROJECT_BINARY_DIR}/release.cpp")
+set(VERSION_FILE "${PROJECT_BINARY_DIR}/generated/release.cpp")
 set(VERSION_SOURCES VERSION "VERSION" LICENSE "LICENSE")
 version_file("src/release.cpp.in" ${VERSION_FILE} "${VERSION_SOURCES}" ".git")
 list(APPEND INNOEXTRACT_SOURCES ${VERSION_FILE})
 
 set(MAN_INPUT "doc/innoextract.1.in")
-set(MAN_FILE "${PROJECT_BINARY_DIR}/innoextract.1")
+set(MAN_FILE "${PROJECT_BINARY_DIR}/generated/innoextract.1")
 set(MAN_SOURCES VERSION "VERSION" CHANGELOG "CHANGELOG")
 version_file(${MAN_INPUT} ${MAN_FILE} "${MAN_SOURCES}" ".git")
 add_custom_target(manpage ALL DEPENDS ${MAN_FILE})
