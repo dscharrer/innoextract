@@ -159,7 +159,7 @@ public:
 					throw std::exception();
 				}
 			} catch(...) {
-				throw std::runtime_error("Coul not open output file \"" + path_.string() + '"');
+				throw std::runtime_error("Could not open output file \"" + path_.string() + '"');
 			}
 		}
 	}

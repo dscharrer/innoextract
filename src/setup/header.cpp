@@ -812,7 +812,7 @@ NAMES(setup::header::architecture_types, "Architecture",
 	"ARM64",
 )
 
-NAMES(setup::header::privileges_required_overrides, "Priviledge Override"
+NAMES(setup::header::privileges_required_overrides, "Privilege Override"
 	"commandline",
 	"dialog",
 )

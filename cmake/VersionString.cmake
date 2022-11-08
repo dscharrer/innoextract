@@ -39,7 +39,7 @@ set(VERSION_STRING_SCRIPT "${VERSION_SCRIPT_DIR}/VersionScript.cmake")
 #    - ${var}_${i}_LINE: Everything except the first component of the line
 #    - ${var}_${i}_NAME: Everything except the last component of the line
 #    - ${var}_${i}_STRING: The last component (excluding optional suffix) of the line
-#    - ${var}_${i}_SUFFIX: Suffix (seperated by " + ") of the line
+#    - ${var}_${i}_SUFFIX: Suffix (separated by " + ") of the line
 #    - ${var}_${i}_MAJOR: First version component in ${var}_${i}_STRING
 #    - ${var}_${i}_MINOR: Second version component in ${var}_${i}_STRING
 #    - ${var}_${i}_PATCH: Third version component in ${var}_${i}_STRING
