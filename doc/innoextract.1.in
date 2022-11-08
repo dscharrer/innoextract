@@ -290,7 +290,7 @@ Show checksum \fB$c\fP and salt \fB$s\fP used for the password \fB$p\fP check as
 
  \fB$c = hash($s . $p)\fP
 
-With the \fB\-\-silent\fP option, the checksum name and hash is printed on one line seperated by a space followed by the salt encoded as hex bytes and password encoding on separate lines.
+With the \fB\-\-silent\fP option, the checksum name and hash is printed on one line separated by a space followed by the salt encoded as hex bytes and password encoding on separate lines.
 
 Checksum types can be \fBCRC32\fP, \fBMD5\fP or \fBSHA-1\fP although \fBCRC32\fP is not used in installers with encryption.
 
@@ -330,12 +330,12 @@ The default value for this option is \fBUTC\fP, causing innoextract to not adjus
 \fB\-v\fP, \fB\-\-version\fP
 Print the \fBinnoextract\fP version number and supported Inno Setup versions.
 
-If combined with the \fB\-\-silent\fP option, only the version \fInumber\fP is printed. Otherwise, the output will contain the name (innoextract) followed by the version number on the first line, and, unless the \fB\-\-quiet\fP options is specified, the range of suuported Inno Setup installer versions on the second line.
+If combined with the \fB\-\-silent\fP option, only the version \fInumber\fP is printed. Otherwise, the output will contain the name (innoextract) followed by the version number on the first line, and, unless the \fB\-\-quiet\fP options is specified, the range of supported Inno Setup installer versions on the second line.
 .TP
 \fB\-\-no\-warn\-unused\fP
 By default, innoextract will print a warning if it encounters \fI.bin\fP files that look like they could be part of the setup but are not used. This option disables that warning.
 .SH PATH CONSTANTS
-Paths in Inno Setup installers can contain constants (variable or code references) that are expanded at install time. innoextract expands all such constants to their name  and replaces unsafe characters with \fB$\fP. For exmaple \fB{app}\fP is expanded to \fBapp\fP while \fB{code:Example}\fP is expanded to \fBcode$Example\fP.
+Paths in Inno Setup installers can contain constants (variable or code references) that are expanded at install time. innoextract expands all such constants to their name  and replaces unsafe characters with \fB$\fP. For example \fB{app}\fP is expanded to \fBapp\fP while \fB{code:Example}\fP is expanded to \fBcode$Example\fP.
 
 There is currently no way to configure this expansion except for disabling it with the \fB\-\-dump\fP option.
 .SH EXIT VALUES
