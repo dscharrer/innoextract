@@ -360,8 +360,13 @@ int main(int argc, char * argv[]) {
 	
 	if(options.count("setup-files") == 0) {
 		if(!o.silent) {
-			std::cout << get_command(argv[0]) << ": no input files specified\n";
-			std::cout << "Try the --help (-h) option for usage information.\n";
+			// std::cout << get_command(argv[0]) << ": no input files specified\n";
+			// std::cout << "Try the --help (-h) option for usage information.\n";
+
+			std::cout << "argc=0, printing help.\n";
+
+			print_help(get_command(argv[0]), visible);
+
 		}
 		return ExitSuccess;
 	}
@@ -392,16 +397,16 @@ int main(int argc, char * argv[]) {
 		}
 		if(password_file != options.end()) {
 			std::istream * is = &std::cin;
-			fs::path file = password_file->second.as<std::string>();
+			// fs::path file = password_file->second.as<std::string>();
 			util::ifstream ifs;
-			if(file != "-") {
-				ifs.open(file);
-				if(!ifs.is_open()) {
-					log_error << "Could not open password file " << file;
-					return ExitDataError;
-				}
-				is = &ifs;
-			}
+			// if(file != "-") {
+			// 	ifs.open(file);
+			// 	if(!ifs.is_open()) {
+			// 		log_error << "Could not open password file " << file;
+			// 		return ExitDataError;
+			// 	}
+			// 	is = &ifs;
+			// }
 			std::getline(*is, o.password);
 			if(!o.password.empty() && o.password[o.password.size() - 1] == '\n') {
 				o.password.resize(o.password.size() - 1);
@@ -410,7 +415,7 @@ int main(int argc, char * argv[]) {
 				o.password.resize(o.password.size() - 1);
 			}
 			if(!*is) {
-				log_error << "Could not read password file " << file;
+				// log_error << "Could not read password file " << file;
 				return ExitDataError;
 			}
 		}
