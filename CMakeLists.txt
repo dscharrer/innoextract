@@ -10,22 +10,23 @@ project(innoextract)
 unset(LIBRARIES)
 
 if(USE_EMBOOST)
+	if(NOT EMBOOSTDIR)
+		set(EMBOOSTDIR "$ENV{HOME}/boost_1_74_0")
+	endif()
 
-	set(EMBASE "$HOME/boost-wasm/build/boost_1_74_0")
-
-	set(EMBDIR "${EMBASE}/stage/lib")
-	set(EMHEADERS "${EMBASE}/boost")
+	set(EMBDIR "${EMBOOSTDIR}/stage/lib")
+	set(EMHEADERS "${EMBOOSTDIR}/boost")
 
 	set(EMLIBS 
-		# ${EMBDIR}/libboost_date_time.bc
+		${EMBDIR}/libboost_date_time.bc
 		${EMBDIR}/libboost_filesystem.bc
 		${EMBDIR}/libboost_iostreams.bc
 		${EMBDIR}/libboost_program_options.bc
 		${EMBDIR}/libboost_system.bc
-		$HOME/emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/libz.a
+		${EMBDIR}/libboost_zlib.bc
+		${EMBDIR}/libboost_bzip2.bc
 
 	)
-	# list(APPEND LIBRARIES ${Boost_LIBRARIES})
 	list(APPEND LIBRARIES ${EMLIBS})
 endif()
 
