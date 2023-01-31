@@ -43,6 +43,10 @@
 #include "util/time.hpp"
 #include "util/windows.hpp"
 
+#include <emscripten_browser_file.h>
+
+static volatile int uploadwait = 1;
+
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
@@ -117,6 +121,15 @@ static void print_license() {
 	          << ' ' << innoextract_copyright << '\n';
 	std::cout << '\n'<< innoextract_license << '\n';
 	;
+}
+
+void handle_upload_file(std::string const &filename, std::string const &mime_type, std::string_view buffer, void*) {
+	printf("Writing file: %s (%lx bytes)\n", filename.c_str(), buffer.size());
+	FILE *f = fopen("setup_uploaded.exe", "w");
+	fwrite(buffer.data(), 1, buffer.size(), f);
+	fclose(f);
+	uploadwait = 0;
+	puts("unlock");
 }
 
 int main(int argc, char * argv[]) {
@@ -217,9 +230,10 @@ int main(int argc, char * argv[]) {
 	o.quiet = o.silent || options.count("quiet");
 	logger::quiet = o.quiet;
 #ifdef DEBUG
-	if(options.count("debug")) {
+	// if(options.count("debug")) {
 		logger::debug = true;
-	}
+		puts("debug enabled");
+	// }
 #endif
 	
 	o.warn_unused = (options.count("no-warn-unused") == 0);
@@ -358,18 +372,19 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	
-	if(options.count("setup-files") == 0) {
-		if(!o.silent) {
-			// std::cout << get_command(argv[0]) << ": no input files specified\n";
-			// std::cout << "Try the --help (-h) option for usage information.\n";
+	// if(options.count("setup-files") == 0) {
+	// 	if(!o.silent) {
+	// 		// std::cout << get_command(argv[0]) << ": no input files specified\n";
+	// 		// std::cout << "Try the --help (-h) option for usage information.\n";
 
-			std::cout << "argc=0, printing help.\n";
+	// 		std::cout << "argc=0, printing help.\n";
 
-			print_help(get_command(argv[0]), visible);
+	// 		print_help(get_command(argv[0]), visible);
 
-		}
-		return ExitSuccess;
-	}
+	// 	}
+	// 	return ExitSuccess;
+	// }
+	puts("ignoring setup-files==0");
 	
 	{
 		po::variables_map::const_iterator i = options.find("output-dir");
@@ -448,19 +463,35 @@ int main(int argc, char * argv[]) {
 	#endif
 	
 	o.extract_unknown = (options.count("no-extract-unknown") == 0);
-	
-	const std::vector<std::string> & files = options["setup-files"]
-	                                         .as< std::vector<std::string> >();
-	
+
+	puts("upload");
+	emscripten_browser_file::upload(".exe", handle_upload_file);
+
+	while (uploadwait) {
+		emscripten_sleep(100);
+	};
+	puts("postupload");
+	uploadwait=1;
+
+	std::vector<std::string> files;
+	std::string f = "/setup_uploaded.exe";
+	files.push_back(f);
+
 	bool suggest_bug_report = false;
 	try {
-		BOOST_FOREACH(const std::string & file, files) {
+		if (files.size() != 0) {
+		std::cout << "files.size()=" << files.size() << "\n";
+		BOOST_FOREACH (const std::string &file, files) {
 			process_file(file, o);
-			if(!o.data_version && files.size() > 1) {
+			if (!o.data_version && files.size() > 1) {
 				std::cout << '\n';
 			}
 		}
-	} catch(const std::ios_base::failure & e) {
+		} else {
+		std::cout << "files.size()=0, printing help.\n";
+		print_help(get_command(argv[0]), visible);
+		}
+        } catch(const std::ios_base::failure & e) {
 		log_error << "Stream error while extracting files!\n"
 		          << " └─ error reason: " << e.what();
 		suggest_bug_report = true;

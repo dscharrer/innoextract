@@ -8,12 +8,20 @@ project(innoextract)
 
 
 unset(LIBRARIES)
+set(DEBUG 1)
+set(INNOEXTRACT_HAVE_LZMA 1)
+
+if(NOT DEFINED ENV{ZIPDIR})
+	message(FATAL_ERROR "ZIPDIR not set in environment, exiting.")
+endif()
+
 
 if(USE_EMBOOST)
-	if(NOT EMBOOSTDIR)
-		set(EMBOOSTDIR "$ENV{HOME}/boost_1_74_0")
+	if(NOT DEFINED ENV{EMBOOSTDIR})
+		message(FATAL_ERROR "EMBOOSTDIR not set in environment, exiting.")
 	endif()
 
+	SET(EMBOOSTDIR $ENV{EMBOOSTDIR})
 	set(EMBDIR "${EMBOOSTDIR}/stage/lib")
 	set(EMHEADERS "${EMBOOSTDIR}/boost")
 
@@ -77,7 +85,16 @@ if(NOT USE_EMBOOST)
 endif()
 
 # Set compiler flags
-add_compile_options(-std=c++1y -Wno-deprecated-declarations -sUSE_ZLIB=1)
+add_compile_options(-std=c++1y -Wno-deprecated-declarations -sUSE_ZLIB=1 -DDEBUG -O3 )
+# -fwasm-exceptions  -pthread
+
+# add_link_options(-fwasm-exceptions -sINITIAL_MEMORY=512MB -sSTACK_SIZE=256MB 
+# add_link_options(-fwasm-exceptions
+add_link_options(
+-sINITIAL_MEMORY=512MB -sSTACK_SIZE=256MB -sALLOW_MEMORY_GROWTH 
+-sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sINVOKE_RUN=0 -sASYNCIFY -sASYNCIFY_STACK_SIZE=4096)
+# -sUSE_PTHREADS)
+
 # check_cxx11("alignof" INNOEXTRACT_HAVE_ALIGNOF)
 # check_cxx11("std::unique_ptr" INNOEXTRACT_HAVE_STD_UNIQUE_PTR 1600)
 
@@ -95,11 +112,11 @@ endif()
 
 # All sources:
 set(INNOEXTRACT_SOURCES
-src/release.hpp
-src/release.cpp
+	src/release.hpp
+	src/release.cpp
 	
 	src/cli/debug.hpp
-	# src/cli/debug.cpp if DEBUG
+	src/cli/debug.cpp
 	src/cli/extract.hpp
 	src/cli/extract.cpp
 	src/cli/gog.hpp
@@ -180,8 +197,6 @@ src/release.cpp
 	src/stream/exefilter.hpp
 	src/stream/file.hpp
 	src/stream/file.cpp
-	src/stream/lzma.hpp
-	# src/stream/lzma.cpp if INNOEXTRACT_HAVE_LZMA
 	src/stream/restrict.hpp
 	src/stream/slice.hpp
 	src/stream/slice.cpp
@@ -211,18 +226,38 @@ src/release.cpp
 	src/util/types.hpp
 	src/util/unique_ptr.hpp
 	src/util/windows.hpp
-	# src/util/windows.cpp if WIN32
-	
+	src/emscripten_browser_file.cpp	
 )
 
+if(USE_LZMA)
+	if(NOT DEFINED ENV{LZMADIR})
+		message(FATAL_ERROR "LZMADIR not set in environment, exiting.")
+	endif()
+
+	set(LZMAHEADERS $ENV{LZMADIR}/api)
+	set(LZMALIBS $ENV{LZMADIR}/.libs/liblzma.a )
+	
+	list(APPEND LIBRARIES ${LZMALIBS})
+	list(APPEND INNOEXTRACT_SOURCES
+		src/stream/lzma.hpp
+		src/stream/lzma.cpp
+	)
+endif()
+
+# libzip
+set(ZIPHEADERS $ENV{ZIPDIR}/lib/)
+set(ZIPLIBS	$ENV{ZIPDIR}/lib/libzip.a )
+
+list(APPEND LIBRARIES ${ZIPLIBS})
 # create_source_groups(ALL_INNOEXTRACT_SOURCES)
 
 
 # Prepare generated files
 
-include_directories(src ${CMAKE_CURRENT_BINARY_DIR} ${EMHEADERS})
+include_directories(src ${CMAKE_CURRENT_BINARY_DIR} ${EMHEADERS} ${LZMAHEADERS} ${ZIPHEADERS})
 
 configure_file("src/configure.hpp.in" "configure.hpp")
+configure_file("src/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html" COPYONLY)
 
 # Main targets
 
@@ -233,7 +268,6 @@ target_link_libraries(innoextract ${LIBRARIES})
 install(TARGETS innoextract RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 install(FILES ${MAN_FILE} DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL)
-
 
 # Print a configuration summary
 

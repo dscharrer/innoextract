@@ -73,6 +73,12 @@
 #include "util/output.hpp"
 #include "util/time.hpp"
 
+extern "C"{
+#include <zip.h>
+}
+
+#include <emscripten_browser_file.h>
+
 namespace fs = boost::filesystem;
 
 namespace {
@@ -891,7 +897,7 @@ void create_output_directory(const extract_options & o) {
 } // anonymous namespace
 
 void process_file(const fs::path & installer, const extract_options & o) {
-	
+
 	bool is_directory;
 	try {
 		is_directory = fs::is_directory(installer);
@@ -1264,7 +1270,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 			// Open input file
 			stream::file_reader::pointer file_source;
 			file_source = stream::file_reader::get(*chunk_source, file, &checksum);
-			
+
 			// Open output files
 			boost::ptr_vector<file_output> single_outputs;
 			std::vector<file_output *> outputs;
@@ -1376,7 +1382,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 					throw std::runtime_error("Integrity test failed!");
 				}
 			}
-			
+
 		}
 		
 		#ifdef DEBUG
@@ -1396,5 +1402,46 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	if(o.warn_unused || o.gog) {
 		gog::probe_bin_files(o, info, installer, offsets.data_offset == 0);
 	}
-	
+
+	// Put files to zip
+	int ze;
+	zip_error_t zerr;
+	std::string zname = info.header.app_name + ".zip";
+	const char *zipname = zname.c_str();
+
+	printf("opening and writing zip: %s\n", zipname);
+	zip_t *zip = zip_open(zipname, ZIP_CREATE, &ze);
+	if (ze) printf("ZIP err: %d: %s\n", ze, zip_strerror(zip));
+
+	const char *dirs[] = {"app", "tmp"};
+	zip_int64_t fi;
+	for (const char *zdir : dirs) {
+			printf("ZIP: %s\n", zdir);
+			zip_dir_add(zip, zdir, 0);
+			for (const fs::directory_entry &dir_entry :
+					fs::recursive_directory_iterator(zdir)) {
+					std::string path = dir_entry.path().string();
+					if (fs::is_directory(dir_entry)) {
+							zip_dir_add(zip, path.c_str(), 0);
+					} else {
+							zip_source_t *zf = zip_source_file_create(
+								path.c_str(), 0, 0, &zerr);
+							fi = zip_file_add(zip, path.c_str(), zf, 0);
+							zip_set_file_compression(zip, fi, ZIP_CM_STORE, 0);
+					}
+					std::cout << dir_entry << '\n';
+					if (ze)
+							printf("ZIP err: %d: %s\n", ze,
+									zip_strerror(zip));
+			}
+	}
+	zip_close(zip);
+	puts("ZIP: closed");
+
+	std::ifstream in(zipname, std::ios::binary | std::ios::ate);
+	int siz = in.tellg();
+	printf("%s size: %d bytes (%d MB)\n", zipname, siz, siz / 1024 / 1024);
+
+	puts("ZIP: download");
+	emscripten_browser_file::down(zname);
 }
