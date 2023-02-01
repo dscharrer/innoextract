@@ -95,20 +95,13 @@ add_link_options(
 -sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sINVOKE_RUN=0 -sASYNCIFY -sASYNCIFY_STACK_SIZE=4096)
 # -sUSE_PTHREADS)
 
-# check_cxx11("alignof" INNOEXTRACT_HAVE_ALIGNOF)
-# check_cxx11("std::unique_ptr" INNOEXTRACT_HAVE_STD_UNIQUE_PTR 1600)
-
-# Don't expose internal symbols to the outside world by default
-if(NOT MSVC)
-	add_compile_options("-fvisibility=hidden")
-	add_compile_options("-fvisibility-inlines-hidden")
-endif()
+add_compile_options("-fvisibility=hidden")
+add_compile_options("-fvisibility-inlines-hidden")
 
 if($ENV{PORTAGE_REPO_NAME} MATCHES "gentoo")
 	# Meh
 	unset(LIBRARIES)
 endif()
-
 
 # All sources:
 set(INNOEXTRACT_SOURCES
