@@ -3,10 +3,46 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style type="text/css">
+    body { color: #ddd;
+        background-color: #222;
+        margin: 5px;
+    }
+    #loadbtn{ width:200px; height:100px; font-size:40px;}
+    .cont { display: flex;}
+    h1,h2,h3 { margin: 5px}
+    /* .row { flex-grow: 1;} */
+    .row { margin-left: 20px;}
+    #btncon {  display: flex;
+            justify-content: center;
+            align-items: center;}
+    progress { width: 100%; height: 50px}
+    #wrapper { width: 500px;}
+    #down { width: 100%; }
+    #info {margin: 0;}
+</style>
 </head>
 <body>
-    <input style="width:500px; height:200px; font-size:72px" type="button"  value="Innoextract!" onclick='callMain();'/>
-    <!-- Create the canvas that the C++ code will draw into -->
+    <div id="wrapper">
+    <div class="cont">
+        <div class="row" id="btncon">
+        <input id="loadbtn" type="button"  value="Load file" onclick='callMain();'/>
+        <!-- <div class="row" style="visibility: hidden;"> -->
+        </div>
+        <div class="row" >
+            <h1 id="title"></h1>
+            <h3 id="desc"></h3>
+            <small id="details"></small>
+        </div>
+    </div>
+    <div class="cont">
+        <div class="row" id="down" hidden>
+            <progress id="progbar" max="100" value="0"></progress>
+            <h2 id="info"></h2>
+        </div>
+    </div>
+    </div>
+        <!-- Create the canvas that the C++ code will draw into -->
     <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     <!-- Allow the C++ to access the canvas element --> 
     <script type='text/javascript'>

@@ -77,7 +77,9 @@ extern "C"{
 #include <zip.h>
 }
 
-#include <emscripten_browser_file.h>
+#include <emjs.h>
+
+extern volatile int ie_state;
 
 namespace fs = boost::filesystem;
 
@@ -609,7 +611,9 @@ void rename_collisions(const extract_options & o, FilesMap & processed_files,
 }
 
 bool print_file_info(const extract_options & o, const setup::info & info) {
-	
+	emjs::ui_innerhtml("title", info.header.app_name.c_str());
+	emjs::ui_innerhtml("desc", info.header.app_copyright.c_str());
+
 	if(!o.quiet) {
 		const std::string & name = info.header.app_versioned_name.empty()
 		                           ? info.header.app_name : info.header.app_versioned_name;
@@ -1110,6 +1114,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	}
 	
 	boost::uint64_t total_size = 0;
+	boost::uint64_t files = 0;
 	
 	typedef std::map<stream::file, size_t> Files;
 	typedef std::map<stream::chunk, Files> Chunks;
@@ -1142,7 +1147,24 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	}
 	
 	progress extract_progress(total_size);
+	char buff[256];
+	snprintf(buff, sizeof(buff), "%llu", total_size/1024);
+	emjs::ui_remattr("down","hidden");
+	emjs::ui_setattr("progbar", "max", buff);
+	emscripten_sleep(1);
 	
+	snprintf(buff, sizeof(buff), "Size(uncompressed): %.1fMB", total_size/1024/1024.0);
+	emjs::ui_innerhtml("details", buff);
+	emjs::ui_setattr("loadbtn", "value", "Extract!");
+	emjs::ui_setattr("loadbtn", "onclick", "ccall(\"ui_extract\");");
+
+	while (ie_state == 1) {
+		emscripten_sleep(100);
+	};
+
+	emjs::ui_innerhtml("info", "Unpacking EXE...");
+	emscripten_sleep(1);
+
 	typedef boost::ptr_map<const processed_file *, file_output> multi_part_outputs;
 	multi_part_outputs multi_outputs;
 	
@@ -1246,6 +1268,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 				}
 				
 				bool updated = extract_progress.update(0, true);
+				emscripten_sleep(1);
 				if(!updated && (o.extract || o.test)) {
 					std::cout.flush();
 				}
@@ -1324,6 +1347,9 @@ void process_file(const fs::path & installer, const extract_options & o) {
 						}
 					}
 					extract_progress.update(boost::uint64_t(n));
+					emjs::ui_progbar_update("progbar", uint64_t(n)/1024);
+					
+					emscripten_sleep(1);
 					output_size += boost::uint64_t(n);
 				}
 			}
@@ -1394,6 +1420,10 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	}
 	
 	extract_progress.clear();
+	emjs::ui_setattr("progbar", "value", "0");
+	emjs::ui_setattr("progbar", "max", "100");
+	emjs::ui_innerhtml("info", "Creating a ZIP file...");
+	emscripten_sleep(1);
 	
 	if(!multi_outputs.empty()) {
 		log_warning << "Incomplete multi-part files";
@@ -1413,10 +1443,10 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	zip_t *zip = zip_open(zipname, ZIP_CREATE, &ze);
 	if (ze) printf("ZIP err: %d: %s\n", ze, zip_strerror(zip));
 
-	const char *dirs[] = {"app", "tmp"};
+	const char *dirs[] = {"app", "tmp"}; // FIXME: dont use static dir names!
 	zip_int64_t fi;
 	for (const char *zdir : dirs) {
-			printf("ZIP: %s\n", zdir);
+			// printf("ZIP: %s\n", zdir);
 			zip_dir_add(zip, zdir, 0);
 			for (const fs::directory_entry &dir_entry :
 					fs::recursive_directory_iterator(zdir)) {
@@ -1429,19 +1459,27 @@ void process_file(const fs::path & installer, const extract_options & o) {
 							fi = zip_file_add(zip, path.c_str(), zf, 0);
 							zip_set_file_compression(zip, fi, ZIP_CM_STORE, 0);
 					}
-					std::cout << dir_entry << '\n';
+					// std::cout << dir_entry << '\n';
 					if (ze)
 							printf("ZIP err: %d: %s\n", ze,
 									zip_strerror(zip));
 			}
 	}
+	emjs::ui_progbar_update("progbar",20);
+	emjs::ui_innerhtml("info", "Packing files into ZIP...");
+	emscripten_sleep(1);
 	zip_close(zip);
+
 	puts("ZIP: closed");
+	emjs::ui_progbar_update("progbar",80);
+	emjs::ui_innerhtml("info", "Done!");
+	emscripten_sleep(1);
 
 	std::ifstream in(zipname, std::ios::binary | std::ios::ate);
 	int siz = in.tellg();
 	printf("%s size: %d bytes (%d MB)\n", zipname, siz, siz / 1024 / 1024);
 
+	// emscripten_sleep(100);
 	puts("ZIP: download");
-	emscripten_browser_file::down(zname);
+	emjs::down(zname);
 }

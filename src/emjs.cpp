@@ -1,14 +1,14 @@
 #include <string>
 #include <emscripten.h>
-
+#include "emjs.h"
 // Based on emscripten-browser-file package by Armchair Software, licensed under MIT
 // https://github.com/Armchair-Software/emscripten-browser-file
 
-namespace emscripten_browser_file {
+namespace emjs{
 
 using upload_handler = void(*)(std::string const&, std::string const&, std::string_view buffer, void*);
 
-EM_JS(void, upload, (char const *accept_types, upload_handler callback, void *callback_data = nullptr), {
+EM_JS(void, upload, (char const *accept_types, upload_handler callback, void *callback_data), {
   /// Prompt the browser to open the file selector dialogue, and pass the file to the given handler
   /// Accept-types are in the format ".png,.jpeg,.jpg" as per https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/accept
   /// Upload handler callback signature is:
@@ -37,7 +37,7 @@ EM_JS(void, upload, (char const *accept_types, upload_handler callback, void *ca
   file_selector.click();
 });
 
-void upload(std::string const &accept_types, upload_handler callback, void *callback_data = nullptr) {
+void upload(std::string const &accept_types, upload_handler callback, void *callback_data) {
   /// C++ wrapper for javascript upload call
   upload(accept_types.c_str(), callback, callback_data);
 }
@@ -68,6 +68,45 @@ void down(std::string const &filename) {
   down(filename.c_str());
 }
 
+EM_JS(void, ui_innerhtml_int, (const char *id, const char *value), {
+	var elem = document.getElementById(UTF8ToString(id));
+	elem.innerHTML=UTF8ToString(value);
+});
+
+EM_JS(void, ui_setattr_int, (const char *id, const char *attr, const char *value), {
+	var elem = document.getElementById(UTF8ToString(id));
+	elem.setAttribute(UTF8ToString(attr),UTF8ToString(value));
+  // console.log("setattr="+UTF8ToString(attr)+", val="+UTF8ToString(value));
+});
+
+EM_JS(void, ui_remattr_int, (const char *id, const char *attr), {
+	var elem = document.getElementById(UTF8ToString(id));
+	elem.removeAttribute(UTF8ToString(attr));
+});
+
+EM_JS(void, ui_progbar_update_int, (const char *id, uint32_t value), {
+	var elem = document.getElementById(UTF8ToString(id));
+  var curr = elem.getAttribute("value");
+	elem.setAttribute("value",''+(Number(curr)+value));
+  // console.log("curr="+curr+", upd="+(Number(curr)+value)+", val="+elem.getAttribute("value"));
+});
+
+
+void ui_innerhtml(const char *id, const char *value) {
+  ui_innerhtml_int(id, value);
+}
+
+void ui_setattr(const char *id, const char *attr, const char *value) {
+  ui_setattr_int(id, attr, value);
+}
+
+void ui_remattr(const char *id, const char *attr) {
+  ui_remattr_int(id, attr);
+}
+
+void ui_progbar_update(const char *id, uint32_t value) {
+  ui_progbar_update_int(id, value);
+}
 
 namespace {
 
@@ -77,6 +116,12 @@ EMSCRIPTEN_KEEPALIVE int load_file_return(char const *filename, char const *mime
   /// Load a file - this function is called from javascript when the file upload is activated
   callback(filename, mime_type, {buffer, buffer_size}, callback_data);
   return 1;
+
+}
+
+extern volatile int ie_state;
+EMSCRIPTEN_KEEPALIVE void ui_extract() {
+	ie_state=2;
 }
 
 }

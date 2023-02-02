@@ -43,9 +43,9 @@
 #include "util/time.hpp"
 #include "util/windows.hpp"
 
-#include <emscripten_browser_file.h>
+#include <emjs.h>
 
-static volatile int uploadwait = 1;
+volatile int ie_state = 0;
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -128,7 +128,7 @@ void handle_upload_file(std::string const &filename, std::string const &mime_typ
 	FILE *f = fopen("setup_uploaded.exe", "w");
 	fwrite(buffer.data(), 1, buffer.size(), f);
 	fclose(f);
-	uploadwait = 0;
+	ie_state = 1;
 	puts("unlock");
 }
 
@@ -230,10 +230,10 @@ int main(int argc, char * argv[]) {
 	o.quiet = o.silent || options.count("quiet");
 	logger::quiet = o.quiet;
 #ifdef DEBUG
-	// if(options.count("debug")) {
+	if(options.count("debug")) {
 		logger::debug = true;
 		puts("debug enabled");
-	// }
+	}
 #endif
 	
 	o.warn_unused = (options.count("no-warn-unused") == 0);
@@ -465,13 +465,12 @@ int main(int argc, char * argv[]) {
 	o.extract_unknown = (options.count("no-extract-unknown") == 0);
 
 	puts("upload");
-	emscripten_browser_file::upload(".exe", handle_upload_file);
+	emjs::upload(".exe", handle_upload_file);
 
-	while (uploadwait) {
+	while (ie_state == 0) {
 		emscripten_sleep(100);
 	};
 	puts("postupload");
-	uploadwait=1;
 
 	std::vector<std::string> files;
 	std::string f = "/setup_uploaded.exe";
@@ -480,7 +479,7 @@ int main(int argc, char * argv[]) {
 	bool suggest_bug_report = false;
 	try {
 		if (files.size() != 0) {
-		std::cout << "files.size()=" << files.size() << "\n";
+
 		BOOST_FOREACH (const std::string &file, files) {
 			process_file(file, o);
 			if (!o.data_version && files.size() > 1) {
