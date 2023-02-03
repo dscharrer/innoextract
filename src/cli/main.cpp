@@ -471,6 +471,7 @@ int main(int argc, char * argv[]) {
 		emscripten_sleep(100);
 	};
 	puts("postupload");
+	emjs::ui_remattr("con","hidden");
 
 	std::vector<std::string> files;
 	std::string f = "/setup_uploaded.exe";
@@ -502,7 +503,11 @@ int main(int argc, char * argv[]) {
 	} catch(const setup::version_error &) {
 		log_error << "Not a supported Inno Setup installer!";
 	}
-	
+	catch(const std::exception &e ){
+		 std::cerr << e.what();
+	}
+
+
 	if(suggest_bug_report) {
 		std::cerr << color::blue << "If you are sure the setup file is not corrupted,"
 		          << " consider \nfiling a bug report at "
@@ -532,5 +537,10 @@ int main(int argc, char * argv[]) {
 		os << '.' << std::endl;
 	}
 	
+	std::cerr << "exiting" << std::endl;
+	ie_state = 0;
+	emjs::ui_setattr("loadbtn", "value", "Load file");
+	emjs::ui_setattr("loadbtn", "onclick", "callMain();");
+
 	return logger::total_errors == 0 ? ExitSuccess : ExitDataError;
 }

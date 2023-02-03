@@ -6,9 +6,9 @@ endif()
 
 project(innoextract)
 
+# set(DEBUG 1)
 
 unset(LIBRARIES)
-# set(DEBUG 1)
 set(INNOEXTRACT_HAVE_LZMA 1)
 
 if(NOT DEFINED ENV{ZIPDIR})
@@ -85,15 +85,12 @@ if(NOT USE_EMBOOST)
 endif()
 
 # Set compiler flags
-add_compile_options(-std=c++1y -Wno-deprecated-declarations -sUSE_ZLIB=1 -O3 )
-# -fwasm-exceptions  -pthread
+add_compile_options(-std=c++1y -Wno-deprecated-declarations -sUSE_ZLIB=1 -O3 -fexceptions)
 
-# add_link_options(-fwasm-exceptions -sINITIAL_MEMORY=512MB -sSTACK_SIZE=256MB 
-# add_link_options(-fwasm-exceptions
 add_link_options(
 -sINITIAL_MEMORY=1024MB -sSTACK_SIZE=512MB -sALLOW_MEMORY_GROWTH 
--sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sINVOKE_RUN=0 -sASYNCIFY -sASYNCIFY_STACK_SIZE=65565)
-# -sUSE_PTHREADS)
+-sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sINVOKE_RUN=0 -sASYNCIFY -sASYNCIFY_STACK_SIZE=65565
+--pre-js ../src/pre.js -sNO_DISABLE_EXCEPTION_CATCHING )
 
 add_compile_options("-fvisibility=hidden")
 add_compile_options("-fvisibility-inlines-hidden")
@@ -109,7 +106,6 @@ set(INNOEXTRACT_SOURCES
 	src/release.cpp
 	
 	src/cli/debug.hpp
-	# src/cli/debug.cpp
 	src/cli/extract.hpp
 	src/cli/extract.cpp
 	src/cli/gog.hpp
@@ -221,6 +217,12 @@ set(INNOEXTRACT_SOURCES
 	src/util/windows.hpp
 	src/emjs.cpp	
 )
+
+if(${DEBUG})
+	add_compile_options(-DDEBUG)
+	list(APPEND INNOEXTRACT_SOURCES src/cli/debug.cpp)
+endif()
+
 
 if(USE_LZMA)
 	if(NOT DEFINED ENV{LZMADIR})

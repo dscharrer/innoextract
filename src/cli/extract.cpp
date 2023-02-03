@@ -1149,7 +1149,6 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	progress extract_progress(total_size);
 	char buff[256];
 	snprintf(buff, sizeof(buff), "%llu", total_size/1024);
-	emjs::ui_remattr("down","hidden");
 	emjs::ui_setattr("progbar", "max", buff);
 	emscripten_sleep(1);
 	
@@ -1161,6 +1160,8 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	while (ie_state == 1) {
 		emscripten_sleep(100);
 	};
+
+	emjs::ui_remattr("down","hidden");
 
 	emjs::ui_innerhtml("info", "Unpacking EXE...");
 	emscripten_sleep(1);
@@ -1459,7 +1460,9 @@ void process_file(const fs::path & installer, const extract_options & o) {
 							fi = zip_file_add(zip, path.c_str(), zf, 0);
 							zip_set_file_compression(zip, fi, ZIP_CM_STORE, 0);
 					}
-					// std::cout << dir_entry << '\n';
+#ifdef DEBUG
+					std::cout << "ZIP: " << dir_entry << '\n';
+#endif
 					if (ze)
 							printf("ZIP err: %d: %s\n", ze,
 									zip_strerror(zip));
