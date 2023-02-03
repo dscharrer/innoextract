@@ -372,33 +372,10 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	
-	// if(options.count("setup-files") == 0) {
-	// 	if(!o.silent) {
-	// 		// std::cout << get_command(argv[0]) << ": no input files specified\n";
-	// 		// std::cout << "Try the --help (-h) option for usage information.\n";
 
-	// 		std::cout << "argc=0, printing help.\n";
-
-	// 		print_help(get_command(argv[0]), visible);
-
-	// 	}
-	// 	return ExitSuccess;
-	// }
-	puts("ignoring setup-files==0");
+	puts("ignoring setup-files==0, setting output dir to goggame");
 	
-	{
-		po::variables_map::const_iterator i = options.find("output-dir");
-		if(i != options.end()) {
-			/*
-			 * We can't use fs::path directly with boost::program_options as fs::path's
-			 * operator>> expects paths to be quoted if they contain spaces, breaking
-			 * lexical casts.
-			 * Instead, do the conversion in the assignment operator.
-			 * See https://svn.boost.org/trac/boost/ticket/8535
-			 */
-			o.output_dir = i->second.as<std::string>();
-		}
-	}
+	o.output_dir = "goggame";
 	
 	{
 		po::variables_map::const_iterator password = options.find("password");
@@ -537,7 +514,6 @@ int main(int argc, char * argv[]) {
 		os << '.' << std::endl;
 	}
 	
-	std::cerr << "exiting" << std::endl;
 	ie_state = 0;
 	emjs::ui_setattr("loadbtn", "value", "Load file");
 	emjs::ui_setattr("loadbtn", "onclick", "callMain();");

@@ -87,7 +87,12 @@ EM_JS(void, ui_remattr_int, (const char *id, const char *attr), {
 EM_JS(void, ui_progbar_update_int, (const char *id, uint32_t value), {
 	var elem = document.getElementById(UTF8ToString(id));
   var curr = elem.getAttribute("value");
+  var max = elem.getAttribute("max");
 	elem.setAttribute("value",''+(Number(curr)+value));
+
+	var proc = document.getElementById("proc");
+  var p=(Number(curr)+value)/Number(max)*100;
+  proc.innerHTML=p.toFixed(1)+'%';
   // console.log("curr="+curr+", upd="+(Number(curr)+value)+", val="+elem.getAttribute("value"));
 });
 

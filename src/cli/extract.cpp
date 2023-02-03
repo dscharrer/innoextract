@@ -1150,6 +1150,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	char buff[256];
 	snprintf(buff, sizeof(buff), "%llu", total_size/1024);
 	emjs::ui_setattr("progbar", "max", buff);
+	emjs::ui_innerhtml("proc", "0.0%");	
 	emscripten_sleep(1);
 	
 	snprintf(buff, sizeof(buff), "Size(uncompressed): %.1fMB", total_size/1024/1024.0);
@@ -1423,6 +1424,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	extract_progress.clear();
 	emjs::ui_setattr("progbar", "value", "0");
 	emjs::ui_setattr("progbar", "max", "100");
+	emjs::ui_innerhtml("proc", "0.0%");	
 	emjs::ui_innerhtml("info", "Creating a ZIP file...");
 	emscripten_sleep(1);
 	
@@ -1444,30 +1446,27 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	zip_t *zip = zip_open(zipname, ZIP_CREATE, &ze);
 	if (ze) printf("ZIP err: %d: %s\n", ze, zip_strerror(zip));
 
-	const char *dirs[] = {"app", "tmp"}; // FIXME: dont use static dir names!
+	const char *zdir = o.output_dir.c_str();
 	zip_int64_t fi;
-	for (const char *zdir : dirs) {
-			// printf("ZIP: %s\n", zdir);
-			zip_dir_add(zip, zdir, 0);
-			for (const fs::directory_entry &dir_entry :
-					fs::recursive_directory_iterator(zdir)) {
-					std::string path = dir_entry.path().string();
-					if (fs::is_directory(dir_entry)) {
-							zip_dir_add(zip, path.c_str(), 0);
-					} else {
-							zip_source_t *zf = zip_source_file_create(
-								path.c_str(), 0, 0, &zerr);
-							fi = zip_file_add(zip, path.c_str(), zf, 0);
-							zip_set_file_compression(zip, fi, ZIP_CM_STORE, 0);
-					}
+		// printf("ZIP: %s\n", zdir);
+		zip_dir_add(zip, zdir, 0);
+		for (const fs::directory_entry &dir_entry : fs::recursive_directory_iterator(zdir)) {
+				std::string path = dir_entry.path().string();
+				if (fs::is_directory(dir_entry)) {
+						zip_dir_add(zip, path.c_str(), 0);
+				} else {
+						zip_source_t *zf = zip_source_file_create(
+							path.c_str(), 0, 0, &zerr);
+						fi = zip_file_add(zip, path.c_str(), zf, 0);
+						zip_set_file_compression(zip, fi, ZIP_CM_STORE, 0);
+				}
 #ifdef DEBUG
-					std::cout << "ZIP: " << dir_entry << '\n';
+				std::cout << "ZIP: " << dir_entry << '\n';
 #endif
-					if (ze)
-							printf("ZIP err: %d: %s\n", ze,
-									zip_strerror(zip));
-			}
-	}
+				if (ze)
+						printf("ZIP err: %d: %s\n", ze,
+								zip_strerror(zip));
+		}
 	emjs::ui_progbar_update("progbar",20);
 	emjs::ui_innerhtml("info", "Packing files into ZIP...");
 	emscripten_sleep(1);
