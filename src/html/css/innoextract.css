@@ -1,0 +1,13 @@
+#con {
+    font-family: monospace;
+    font-size: small;
+    overflow: scroll;
+    height: 100px;
+    resize: vertical;
+}
+.err {
+    color: #dc3545;
+}
+.progress-bar {
+    transition: none !important;
+}

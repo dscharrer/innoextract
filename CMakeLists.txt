@@ -23,7 +23,7 @@ if(USE_EMBOOST)
 
 	SET(EMBOOSTDIR $ENV{EMBOOSTDIR})
 	set(EMBDIR "${EMBOOSTDIR}/stage/lib")
-	set(EMHEADERS "${EMBOOSTDIR}/boost")
+	set(EMHEADERS "${EMBOOSTDIR}")
 
 	set(EMLIBS 
 		${EMBDIR}/libboost_date_time.bc
@@ -37,6 +37,10 @@ if(USE_EMBOOST)
 	)
 	list(APPEND LIBRARIES ${EMLIBS})
 endif()
+
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+add_subdirectory($ENV{JSONDIR})
+list(APPEND LIBRARIES nlohmann_json::nlohmann_json)
 
 if(NOT USE_EMBOOST)
 	find_package(Boost REQUIRED COMPONENTS
@@ -89,7 +93,7 @@ add_compile_options(-std=c++1y -Wno-deprecated-declarations -sUSE_ZLIB=1 -O3 -fe
 
 add_link_options(
 -sINITIAL_MEMORY=1024MB -sSTACK_SIZE=512MB -sALLOW_MEMORY_GROWTH 
--sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sINVOKE_RUN=0 -sASYNCIFY -sASYNCIFY_STACK_SIZE=65565
+-sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sEXPORTED_FUNCTIONS=[_main,_malloc,_free] -sINVOKE_RUN=0 -sASYNCIFY -sASYNCIFY_STACK_SIZE=65565
 --pre-js ../src/pre.js -sNO_DISABLE_EXCEPTION_CATCHING )
 
 add_compile_options("-fvisibility=hidden")
@@ -252,7 +256,10 @@ list(APPEND LIBRARIES ${ZIPLIBS})
 include_directories(src ${CMAKE_CURRENT_BINARY_DIR} ${EMHEADERS} ${LZMAHEADERS} ${ZIPHEADERS})
 
 configure_file("src/configure.hpp.in" "configure.hpp")
-configure_file("src/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html" COPYONLY)
+file(COPY src/html/js DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY src/html/css DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY src/html/img DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+configure_file("src/html/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html" COPYONLY)
 
 # Main targets
 

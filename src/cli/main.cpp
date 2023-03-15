@@ -372,8 +372,13 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	
-
-	puts("ignoring setup-files==0, setting output dir to goggame");
+	if(options.count("setup-files") == 0) {
+		if(!o.silent) {
+			std::cout << get_command(argv[0]) << ": no input files specified\n";
+			std::cout << "Try the --help (-h) option for usage information.\n";
+		}
+		return ExitSuccess;
+	}
 	
 	o.output_dir = "goggame";
 	
@@ -441,18 +446,9 @@ int main(int argc, char * argv[]) {
 	
 	o.extract_unknown = (options.count("no-extract-unknown") == 0);
 
-	puts("upload");
-	emjs::upload(".exe", handle_upload_file);
 
-	while (ie_state == 0) {
-		emscripten_sleep(100);
-	};
-	puts("postupload");
-	emjs::ui_remattr("con","hidden");
-
-	std::vector<std::string> files;
-	std::string f = "/setup_uploaded.exe";
-	files.push_back(f);
+	const std::vector<std::string> & files = options["setup-files"]
+	                                         .as< std::vector<std::string> >();
 
 	bool suggest_bug_report = false;
 	try {
@@ -513,10 +509,12 @@ int main(int argc, char * argv[]) {
 		}
 		os << '.' << std::endl;
 	}
+
+	if(logger::total_errors) {
+		emjs::ui_show_error();
+	}
 	
 	ie_state = 0;
-	emjs::ui_setattr("loadbtn", "value", "Load file");
-	emjs::ui_setattr("loadbtn", "onclick", "callMain();");
 
 	return logger::total_errors == 0 ? ExitSuccess : ExitDataError;
 }
