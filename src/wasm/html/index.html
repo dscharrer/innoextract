@@ -50,7 +50,17 @@
                         </template>
                     </ul>
                 </div>
-                  
+                <div class="mt-2">
+                    <div class="collapse mb-2" id="collapseLogs">
+                        <h5>Logs</h5>
+                        <div id="con" class="card card-body"></div>
+                    </div>
+                    <p>
+                        <a class="btn btn-primary btn-sm" data-bs-toggle="collapse" href="#collapseLogs" role="button" aria-expanded="false" aria-controls="collapseLogs">
+                            <i class="bi bi-terminal-fill"></i> Show/hide logs
+                        </a>
+                    </p>
+                </div>
             </div>
             <div class="col-lg-6">
                 <h5>Output</h5>
@@ -61,7 +71,7 @@
                                 <h5 id="title" class="card-title">Add and choose a EXE file...</h5>
                                 <h6 id="desc" class="card-subtitle mb-2 text-muted"></h6>
                             </div>
-                            <small id="details"></small>
+                            <small id="details">Size: <span id="size">0</span>MB Files: <span id="filesNum">0</span></small>
                         </div>
                         <div class="progress">
                             <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
@@ -69,21 +79,14 @@
                     </div>
                     <div id="tree"></div> 
                     <div class="card-footer">
-                        <button id="extractBtn" class="btn btn-warning w-100" onclick="ccall('ui_extract');" disabled><i class="bi bi-file-earmark-zip-fill"></i> Extract and save as a ZIP! </button>
+                        <button id="extractBtn" class="btn btn-warning w-100" disabled><i class="bi bi-file-earmark-zip-fill"></i> Extract and save as a ZIP! </button>
                     </div>
                 </div>
             </div>
         </div>
         <div class="row">
             <div class="col gy-5">
-                <p>
-                <a class="btn btn-primary btn-sm" data-bs-toggle="collapse" href="#collapseLogs" role="button" aria-expanded="false" aria-controls="collapseLogs">
-                    <i class="bi bi-terminal-fill"></i> Show logs
-                </a>
-                </p>
-                <div class="collapse" id="collapseLogs">
-                    <div id="con" class="card card-body"></div>
-                </div>
+               
             </div>
         </div>
     </div>
@@ -96,8 +99,8 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <p>Innoextract has been failed. Check the logs below and try again.</p>
-              <div id="errorLogs"></div>
+              <p>Innoextract has been failed.</p>
+              <p id="errorMsg"></p>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

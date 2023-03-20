@@ -73,17 +73,7 @@
 #include "util/output.hpp"
 #include "util/time.hpp"
 
-extern "C"{
-#include <zip.h>
-}
-
-#include <emjs.h>
-#include <nlohmann/json.hpp>
-
-extern volatile int ie_state;
-
 namespace fs = boost::filesystem;
-using json = nlohmann::ordered_json;
 
 namespace {
 
@@ -613,9 +603,7 @@ void rename_collisions(const extract_options & o, FilesMap & processed_files,
 }
 
 bool print_file_info(const extract_options & o, const setup::info & info) {
-	emjs::ui_innerhtml("title", info.header.app_name.c_str());
-	emjs::ui_innerhtml("desc", info.header.app_copyright.c_str());
-
+	
 	if(!o.quiet) {
 		const std::string & name = info.header.app_versioned_name.empty()
 		                           ? info.header.app_name : info.header.app_versioned_name;
@@ -900,62 +888,11 @@ void create_output_directory(const extract_options & o) {
 	
 }
 
-void filter_files_ui(const processed_entries& processed) {
-	json main_obj;
-	std::map<std::string, json::object_t*> dirs;
-
-	emjs::ui_setattr("progress-bar", "style", "width: 100%;");
-	emjs::ui_innerhtml("progress-bar", "Loading files...");
-	emscripten_sleep(1);
-
-	BOOST_FOREACH(const DirectoriesMap::value_type & i, processed.directories) {
-		const std::string & path = i.second.path();
-		size_t pos = path.find_last_of(setup::path_sep);
-		if(pos == std::string::npos) {
-			dirs[path] = main_obj.emplace_back(json{{"text", path}}).get_ptr<json::object_t*>();
-		}
-		else {
-			json::object_t* parent = dirs[path.substr(0, pos)];
-			if(!parent->count("nodes")) {
-				parent->emplace("nodes", json::array());
-			}
-			dirs[path] = parent->at("nodes").emplace_back(json{{"text", path.substr(pos+1)}}).get_ptr<json::object_t*>();
-		}
-	}
-
-	BOOST_FOREACH(const FilesMap::value_type & i, processed.files) {
-		const processed_file & file = i.second;
-		const std::string & path = file.path();
-		size_t pos = path.find_last_of(setup::path_sep);
-		json file_obj;
-		file_obj["text"] = path.substr(pos+1);
-		file_obj["icon"] = "bi bi-file-earmark-fill";
-		file_obj["tags"] = json::array();
-		file_obj["tags"].push_back(file.entry().languages);
-		if(pos != std::string::npos) {
-			json::object_t* parent = dirs[path.substr(0, pos)];
-			if(!parent->count("nodes")) {
-				parent->emplace("nodes", json::array());
-			}
-			parent->at("nodes").push_back(file_obj);
-		} else {
-			main_obj.push_back(file_obj);
-		}
-	}
-
-	emjs::update_file_list(main_obj.dump());
-	emscripten_sleep(1);
-}
-
 } // anonymous namespace
 
 void process_file(const fs::path & installer, const extract_options & o) {
-
+	
 	bool is_directory;
-
-	emjs::ui_innerhtml("title", "Loading...");
-	emscripten_sleep(1);
-
 	try {
 		is_directory = fs::is_directory(installer);
 	} catch(...) {
@@ -968,7 +905,6 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	
 	util::ifstream ifs;
 	try {
-		emjs::get_file(installer.string());
 		ifs.open(installer, std::ios_base::in | std::ios_base::binary);
 		if(!ifs.is_open()) {
 			throw std::exception();
@@ -1061,7 +997,6 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	}
 	
 	bool multiple_sections = print_file_info(o, info);
-	emscripten_sleep(1);
 	
 	std::string password;
 	if(o.password.empty()) {
@@ -1099,9 +1034,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	}
 	
 	processed_entries processed = filter_entries(o, info);
-
-	filter_files_ui(processed);
-
+	
 	if(o.extract) {
 		create_output_directory(o);
 	}
@@ -1171,7 +1104,6 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	}
 	
 	boost::uint64_t total_size = 0;
-	boost::uint64_t files = 0;
 	
 	typedef std::map<stream::file, size_t> Files;
 	typedef std::map<stream::chunk, Files> Chunks;
@@ -1204,22 +1136,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	}
 	
 	progress extract_progress(total_size);
-	uint64_t bytes_extracted = 0;
-	char buff[256];
-	emjs::ui_progbar_update(0);
 	
-	snprintf(buff, sizeof(buff), "Size: %.1fMB Files: %d", total_size/1024/1024.0, processed.files.size());
-	emjs::ui_innerhtml("details", buff);
-	emjs::ui_remattr("extractBtn", "disabled");
-	ie_state = 1;
-	while (ie_state == 1) {
-		emscripten_sleep(100);
-	};
-
-	emjs::ui_setattr("extractBtn", "disabled", "");
-
-	emscripten_sleep(1);
-
 	typedef boost::ptr_map<const processed_file *, file_output> multi_part_outputs;
 	multi_part_outputs multi_outputs;
 	
@@ -1323,7 +1240,6 @@ void process_file(const fs::path & installer, const extract_options & o) {
 				}
 				
 				bool updated = extract_progress.update(0, true);
-				emscripten_sleep(1);
 				if(!updated && (o.extract || o.test)) {
 					std::cout.flush();
 				}
@@ -1348,7 +1264,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 			// Open input file
 			stream::file_reader::pointer file_source;
 			file_source = stream::file_reader::get(*chunk_source, file, &checksum);
-
+			
 			// Open output files
 			boost::ptr_vector<file_output> single_outputs;
 			std::vector<file_output *> outputs;
@@ -1402,8 +1318,6 @@ void process_file(const fs::path & installer, const extract_options & o) {
 						}
 					}
 					extract_progress.update(boost::uint64_t(n));
-					bytes_extracted += n;
-					emjs::ui_progbar_update(float(bytes_extracted)/float(total_size)*100.0f);
 					output_size += boost::uint64_t(n);
 				}
 			}
@@ -1462,7 +1376,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 					throw std::runtime_error("Integrity test failed!");
 				}
 			}
-
+			
 		}
 		
 		#ifdef DEBUG
@@ -1482,44 +1396,5 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	if(o.warn_unused || o.gog) {
 		gog::probe_bin_files(o, info, installer, offsets.data_offset == 0);
 	}
-
-	// Put files to zip
-	int ze;
-	zip_error_t zerr;
-	std::string zname = info.header.app_name + ".zip";
-	const char *zipname = zname.c_str();
-
-	printf("opening and writing zip: %s\n", zipname);
-	zip_t *zip = zip_open(zipname, ZIP_CREATE, &ze);
-	if (ze) printf("ZIP err: %d: %s\n", ze, zip_strerror(zip));
-
-	const char *zdir = o.output_dir.c_str();
-	zip_int64_t fi;
-		// printf("ZIP: %s\n", zdir);
-		zip_dir_add(zip, zdir, 0);
-		for (const fs::directory_entry &dir_entry : fs::recursive_directory_iterator(zdir)) {
-				std::string path = dir_entry.path().string();
-				if (fs::is_directory(dir_entry)) {
-						zip_dir_add(zip, path.c_str(), 0);
-				} else {
-						zip_source_t *zf = zip_source_file_create(
-							path.c_str(), 0, 0, &zerr);
-						fi = zip_file_add(zip, path.c_str(), zf, 0);
-						zip_set_file_compression(zip, fi, ZIP_CM_STORE, 0);
-				}
-#ifdef DEBUG
-				std::cout << "ZIP: " << dir_entry << '\n';
-#endif
-				if (ze)
-						printf("ZIP err: %d: %s\n", ze,
-								zip_strerror(zip));
-		}
-	zip_close(zip);
-
-	puts("ZIP: closed");
-	std::ifstream in(zipname, std::ios::binary | std::ios::ate);
-	int siz = in.tellg();
-	printf("%s size: %d bytes (%d MB)\n", zipname, siz, siz / 1024 / 1024);
-	puts("ZIP: download");
-	emjs::down(zname);
+	
 }

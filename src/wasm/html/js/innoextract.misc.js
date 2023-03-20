@@ -3,14 +3,24 @@ const addBtn = document.getElementById("addBtn");
 const removeBtn = document.getElementById("removeBtn");
 const startBtn = document.getElementById("startBtn");
 const extractBtn = document.getElementById("extractBtn");
+
+//File list
 const emptyListInfo = document.getElementById("emptyListInfo");
 const fileTemplate = document.getElementById("fileTemplate");
 const fileList = document.getElementById("fileList");
-const con = document.getElementById("con");
+
+//Error dialog
 const errorModal = new bootstrap.Modal(document.getElementById("errorModal"));
-const errorLogs = document.getElementById("errorLogs");
+const errorMsg = document.getElementById("errorMsg");
+
+//Installer info
+const title = document.getElementById("title");
+const desc = document.getElementById("desc");
+const sizeInfo = document.getElementById("size");
+const filesNum = document.getElementById("filesNum");
 
 var global_file_list = []
+var tree;
 
 addBtn.addEventListener("click", (e) => {
     if (fileBrowser) {
@@ -25,30 +35,51 @@ removeBtn.addEventListener("click", (e) => {
     }
 }, false);
 
-function showErrorModal() {
-    errorLogs.innerHTML = '';
-    errorLogs.appendChild(con.cloneNode(true));
-    errorModal.show();
+function showError(obj) {
+    if (obj.error) {
+        errorMsg.innerHTML = obj.error;
+        errorModal.show();
+        return true;
+    }
+    return false;
 }
 
 function startInnoExtract() {
     let checked = document.querySelector('input[name="listGroupRadio"]:checked');
     if (checked) {
         var file = global_file_list[checked.value];
-        var rc = callMain([file.name]);
-        if (rc != 0) {
-            showErrorModal();
-        }
+        Module.ccall('load_exe', 'string', ['string'], [file.name], {async: true}).then(result =>{
+            var obj = JSON.parse(result)
+            if (!showError(obj)) {
+                title.innerHTML = obj.name
+                desc.innerHTML = obj.copyrights
+                sizeInfo.innerHTML = obj.size
+                filesNum.innerHTML = obj.files_num;
+                Module.ccall('list_files', 'string', [], [], {async: true}).then(result =>{
+                    createTree(JSON.parse(result));
+                    extractBtn.disabled = false;
+                });
+            }
+        });
     }
 }
 startBtn.addEventListener("click", startInnoExtract, false);
 
-// function extractFiles() {
-//     checked = $('#tree').treeview('getChecked');
-//     console.log(checked);
-// }
+function extractFiles() {
+    extractBtn.disabled = true;
+    checked = tree.treeview('getChecked');
+    ids = []
+    for (const element of checked) {
+        if (element.fileId)
+            ids.push(element.fileId);
+    }
+    Module.ccall('extract', 'string', ['string'], [JSON.stringify(ids)], {async: true}).then(result =>{
+        extractBtn.disabled = false;
+        showError(JSON.parse(result))
+    });
+}
 
-// extractBtn.addEventListener("click", extractFiles, false);
+extractBtn.addEventListener("click", extractFiles, false);
 
 function createList() {
     fileList.innerHTML = '';
@@ -76,7 +107,7 @@ fileBrowser.addEventListener("change", handleAddFiles, false);
 
 function createTree(data) {
     let blockCheckingChildren = false;
-    var $tree = $('#tree').treeview({
+    tree = $('#tree').treeview({
         data: data,         // data is not optional
         showCheckbox: true,
         checkedIcon: 'bi bi-check-square',
@@ -90,32 +121,32 @@ function createTree(data) {
         onNodeUnchecked: function(event, node) {
             if (node.nodes) {
                 for (const element of node.nodes) {
-                    $tree.treeview('uncheckNode', [ element.nodeId, { silent: false } ]);
+                    tree.treeview('uncheckNode', [ element.nodeId, { silent: false } ]);
                 }
             }
-            parent = $tree.treeview('getParent', node);
+            parent = tree.treeview('getParent', node);
             if (parent && parent.state) {
-                siblings = $tree.treeview('getSiblings', node);
+                siblings = tree.treeview('getSiblings', node);
                 all_unchecked = siblings.every(element => !element.state.checked);
                 if (all_unchecked) {
-                    $tree.treeview('uncheckNode', [ parent.nodeId, { silent: false } ]);
+                    tree.treeview('uncheckNode', [ parent.nodeId, { silent: false } ]);
                 }
             }
         },
         onNodeChecked: function(event, node) {
             if (node.nodes && !blockCheckingChildren) {
                 for (const element of node.nodes) {
-                    $tree.treeview('checkNode', [ element.nodeId, { silent: false } ]);
+                    tree.treeview('checkNode', [ element.nodeId, { silent: false } ]);
                 }
             }
-            parent = $tree.treeview('getParent', node);
+            parent = tree.treeview('getParent', node);
             if (parent && parent.state) {
                 blockCheckingChildren = true;
-                $tree.treeview('checkNode', [ parent.nodeId, { silent: false } ]);
+                tree.treeview('checkNode', [ parent.nodeId, { silent: false } ]);
                 blockCheckingChildren = false;
             }
         }
     });
-    $tree.treeview('checkAll', { silent: true });
-    $tree.treeview('collapseAll', { silent: true });
+    tree.treeview('checkAll', { silent: true });
+    tree.treeview('collapseAll', { silent: true });
 }

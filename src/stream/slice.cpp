@@ -33,7 +33,7 @@
 #include "util/load.hpp"
 #include "util/log.hpp"
 
-#include <emjs.h>
+#include "wasm/emjs.h"
 
 namespace stream {
 

@@ -117,6 +117,9 @@ set(INNOEXTRACT_SOURCES
 	src/cli/goggalaxy.hpp
 	src/cli/goggalaxy.cpp
 	src/cli/main.cpp
+
+	src/wasm/extract.hpp
+	src/wasm/extract.cpp
 	
 	src/crypto/adler32.hpp
 	src/crypto/adler32.cpp
@@ -219,7 +222,7 @@ set(INNOEXTRACT_SOURCES
 	src/util/types.hpp
 	src/util/unique_ptr.hpp
 	src/util/windows.hpp
-	src/emjs.cpp	
+	src/wasm/emjs.cpp	
 )
 
 if(${DEBUG})
@@ -256,10 +259,10 @@ list(APPEND LIBRARIES ${ZIPLIBS})
 include_directories(src ${CMAKE_CURRENT_BINARY_DIR} ${EMHEADERS} ${LZMAHEADERS} ${ZIPHEADERS})
 
 configure_file("src/configure.hpp.in" "configure.hpp")
-file(COPY src/html/js DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-file(COPY src/html/css DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-file(COPY src/html/img DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-configure_file("src/html/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html" COPYONLY)
+file(COPY src/wasm/html/js DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY src/wasm/html/css DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY src/wasm/html/img DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+configure_file("src/wasm/html/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html" COPYONLY)
 
 # Main targets
 

@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iomanip>
 #include <emscripten.h>
+#include "wasm/extract.hpp"
 #include "emjs.h"
 // Based on emscripten-browser-file package by Armchair Software, licensed under MIT
 // https://github.com/Armchair-Software/emscripten-browser-file
@@ -109,10 +110,6 @@ EM_JS(void, update_file_list, (char const *json), {
   createTree(tree_data);
 });
 
-void update_file_list(std::string const &json) {
-  update_file_list(json.c_str());
-}
-
 EM_JS(void, ui_innerhtml_int, (const char *id, const char *value), {
 	var elem = document.getElementById(UTF8ToString(id));
 	elem.innerHTML=UTF8ToString(value);
@@ -166,16 +163,28 @@ EMSCRIPTEN_KEEPALIVE int load_file_return(char const *filename, char const *mime
   /// Load a file - this function is called from javascript when the file upload is activated
   callback(filename, mime_type, {buffer, buffer_size}, callback_data);
   return 1;
-
 }
 
 EMSCRIPTEN_KEEPALIVE void get_file_done() {
   file_loadend = true;
 }
 
-extern volatile int ie_state;
-EMSCRIPTEN_KEEPALIVE void ui_extract() {
-	ie_state=2;
+EMSCRIPTEN_KEEPALIVE char const * load_exe(char const *filename) {
+  static std::string result;
+  result = wasm::Context::get().LoadExe(std::string(filename));
+  return result.c_str();
+}
+
+EMSCRIPTEN_KEEPALIVE char const * list_files() {
+  static std::string result;
+  result = wasm::Context::get().ListFiles().c_str();
+  return result.c_str();
+}
+
+EMSCRIPTEN_KEEPALIVE char const * extract(char const *list_json) {
+  static std::string result;
+  result = wasm::Context::get().Extract(list_json).c_str();
+  return result.c_str();
 }
 
 }

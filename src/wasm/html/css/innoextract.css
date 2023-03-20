@@ -2,7 +2,7 @@
     font-family: monospace;
     font-size: small;
     overflow: scroll;
-    height: 100px;
+    height: 250px;
     resize: vertical;
 }
 .err {

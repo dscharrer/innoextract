@@ -15,7 +15,6 @@ void upload(std::string const &accept_types, upload_handler callback, void *call
 void download(std::string const &filename, std::string const &mime_type, std::string_view buffer);
 void down(std::string const &filename);
 void get_file(std::string const &filename);
-void update_file_list(std::string const &json);
 void ui_innerhtml(const char *id, const char *value);
 void ui_setattr(const char *id, const char *attr, std::string const &value);
 void ui_remattr(const char *id, const char *attr);
@@ -25,6 +24,9 @@ void ui_show_error();
 namespace {
 extern "C" {
 EMSCRIPTEN_KEEPALIVE int load_file_return(char const *filename, char const *mime_type, char *buffer, size_t buffer_size, upload_handler callback, void *callback_data);
+EMSCRIPTEN_KEEPALIVE char const * load_exe(char const *filename);
+EMSCRIPTEN_KEEPALIVE char const * list_files();
+EMSCRIPTEN_KEEPALIVE char const * extract(char const *list_json);
 }
 }
 
