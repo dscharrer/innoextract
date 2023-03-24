@@ -285,6 +285,7 @@ std::string Context::ListFiles() {
 }
 
 std::string Context::Extract(std::string list_json) {
+  const std::string& output_dir = info_.header.app_name;
   auto input = json::parse(list_json);
   std::sort(input.begin(), input.end());
   log_info << "Unpacking " << input.size() << " files have been started.";
@@ -298,10 +299,10 @@ std::string Context::Extract(std::string list_json) {
 
   // creating empty directories - ignoring user input
   // writing directly to the ZIP will resolve that in the future
-  fs::create_directory("output");
+  fs::create_directory(output_dir);
 
   for (const auto& dir : dirs_) {
-    fs::create_directory("output/" + dir);
+    fs::create_directory(output_dir + "/" + dir);
   }
 
   typedef std::pair<const processed_file*, uint64_t> output_location;
@@ -430,7 +431,7 @@ std::string Context::Extract(std::string list_json) {
           }
 
           if (!output) {
-            output = new file_output("output", fileinfo, true);
+            output = new file_output(output_dir, fileinfo, true);
             if (fileinfo->is_multipart()) {
               multi_outputs_.insert(fileinfo, output);
             }
@@ -527,15 +528,16 @@ void Context::verify_close_outputs(const std::vector<file_output*>& outputs,
 }
 
 void Context::save_zip() const {
-  std::string zname = info_.header.app_name + ".zip";
+  const std::string& output_dir = info_.header.app_name;
+  std::string zname = output_dir + ".zip";
   int ze = 0;
   zip_error_t zerr;
   zip_t* zip = zip_open(zname.c_str(), ZIP_CREATE, &ze);
   if (ze) printf("ZIP err: %d: %s\n", ze, zip_strerror(zip));
   zip_int64_t fi;
-  zip_dir_add(zip, "output", 0);
+  zip_dir_add(zip, output_dir.c_str(), 0);
   for (const fs::directory_entry& dir_entry :
-       fs::recursive_directory_iterator("output")) {
+       fs::recursive_directory_iterator(output_dir)) {
     std::string path = dir_entry.path().string();
     if (fs::is_directory(dir_entry)) {
       zip_dir_add(zip, path.c_str(), 0);
