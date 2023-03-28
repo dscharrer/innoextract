@@ -20,13 +20,11 @@ using json = nlohmann::ordered_json;
 
 namespace wasm {
 
-file_output::file_output(const fs::path& dir, const processed_file* f,
-                         bool write)
+file_output::file_output(const fs::path& dir, const processed_file* f, bool write)
     : path_(dir / f->path()),
       file_(f),
       checksum_(f->entry().checksum.type),
-      checksum_position_(
-          f->entry().checksum.type == crypto::None ? boost::uint64_t(-1) : 0),
+      checksum_position_(f->entry().checksum.type == crypto::None ? boost::uint64_t(-1) : 0),
       position_(0),
       total_written_(0),
       write_(write) {
@@ -42,8 +40,7 @@ file_output::file_output(const fs::path& dir, const processed_file* f,
         throw std::exception();
       }
     } catch (...) {
-      throw std::runtime_error("Could not open output file \"" +
-                               path_.string() + '"');
+      throw std::runtime_error("Could not open output file \"" + path_.string() + '"');
     }
   }
 }
@@ -81,12 +78,10 @@ void file_output::seek(boost::uint64_t new_position) {
     stream_.seekp(util::fstream::off_type(new_position), std::ios_base::beg);
   } else {
     util::fstream::off_type sign = (new_position > position_) ? 1 : -1;
-    boost::uint64_t diff = (new_position > position_)
-                               ? new_position - position_
-                               : position_ - new_position;
+    boost::uint64_t diff =
+        (new_position > position_) ? new_position - position_ : position_ - new_position;
     while (diff > 0) {
-      stream_.seekp(sign * util::fstream::off_type(std::min(diff, max)),
-                    std::ios_base::cur);
+      stream_.seekp(sign * util::fstream::off_type(std::min(diff, max)), std::ios_base::cur);
       diff -= std::min(diff, max);
     }
   }
@@ -100,13 +95,9 @@ void file_output::close() {
   }
 }
 
-bool file_output::is_complete() const {
-  return total_written_ == file_->entry().size;
-}
+bool file_output::is_complete() const { return total_written_ == file_->entry().size; }
 
-bool file_output::has_checksum() const {
-  return checksum_position_ == file_->entry().size;
-}
+bool file_output::has_checksum() const { return checksum_position_ == file_->entry().size; }
 
 bool file_output::calculate_checksum() {
   if (has_checksum()) {
@@ -121,12 +112,10 @@ bool file_output::calculate_checksum() {
       boost::uint64_t(std::numeric_limits<util::fstream::off_type>::max() / 4);
 
   boost::uint64_t diff = checksum_position_;
-  stream_.seekg(util::fstream::off_type(std::min(diff, max)),
-                std::ios_base::beg);
+  stream_.seekg(util::fstream::off_type(std::min(diff, max)), std::ios_base::beg);
   diff -= std::min(diff, max);
   while (diff > 0) {
-    stream_.seekg(util::fstream::off_type(std::min(diff, max)),
-                  std::ios_base::cur);
+    stream_.seekg(util::fstream::off_type(std::min(diff, max)), std::ios_base::cur);
     diff -= std::min(diff, max);
   }
 
@@ -194,9 +183,8 @@ std::string Context::LoadExe(std::string exe_file) {
 
   gog::parse_galaxy_files(info_, 0);
 
-  obj["name"] = info_.header.app_versioned_name.empty()
-                    ? info_.header.app_name
-                    : info_.header.app_versioned_name;
+  obj["name"] = info_.header.app_versioned_name.empty() ? info_.header.app_name
+                                                        : info_.header.app_versioned_name;
   obj["copyrights"] = info_.header.app_copyright;
   obj["langs"] = json::array();
   obj["size"] = get_size() / 1024 / 1024;
@@ -250,8 +238,7 @@ std::string Context::ListFiles() {
   for (const auto& p : dirs_) {
     size_t pos = p.find_last_of(setup::path_sep);
     if (pos == std::string::npos) {
-      json_dirs[p] =
-          main_obj.emplace_back(json{{"text", p}}).get_ptr<json::object_t*>();
+      json_dirs[p] = main_obj.emplace_back(json{{"text", p}}).get_ptr<json::object_t*>();
     } else {
       json::object_t* parent = json_dirs[p.substr(0, pos)];
       if (!parent->count("nodes")) {
@@ -291,7 +278,7 @@ std::string Context::ListFiles() {
 std::string Context::Extract(std::string list_json) {
   const std::string& output_dir = info_.header.app_name;
   auto input = json::parse(list_json);
-  std::vector<const processed_file *> selected_files;
+  std::vector<const processed_file*> selected_files;
   selected_files.reserve(all_files_.size());
 
   std::sort(input.begin(), input.end());
@@ -318,20 +305,15 @@ std::string Context::Extract(std::string list_json) {
   files_for_location.resize(info_.data_entries.size());
 
   for (const processed_file* file_ptr : selected_files) {
-    files_for_location[file_ptr->entry().location].push_back(
-        output_location(file_ptr, 0));
-    uint64_t offset =
-        info_.data_entries[file_ptr->entry().location].uncompressed_size;
-    uint32_t sort_slice =
-        info_.data_entries[file_ptr->entry().location].chunk.first_slice;
-    uint32_t sort_offset =
-        info_.data_entries[file_ptr->entry().location].chunk.sort_offset;
+    files_for_location[file_ptr->entry().location].push_back(output_location(file_ptr, 0));
+    uint64_t offset = info_.data_entries[file_ptr->entry().location].uncompressed_size;
+    uint32_t sort_slice = info_.data_entries[file_ptr->entry().location].chunk.first_slice;
+    uint32_t sort_offset = info_.data_entries[file_ptr->entry().location].chunk.sort_offset;
     for (uint32_t location : file_ptr->entry().additional_locations) {
       setup::data_entry& data = info_.data_entries[location];
       files_for_location[location].push_back(output_location(file_ptr, offset));
       if (data.chunk.first_slice > sort_slice ||
-          (data.chunk.first_slice == sort_slice &&
-           data.chunk.sort_offset > sort_offset)) {
+          (data.chunk.first_slice == sort_slice && data.chunk.sort_offset > sort_offset)) {
         sort_slice = data.chunk.first_slice;
         sort_offset = data.chunk.sort_offset;
       } else if (data.chunk.first_slice == sort_slice &&
@@ -377,26 +359,22 @@ std::string Context::Extract(std::string list_json) {
       if (info_.version < INNO_VERSION(4, 1, 7) && !basename2.empty()) {
         std::swap(basename2, basename);
       }
-      slice_reader.reset(new stream::slice_reader(
-          dir, basename, basename2, info_.header.slices_per_disk));
+      slice_reader.reset(
+          new stream::slice_reader(dir, basename, basename2, info_.header.slices_per_disk));
     }
 
     bytes_extracted_ = 0;
     multi_outputs_.clear();
 
-    for (const Chunks::value_type& chunk :
-         chunks) {  //[first = chunk, second = [file, location]]
+    for (const Chunks::value_type& chunk : chunks) {  //[first = chunk, second = [file, location]]
       stream::chunk_reader::pointer chunk_source;
       if (chunk.first.encryption == stream::Plaintext) {
-        chunk_source =
-            stream::chunk_reader::get(*slice_reader, chunk.first, "");
+        chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first, "");
       }
       uint64_t offset = 0;
-      for (const Files::value_type& location :
-           chunk.second) {  // 1 chunk => n files
+      for (const Files::value_type& location : chunk.second) {  // 1 chunk => n files
         const stream::file& file = location.first;
-        const std::vector<output_location>& output_locations =
-            files_for_location[location.second];
+        const std::vector<output_location>& output_locations = files_for_location[location.second];
         if (file.offset > offset) {
           if (chunk_source.get()) {
             util::discard(*chunk_source, file.offset - offset);
@@ -404,9 +382,8 @@ std::string Context::Extract(std::string list_json) {
         }
         if (chunk_source.get() && file.offset < offset) {
           std::ostringstream oss;
-          oss << "Bad offset while extracting files: file start ("
-              << file.offset << ") is before end of previous file (" << offset
-              << ")!";
+          oss << "Bad offset while extracting files: file start (" << file.offset
+              << ") is before end of previous file (" << offset << ")!";
           throw std::runtime_error(oss.str());
         }
         offset = file.offset + file.size;
@@ -422,8 +399,7 @@ std::string Context::Extract(std::string list_json) {
         file_source = stream::file_reader::get(*chunk_source, file, &checksum);
 
         std::vector<file_output*> outputs;
-        for (const output_location& output_loc :
-             output_locations) {  // 1 file => n output files
+        for (const output_location& output_loc : output_locations) {  // 1 file => n output files
           const processed_file* fileinfo = output_loc.first;
 
           // Re-use existing file output for multi-part files
@@ -488,15 +464,13 @@ uint64_t Context::copy_data(const stream::file_reader::pointer& source,
       for (file_output* output : outputs) {
         bool success = output->write(buffer, size_t(n));
         if (!success) {
-          throw std::runtime_error("Error writing file \"" +
-                                   output->path().string() + '"');
+          throw std::runtime_error("Error writing file \"" + output->path().string() + '"');
         }
       }
       bytes_extracted_ += n;
       output_size += n;
 
-      emjs::ui_progbar_update(float(bytes_extracted_) / float(total_size_) *
-                              100.0f);
+      emjs::ui_progbar_update(float(bytes_extracted_) / float(total_size_) * 100.0f);
     }
   }
 
@@ -509,20 +483,17 @@ void Context::verify_close_outputs(const std::vector<file_output*>& outputs,
     if (output->file()->is_multipart() && !output->is_complete()) {
       continue;
     }
-    if (output->file()->entry().checksum.type != crypto::None &&
-        output->calculate_checksum()) {
+    if (output->file()->entry().checksum.type != crypto::None && output->calculate_checksum()) {
       crypto::checksum output_checksum = output->checksum();
       if (output_checksum != output->file()->entry().checksum) {
-        log_warning << "Output checksum mismatch for " << output->file()->path()
-                    << ":\n"
+        log_warning << "Output checksum mismatch for " << output->file()->path() << ":\n"
                     << " ├─ actual:   " << output_checksum << '\n'
                     << " └─ expected: " << output->file()->entry().checksum;
       }
     }
     output->close();
     log_info << " - File " << output->path() << " unpacked.";
-    if (!util::set_file_time(output->path(), data.timestamp,
-                             data.timestamp_nsec)) {
+    if (!util::set_file_time(output->path(), data.timestamp, data.timestamp_nsec)) {
       log_warning << "Error setting timestamp on file " << output->path();
     }
 
@@ -547,8 +518,7 @@ void Context::save_zip() const {
   if (ze) printf("ZIP err: %d: %s\n", ze, zip_strerror(zip));
   zip_int64_t fi;
   zip_dir_add(zip, output_dir.c_str(), 0);
-  for (const fs::directory_entry& dir_entry :
-       fs::recursive_directory_iterator(output_dir)) {
+  for (const fs::directory_entry& dir_entry : fs::recursive_directory_iterator(output_dir)) {
     std::string path = dir_entry.path().string();
     if (fs::is_directory(dir_entry)) {
       zip_dir_add(zip, path.c_str(), 0);
@@ -562,8 +532,7 @@ void Context::save_zip() const {
   emjs::down(zname);
 }
 
-void Context::add_dirs(std::set<std::string>& vec,
-                       const std::string& path) const {
+void Context::add_dirs(std::set<std::string>& vec, const std::string& path) const {
   size_t pos = path.find_last_of(setup::path_sep);
   if (pos == std::string::npos) {
     return;

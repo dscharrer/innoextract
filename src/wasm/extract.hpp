@@ -47,8 +47,7 @@ class file_output : private boost::noncopyable {
   bool write_;
 
  public:
-  explicit file_output(const fs::path& dir, const processed_file* f,
-                       bool write);
+  explicit file_output(const fs::path& dir, const processed_file* f, bool write);
   bool write(const char* data, size_t n);
   void seek(boost::uint64_t new_position);
   void close();

@@ -5,6 +5,11 @@
     height: 250px;
     resize: vertical;
 }
+
+#con > p {
+    margin: 0px;
+}
+
 .err {
     color: #dc3545;
 }

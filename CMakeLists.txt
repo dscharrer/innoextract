@@ -94,7 +94,7 @@ add_compile_options(-std=c++1y -Wno-deprecated-declarations -sUSE_ZLIB=1 -O3 -fe
 add_link_options(
 -sINITIAL_MEMORY=1024MB -sSTACK_SIZE=512MB -sALLOW_MEMORY_GROWTH 
 -sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sEXPORTED_FUNCTIONS=[_main,_malloc,_free] -sINVOKE_RUN=0 -sASYNCIFY -sASYNCIFY_STACK_SIZE=65565
---pre-js ../src/pre.js -sNO_DISABLE_EXCEPTION_CATCHING )
+--pre-js ../src/wasm/pre.js -sNO_DISABLE_EXCEPTION_CATCHING )
 
 add_compile_options("-fvisibility=hidden")
 add_compile_options("-fvisibility-inlines-hidden")
