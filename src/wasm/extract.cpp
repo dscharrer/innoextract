@@ -156,8 +156,12 @@ Context& Context::get() {
 std::string Context::LoadExe(std::string exe_file) {
   installer_ = exe_file;
   json obj;
+  emjs::ui_progbar_update(0);
   emjs::get_file(exe_file);
   try {
+    if (ifs_.is_open()) {
+      ifs_.close();
+    }
     log_info << "Opening \"" << exe_file << '"';
     ifs_.open(exe_file, std::ios_base::in | std::ios_base::binary);
     if (!ifs_.is_open()) {
@@ -219,8 +223,8 @@ uint64_t Context::get_size() const {
 std::string Context::ListFiles() {
   setup::filename_map filenames;
   dirs_.clear();
-  files_.clear();
-  files_.reserve(info_.files.size());
+  all_files_.clear();
+  all_files_.reserve(info_.files.size());
   json main_obj;
   std::map<std::string, json::object_t*> json_dirs;
   filenames.set_expand(true);
@@ -239,7 +243,7 @@ std::string Context::ListFiles() {
     std::string path = filenames.convert(file.destination);
     if (path.empty()) continue;
     add_dirs(dirs_, path);
-    files_.push_back(processed_file(&file, path));
+    all_files_.push_back(processed_file(&file, path));
   }
 
   // create JSON objects for directories
@@ -260,7 +264,7 @@ std::string Context::ListFiles() {
   }
 
   uint32_t idx = 0;
-  for (const auto& f : files_) {
+  for (const auto& f : all_files_) {
     const std::string& path = f.path();
     json file_obj;
     size_t pos = path.find_last_of(setup::path_sep);
@@ -287,14 +291,18 @@ std::string Context::ListFiles() {
 std::string Context::Extract(std::string list_json) {
   const std::string& output_dir = info_.header.app_name;
   auto input = json::parse(list_json);
+  std::vector<const processed_file *> selected_files;
+  selected_files.reserve(all_files_.size());
+
   std::sort(input.begin(), input.end());
   log_info << "Unpacking " << input.size() << " files have been started.";
-  for (ssize_t i = files_.size() - 1; i >= 0; --i) {
-    if (!input.empty() && i == input.back()) {
-      input.erase(input.size() - 1);
-    } else {
-      files_.erase(files_.begin() + i);
-    }
+  for (const auto& i : input) {
+    selected_files.push_back(&all_files_[i]);
+  }
+
+  // cleaning MEMFS
+  if (fs::exists(output_dir)) {
+    fs::remove_all(output_dir);
   }
 
   // creating empty directories - ignoring user input
@@ -309,18 +317,18 @@ std::string Context::Extract(std::string list_json) {
   std::vector<std::vector<output_location> > files_for_location;
   files_for_location.resize(info_.data_entries.size());
 
-  for (const processed_file& file : files_) {
-    files_for_location[file.entry().location].push_back(
-        output_location(&file, 0));
+  for (const processed_file* file_ptr : selected_files) {
+    files_for_location[file_ptr->entry().location].push_back(
+        output_location(file_ptr, 0));
     uint64_t offset =
-        info_.data_entries[file.entry().location].uncompressed_size;
+        info_.data_entries[file_ptr->entry().location].uncompressed_size;
     uint32_t sort_slice =
-        info_.data_entries[file.entry().location].chunk.first_slice;
+        info_.data_entries[file_ptr->entry().location].chunk.first_slice;
     uint32_t sort_offset =
-        info_.data_entries[file.entry().location].chunk.sort_offset;
-    for (uint32_t location : file.entry().additional_locations) {
+        info_.data_entries[file_ptr->entry().location].chunk.sort_offset;
+    for (uint32_t location : file_ptr->entry().additional_locations) {
       setup::data_entry& data = info_.data_entries[location];
-      files_for_location[location].push_back(output_location(&file, offset));
+      files_for_location[location].push_back(output_location(file_ptr, offset));
       if (data.chunk.first_slice > sort_slice ||
           (data.chunk.first_slice == sort_slice &&
            data.chunk.sort_offset > sort_offset)) {
@@ -374,9 +382,6 @@ std::string Context::Extract(std::string list_json) {
     }
 
     bytes_extracted_ = 0;
-    emjs::ui_progbar_update(0);
-    emscripten_sleep(1);
-
     multi_outputs_.clear();
 
     for (const Chunks::value_type& chunk :
@@ -469,7 +474,7 @@ std::string Context::Extract(std::string list_json) {
   log_info << "Done. Creating ZIP file.";
   save_zip();
 
-  return json().dump();
+  return json::object().dump();
 }
 
 uint64_t Context::copy_data(const stream::file_reader::pointer& source,
@@ -530,6 +535,12 @@ void Context::verify_close_outputs(const std::vector<file_output*>& outputs,
 void Context::save_zip() const {
   const std::string& output_dir = info_.header.app_name;
   std::string zname = output_dir + ".zip";
+
+  // remove ZIP file if exists
+  if (fs::exists(zname)) {
+    fs::remove(zname);
+  }
+
   int ze = 0;
   zip_error_t zerr;
   zip_t* zip = zip_open(zname.c_str(), ZIP_CREATE, &ze);

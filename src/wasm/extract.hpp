@@ -74,7 +74,7 @@ class Context {
   loader::offsets offsets_;
   setup::info info_;
   std::set<std::string> dirs_;
-  std::vector<processed_file> files_;
+  std::vector<processed_file> all_files_;
   uint64_t bytes_extracted_;
   uint64_t total_size_;
   typedef boost::ptr_map<const processed_file*, file_output> multi_part_outputs;

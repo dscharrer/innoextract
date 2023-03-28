@@ -18,6 +18,7 @@ const title = document.getElementById("title");
 const desc = document.getElementById("desc");
 const sizeInfo = document.getElementById("size");
 const filesNum = document.getElementById("filesNum");
+const treeDiv = document.getElementById("tree");
 
 var global_file_list = []
 var tree;
@@ -28,7 +29,7 @@ addBtn.addEventListener("click", (e) => {
     }
 }, false);
 removeBtn.addEventListener("click", (e) => {
-    let checked = document.querySelector('input[name="listGroupRadio"]:checked');
+    let checked = document.querySelector('input[name="exeRadio"]:checked');
     if (checked) {
         global_file_list.splice(checked.value, 1);
         createList();
@@ -44,9 +45,18 @@ function showError(obj) {
     return false;
 }
 
+function clearFileInfo() {
+    treeDiv.innerHTML = '';
+    title.innerHTML = 'Add and choose a EXE file...';
+    desc.innerHTML = '';
+    sizeInfo.innerHTML = '0'
+    filesNum.innerHTML = '0';
+}
+
 function startInnoExtract() {
-    let checked = document.querySelector('input[name="listGroupRadio"]:checked');
+    let checked = document.querySelector('input[name="exeRadio"]:checked');
     if (checked) {
+        clearFileInfo();
         var file = global_file_list[checked.value];
         Module.ccall('load_exe', 'string', ['string'], [file.name], {async: true}).then(result =>{
             var obj = JSON.parse(result)
