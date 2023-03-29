@@ -1,0 +1,18 @@
+#con {
+    font-family: monospace;
+    font-size: small;
+    overflow: scroll;
+    height: 250px;
+    resize: vertical;
+}
+
+#con > p {
+    margin: 0px;
+}
+
+.err {
+    color: #dc3545;
+}
+.progress-bar {
+    transition: none !important;
+}

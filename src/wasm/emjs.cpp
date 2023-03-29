@@ -1,5 +1,8 @@
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include <emscripten.h>
+#include "wasm/extract.hpp"
 #include "emjs.h"
 // Based on emscripten-browser-file package by Armchair Software, licensed under MIT
 // https://github.com/Armchair-Software/emscripten-browser-file
@@ -68,6 +71,45 @@ void down(std::string const &filename) {
   down(filename.c_str());
 }
 
+EM_JS(void, get_file, (char const *filename), {
+  let ok = false;
+  for (let i = 0; i < global_file_list.length; i++) {
+    var file = global_file_list[i];
+    if (file.name == UTF8ToString(filename)) {
+      const file_reader = new FileReader();
+      file_reader.addEventListener("loadend",function(){
+        const uint8Arr = new Uint8Array(event.target.result);
+        const num_bytes = uint8Arr.length * uint8Arr.BYTES_PER_ELEMENT;
+        FS.writeFile(event.target.filename, uint8Arr);
+        Module.ccall('get_file_done');
+      });
+      file_reader.filename = file.name;
+      file_reader.mime_type = file.type;
+      file_reader.readAsArrayBuffer(file);
+      ok = true;
+    }
+  }
+  if (!ok) {
+    Module.ccall('get_file_done');
+  }
+});
+
+static volatile bool file_loadend;
+
+void get_file(std::string const &filename) {
+  /// C++ wrapper for javascript download call, accepting a string_view
+  file_loadend = false;
+  get_file(filename.c_str());
+  while (!file_loadend) {
+    emscripten_sleep(100);
+  }
+}
+
+EM_JS(void, update_file_list, (char const *json), {
+  var tree_data = JSON.parse(UTF8ToString(json));
+  createTree(tree_data);
+});
+
 EM_JS(void, ui_innerhtml_int, (const char *id, const char *value), {
 	var elem = document.getElementById(UTF8ToString(id));
 	elem.innerHTML=UTF8ToString(value);
@@ -84,16 +126,8 @@ EM_JS(void, ui_remattr_int, (const char *id, const char *attr), {
 	elem.removeAttribute(UTF8ToString(attr));
 });
 
-EM_JS(void, ui_progbar_update_int, (const char *id, uint32_t value), {
-	var elem = document.getElementById(UTF8ToString(id));
-  var curr = elem.getAttribute("value");
-  var max = elem.getAttribute("max");
-	elem.setAttribute("value",''+(Number(curr)+value));
-
-	var proc = document.getElementById("proc");
-  var p=(Number(curr)+value)/Number(max)*100;
-  proc.innerHTML=p.toFixed(1)+'%';
-  // console.log("curr="+curr+", upd="+(Number(curr)+value)+", val="+elem.getAttribute("value"));
+EM_JS(void, ui_show_error_int, (), {
+  showErrorModal();
 });
 
 
@@ -101,16 +135,24 @@ void ui_innerhtml(const char *id, const char *value) {
   ui_innerhtml_int(id, value);
 }
 
-void ui_setattr(const char *id, const char *attr, const char *value) {
-  ui_setattr_int(id, attr, value);
+void ui_setattr(const char *id, const char *attr, std::string const &value) {
+  ui_setattr_int(id, attr, value.c_str());
 }
 
 void ui_remattr(const char *id, const char *attr) {
   ui_remattr_int(id, attr);
 }
 
-void ui_progbar_update(const char *id, uint32_t value) {
-  ui_progbar_update_int(id, value);
+void ui_progbar_update(float value) {
+  std::stringstream stream;
+  stream << std::fixed << std::setprecision(2) << value << "%";
+  ui_setattr("progress-bar", "style", "width: "+stream.str()+";");
+  ui_innerhtml("progress-bar", stream.str().c_str());
+  emscripten_sleep(1);
+}
+
+void ui_show_error() {
+  ui_show_error_int();
 }
 
 namespace {
@@ -121,12 +163,28 @@ EMSCRIPTEN_KEEPALIVE int load_file_return(char const *filename, char const *mime
   /// Load a file - this function is called from javascript when the file upload is activated
   callback(filename, mime_type, {buffer, buffer_size}, callback_data);
   return 1;
-
 }
 
-extern volatile int ie_state;
-EMSCRIPTEN_KEEPALIVE void ui_extract() {
-	ie_state=2;
+EMSCRIPTEN_KEEPALIVE void get_file_done() {
+  file_loadend = true;
+}
+
+EMSCRIPTEN_KEEPALIVE char const * load_exe(char const *filename) {
+  static std::string result;
+  result = wasm::Context::get().LoadExe(std::string(filename));
+  return result.c_str();
+}
+
+EMSCRIPTEN_KEEPALIVE char const * list_files() {
+  static std::string result;
+  result = wasm::Context::get().ListFiles().c_str();
+  return result.c_str();
+}
+
+EMSCRIPTEN_KEEPALIVE char const * extract(char const *list_json) {
+  static std::string result;
+  result = wasm::Context::get().Extract(list_json).c_str();
+  return result.c_str();
 }
 
 }

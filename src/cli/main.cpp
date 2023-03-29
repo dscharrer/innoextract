@@ -43,10 +43,6 @@
 #include "util/time.hpp"
 #include "util/windows.hpp"
 
-#include <emjs.h>
-
-volatile int ie_state = 0;
-
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
@@ -121,15 +117,6 @@ static void print_license() {
 	          << ' ' << innoextract_copyright << '\n';
 	std::cout << '\n'<< innoextract_license << '\n';
 	;
-}
-
-void handle_upload_file(std::string const &filename, std::string const &mime_type, std::string_view buffer, void*) {
-	printf("Writing file: %s (%lx bytes)\n", filename.c_str(), buffer.size());
-	FILE *f = fopen("setup_uploaded.exe", "w");
-	fwrite(buffer.data(), 1, buffer.size(), f);
-	fclose(f);
-	ie_state = 1;
-	puts("unlock");
 }
 
 int main(int argc, char * argv[]) {
@@ -232,7 +219,6 @@ int main(int argc, char * argv[]) {
 #ifdef DEBUG
 	if(options.count("debug")) {
 		logger::debug = true;
-		puts("debug enabled");
 	}
 #endif
 	
@@ -372,10 +358,27 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	
-
-	puts("ignoring setup-files==0, setting output dir to goggame");
+	if(options.count("setup-files") == 0) {
+		if(!o.silent) {
+			std::cout << get_command(argv[0]) << ": no input files specified\n";
+			std::cout << "Try the --help (-h) option for usage information.\n";
+		}
+		return ExitSuccess;
+	}
 	
-	o.output_dir = "goggame";
+	{
+		po::variables_map::const_iterator i = options.find("output-dir");
+		if(i != options.end()) {
+			/*
+			 * We can't use fs::path directly with boost::program_options as fs::path's
+			 * operator>> expects paths to be quoted if they contain spaces, breaking
+			 * lexical casts.
+			 * Instead, do the conversion in the assignment operator.
+			 * See https://svn.boost.org/trac/boost/ticket/8535
+			 */
+			o.output_dir = i->second.as<std::string>();
+		}
+	}
 	
 	{
 		po::variables_map::const_iterator password = options.find("password");
@@ -389,16 +392,16 @@ int main(int argc, char * argv[]) {
 		}
 		if(password_file != options.end()) {
 			std::istream * is = &std::cin;
-			// fs::path file = password_file->second.as<std::string>();
+			fs::path file = password_file->second.as<std::string>();
 			util::ifstream ifs;
-			// if(file != "-") {
-			// 	ifs.open(file);
-			// 	if(!ifs.is_open()) {
-			// 		log_error << "Could not open password file " << file;
-			// 		return ExitDataError;
-			// 	}
-			// 	is = &ifs;
-			// }
+			if(file != "-") {
+				ifs.open(file);
+				if(!ifs.is_open()) {
+					log_error << "Could not open password file " << file;
+					return ExitDataError;
+				}
+				is = &ifs;
+			}
 			std::getline(*is, o.password);
 			if(!o.password.empty() && o.password[o.password.size() - 1] == '\n') {
 				o.password.resize(o.password.size() - 1);
@@ -407,7 +410,7 @@ int main(int argc, char * argv[]) {
 				o.password.resize(o.password.size() - 1);
 			}
 			if(!*is) {
-				// log_error << "Could not read password file " << file;
+				log_error << "Could not read password file " << file;
 				return ExitDataError;
 			}
 		}
@@ -440,35 +443,19 @@ int main(int argc, char * argv[]) {
 	#endif
 	
 	o.extract_unknown = (options.count("no-extract-unknown") == 0);
-
-	puts("upload");
-	emjs::upload(".exe", handle_upload_file);
-
-	while (ie_state == 0) {
-		emscripten_sleep(100);
-	};
-	puts("postupload");
-	emjs::ui_remattr("con","hidden");
-
-	std::vector<std::string> files;
-	std::string f = "/setup_uploaded.exe";
-	files.push_back(f);
-
+	
+	const std::vector<std::string> & files = options["setup-files"]
+	                                         .as< std::vector<std::string> >();
+	
 	bool suggest_bug_report = false;
 	try {
-		if (files.size() != 0) {
-
-		BOOST_FOREACH (const std::string &file, files) {
+		BOOST_FOREACH(const std::string & file, files) {
 			process_file(file, o);
-			if (!o.data_version && files.size() > 1) {
+			if(!o.data_version && files.size() > 1) {
 				std::cout << '\n';
 			}
 		}
-		} else {
-		std::cout << "files.size()=0, printing help.\n";
-		print_help(get_command(argv[0]), visible);
-		}
-        } catch(const std::ios_base::failure & e) {
+	} catch(const std::ios_base::failure & e) {
 		log_error << "Stream error while extracting files!\n"
 		          << " └─ error reason: " << e.what();
 		suggest_bug_report = true;
@@ -480,11 +467,7 @@ int main(int argc, char * argv[]) {
 	} catch(const setup::version_error &) {
 		log_error << "Not a supported Inno Setup installer!";
 	}
-	catch(const std::exception &e ){
-		 std::cerr << e.what();
-	}
-
-
+	
 	if(suggest_bug_report) {
 		std::cerr << color::blue << "If you are sure the setup file is not corrupted,"
 		          << " consider \nfiling a bug report at "
@@ -514,9 +497,5 @@ int main(int argc, char * argv[]) {
 		os << '.' << std::endl;
 	}
 	
-	ie_state = 0;
-	emjs::ui_setattr("loadbtn", "value", "Load file");
-	emjs::ui_setattr("loadbtn", "onclick", "callMain();");
-
 	return logger::total_errors == 0 ? ExitSuccess : ExitDataError;
 }
