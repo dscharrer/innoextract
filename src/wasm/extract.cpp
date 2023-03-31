@@ -146,7 +146,7 @@ std::string Context::LoadExe(std::string exe_file) {
   installer_ = exe_file;
   json obj;
   emjs::ui_progbar_update(0);
-  emjs::get_file(exe_file);
+  emjs::get_file_wrap(exe_file);
   try {
     if (ifs_.is_open()) {
       ifs_.close();
@@ -529,7 +529,7 @@ void Context::save_zip() const {
     }
   }
   zip_close(zip);
-  emjs::down(zname);
+  emjs::down_wrap(zname);
 }
 
 void Context::add_dirs(std::set<std::string>& vec, const std::string& path) const {

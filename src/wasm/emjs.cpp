@@ -1,9 +1,10 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
-#include <emscripten.h>
+#include <emscripten/emscripten.h>
 #include "wasm/extract.hpp"
 #include "emjs.h"
+#include <emscripten/val.h>
 // Based on emscripten-browser-file package by Armchair Software, licensed under MIT
 // https://github.com/Armchair-Software/emscripten-browser-file
 
@@ -40,7 +41,7 @@ EM_JS(void, upload, (char const *accept_types, upload_handler callback, void *ca
   file_selector.click();
 });
 
-void upload(std::string const &accept_types, upload_handler callback, void *callback_data) {
+void upload_wrap(std::string const &accept_types, upload_handler callback, void *callback_data) {
   /// C++ wrapper for javascript upload call
   upload(accept_types.c_str(), callback, callback_data);
 }
@@ -53,7 +54,7 @@ EM_JS(void, download, (char const *filename, char const *mime_type, void const *
   a.click();
 });
 
-void download(std::string const &filename, std::string const &mime_type, std::string_view buffer) {
+void download_wrap(std::string const &filename, std::string const &mime_type, std::string_view buffer) {
   /// C++ wrapper for javascript download call, accepting a string_view
   download(filename.c_str(), mime_type.c_str(), buffer.data(), buffer.size());
 }
@@ -66,10 +67,12 @@ EM_JS(void, down, (char const *filename), {
 		a.click();
 });
 
-void down(std::string const &filename) {
+void down_wrap(std::string const &filename) {
   /// C++ wrapper for javascript download call, accepting a string_view
   down(filename.c_str());
 }
+
+
 
 EM_JS(void, get_file, (char const *filename), {
   let ok = false;
@@ -96,7 +99,7 @@ EM_JS(void, get_file, (char const *filename), {
 
 static volatile bool file_loadend;
 
-void get_file(std::string const &filename) {
+void get_file_wrap(std::string const &filename) {
   /// C++ wrapper for javascript download call, accepting a string_view
   file_loadend = false;
   get_file(filename.c_str());

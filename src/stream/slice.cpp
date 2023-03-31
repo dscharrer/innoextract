@@ -83,7 +83,7 @@ void slice_reader::seek(size_t slice) {
 
 bool slice_reader::open_file(const path_type & file) {
 	
-	emjs::get_file(file.string());
+	emjs::get_file_wrap(file.string());
 	if(!boost::filesystem::exists(file)) {
 		return false;
 	}
