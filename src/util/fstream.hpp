@@ -31,9 +31,15 @@
 
 #include <boost/filesystem/fstream.hpp>
 
+// TODO: ifdef
+#include "wasm/jsfile.hpp"
+
 namespace util {
 
-typedef boost::filesystem::ifstream ifstream;
+// TODO: ifdef
+// typedef boost::filesystem::ifstream ifstream;
+typedef wasm::JSFile ifstream;
+
 typedef boost::filesystem::ofstream ofstream;
 typedef boost::filesystem::fstream  fstream;
 

@@ -120,6 +120,10 @@ set(INNOEXTRACT_SOURCES
 
 	src/wasm/extract.hpp
 	src/wasm/extract.cpp
+	src/wasm/emjs.h
+	src/wasm/emjs.cpp
+	src/wasm/jsfile.hpp
+	src/wasm/jsfile.cpp
 	
 	src/crypto/adler32.hpp
 	src/crypto/adler32.cpp
@@ -222,7 +226,6 @@ set(INNOEXTRACT_SOURCES
 	src/util/types.hpp
 	src/util/unique_ptr.hpp
 	src/util/windows.hpp
-	src/wasm/emjs.cpp	
 )
 
 if(${DEBUG})

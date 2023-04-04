@@ -146,7 +146,6 @@ std::string Context::LoadExe(std::string exe_file) {
   installer_ = exe_file;
   json obj;
   emjs::ui_progbar_update(0);
-  emjs::get_file_wrap(exe_file);
   try {
     if (ifs_.is_open()) {
       ifs_.close();

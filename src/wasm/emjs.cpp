@@ -72,42 +72,6 @@ void down_wrap(std::string const &filename) {
   down(filename.c_str());
 }
 
-
-
-EM_JS(void, get_file, (char const *filename), {
-  let ok = false;
-  for (let i = 0; i < global_file_list.length; i++) {
-    var file = global_file_list[i];
-    if (file.name == UTF8ToString(filename)) {
-      const file_reader = new FileReader();
-      file_reader.addEventListener("loadend",function(){
-        const uint8Arr = new Uint8Array(event.target.result);
-        const num_bytes = uint8Arr.length * uint8Arr.BYTES_PER_ELEMENT;
-        FS.writeFile(event.target.filename, uint8Arr);
-        Module.ccall('get_file_done');
-      });
-      file_reader.filename = file.name;
-      file_reader.mime_type = file.type;
-      file_reader.readAsArrayBuffer(file);
-      ok = true;
-    }
-  }
-  if (!ok) {
-    Module.ccall('get_file_done');
-  }
-});
-
-static volatile bool file_loadend;
-
-void get_file_wrap(std::string const &filename) {
-  /// C++ wrapper for javascript download call, accepting a string_view
-  file_loadend = false;
-  get_file(filename.c_str());
-  while (!file_loadend) {
-    emscripten_sleep(100);
-  }
-}
-
 EM_JS(void, update_file_list, (char const *json), {
   var tree_data = JSON.parse(UTF8ToString(json));
   createTree(tree_data);
@@ -166,10 +130,6 @@ EMSCRIPTEN_KEEPALIVE int load_file_return(char const *filename, char const *mime
   /// Load a file - this function is called from javascript when the file upload is activated
   callback(filename, mime_type, {buffer, buffer_size}, callback_data);
   return 1;
-}
-
-EMSCRIPTEN_KEEPALIVE void get_file_done() {
-  file_loadend = true;
 }
 
 EMSCRIPTEN_KEEPALIVE char const * load_exe(char const *filename) {
