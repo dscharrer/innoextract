@@ -11,10 +11,10 @@ namespace emjs {
 
 using upload_handler = void(*)(std::string const&, std::string const&, std::string_view buffer, void*);
 
-void upload(std::string const &accept_types, upload_handler callback, void *callback_data = nullptr);
-void download(std::string const &filename, std::string const &mime_type, std::string_view buffer);
-void down(std::string const &filename);
-void get_file(std::string const &filename);
+void upload_wrap(std::string const &accept_types, upload_handler callback, void *callback_data = nullptr);
+void download_wrap(std::string const &filename, std::string const &mime_type, std::string_view buffer);
+void down_wrap(std::string const &filename);
+void get_file_wrap(std::string const &filename);
 void ui_innerhtml(const char *id, const char *value);
 void ui_setattr(const char *id, const char *attr, std::string const &value);
 void ui_remattr(const char *id, const char *attr);
