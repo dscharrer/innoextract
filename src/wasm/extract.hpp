@@ -15,6 +15,9 @@
 #include "setup/info.hpp"
 #include "stream/file.hpp"
 #include "util/fstream.hpp"
+
+#include "wasm/nonzip/nonzip.h"
+
 namespace fs = boost::filesystem;
 
 namespace wasm {
@@ -45,9 +48,12 @@ class file_output : private boost::noncopyable {
   boost::uint64_t total_written_;
 
   bool write_;
+  Nonzip &zip_;
+	bool zip_open_;
+	uint32_t zipindex_;
 
  public:
-  explicit file_output(const fs::path& dir, const processed_file* f, bool write);
+  explicit file_output(const fs::path& dir, const processed_file* f, bool write, Nonzip &zip);
   bool write(const char* data, size_t n);
   void seek(boost::uint64_t new_position);
   void close();
@@ -57,6 +63,7 @@ class file_output : private boost::noncopyable {
   bool has_checksum() const;
   bool calculate_checksum();
   crypto::checksum checksum();
+  void settime(time_t t);
 };
 
 class Context {
@@ -78,13 +85,14 @@ class Context {
   uint64_t total_size_;
   typedef boost::ptr_map<const processed_file*, file_output> multi_part_outputs;
   multi_part_outputs multi_outputs_;
+  Nonzip zip_;
   void add_dirs(std::set<std::string>& vec, const std::string& path) const;
   uint64_t get_size() const;
   uint64_t copy_data(const stream::file_reader::pointer& source,
                      const std::vector<file_output*>& outputs);
   void verify_close_outputs(const std::vector<file_output*>& outputs,
                             const setup::data_entry& data);
-  void save_zip() const;
+  void save_zip();
   static const char* error_obj(const std::string& msg);
 };
 

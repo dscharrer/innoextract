@@ -20,6 +20,10 @@ void ui_remattr(const char *id, const char *attr);
 void ui_progbar_update(float value);
 void ui_show_error();
 
+void open(const char *name, const char *__restrict modes);
+size_t write(const void * ptr, size_t size, size_t n);
+void close();
+
 namespace {
 extern "C" {
 EMSCRIPTEN_KEEPALIVE int load_file_return(char const *filename, char const *mime_type, char *buffer, size_t buffer_size, upload_handler callback, void *callback_data);

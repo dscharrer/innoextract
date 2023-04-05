@@ -122,6 +122,55 @@ void ui_show_error() {
   ui_show_error_int();
 }
 
+EM_JS(void, open_int, (const char *name, const char *modes), {
+  var fileStream, writer;
+  if(!fileStream){
+    fileStream = streamSaver.createWriteStream(UTF8ToString(name));
+    Module.writer = fileStream.getWriter();
+  }
+  Module.writer.ready.then(() => {
+  // Module.ccall('set_write_ready', 'number', ['number'], [ 1 ]);
+  // console.log("open write_ready=1");
+  console.log("zipstream: open, ready");
+  });
+});
+
+void open(const char *name, const char *modes){
+  open_int(name, modes);
+}
+
+EM_ASYNC_JS(size_t, write_int, (const void *ptr, size_t size, size_t n), {
+  let buff = new Uint8Array(Module.HEAPU8.buffer, ptr, size*n);
+
+  await Module.writer.write(buff); //.then(() => {
+  console.log("zipstream: write "+(size*n));
+  //   Module.ccall('set_write_ready', 'number', ['number'], [ 1 ]);
+  // })
+  // .catch((err) => {
+  //   console.log("zipstream: write err:", err);
+  // });
+});
+
+size_t write(const void *ptr, size_t size, size_t n){
+  // printf("wait  write_ready = %d\n", write_ready);
+  // while(!write_ready)
+  	// emscripten_sleep(1);
+
+  // write_ready = 0;
+  // puts("set write_ready=0");
+  write_int(ptr, size, n);
+  return size*n;
+}
+
+EM_JS(void, close_int, (void), {
+  Module.writer.close();
+  console.log("zipstream: close")
+});
+
+void close(){
+  close_int();
+}
+
 namespace {
 
 extern "C" {
