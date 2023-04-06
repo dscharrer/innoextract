@@ -11,11 +11,6 @@ project(innoextract)
 unset(LIBRARIES)
 set(INNOEXTRACT_HAVE_LZMA 1)
 
-if(NOT DEFINED ENV{ZIPDIR})
-	message(FATAL_ERROR "ZIPDIR not set in environment, exiting.")
-endif()
-
-
 if(USE_EMBOOST)
 	if(NOT DEFINED ENV{EMBOOSTDIR})
 		message(FATAL_ERROR "EMBOOSTDIR not set in environment, exiting.")
@@ -89,7 +84,8 @@ if(NOT USE_EMBOOST)
 endif()
 
 # Set compiler flags
-add_compile_options(-std=c++1y -Wno-deprecated-declarations -sUSE_ZLIB=1 -O3 -fexceptions)
+set(CMAKE_CXX_STANDARD 11)
+add_compile_options(-Wno-deprecated-declarations -Wno-narrowing -sUSE_ZLIB=1 -O3 -fexceptions -Wcast-align -Wover-aligned)
 
 add_link_options(
 -sINITIAL_MEMORY=1024MB -sSTACK_SIZE=512MB -sALLOW_MEMORY_GROWTH 
@@ -120,6 +116,11 @@ set(INNOEXTRACT_SOURCES
 
 	src/wasm/extract.hpp
 	src/wasm/extract.cpp
+	src/wasm/emjs.h
+	src/wasm/emjs.cpp
+	src/wasm/jsfile.hpp
+	src/wasm/jsfile.cpp
+	src/wasm/nonzip/nonzip.cpp
 	
 	src/crypto/adler32.hpp
 	src/crypto/adler32.cpp
@@ -222,7 +223,6 @@ set(INNOEXTRACT_SOURCES
 	src/util/types.hpp
 	src/util/unique_ptr.hpp
 	src/util/windows.hpp
-	src/wasm/emjs.cpp	
 )
 
 if(${DEBUG})
@@ -245,14 +245,6 @@ if(USE_LZMA)
 		src/stream/lzma.cpp
 	)
 endif()
-
-# libzip
-set(ZIPHEADERS $ENV{ZIPDIR}/lib/)
-set(ZIPLIBS	$ENV{ZIPDIR}/lib/libzip.a )
-
-list(APPEND LIBRARIES ${ZIPLIBS})
-# create_source_groups(ALL_INNOEXTRACT_SOURCES)
-
 
 # Prepare generated files
 
