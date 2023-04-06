@@ -332,6 +332,7 @@ std::string Context::Extract(std::string list_json) {
     for (uint32_t location : file_ptr->entry().additional_locations) {
       setup::data_entry& data = info_.data_entries[location];
       files_for_location[location].push_back(output_location(file_ptr, offset));
+      offset += data.uncompressed_size;
       if (data.chunk.first_slice > sort_slice ||
           (data.chunk.first_slice == sort_slice && data.chunk.sort_offset > sort_offset)) {
         sort_slice = data.chunk.first_slice;
