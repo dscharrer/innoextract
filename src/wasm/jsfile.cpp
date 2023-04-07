@@ -1,6 +1,8 @@
 #include "jsfile.hpp"
 
+//#ifdef WASM_BUILD
 #include <emscripten.h>
+//#endif //WASM_BUILD
 
 namespace wasm {
 

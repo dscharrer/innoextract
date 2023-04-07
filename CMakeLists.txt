@@ -10,7 +10,7 @@ if(WASM)
 
 	project(innoextract)
 	# set(DEBUG 1)
-
+	add_compile_definitions(WASM_BUILD)
 
 	unset(LIBRARIES)
 	set(INNOEXTRACT_HAVE_LZMA 1)
@@ -439,7 +439,7 @@ endif()
 set(INNOEXTRACT_SOURCES
 	src/index.hpp if DOCUMENTATION
 	src/release.hpp
-	src/release.cpp if WASM
+	src/release.cpp
 	
 	src/cli/debug.hpp
 	src/cli/debug.cpp if DEBUG
