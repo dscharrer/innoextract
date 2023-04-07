@@ -28,6 +28,7 @@
  * For available variables see cmake/VersionString.cmake.
  */
 
+//TODO: Revert this?
 #if 5 != 5
 #error "Configure error - the VERSION file should specify exactly two lines!"
 #endif

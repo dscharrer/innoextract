@@ -4,40 +4,261 @@ if(CMAKE_VERSION VERSION_LESS 3.12)
 	cmake_policy(VERSION ${CMAKE_VERSION})
 endif()
 
-project(innoextract)
+if(WASM)
 
-# set(DEBUG 1)
+	set(CMAKE_TOOLCHAIN_FILE "$ENV{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake") 
 
-unset(LIBRARIES)
-set(INNOEXTRACT_HAVE_LZMA 1)
+	project(innoextract)
+	# set(DEBUG 1)
 
-if(USE_EMBOOST)
-	if(NOT DEFINED ENV{EMBOOSTDIR})
-		message(FATAL_ERROR "EMBOOSTDIR not set in environment, exiting.")
+
+	unset(LIBRARIES)
+	set(INNOEXTRACT_HAVE_LZMA 1)
+
+	if(NOT DEFINED ENV{ZIPDIR})
+		message(FATAL_ERROR "ZIPDIR not set in environment, exiting.")
 	endif()
 
-	SET(EMBOOSTDIR $ENV{EMBOOSTDIR})
-	set(EMBDIR "${EMBOOSTDIR}/stage/lib")
-	set(EMHEADERS "${EMBOOSTDIR}")
 
-	set(EMLIBS 
-		${EMBDIR}/libboost_date_time.bc
-		${EMBDIR}/libboost_filesystem.bc
-		${EMBDIR}/libboost_iostreams.bc
-		${EMBDIR}/libboost_program_options.bc
-		${EMBDIR}/libboost_system.bc
-		${EMBDIR}/libboost_zlib.bc
-		${EMBDIR}/libboost_bzip2.bc
+	if(USE_EMBOOST)
+		if(NOT DEFINED ENV{EMBOOSTDIR})
+			message(FATAL_ERROR "EMBOOSTDIR not set in environment, exiting.")
+		endif()
 
-	)
-	list(APPEND LIBRARIES ${EMLIBS})
-endif()
+		SET(EMBOOSTDIR $ENV{EMBOOSTDIR})
+		set(EMBDIR "${EMBOOSTDIR}/stage/lib")
+		set(EMHEADERS "${EMBOOSTDIR}")
 
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-add_subdirectory($ENV{JSONDIR})
-list(APPEND LIBRARIES nlohmann_json::nlohmann_json)
+		set(EMLIBS 
+			${EMBDIR}/libboost_date_time.bc
+			${EMBDIR}/libboost_filesystem.bc
+			${EMBDIR}/libboost_iostreams.bc
+			${EMBDIR}/libboost_program_options.bc
+			${EMBDIR}/libboost_system.bc
+			${EMBDIR}/libboost_zlib.bc
+			${EMBDIR}/libboost_bzip2.bc
 
-if(NOT USE_EMBOOST)
+		)
+		list(APPEND LIBRARIES ${EMLIBS})
+	endif()
+
+	set(JSON_BuildTests OFF CACHE INTERNAL "")
+	add_subdirectory($ENV{JSONDIR})
+	list(APPEND LIBRARIES nlohmann_json::nlohmann_json)
+
+	if(NOT USE_EMBOOST)
+		find_package(Boost REQUIRED COMPONENTS
+			iostreams
+			filesystem
+			date_time
+			system
+			program_options
+		)
+
+		link_directories(${Boost_LIBRARY_DIRS})
+		include_directories(SYSTEM ${Boost_INCLUDE_DIR})
+		if(NOT Boost_VERSION_MACRO)
+			# CMP0093 changed Boost_VERSION to x.y.z format and provide the old format in Boost_VERSION_MACRO
+			set(Boost_VERSION_MACRO ${Boost_VERSION})
+		endif()
+
+		has_static_libs(Boost Boost_LIBRARIES)
+		if(Boost_HAS_STATIC_LIBS)
+			foreach(Lib IN ITEMS ZLIB BZip2)
+				string(TOUPPER ${Lib} LIB)
+				string(TOLOWER ${Lib} lib)
+				foreach(static IN ITEMS 1 0)
+					if(static)
+						use_static_libs(${Lib})
+					endif()
+					if(WIN32)
+						find_package(Boost COMPONENTS ${lib} QUIET)
+					endif()
+					if(Boost_${LIB}_FOUND)
+						message (STATUS "Found boost_${lib}")
+						set(${LIB}_LIBRARIES ${Boost_${LIB}_LIBRARY})
+					else()
+						find_package(${Lib} REQUIRED)
+					endif()
+					if(static)
+						use_static_libs_restore()
+					endif()
+					if(${LIB}_LIBRARIES OR STRICT_USE)
+						break()
+					endif()
+				endforeach()
+				list(APPEND LIBRARIES ${${LIB}_LIBRARIES})
+			endforeach()
+		endif()	
+	endif()
+
+	# Helper scrips
+
+	include(CheckSymbolExists)
+
+	set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake") # For custom cmake modules
+	include(CreateSourceGroups)
+	include(FilterList)
+	# Set compiler flags
+	set(CMAKE_CXX_STANDARD 11)
+	add_compile_options(-Wno-deprecated-declarations -Wno-narrowing -sUSE_ZLIB=1 -O3 -fexceptions -Wcast-align -Wover-aligned)
+
+	add_link_options(
+	-sINITIAL_MEMORY=1024MB -sSTACK_SIZE=512MB -sALLOW_MEMORY_GROWTH 
+	-sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sEXPORTED_FUNCTIONS=[_main,_malloc,_free] -sINVOKE_RUN=0 -sASYNCIFY -sASYNCIFY_STACK_SIZE=65565
+	--pre-js ../src/wasm/pre.js -sNO_DISABLE_EXCEPTION_CATCHING )
+
+	add_compile_options("-fvisibility=hidden")
+	add_compile_options("-fvisibility-inlines-hidden")
+
+else() #NOT WASM
+	project(innoextract)
+
+	unset(CMAKE_TOOLCHAIN_FILE)
+	# Define configuration options
+
+	if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+		set(MACOS 1)
+	else()
+		set(MACOS 0)
+	endif()
+
+	macro(suboption _var _comment _type _default)
+		if(NOT DEFINED ${_var})
+			set(${_var} "${_default}")
+		else()
+			set(${_var} "${${_var}}" CACHE ${_type} "${_comment}")
+		endif()
+	endmacro()
+
+	option(DEVELOPER "Use build settings suitable for developers" OFF)
+	option(CONTINUOUS_INTEGRATION "Use build settings suitable for CI" OFF)
+
+	# Components
+	option(USE_ARC4 "Build ARC4 decryption support" ON)
+
+	# Optional dependencies
+	option(USE_LZMA "Build LZMA decompression support" ON)
+	option(USE_DYNAMIC_UTIMENSAT "Dynamically load utimensat if not available at compile time" OFF)
+
+	# Alternative dependencies
+	set(WITH_CONV CACHE STRING "The library to use for charset conversions")
+
+	# Build types
+	option(DEBUG_EXTRA "Expensive debug options" OFF)
+	option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
+	option(SET_NOISY_WARNING_FLAGS "Enable noisy compiler warnings" OFF)
+	option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
+	suboption(USE_LDGOLD "Use the Gold linker" BOOL ${SET_OPTIMIZATION_FLAGS})
+	set(default_FASTLINK OFF)
+	if(DEVELOPER OR CONTINUOUS_INTEGRATION)
+		set(default_FASTLINK ON)
+	endif()
+	suboption(FASTLINK "Optimize (incremental) linking speed" BOOL ${default_FASTLINK})
+	set(default_USE_LTO OFF)
+	if(SET_OPTIMIZATION_FLAGS AND NOT FASTLINK)
+		set(default_USE_LTO ON)
+	endif()
+	suboption(USE_LTO "Use link-time code generation" BOOL ${default_USE_LTO})
+	suboption(WERROR "Turn warnings into errors" BOOL ${CONTINUOUS_INTEGRATION})
+	suboption(CXX_STD_VERSION "Maximum C++ standard version to enable" STRING 2017)
+	if(DEVELOPER OR CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(default_DEBUG ON)
+	else()
+		set(default_DEBUG OFF)
+	endif()
+	suboption(DEBUG "Build with debug output" BOOL ${default_DEBUG})
+	if(DEBUG)
+		add_definitions(-DDEBUG=1)
+	endif()
+
+	set(default_USE_STATIC_LIBS OFF)
+	if(WIN32)
+		set(default_USE_STATIC_LIBS ON)
+	endif()
+	option(USE_STATIC_LIBS       "Statically link libraries" ${default_USE_STATIC_LIBS})
+	option(LZMA_USE_STATIC_LIBS  "Statically link liblzma"   ${USE_STATIC_LIBS})
+	option(ZLIB_USE_STATIC_LIBS  "Statically link libz"      ${USE_STATIC_LIBS})
+	option(BZip2_USE_STATIC_LIBS "Statically link libbz2"    ${USE_STATIC_LIBS})
+	option(Boost_USE_STATIC_LIBS "Statically link Boost"     ${USE_STATIC_LIBS})
+	option(iconv_USE_STATIC_LIBS "Statically link libiconv"  ${USE_STATIC_LIBS})
+
+	# Make optional dependencies required
+	suboption(STRICT_USE "Abort if there are missing optional dependencies" BOOL ${CONTINUOUS_INTEGRATION})
+	if(STRICT_USE)
+		set(OPTIONAL_DEPENDENCY REQUIRED)
+	else()
+		set(OPTIONAL_DEPENDENCY)
+	endif()
+
+	# Install destinations
+	if(CMAKE_VERSION VERSION_LESS 2.8.5)
+		set(CMAKE_INSTALL_DATAROOTDIR "share" CACHE
+			STRING "read-only architecture-independent data root (share) (relative to prefix).")
+		set(CMAKE_INSTALL_BINDIR "bin" CACHE
+			STRING "user executables (bin) (relative to prefix).")
+		set(CMAKE_INSTALL_MANDIR "${CMAKE_INSTALL_DATAROOTDIR}/man" CACHE
+			STRING "man documentation (DATAROOTDIR/man) (relative to prefix).")
+		mark_as_advanced(
+			CMAKE_INSTALL_DATAROOTDIR
+			CMAKE_INSTALL_BINDIR
+			CMAKE_INSTALL_MANDIR
+		)
+	else()
+		include(GNUInstallDirs)
+	endif()
+
+
+	# Helper scrips
+
+	include(CheckSymbolExists)
+
+	set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake") # For custom cmake modules
+	include(BuildType)
+	include(CompileCheck)
+	include(CreateSourceGroups)
+	include(CXXVersionCheck)
+	include(Doxygen)
+	include(FilterList)
+	include(PrintConfiguration)
+	include(StyleCheck)
+	include(UseStaticLibs)
+	include(VersionString)
+
+
+	# Find required libraries
+
+	# Win32 API
+	if(WIN32)
+		# Ensure we aren't using functionalities not found under Window XP SP1
+		add_definitions(-D_WIN32_WINNT=0x0502)
+		add_definitions(-DNOMINMAX)
+		add_definitions(-DWIN32_LEAN_AND_MEAN)
+	endif()
+
+	if(USE_STATIC_LIBS AND NOT MSVC)
+		add_ldflag("-static-libstdc++")
+		add_ldflag("-static-libgcc")
+	endif()
+
+	unset(LIBRARIES)
+
+	if(USE_ARC4)
+		set(INNOEXTRACT_HAVE_ARC4 1)
+	endif()
+
+	if(USE_LZMA)
+		find_package(LZMA REQUIRED)
+		list(APPEND LIBRARIES ${LZMA_LIBRARIES})
+		include_directories(SYSTEM ${LZMA_INCLUDE_DIR})
+		add_definitions(${LZMA_DEFINITIONS})
+		set(INNOEXTRACT_HAVE_LZMA 1)
+	else()
+		message(WARNING "\nDisabling LZMA decompression support.\n"
+						"You won't be able to extract most newer Inno Setup installers.")
+		set(INNOEXTRACT_HAVE_LZMA 0)
+	endif()
+
 	find_package(Boost REQUIRED COMPONENTS
 		iostreams
 		filesystem
@@ -45,7 +266,7 @@ if(NOT USE_EMBOOST)
 		system
 		program_options
 	)
-
+	list(APPEND LIBRARIES ${Boost_LIBRARIES})
 	link_directories(${Boost_LIBRARY_DIRS})
 	include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 	if(NOT Boost_VERSION_MACRO)
@@ -80,20 +301,134 @@ if(NOT USE_EMBOOST)
 			endforeach()
 			list(APPEND LIBRARIES ${${LIB}_LIBRARIES})
 		endforeach()
-	endif()	
-endif()
+	endif()
 
-# Set compiler flags
-set(CMAKE_CXX_STANDARD 11)
-add_compile_options(-Wno-deprecated-declarations -Wno-narrowing -sUSE_ZLIB=1 -O3 -fexceptions -Wcast-align -Wover-aligned)
+	set(INNOEXTRACT_HAVE_ICONV 0)
+	set(INNOEXTRACT_HAVE_WIN32_CONV 0)
+	if(WIN32 AND (NOT WITH_CONV OR WITH_CONV STREQUAL "win32"))
+		set(INNOEXTRACT_HAVE_WIN32_CONV 1)
+	elseif(NOT WITH_CONV OR WITH_CONV STREQUAL "iconv")
+		if(STRICT_USE)
+			set(ICONV_REQUIRED REQUIRED)
+		else()
+			set(ICONV_REQUIRED)
+		endif()
+		find_package(iconv ${ICONV_REQUIRED})
+		if(ICONV_FOUND)
+			list(APPEND LIBRARIES ${iconv_LIBRARIES})
+			include_directories(SYSTEM ${iconv_INCLUDE_DIR})
+			add_definitions(${iconv_DEFINITIONS})
+			set(INNOEXTRACT_HAVE_ICONV 1)
+		endif()
+	elseif(WITH_CONV AND NOT WITH_CONV STREQUAL "builtin")
+		message(FATAL_ERROR "Invalid WITH_CONV option: ${WITH_CONV}")
+	endif()
 
-add_link_options(
--sINITIAL_MEMORY=1024MB -sSTACK_SIZE=512MB -sALLOW_MEMORY_GROWTH 
--sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sEXPORTED_FUNCTIONS=[_main,_malloc,_free] -sINVOKE_RUN=0 -sASYNCIFY -sASYNCIFY_STACK_SIZE=65565
---pre-js ../src/wasm/pre.js -sNO_DISABLE_EXCEPTION_CATCHING )
 
-add_compile_options("-fvisibility=hidden")
-add_compile_options("-fvisibility-inlines-hidden")
+	# Set compiler flags
+
+	if(Boost_VERSION_MACRO LESS 104800)
+		# Older Boost versions don't work with C++11
+	elseif(NOT CXX_STD_VERSION LESS 2011)
+		enable_cxx_version(${CXX_STD_VERSION})
+		check_cxx11("alignof" INNOEXTRACT_HAVE_ALIGNOF)
+		if(WIN32)
+			check_cxx11("std::codecvt_utf8_utf16" INNOEXTRACT_HAVE_STD_CODECVT_UTF8_UTF16 1600)
+		endif()
+		check_cxx11("std::unique_ptr" INNOEXTRACT_HAVE_STD_UNIQUE_PTR 1600)
+	endif()
+
+	# Don't expose internal symbols to the outside world by default
+	if(NOT MSVC)
+		add_cxxflag("-fvisibility=hidden")
+		add_cxxflag("-fvisibility-inlines-hidden")
+	endif()
+
+	# Older glibc versions won't provide some useful symbols by default - request them
+	# This flag is currently also set by gcc when compiling C++, but not for plain C
+	if(NOT WIN32)
+		check_symbol_exists(__GLIBC__ "features.h" HAVE_GLIBC)
+		if(HAVE_GLIBC)
+			set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE=1")
+			add_definitions(-D_GNU_SOURCE=1)
+		endif()
+	endif()
+
+	if(WIN32)
+		# Define this so that we don't accitenally use ANSI functions
+		add_definitions(-DUNICODE)
+		add_definitions(-D_UNICODE)
+	endif()
+
+
+	# Check for optional functionality and system configuration
+
+	if(NOT WIN32)
+		
+		check_symbol_exists(isatty "unistd.h" INNOEXTRACT_HAVE_ISATTY)
+		check_symbol_exists(ioctl "sys/ioctl.h" INNOEXTRACT_HAVE_IOCTL)
+		check_symbol_exists(timegm "time.h" INNOEXTRACT_HAVE_TIMEGM)
+		check_symbol_exists(gmtime_r "time.h" INNOEXTRACT_HAVE_GMTIME_R)
+		check_symbol_exists(AT_FDCWD "fcntl.h" INNOEXTRACT_HAVE_AT_FDCWD)
+		if(INNOEXTRACT_HAVE_AT_FDCWD)
+			check_symbol_exists(utimensat "sys/stat.h" INNOEXTRACT_HAVE_UTIMENSAT)
+		endif()
+		if(INNOEXTRACT_HAVE_UTIMENSAT AND INNOEXTRACT_HAVE_AT_FDCWD)
+			set(INNOEXTRACT_HAVE_UTIMENSAT_d 1)
+		else()
+			if(USE_DYNAMIC_UTIMENSAT AND INNOEXTRACT_HAVE_AT_FDCWD)
+				set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_DL_LIBS})
+				check_symbol_exists(dlsym "dlfcn.h" INNOEXTRACT_HAVE_DLSYM)
+				check_symbol_exists(RTLD_DEFAULT "dlfcn.h" INNOEXTRACT_HAVE_RTLD_DEFAULT)
+				unset(CMAKE_REQUIRED_LIBRARIES)
+				if(INNOEXTRACT_HAVE_DLSYM AND INNOEXTRACT_HAVE_RTLD_DEFAULT)
+					set(INNOEXTRACT_HAVE_DYNAMIC_UTIMENSAT 1)
+					if(CMAKE_DL_LIBS)
+						list(APPEND LIBRARIES ${CMAKE_DL_LIBS})
+					endif()
+				endif()
+			endif()
+			check_symbol_exists(utimes "sys/time.h" INNOEXTRACT_HAVE_UTIMES)
+		endif()
+		check_symbol_exists(posix_spawnp "spawn.h" INNOEXTRACT_HAVE_POSIX_SPAWNP)
+		if(INNOEXTRACT_HAVE_POSIX_SPAWNP)
+			check_symbol_exists(environ "unistd.h" INNOEXTRACT_HAVE_UNISTD_ENVIRON)
+		else()
+			check_symbol_exists(fork "unistd.h" INNOEXTRACT_HAVE_FORK)
+			check_symbol_exists(execvp "unistd.h" INNOEXTRACT_HAVE_EXECVP)
+		endif()
+		if(INNOEXTRACT_HAVE_POSIX_SPAWNP OR (INNOEXTRACT_HAVE_FORK AND INNOEXTRACT_HAVE_EXECVP))
+			check_symbol_exists(waitpid "sys/wait.h" INNOEXTRACT_HAVE_WAITPID)
+		endif()
+		
+	endif()
+
+	if(NOT MSVC)
+		
+		if(CMAKE_CXX_COMPILER_ID STREQUAL "PathScale")
+			# EKOPath recognizes these but then fails to link
+		else()
+			check_builtin(INNOEXTRACT_HAVE_BUILTIN_BSWAP16 "__builtin_bswap16(0)")
+			check_builtin(INNOEXTRACT_HAVE_BUILTIN_BSWAP32 "__builtin_bswap32(0)")
+			check_builtin(INNOEXTRACT_HAVE_BUILTIN_BSWAP64 "__builtin_bswap64(0)")
+		endif()
+		if(NOT INNOEXTRACT_HAVE_BUILTIN_BSWAP16)
+			check_symbol_exists(bswap_16 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_16)
+		endif()
+		if(NOT INNOEXTRACT_HAVE_BUILTIN_BSWAP32)
+			check_symbol_exists(bswap_32 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_32)
+		endif()
+		if(NOT INNOEXTRACT_HAVE_BUILTIN_BSWAP64)
+			check_symbol_exists(bswap_64 "byteswap.h" INNOEXTRACT_HAVE_BSWAP_64)
+		endif()
+		
+	endif()
+
+	# All sources:
+
+	set(DOCUMENTATION 0) # never build these
+
+endif() #WASM
 
 if($ENV{PORTAGE_REPO_NAME} MATCHES "gentoo")
 	# Meh
@@ -102,10 +437,12 @@ endif()
 
 # All sources:
 set(INNOEXTRACT_SOURCES
+	src/index.hpp if DOCUMENTATION
 	src/release.hpp
-	src/release.cpp
+	src/release.cpp if WASM
 	
 	src/cli/debug.hpp
+	src/cli/debug.cpp if DEBUG
 	src/cli/extract.hpp
 	src/cli/extract.cpp
 	src/cli/gog.hpp
@@ -114,18 +451,16 @@ set(INNOEXTRACT_SOURCES
 	src/cli/goggalaxy.cpp
 	src/cli/main.cpp
 
-	src/wasm/extract.hpp
-	src/wasm/extract.cpp
-	src/wasm/emjs.h
-	src/wasm/emjs.cpp
-	src/wasm/jsfile.hpp
-	src/wasm/jsfile.cpp
-	src/wasm/nonzip/nonzip.cpp
+	src/wasm/jsfile.hpp if WASM
+	src/wasm/jsfile.cpp if WASM
+	src/wasm/nonzip/nonzip.cpp if WASM
+	src/wasm/extract.hpp if WASM
+	src/wasm/extract.cpp if WASM
 	
 	src/crypto/adler32.hpp
 	src/crypto/adler32.cpp
-	# src/crypto/arc4.hpp if INNOEXTRACT_HAVE_ARC4
-	# src/crypto/arc4.cpp if INNOEXTRACT_HAVE_ARC4
+	src/crypto/arc4.hpp if INNOEXTRACT_HAVE_ARC4
+	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_ARC4
 	src/crypto/checksum.hpp
 	src/crypto/checksum.cpp
 	src/crypto/crc32.hpp
@@ -194,6 +529,9 @@ set(INNOEXTRACT_SOURCES
 	src/stream/exefilter.hpp
 	src/stream/file.hpp
 	src/stream/file.cpp
+	src/stream/lzma.hpp
+	src/stream/lzma.cpp if INNOEXTRACT_HAVE_LZMA
+	src/stream/lzma.cpp if USE_LZMA
 	src/stream/restrict.hpp
 	src/stream/slice.hpp
 	src/stream/slice.cpp
@@ -222,43 +560,78 @@ set(INNOEXTRACT_SOURCES
 	src/util/time.cpp
 	src/util/types.hpp
 	src/util/unique_ptr.hpp
-	src/util/windows.hpp
+	src/util/windows.hpp   
+	src/util/windows.cpp if WIN32
+	src/wasm/emjs.cpp if WASM
 )
 
-if(${DEBUG})
-	add_compile_options(-DDEBUG)
-	list(APPEND INNOEXTRACT_SOURCES src/cli/debug.cpp)
-endif()
+filter_list(INNOEXTRACT_SOURCES ALL_INNOEXTRACT_SOURCES)
+
+if(WASM)
+	create_source_groups(INNOEXTRACT_SOURCES)
+else()
+	create_source_groups(ALL_INNOEXTRACT_SOURCES)
+endif(WASM)
 
 
-if(USE_LZMA)
-	if(NOT DEFINED ENV{LZMADIR})
-		message(FATAL_ERROR "LZMADIR not set in environment, exiting.")
+if(WASM)
+	if(${DEBUG})
+		add_compile_options(-DDEBUG)
 	endif()
 
-	set(LZMAHEADERS $ENV{LZMADIR}/api)
-	set(LZMALIBS $ENV{LZMADIR}/.libs/liblzma.a )
-	
-	list(APPEND LIBRARIES ${LZMALIBS})
-	list(APPEND INNOEXTRACT_SOURCES
-		src/stream/lzma.hpp
-		src/stream/lzma.cpp
-	)
+
+	if(USE_LZMA)
+		if(NOT DEFINED ENV{LZMADIR})
+			message(FATAL_ERROR "LZMADIR not set in environment, exiting.")
+		endif()
+
+		set(LZMAHEADERS $ENV{LZMADIR}/api)
+		set(LZMALIBS $ENV{LZMADIR}/.libs/liblzma.a )
+		
+		list(APPEND LIBRARIES ${LZMALIBS})
+	endif()
+
+	# libzip
+	set(ZIPHEADERS $ENV{ZIPDIR}/lib/)
+	set(ZIPLIBS	$ENV{ZIPDIR}/lib/libzip.a )
+
+	list(APPEND LIBRARIES ${ZIPLIBS})
+
+	# Prepare generated files
+
+	include_directories(src ${CMAKE_CURRENT_BINARY_DIR} ${EMHEADERS} ${LZMAHEADERS} ${ZIPHEADERS})
+
+	configure_file("src/configure.hpp.in" "configure.hpp")
+	file(COPY src/wasm/html/js DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+	file(COPY src/wasm/html/css DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+	file(COPY src/wasm/html/img DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+	configure_file("src/wasm/html/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html" COPYONLY)
+
+else() #NOT WASM
+	# Prepare generated files
+
+	include_directories(src ${CMAKE_CURRENT_BINARY_DIR})
+
+	configure_file("src/configure.hpp.in" "configure.hpp")
+
+	set(VERSION_FILE "${PROJECT_BINARY_DIR}/release.cpp")
+	set(VERSION_SOURCES VERSION "VERSION" LICENSE "LICENSE")
+	version_file("src/release.cpp.in" ${VERSION_FILE} "${VERSION_SOURCES}" ".git")
+	list(APPEND ALL_INNOEXTRACT_SOURCES ${VERSION_FILE})
+
+	set(MAN_INPUT "doc/innoextract.1.in")
+	set(MAN_FILE "${PROJECT_BINARY_DIR}/innoextract.1")
+	set(MAN_SOURCES VERSION "VERSION" CHANGELOG "CHANGELOG")
+	version_file(${MAN_INPUT} ${MAN_FILE} "${MAN_SOURCES}" ".git")
+	add_custom_target(manpage ALL DEPENDS ${MAN_FILE})
+
 endif()
 
-# Prepare generated files
-
-include_directories(src ${CMAKE_CURRENT_BINARY_DIR} ${EMHEADERS} ${LZMAHEADERS} ${ZIPHEADERS})
-
-configure_file("src/configure.hpp.in" "configure.hpp")
-file(COPY src/wasm/html/js DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-file(COPY src/wasm/html/css DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-file(COPY src/wasm/html/img DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-configure_file("src/wasm/html/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html" COPYONLY)
-
 # Main targets
+if (WASM)
+	set(CMAKE_EXECUTABLE_SUFFIX ".html")
+endif()
 
-set(CMAKE_EXECUTABLE_SUFFIX ".html")
 add_executable(innoextract ${INNOEXTRACT_SOURCES})
 target_link_libraries(innoextract ${LIBRARIES})
 
@@ -266,6 +639,11 @@ install(TARGETS innoextract RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 install(FILES ${MAN_FILE} DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL)
 
+# Additional targets.
+if(NOT WASM)
+	add_style_check_target(style "${ALL_INNOEXTRACT_SOURCES}" innoextract)
+	add_doxygen_target(doc "doc/Doxyfile.in" "VERSION" ".git" "${PROJECT_BINARY_DIR}/doc")
+endif()
 # Print a configuration summary
 
 message("")
@@ -301,6 +679,15 @@ message("Charset conversion"
 	1                             "builtin"
 )
 
-message("LIBRARIES:" ${LIBRARIES})
-
-message("")
+if(WASM)
+	message("LIBRARIES:" ${LIBRARIES})
+	message("")
+elseif(DEVELOPER)
+	message("")
+	file(READ "README.md" readme)
+	parse_version_file("VERSION" "VERSION")
+	string(REPLACE "${VERSION_2}" "" readme_without_version "${readme}")
+	if(readme_without_version STREQUAL readme)
+		message(WARNING "Could not find '${VERSION_2}' in README.md.")
+	endif()
+endif()
