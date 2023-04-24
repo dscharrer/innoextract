@@ -3,6 +3,7 @@
 
 #define NONZIP_PLATFORM
 
+
 #ifdef NONZIP_PLATFORM
 // FILE* nz_fopen(const char *__restrict name, const char *__restrict modes);
 // size_t nz_emjs::write(const void *__restrict ptr, size_t size, size_t n, FILE *__restrict stream);

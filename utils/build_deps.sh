@@ -23,10 +23,6 @@ function test_boost() {
     [ -d $DEPDIR/boost_1_74_0/stage/lib ] && [[ $(ls $DEPDIR/boost_1_74_0/stage/lib | grep bc | wc -l) -eq 7 ]]
 }
 
-function test_libzip() {
-    [ -f $DEPDIR/libzip-1.9.2/lib/libzip.a  ]
-}
-
 function test_json() {
     [ -f $DEPDIR/json-3.11.2/CMakeLists.txt  ]
 }
@@ -34,9 +30,7 @@ function test_json() {
 function test_deps_or_build() {
     test_lzma && info "libLZMA already built, skipping" || make_lzma
     test_boost && info "libboost already built, skipping" || make_boost
-    test_libzip && info "libzip already built, skipping" || make_zip
     test_json && info "nlohmann::json already built, skipping" || make_json
-    # TODO: add other libs
 }
 
 if ! env | grep -q EMSDK; then die "EMSDK not found in env, exiting" ; fi
@@ -86,28 +80,13 @@ function make_boost() {
     test_boost && info "Done building Boost" || err "Boost was not built successfully, check log for details."
 }
 
-function make_zip() {
-    cd $DEPDIR
-    info "Downloading libzip..."
-    wget -nv https://libzip.org/download/libzip-1.9.2.tar.gz || die "Downloading libzip failed"
-
-    info "Unpacking libzip..."
-    tar -xaf libzip-1.9.2.tar.gz && cd libzip-1.9.2 || die "Unpacking libzip failed"
-
-    info "Building libzip, see libzip.log for details..."
-    ( emcmake cmake . ) > $DEPDIR/libzip.log 2>&1 || die "Building libzip failed"
-    ( emmake make -j$MAKE_J ) >> $DEPDIR/libzip.log 2>&1 || die "Building libzip failed"
-    cp zipconf.h lib/
-    test_libzip && info "Done building libzip" || err "libzip lib was not built successfully, check log for details."
-}
-
 function make_json() {
     cd $DEPDIR
     info "Downloading nlohmann::json..."
     wget -nv https://github.com/nlohmann/json/archive/refs/tags/v3.11.2.tar.gz || die "Downloading nlohmann::json failed"
 
     info "Unpacking nlohmann::json..."
-    tar -xaf v3.11.2.tar.gz && cd libzip-1.9.2 || die "Unpacking nlohmann::json failed"
+    tar -xaf v3.11.2.tar.gz && cd json-3.11.2 || die "Unpacking nlohmann::json failed"
 }
 
 test_deps_or_build
