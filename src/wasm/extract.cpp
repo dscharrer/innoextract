@@ -113,7 +113,8 @@ void file_output::close() {
 
 
 void file_output::settime(time_t t){
-  zip_.setTime(zipindex_, t);
+  if(zip_open_)
+    zip_.setTime(zipindex_, t);
 }
 
 bool file_output::is_complete() const { return total_written_ == file_->entry().size; }
@@ -234,6 +235,10 @@ std::string Context::ListFiles() {
   all_files_.clear();
   all_files_.reserve(info_.files.size());
   json main_obj;
+  json main_dir;
+  main_dir["text"] = info_.header.app_name;
+  main_dir["mainDir"] = true;
+  main_dir["nodes"] = json::array();
   std::map<std::string, json::object_t*> json_dirs;
   filenames.set_expand(true);
 
@@ -258,7 +263,7 @@ std::string Context::ListFiles() {
   for (const auto& p : dirs_) {
     size_t pos = p.find_last_of(setup::path_sep);
     if (pos == std::string::npos) {
-      json_dirs[p] = main_obj.emplace_back(json{{"text", p}}).get_ptr<json::object_t*>();
+      json_dirs[p] = main_dir["nodes"].emplace_back(json{{"text", p}}).get_ptr<json::object_t*>();
     } else {
       json::object_t* parent = json_dirs[p.substr(0, pos)];
       if (!parent->count("nodes")) {
@@ -289,9 +294,10 @@ std::string Context::ListFiles() {
       }
       parent->at("nodes").push_back(file_obj);
     } else {
-      main_obj.push_back(file_obj);
+      main_dir["nodes"].push_back(file_obj);
     }
   }
+  main_obj.emplace_back(main_dir);
   return main_obj.dump();
 }
 
@@ -491,7 +497,7 @@ uint64_t Context::copy_data(const stream::file_reader::pointer& source,
       bytes_extracted_ += n;
       output_size += n;
 
-      emjs::ui_progbar_update(float(bytes_extracted_) / float(total_size_) * 100.0f);
+      emjs::ui_progbar_update(float(bytes_extracted_) / total_size_ * 100);
     }
   }
 

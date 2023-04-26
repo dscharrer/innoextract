@@ -40,6 +40,9 @@ function showError(obj) {
     if (obj.error) {
         errorMsg.innerHTML = obj.error;
         errorModal.show();
+        if (Module.writer) {
+            Module.writer.abort();
+        }
         return true;
     }
     return false;
@@ -76,16 +79,20 @@ function startInnoExtract() {
 startBtn.addEventListener("click", startInnoExtract, false);
 
 function extractFiles() {
+    var startDate = new Date();
     extractBtn.disabled = true;
     checked = tree.treeview('getChecked');
     ids = []
     for (const element of checked) {
-        if (element.fileId)
+        if (element.fileId !== undefined)
             ids.push(element.fileId);
     }
     Module.ccall('extract', 'string', ['string'], [JSON.stringify(ids)], {async: true}).then(result =>{
         extractBtn.disabled = false;
-        showError(JSON.parse(result))
+        showError(JSON.parse(result));
+        var endDate   = new Date();
+        var seconds = (endDate.getTime() - startDate.getTime()) / 1000;
+        console.log("Time: " + seconds + "s");
     });
 }
 
@@ -129,34 +136,50 @@ function createTree(data) {
         levels: 5,
         showTags: true,
         onNodeUnchecked: function(event, node) {
-            if (node.nodes) {
-                for (const element of node.nodes) {
-                    tree.treeview('uncheckNode', [ element.nodeId, { silent: false } ]);
+            if (node.mainDir) {
+                tree.treeview('uncheckAll', { silent: true });
+            } else {
+                if (node.nodes) {
+                    for (const element of node.nodes) {
+                        tree.treeview('uncheckNode', [ element.nodeId, { silent: false } ]);
+                    }
+                }
+                parent = tree.treeview('getParent', node);
+                if (parent && parent.state) {
+                    siblings = tree.treeview('getSiblings', node);
+                    all_unchecked = siblings.every(element => !element.state.checked);
+                    if (all_unchecked) {
+                        tree.treeview('uncheckNode', [ parent.nodeId, { silent: false } ]);
+                    }
                 }
             }
-            parent = tree.treeview('getParent', node);
-            if (parent && parent.state) {
-                siblings = tree.treeview('getSiblings', node);
-                all_unchecked = siblings.every(element => !element.state.checked);
-                if (all_unchecked) {
-                    tree.treeview('uncheckNode', [ parent.nodeId, { silent: false } ]);
-                }
-            }
+
         },
         onNodeChecked: function(event, node) {
-            if (node.nodes && !blockCheckingChildren) {
-                for (const element of node.nodes) {
-                    tree.treeview('checkNode', [ element.nodeId, { silent: false } ]);
+            if (node.mainDir) {
+                if(!blockCheckingChildren)
+                    tree.treeview('checkAll', { silent: true });
+            } else {
+                if (node.nodes && !blockCheckingChildren) {
+                    for (const element of node.nodes) {
+                        tree.treeview('checkNode', [ element.nodeId, { silent: false } ]);
+                    }
                 }
-            }
-            parent = tree.treeview('getParent', node);
-            if (parent && parent.state) {
-                blockCheckingChildren = true;
-                tree.treeview('checkNode', [ parent.nodeId, { silent: false } ]);
-                blockCheckingChildren = false;
+                parent = tree.treeview('getParent', node);
+                if (parent && parent.state) {
+                    blockCheckingChildren = true;
+                    tree.treeview('checkNode', [ parent.nodeId, { silent: false } ]);
+                    blockCheckingChildren = false;
+                }
             }
         }
     });
     tree.treeview('checkAll', { silent: true });
     tree.treeview('collapseAll', { silent: true });
 }
+
+window.addEventListener('beforeunload', evt => {
+    if (Module.writer ) {
+        Module.writer.abort();
+    }
+});

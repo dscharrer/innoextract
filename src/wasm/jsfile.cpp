@@ -25,8 +25,8 @@ EM_JS(int, file_size, (int file_idx), {
 
 EM_ASYNC_JS(int, read_bytes, (int file_idx, void* ptr, int pos, int length), {
   if (file_idx < global_file_list.length) {
-    var file = global_file_list[file_idx];
-    var chunk = file.slice(pos, pos + length);
+    let file = global_file_list[file_idx];
+    let chunk = file.slice(pos, pos + length);
     const uint8Arr = new Uint8Array(await chunk.arrayBuffer());
     const num_bytes = uint8Arr.length * uint8Arr.BYTES_PER_ELEMENT;
 

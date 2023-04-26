@@ -1,5 +1,6 @@
 #include <string>
 #include <sstream>
+#include <iostream>
 #include <iomanip>
 #include <emscripten/emscripten.h>
 #include "wasm/extract.hpp"
@@ -110,12 +111,15 @@ void ui_remattr(const char *id, const char *attr) {
   ui_remattr_int(id, attr);
 }
 
-void ui_progbar_update(float value) {
-  std::stringstream stream;
-  stream << std::fixed << std::setprecision(2) << value << "%";
-  ui_setattr("progress-bar", "style", "width: "+stream.str()+";");
-  ui_innerhtml("progress-bar", stream.str().c_str());
-  emscripten_sleep(1);
+void ui_progbar_update(int value) {
+  static int last_value = 0;
+  if (value != last_value) {
+    const std::string s = std::to_string(value) + "%";
+    ui_setattr("progress-bar", "style", "width: " + s + ";");
+    ui_innerhtml("progress-bar", s.c_str());
+    last_value = value;
+    emscripten_sleep(1);
+  }
 }
 
 void ui_show_error() {
@@ -123,14 +127,12 @@ void ui_show_error() {
 }
 
 EM_JS(void, open_int, (const char *name, const char *modes), {
-  var fileStream, writer;
+  var fileStream;
   if(!fileStream){
     fileStream = streamSaver.createWriteStream(UTF8ToString(name));
     Module.writer = fileStream.getWriter();
   }
   Module.writer.ready.then(() => {
-  // Module.ccall('set_write_ready', 'number', ['number'], [ 1 ]);
-  // console.log("open write_ready=1");
   console.log("zipstream: open, ready");
   });
 });
@@ -144,21 +146,20 @@ EM_ASYNC_JS(size_t, write_int, (const void *ptr, size_t size, size_t n), {
 
   await Module.writer.write(buff); //.then(() => {
   console.log("zipstream: write "+(size*n));
-  //   Module.ccall('set_write_ready', 'number', ['number'], [ 1 ]);
-  // })
-  // .catch((err) => {
-  //   console.log("zipstream: write err:", err);
-  // });
 });
 
 size_t write(const void *ptr, size_t size, size_t n){
-  // printf("wait  write_ready = %d\n", write_ready);
-  // while(!write_ready)
-  	// emscripten_sleep(1);
+  static char buff[64*1024*1024];
+  static int bpos = 0;
+  if((bpos+size*n > sizeof(buff)) || (ptr == NULL)) {
+    std::cout << "writing " << bpos << "bytes\n";
+    write_int(buff, 1, bpos);
+    bpos = 0;
+  }
 
-  // write_ready = 0;
-  // puts("set write_ready=0");
-  write_int(ptr, size, n);
+  memcpy(buff+bpos, ptr, size*n);
+  bpos += size*n;
+
   return size*n;
 }
 

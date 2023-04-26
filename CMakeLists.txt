@@ -593,8 +593,7 @@ if(WASM)
 
 	# Prepare generated files
 
-	include_directories(src ${CMAKE_CURRENT_BINARY_DIR} ${EMHEADERS} ${LZMAHEADERS} ${ZIPHEADERS})
-
+  include_directories(src ${CMAKE_CURRENT_BINARY_DIR} ${EMHEADERS} ${LZMAHEADERS})
 	configure_file("src/configure.hpp.in" "configure.hpp")
 	file(COPY src/wasm/html/js DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 	file(COPY src/wasm/html/css DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")

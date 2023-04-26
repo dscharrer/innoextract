@@ -17,7 +17,7 @@ void down_wrap(std::string const &filename);
 void ui_innerhtml(const char *id, const char *value);
 void ui_setattr(const char *id, const char *attr, std::string const &value);
 void ui_remattr(const char *id, const char *attr);
-void ui_progbar_update(float value);
+void ui_progbar_update(int value);
 void ui_show_error();
 
 void open(const char *name, const char *__restrict modes);

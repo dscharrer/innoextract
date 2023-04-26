@@ -5,13 +5,7 @@
 
 
 #ifdef NONZIP_PLATFORM
-// FILE* nz_fopen(const char *__restrict name, const char *__restrict modes);
-// size_t nz_emjs::write(const void *__restrict ptr, size_t size, size_t n, FILE *__restrict stream);
-// int nz_fclose(FILE *stream);
 #include "wasm/emjs.h"
-// #define fopen emjs::open
-// #define emjs::write emjs::write
-// #define fclose emjs::close
 #endif
 
 static inline void filetolf(struct nonzip_lf *lf, struct nonzip_file *f) {
@@ -108,7 +102,7 @@ int Nonzip::appendFile(const void *data, uint32_t dlen) {
     dlen = emjs::write(data, 1, dlen); // Write file data
     offset += dlen;
 
-    printf("Appending file %s: len=%u(+%u), offset=%u\n", files[i]->zf_name, files[i]->zf_csize , dlen, files[i]->zf_offset);
+    // printf("Appending file %s: len=%u(+%u), offset=%u\n", files[i]->zf_name, files[i]->zf_csize , dlen, files[i]->zf_offset);
 
     return dlen;
 }
@@ -122,7 +116,7 @@ int Nonzip::close() {
     uint32_t cdoffset = offset;
     for (i = 0; i < numfiles; i++) {
         filetocf(&cf, files[i]);
-        cdsize += sizeof(cf) * emjs::write(&cf, sizeof(cf), 1);  // write central file header
+        cdsize += emjs::write(&cf, sizeof(cf), 1);  // write central file header
         cdsize += emjs::write(files[i]->zf_name, 1, files[i]->zf_fnlen);  // write filename
         free(files[i]->zf_name);
         free(files[i]);
@@ -138,6 +132,7 @@ int Nonzip::close() {
     end.en_cdsize = cdsize;
     end.en_clen = sizeof(nonzip_comment) - 1;
     emjs::write(&end, sizeof(end), 1);
+    emjs::write(NULL, 0, 0);
     emjs::close();
 
     status = NONZIP_STATUS_IDLE;
@@ -146,55 +141,17 @@ int Nonzip::close() {
 
 void Nonzip::setTime(uint32_t index, time_t t)
 {
-    struct dostime dt = timetodos(t);
-    files[index]->zf_modd = dt.date;
-    files[index]->zf_modt = dt.time;
+    if(index < numfiles){
+        struct dostime dt = timetodos(t);
+        files[index]->zf_modd = dt.date;
+        files[index]->zf_modt = dt.time;
+    }
+    else {
+        printf("trying to set time for non-existent file, index=%u, numfiles=%llu\n", index, numfiles);
+    }
 }
 
 int Nonzip::getStatus()
 {
     return status;
 }
-
-#ifdef TEST
-// Usecase test
-int main(void) {
-    nonzip_t z;
-    z = nonzip_open("test.zip");
-    char fname[64];
-    int i;
-    srand(time(0));
-    for (i = 0; i < 10; i++) {
-        uint32_t fsize = abs(rand()) % (1 * 1024 * 1024);
-        char *file = malloc(fsize);
-        sprintf(fname, "file%d", i);
-        nonzip_addfile(&z, fname, file, fsize, time(0));
-        free(file);
-    }
-    nonzip_close(&z);
-    return 0;
-}
-#endif
-
-#ifdef TEST2
-// Usecase test for file appending
-int main(void) {
-    nonzip_t z;
-    z = nonzip_open("test.zip");
-    char fname[64];
-    int j,i;
-    const char t[] = "test 123\n";
-    char text[32];
-
-    for(j=0; j<10; j++){
-        sprintf(fname, "file%d", j);
-        nonzip_addfile(&z, fname, t, sizeof(t)-1, time(0));
-        for (i = 0; i < 10; i++) {
-            snprintf(text, sizeof(text), "test write %4d\n", i);
-            nonzip_appendfile(&z, text, 16);
-        }
-    }
-    nonzip_close(&z);
-    return 0;
-}
-#endif

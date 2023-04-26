@@ -3,7 +3,5 @@ export MAKE_J=8
 
 export EMBOOSTDIR=$DEPDIR/boost_1_74_0
 export LZMADIR=$DEPDIR/xz-5.2.10/src/liblzma
-#export LZMA_BASE_DIR=$DEPDIR/xz-5.2.10/src/liblzma
-export ZIPDIR=$DEPDIR/libzip-1.9.2
 export JSONDIR=$DEPDIR/json-3.11.2
 #export CMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
