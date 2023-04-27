@@ -15,11 +15,6 @@ if(WASM)
 	unset(LIBRARIES)
 	set(INNOEXTRACT_HAVE_LZMA 1)
 
-	if(NOT DEFINED ENV{ZIPDIR})
-		message(FATAL_ERROR "ZIPDIR not set in environment, exiting.")
-	endif()
-
-
 	if(USE_EMBOOST)
 		if(NOT DEFINED ENV{EMBOOSTDIR})
 			message(FATAL_ERROR "EMBOOSTDIR not set in environment, exiting.")
