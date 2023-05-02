@@ -22,6 +22,7 @@ const treeDiv = document.getElementById("tree");
 
 var global_file_list = []
 var tree;
+let extractBtnAlternateFunction = false;
 
 addBtn.addEventListener("click", (e) => {
     if (fileBrowser) {
@@ -79,21 +80,28 @@ function startInnoExtract() {
 startBtn.addEventListener("click", startInnoExtract, false);
 
 function extractFiles() {
-    var startDate = new Date();
-    extractBtn.disabled = true;
-    checked = tree.treeview('getChecked');
-    ids = []
-    for (const element of checked) {
-        if (element.fileId !== undefined)
-            ids.push(element.fileId);
-    }
-    Module.ccall('extract', 'string', ['string'], [JSON.stringify(ids)], {async: true}).then(result =>{
+    if(extractBtnAlternateFunction) {
+        console.log("Abort");
+        location.reload();
+    } else {
+        var startDate = new Date();
+        extractBtnAlternateFunction = 1;
+        document.getElementById("extractBtn").innerHTML = 'ABORT!';
         extractBtn.disabled = false;
-        showError(JSON.parse(result));
-        var endDate   = new Date();
-        var seconds = (endDate.getTime() - startDate.getTime()) / 1000;
-        console.log("Time: " + seconds + "s");
-    });
+        checked = tree.treeview('getChecked');
+        ids = []
+        for (const element of checked) {
+            if (element.fileId !== undefined)
+                ids.push(element.fileId);
+        }
+        Module.ccall('extract', 'string', ['string'], [JSON.stringify(ids)], {async: true}).then(result =>{
+            extractBtn.disabled = false;
+            showError(JSON.parse(result));
+            var endDate   = new Date();
+            var seconds = (endDate.getTime() - startDate.getTime()) / 1000;
+            console.log("Time: " + seconds + "s");
+        });
+    }
 }
 
 extractBtn.addEventListener("click", extractFiles, false);
