@@ -3,6 +3,7 @@ const addBtn = document.getElementById("addBtn");
 const removeBtn = document.getElementById("removeBtn");
 const startBtn = document.getElementById("startBtn");
 const extractBtn = document.getElementById("extractBtn");
+extractBtn.disabled = true;
 
 //File list
 const emptyListInfo = document.getElementById("emptyListInfo");
@@ -60,6 +61,7 @@ function startInnoExtract() {
     let checked = document.querySelector('input[name="exeRadio"]:checked');
     if (checked) {
         clearFileInfo();
+        extractBtn.disabled = true;
         var file = global_file_list[checked.value];
         Module.ccall('load_exe', 'string', ['string'], [file.name], {async: true}).then(result =>{
             var obj = JSON.parse(result)
