@@ -57,7 +57,7 @@ function make_boost() {
     cd $DEPDIR
     info "Downloading boost, zlib, bzip2..."
     wget -nv https://boostorg.jfrog.io/artifactory/main/release/1.74.0/source/boost_1_74_0.tar.bz2 -O boost_1_74_0.tar.bz2
-    wget -nv https://zlib.net/zlib-1.2.13.tar.gz -O zlib-1.2.13.tar.gz
+    wget -nv https://github.com/madler/zlib/releases/download/v1.2.13/zlib-1.2.13.tar.gz -O zlib-1.2.13.tar.gz
     wget -nv https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz -O bzip2-1.0.8.tar.gz
 
     info "Unpacking..."
