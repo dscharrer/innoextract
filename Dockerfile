@@ -16,6 +16,7 @@ RUN \
 ENV HOME /root
 ENV EMSDK /root/emsdk
 ENV EMSCRIPTEN_VERSION latest
+ENV INNOEXTRACT /root/innoextract
 
 # Define working directory.
 WORKDIR /root
@@ -60,11 +61,12 @@ ENV EMSDK=${EMSDK} \
 RUN \
   echo "umask 0000" >> /etc/bash.bashrc && \
   echo ". ${EMSDK}/emsdk_env.sh" >> /etc/bash.bashrc && \
-  echo "## Done"
+  echo "## Done" && \
+  echo "## Emscripten installed successfully!"
 
 # Install innoextract
+ADD . ${INNOEXTRACT}
 RUN \
-  git clone https://github.com/Oskar-Plaska-Mobica/innoextract-wasm.git -b 'wasm-main' innoextract && \
   cd innoextract && \
   ./build.sh
 
