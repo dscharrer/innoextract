@@ -84,11 +84,11 @@ void slice_reader::seek(size_t slice) {
 
 bool slice_reader::open_file(const path_type & file) {
 
-#ifdef WASM_BUILD
+#ifndef WASM_BUILD
 	if(!boost::filesystem::exists(file)) {
 		return false;
 	}
-#else //WASM_BUILD
+#endif //WASM_BUILD
 	
 	log_info << "Opening \"" << color::cyan << file.string() << color::reset << '"';
 	
@@ -137,8 +137,6 @@ bool slice_reader::open_file(const path_type & file) {
 	}
 	
 	return true;
-
-#endif //WASM_BUILD
 }
 
 std::string slice_reader::slice_filename(const std::string & basename, size_t slice,

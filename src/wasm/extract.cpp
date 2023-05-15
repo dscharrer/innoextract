@@ -38,8 +38,6 @@ file_output::file_output(const fs::path& dir, const processed_file* f, bool writ
       if (file_->is_multipart()) {
         flags |= std::ios_base::in;
       }
-      // stream_.open(path_, flags);
-      // if (!stream_.is_open()) {
       if(zip_.getStatus() != NONZIP_STATUS_READY) {
         throw std::exception();
       }
@@ -50,10 +48,6 @@ file_output::file_output(const fs::path& dir, const processed_file* f, bool writ
 }
 
 bool file_output::write(const char* data, size_t n) {
-  // if (write_) {
-  //   stream_.write(data, std::streamsize(n));
-  // }
-
   int r;
   if(!zip_open_) {
 		r = zip_.addFile(path_.c_str(), data, n, &zipindex_);
@@ -61,7 +55,6 @@ bool file_output::write(const char* data, size_t n) {
 	} else {
     r = zip_.appendFile(data, n);
   }
-
 
   if (checksum_position_ == position_) {
     checksum_.update(data, n);
@@ -71,7 +64,6 @@ bool file_output::write(const char* data, size_t n) {
   position_ += n;
   total_written_ += n;
 
-  // return !write_ || !stream_.fail();
   return r==n;
 }
 
@@ -80,34 +72,10 @@ void file_output::seek(boost::uint64_t new_position) {
     return;
   }
 
-  // if (!write_) {
-  //   position_ = new_position;
-  //   return;
-  // }
-
-  // const boost::uint64_t max =
-  //     boost::uint64_t(std::numeric_limits<util::fstream::off_type>::max() / 4);
-
-  // if (new_position <= max) {
-  //   stream_.seekp(util::fstream::off_type(new_position), std::ios_base::beg);
-  // } else {
-  //   util::fstream::off_type sign = (new_position > position_) ? 1 : -1;
-  //   boost::uint64_t diff =
-  //       (new_position > position_) ? new_position - position_ : position_ - new_position;
-  //   while (diff > 0) {
-  //     stream_.seekp(sign * util::fstream::off_type(std::min(diff, max)), std::ios_base::cur);
-  //     diff -= std::min(diff, max);
-  //   }
-  // }
-
-  // position_ = new_position;
   printf("seek() stub! pos=%llu, newpos=%llu\n", position_, new_position);
 }
 
 void file_output::close() {
-  // if (write_) {
-  //   stream_.close();
-  // }
   return;
 }
 
@@ -521,9 +489,6 @@ void Context::verify_close_outputs(const std::vector<file_output*>& outputs,
     output->close();
     output->settime(data.timestamp);
     log_info << " - File " << output->path() << " unpacked.";
-    // if (!util::set_file_time(output->path(), data.timestamp, data.timestamp_nsec)) {
-    //   log_warning << "Error setting timestamp on file " << output->path();
-    // }
 
     if (output->file()->is_multipart()) {
       multi_outputs_.erase(output->file());
@@ -532,32 +497,6 @@ void Context::verify_close_outputs(const std::vector<file_output*>& outputs,
 }
 
 void Context::save_zip() {
-  // const std::string& output_dir = info_.header.app_name;
-  // std::string zname = output_dir + ".zip";
-
-  // // remove ZIP file if exists
-  // if (fs::exists(zname)) {
-  //   fs::remove(zname);
-  // }
-
-  // int ze = 0;
-  // zip_error_t zerr;
-  // zip_t* zip = zip_open(zname.c_str(), ZIP_CREATE, &ze);
-  // if (ze) printf("ZIP err: %d: %s\n", ze, zip_strerror(zip));
-  // zip_int64_t fi;
-  // zip_dir_add(zip, output_dir.c_str(), 0);
-  // for (const fs::directory_entry& dir_entry : fs::recursive_directory_iterator(output_dir)) {
-  //   std::string path = dir_entry.path().string();
-  //   if (fs::is_directory(dir_entry)) {
-  //     zip_dir_add(zip, path.c_str(), 0);
-  //   } else {
-  //     zip_source_t* zf = zip_source_file_create(path.c_str(), 0, 0, &zerr);
-  //     fi = zip_file_add(zip, path.c_str(), zf, 0);
-  //     zip_set_file_compression(zip, fi, ZIP_CM_STORE, 0);
-  //   }
-  // }
-  // zip_close(zip);
-  // emjs::down_wrap(zname);
   zip_.close();
 }
 
