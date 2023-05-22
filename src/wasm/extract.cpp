@@ -15,6 +15,7 @@
 #include "util/load.hpp"
 #include "util/log.hpp"
 #include "util/time.hpp"
+#include "setup/expression.hpp"
 
 
 using json = nlohmann::ordered_json;
@@ -221,6 +222,7 @@ std::string Context::ListFiles() {
     if (file.location >= info_.data_entries.size()) {
       continue;  // Ignore external files (copy commands)
     }
+
     std::string path = filenames.convert(file.destination);
     if (path.empty()) continue;
     add_dirs(dirs_, path);
@@ -272,13 +274,19 @@ std::string Context::ListFiles() {
 std::string Context::Extract(std::string list_json) {
   const std::string& output_dir = info_.header.app_name;
   auto input = json::parse(list_json);
+  auto files = input["files"];
+  std::string lang;
   std::vector<const processed_file*> selected_files;
   selected_files.reserve(all_files_.size());
 
-  std::sort(input.begin(), input.end());
-  log_info << "Unpacking " << input.size() << " files have been started.";
-  for (const auto& i : input) {
-    selected_files.push_back(&all_files_[i]);
+  if (input.contains("lang")){
+    lang = input["lang"];
+  }
+
+  std::sort(files.begin(), files.end());
+  log_info << "Unpacking " << files.size() << " files have been started.";
+  for (const auto& f : files) {
+    selected_files.push_back(&all_files_[f]);
   }
 
   // cleaning MEMFS
@@ -298,8 +306,10 @@ std::string Context::Extract(std::string list_json) {
   std::vector<std::vector<output_location> > files_for_location;
   files_for_location.resize(info_.data_entries.size());
 
+
   for (const processed_file* file_ptr : selected_files) {
-    files_for_location[file_ptr->entry().location].push_back(output_location(file_ptr, 0));
+    if(file_ptr->entry().languages.empty() || lang.empty() || setup::expression_match(lang, file_ptr->entry().languages))
+      files_for_location[file_ptr->entry().location].push_back(output_location(file_ptr, 0));
     uint64_t offset = info_.data_entries[file_ptr->entry().location].uncompressed_size;
     uint32_t sort_slice = info_.data_entries[file_ptr->entry().location].chunk.first_slice;
     uint32_t sort_offset = info_.data_entries[file_ptr->entry().location].chunk.sort_offset;
@@ -323,7 +333,6 @@ std::string Context::Extract(std::string list_json) {
   }
 
   total_size_ = 0;
-  uint64_t files = 0;
 
   typedef std::map<stream::file, size_t> Files;
   typedef std::map<stream::chunk, Files> Chunks;

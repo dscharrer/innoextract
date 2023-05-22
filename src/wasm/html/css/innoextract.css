@@ -13,3 +13,7 @@
 .err {
     color: #dc3545;
 }
+
+#langSelect {
+    width: fit-content;
+}

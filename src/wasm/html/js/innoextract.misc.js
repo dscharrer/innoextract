@@ -4,11 +4,13 @@ const removeBtn = document.getElementById("removeBtn");
 const startBtn = document.getElementById("startBtn");
 const extractBtn = document.getElementById("extractBtn");
 extractBtn.disabled = true;
+const extractGroup = document.getElementById("extract-group");
 
 //File list
 const emptyListInfo = document.getElementById("emptyListInfo");
 const fileTemplate = document.getElementById("fileTemplate");
 const fileList = document.getElementById("fileList");
+var langSelect;
 
 //Error dialog
 const errorModal = new bootstrap.Modal(document.getElementById("errorModal"));
@@ -57,6 +59,20 @@ function clearFileInfo() {
     filesNum.innerHTML = '0';
 }
 
+function addLanguageSelector() {
+    if(!document.getElementById("langSelect")){
+        extractGroup.insertAdjacentHTML('afterbegin','<select id="langSelect" class="form-select flex-fill" aria-label="Select language" hidden></select>');
+        langSelect = document.getElementById("langSelect");
+    }
+}
+
+function removeLanguageSelector() {
+    if(document.getElementById("langSelect")){
+        extractGroup.removeChild(langSelect);
+        langSelect = undefined;
+    }
+}
+
 function startInnoExtract() {
     let checked = document.querySelector('input[name="exeRadio"]:checked');
     if (checked) {
@@ -70,6 +86,15 @@ function startInnoExtract() {
                 desc.innerHTML = obj.copyrights
                 sizeInfo.innerHTML = obj.size
                 filesNum.innerHTML = obj.files_num;
+                removeLanguageSelector();
+                if(obj.langs.length > 1) {
+                    addLanguageSelector();
+                    obj.langs.forEach(lang => {
+                        langSelect.insertAdjacentHTML('beforeend', `<option value="${lang.name}">${lang.lang_name}</option>`);
+                    });
+                    langSelect.hidden = false;
+                }
+
                 Module.ccall('list_files', 'string', [], [], {async: true}).then(result =>{
                     createTree(JSON.parse(result));
                     extractBtn.disabled = false;
@@ -84,12 +109,17 @@ function extractFiles() {
     var startDate = new Date();
     extractBtn.disabled = true;
     checked = tree.treeview('getChecked');
-    ids = []
+    info = { files: []};
     for (const element of checked) {
         if (element.fileId !== undefined)
-            ids.push(element.fileId);
+            info.files.push(element.fileId);
     }
-    Module.ccall('extract', 'string', ['string'], [JSON.stringify(ids)], {async: true}).then(result =>{
+
+    if(langSelect){
+        info.lang = langSelect.value;
+    }
+
+    Module.ccall('extract', 'string', ['string'], [JSON.stringify(info)], {async: true}).then(result =>{
         extractBtn.disabled = false;
         showError(JSON.parse(result));
         var endDate   = new Date();

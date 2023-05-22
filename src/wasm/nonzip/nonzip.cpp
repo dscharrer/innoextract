@@ -56,7 +56,7 @@ int Nonzip::addFile(const char *name, const void *data, uint32_t dlen, uint32_t 
     }
     int i = (numfiles++);
     int nlen = strlen(name);
-    struct dostime dt = dt;
+    struct dostime dt = this->dt;
     files[i] = (struct nonzip_file *)calloc(1, sizeof(struct nonzip_file));
 
     files[i]->zf_verm = NONZIP_VERMADE_DEF;
