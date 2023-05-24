@@ -593,7 +593,8 @@ if(WASM)
 	file(COPY src/wasm/html/js DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 	file(COPY src/wasm/html/css DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 	file(COPY src/wasm/html/img DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-	configure_file("src/wasm/html/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html" COPYONLY)
+	string(TIMESTAMP BUILD_DATE "%s")
+	configure_file("src/wasm/html/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html")
 
 else() #NOT WASM
 	# Prepare generated files
