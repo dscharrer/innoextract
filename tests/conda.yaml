@@ -1,0 +1,26 @@
+# For more details on the format and content:
+# https://github.com/robocorp/rcc/blob/master/docs/recipes.md#what-is-in-condayaml
+# Tip: Adding a link to the release notes of the packages helps maintenance and security.
+
+channels:
+  - conda-forge
+
+dependencies:
+  # Define conda-forge packages here -> https://anaconda.org/search
+  # When available, prefer the conda-forge packages over pip as installations are more efficient.
+  - python=3.9.13               # https://pyreadiness.org/3.9/ 
+  - pip=22.1.2                  # https://pip.pypa.io/en/stable/news/
+  - pip:
+      # Define pip packages here -> https://pypi.org/
+      # - rpaframework==22.5.3    # https://rpaframework.org/releasenotes.html
+      - robotframework==6.0.2
+      - selenium==4.8.2
+      - robotframework-autoitlibrary==1.2.8
+      # - robotframework-sshlibrary==3.8.0
+      # - robotframework-executor==0.1.5
+      # - robotframework-SikuliLibrary==2.0.3
+      - robotframework-seleniumlibrary==6.0.0
+      # - robotframework-requests==0.9.3
+      - robotframework-browser==16.0.0
+      - robotframework-tidy==3.5.0
+      - webdrivermanager==0.10.0

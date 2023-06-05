@@ -1,0 +1,25 @@
+# For more details on the format and content:
+# https://github.com/robocorp/rcc/blob/master/docs/recipes.md#what-is-in-robotyaml
+
+tasks:
+  # Task names here are used when executing the bots, so renaming these is recommended.
+  Run all tasks:
+    shell: python -m robot --report NONE --outputdir output --logtitle "Task log" tests/smoke_tests.robot
+
+condaConfigFile: conda.yaml
+
+environmentConfigs:
+  - environment_windows_amd64_freeze.yaml
+  - environment_linux_amd64_freeze.yaml
+  - environment_darwin_amd64_freeze.yaml
+  - conda.yaml
+
+artifactsDir: output  
+
+PATH:
+  - .
+PYTHONPATH:
+  - .
+
+ignoreFiles:
+  - .gitignore
