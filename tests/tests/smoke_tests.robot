@@ -1,26 +1,35 @@
 *** Settings ***
 Documentation  Smoke Tests
+Library        OperatingSystem
 Library        SeleniumLibrary
 Library        String
 Resource       ../src/page_objects/keywords/common.robot
 Resource       ../src/page_objects/keywords/home_page.robot
 Resource       ../src/page_objects/keywords/windows.robot
+Resource       ../src/test_files/test_files.resource
 Library        ../src/page_objects/libraries/browser_lib.py
+
+*** Variables ***
+${BROWSER}             Firefox
+${DOWNLOAD_FILE_NAME}  innoout.zip
+${HOME_PAGE_PATH}      http://127.0.0.1:8000/index.html
 
 *** Test Cases ***
 Extract test file
     [documentation]  Extract smoke file successfully
     [tags]  Smoke
-    ${random_string}  Generate Random String  20   
-    ${path}  Catenate  SEPARATOR=\\  ${TEMPDIR}  ${random_string}
-    ${profile}  create_profile  ${path}
-    Log  \npath ${path}  console=yes
-    open browser    ${home_page_url}  ff  ff_profile_dir=${profile}
-    # Opening Browser  ${home_page_url}  ${browser}
+    ${download_path}  Create Unique Download Path
+    ${profile}  create_profile  ${download_path}
+    Opening Browser  ${HOME_PAGE_PATH}  ${browser}  ${profile}
     Click Add Files Button
-    Upload File  C\:\\Users\\rodu\\Documents\\Innoextract\\repo\\innoextract-wasm-test\\src\\test_files\\10k_files.exe
+    Upload Test File  ${file_4mb}[path]
     Click Start Button
     Wait Until Page Does Not Contain Element  ${ExtractAndSaveDisabledButton}
-    Click Extract And SaveButton
-    # Validate file downloaded
+    Click Extract And Save Button
+    ${downloaded_file_path}  Set Variable  ${download_path}${DOWNLOAD_FILE_NAME}
+    Log  Validate file created: ${downloaded_file_path}  console=yes
+    Wait Until Created  ${downloaded_file_path}
+    Sleep  1s
+    Log  Validate file is not empty: ${downloaded_file_path}  console=yes
+    File Should Not Be Empty  ${downloaded_file_path}
     Close Browser
