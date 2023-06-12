@@ -15,8 +15,8 @@ ExtractAndSaveDisabledButton = '//*[(@id = "extract-group")]//button[(@disabled)
 FileDetails = '//small[@id="details"]'
 
 # Logs section
-LogsTitle = '//h5[contains(text(),"Logs")]'
-CollapseLogsButton = 'a.btn[aria-controls="collapseLogs"]'
+LogsTitle = '/html/body/div[1]/div/div[1]/div[2]/div/h5'
+CollapseLogsButton = '/html/body/div[1]/div/div[1]/div[2]/p/a/i'
 LogsConsole = '//div[@id="con"]'
 
 # Popup notifications

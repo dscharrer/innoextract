@@ -24,8 +24,10 @@ Extract test file
     Click Add Files Button
     Upload Test File  ${file_4mb}[path]
     Click Start Button
+    Check If Log Console Contains    Opening "${file_4mb}[name]"
     Wait Until Page Does Not Contain Element  ${ExtractAndSaveDisabledButton}
     Click Extract And Save Button
+    Check If Log Console Contains    Done    600
     ${downloaded_file_path}  Set Variable  ${download_path}${DOWNLOAD_FILE_NAME}
     Log  Validate file created: ${downloaded_file_path}  console=yes
     Wait Until Created  ${downloaded_file_path}

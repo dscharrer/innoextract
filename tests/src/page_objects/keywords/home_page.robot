@@ -18,3 +18,23 @@ Click Remove Button
 Click Start Button
     Click Element  ${StartButton}
     Log  Click Start Button  console=yes
+
+Log Console Is Visible
+    Wait Until Element Is Visible   xpath=${CollapseLogsButton}
+    Run Keyword And Return Status    Element Should Be Visible   xpath=${LogsTitle}
+    ${variable}=    Run Keyword And Return Status    Element Should Be Visible   xpath=${LogsTitle}
+    RETURN    ${variable}
+
+Open Log Console
+    Click Element    xpath=${CollapseLogsButton}
+
+Unhide Log Window
+    ${status} =   Log Console Is Visible
+    Run Keyword If    ${status} == False  Open Log Console
+    Wait Until Element Is Visible   xpath=${LogsTitle}
+
+Check If Log Console Contains
+    [Arguments]    ${message}    ${timeout}=5
+    Unhide Log Window    
+    Wait Until Element Contains    ${LogsConsole}    ${message}    ${timeout}
+    Element Should Not Contain    ${LogsConsole}    error
