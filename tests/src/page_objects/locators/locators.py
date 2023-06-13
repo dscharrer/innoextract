@@ -13,6 +13,9 @@ OutputTitle = '//h5[contains(text(),"Output")]'
 ExtractAndSaveButton = '//button[@id="extractBtn"]'
 ExtractAndSaveDisabledButton = '//*[(@id = "extract-group")]//button[(@disabled)]'
 FileDetails = '//small[@id="details"]'
+FileSize = '//*[@id="size"]'
+FileNum = '//*[@id="filesNum"]'
+Description = '//*[@id="title"]'
 
 # Logs section
 LogsTitle = '//h5[contains(text(),"Logs")]'
