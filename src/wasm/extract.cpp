@@ -182,8 +182,8 @@ std::string Context::LoadExe(std::string exe_file) {
 
   for (const setup::language_entry& language : info_.languages) {
     json lang_obj;
-    lang_obj["name"] = language.name;
-    lang_obj["lang_name"] = language.language_name;
+    lang_obj["code"] = language.name;
+    lang_obj["name"] = language.language_name;
     obj["langs"].push_back(lang_obj);
   }
   return obj.dump();

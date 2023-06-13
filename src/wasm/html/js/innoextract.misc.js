@@ -90,7 +90,10 @@ function startInnoExtract() {
                 if(obj.langs.length > 1) {
                     addLanguageSelector();
                     obj.langs.forEach(lang => {
-                        langSelect.insertAdjacentHTML('beforeend', `<option value="${lang.name}">${lang.lang_name}</option>`);
+                        console.log(lang);
+                        if(!lang.name)
+                            lang.name=lang.code;
+                        langSelect.insertAdjacentHTML('beforeend', `<option value="${lang.code}">${lang.name}</option>`);
                     });
                     langSelect.hidden = false;
                 }
