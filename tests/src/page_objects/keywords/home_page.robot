@@ -9,6 +9,7 @@ Click Add Files Button
     Log  Click Add Files Button  console=yes
 
 Click Extract And Save Button
+    Wait Until Page Does Not Contain Element  ${ExtractAndSaveDisabledButton}
     Click Element  ${ExtractAndSaveButton}
     Log  Click Extract And Save Button  console=yes
 
