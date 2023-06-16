@@ -1,0 +1,47 @@
+2023.5.18: 2.4
+	From @sreschke80 (thanks!):
+	- Add NULL check for parameter writestatus in zs_entryend()
+	- Remove (redundant) NULL check for parameter name in zs_entrybegin()
+
+2023.5.14:
+	- Cleanups for unused variable and parameter warnings.
+
+2019.11.14: 2.3
+	- Fix encoding of entry modification times on non-Windows, thanks @sreschke80.
+
+2019.4.27: 2.2
+	- Add support for Windows including Makefile.nmake for building.
+	Installation of zlib on Windows remains as an exercise for the caller.
+	Testing was performed with the pre-compiled binaries from:
+	https://sourceforge.net/projects/uqm-mods/files/latest/download
+	- By @kugel-: fix some potential minor leaks in error handling.
+
+2017.1.17: 2.1
+	- By @kugel-: fix leaks and warnings.  Thanks!
+	- By @sreschke80: free allocated resources on failure.  Thanks!
+
+2015.10.4: 2.0
+	Reorganize fdzipstream.c with suggestions from @Crog.
+	- Support for arbitrary methods through call back functions and convert
+	the included STORE and DEFLATE methods to use this interface.
+	- Remove duplication, zs_writeentry() is now a simple wrapper around
+	other functions.  All ZIP archives will now be created with streaming
+	structures as the capability to create them without is removed.
+	- Remove zs_entryflush() external interface, flushing is now a part of
+	zs_entryend().
+	- Changes to zipfiles.c example: remove streaming versus not code and
+	explicity entry flushing to match changes in API.
+
+2015.8.2: 1.1
+	- Rework deflate() logic for flexibility and simplicity.
+	- Add zs_entryflush() as a simple wrapper to flush internal compression
+	buffers without new data.  Thanks to @Crog for reporting and suggesting.
+	- Update zipfiles.c example code to use new zs_entryflush().
+	- Allow retry of write() in zs_writedata() for incomplete writes as
+	suggested by @Crog.
+	- Add Apache 2 licensing notices.
+
+2013.9.28: 1.0
+	- Initial version.  Supports classic ZIP archive creation, files/entries
+	with streaming structures (data can be chunked) and ZIP64 Central
+	Directory structures for archives totalling more then 4GB in size.

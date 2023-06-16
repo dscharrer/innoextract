@@ -1,0 +1,30 @@
+#
+# Nmake file for Windows (MSVC)
+# Use 'nmake -f Makefile.nmake'
+
+NODEBUG=1
+
+# The following variables should identify where to find the zlib header and library
+# Testing was performed with zlib binaries from:
+#   https://sourceforge.net/projects/uqm-mods/files/latest/download
+INCS = /I..\zlib\include
+LIBS = ..\zlib\lib\libz.a
+
+OPTS = -D_CRT_SECURE_NO_WARNINGS
+
+BINS = zipexample.exe zipfiles.exe
+
+all: $(BINS)
+
+zipexample.exe: zipexample.obj fdzipstream.obj
+	LINK /nologo /out:$@ $(LIBS) zipexample.obj fdzipstream.obj
+
+zipfiles.exe: zipfiles.obj fdzipstream.obj
+	LINK /nologo /out:$@ $(LIBS) zipfiles.obj fdzipstream.obj
+
+.c.obj:
+	$(CC) /nologo $(CFLAGS) $(INCS) $(OPTS) /c $<
+
+# Clean-up directives
+clean:
+	-del a.out core *.o *.obj *% *~ $(BIN)

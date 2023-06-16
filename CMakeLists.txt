@@ -448,10 +448,10 @@ set(INNOEXTRACT_SOURCES
 
 	src/wasm/jsfile.hpp if WASM
 	src/wasm/jsfile.cpp if WASM
-	src/wasm/nonzip/nonzip.cpp if WASM
 	src/wasm/extract.hpp if WASM
 	src/wasm/extract.cpp if WASM
-	
+	src/wasm/fdzipstream/fdzipstream.c if WASM
+
 	src/crypto/adler32.hpp
 	src/crypto/adler32.cpp
 	src/crypto/arc4.hpp if INNOEXTRACT_HAVE_ARC4

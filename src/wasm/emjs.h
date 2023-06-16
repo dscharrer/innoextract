@@ -4,8 +4,10 @@
 // Based on emscripten-browser-file package by Armchair Software, licensed under MIT
 // https://github.com/Armchair-Software/emscripten-browser-file
 
-#include <string>
+#ifdef __cplusplus
+
 #include <emscripten.h>
+#include <string>
 
 namespace emjs {
 
@@ -35,5 +37,8 @@ EMSCRIPTEN_KEEPALIVE char const * extract(char const *list_json);
 
 }
 
+#else
+ssize_t emjs_write(void* buf, size_t len);
+#endif
 
 #endif // EMSCRIPTEN_UPLOAD_FILE_H_INCLUDED

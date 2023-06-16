@@ -17,12 +17,13 @@
 #include "util/time.hpp"
 #include "setup/expression.hpp"
 
+#include "wasm/fdzipstream/fdzipstream.h"
 
 using json = nlohmann::ordered_json;
 
 namespace wasm {
 
-file_output::file_output(const fs::path& dir, const processed_file* f, bool write, Nonzip &zip)
+file_output::file_output(const fs::path& dir, const processed_file* f, bool write, ZIPstream *zip)
     : path_(dir / f->path()),
       file_(f),
       checksum_(f->entry().checksum.type),
@@ -31,7 +32,7 @@ file_output::file_output(const fs::path& dir, const processed_file* f, bool writ
       total_written_(0),
       write_(write),
       zip_(zip),
-      zip_open_(false) {
+      file_open_(false) {
   if (write_) {
     try {
       std::ios_base::openmode flags =
@@ -39,7 +40,7 @@ file_output::file_output(const fs::path& dir, const processed_file* f, bool writ
       if (file_->is_multipart()) {
         flags |= std::ios_base::in;
       }
-      if(zip_.getStatus() != NONZIP_STATUS_READY) {
+      if (zip_ == NULL) {
         throw std::exception();
       }
     } catch (...) {
@@ -48,13 +49,15 @@ file_output::file_output(const fs::path& dir, const processed_file* f, bool writ
   }
 }
 
-bool file_output::write(const char* data, size_t n) {
-  int r;
-  if(!zip_open_) {
-		r = zip_.addFile(path_.c_str(), data, n, &zipindex_);
-		zip_open_ = true;
+bool file_output::write(char* data, size_t n) {
+  ZIPentry* ze;
+  if (!file_open_) {
+    printf("Unpacking file %s\n", path_.c_str());
+    zip_entry_ = zs_entrybegin(zip_, path_.c_str(), time(0), ZS_STORE, 0);
+    ze = zs_entrydata(zip_, zip_entry_, reinterpret_cast<uint8_t*>(data), n, 0);
+		file_open_ = true;
 	} else {
-    r = zip_.appendFile(data, n);
+    ze = zs_entrydata(zip_, zip_entry_, reinterpret_cast<uint8_t*>(data), n, 0);
   }
 
   if (checksum_position_ == position_) {
@@ -65,7 +68,11 @@ bool file_output::write(const char* data, size_t n) {
   position_ += n;
   total_written_ += n;
 
-  return r==n;
+  if (is_complete()) {
+    zs_entryend(zip_, zip_entry_, 0);
+  }
+
+  return ze == zip_entry_;
 }
 
 void file_output::seek(boost::uint64_t new_position) {
@@ -80,10 +87,10 @@ void file_output::close() {
   return;
 }
 
-
 void file_output::settime(time_t t){
-  if(zip_open_)
-    zip_.setTime(zipindex_, t);
+  if (file_open_) {
+    zs_entrydatetime(zip_entry_, t);
+  }
 }
 
 bool file_output::is_complete() const { return total_written_ == file_->entry().size; }
@@ -126,7 +133,7 @@ bool file_output::calculate_checksum() {
 
 crypto::checksum file_output::checksum() { return checksum_.finalize(); }
 
-Context::Context() : zip_("innoout.zip") { color::init(color::disable, color::disable); }
+Context::Context() { color::init(color::disable, color::disable); }
 
 Context& Context::get() {
   static Context ctx;
@@ -301,6 +308,12 @@ std::string Context::Extract(std::string list_json) {
   for (const auto& dir : dirs_) {
     fs::create_directory(output_dir + "/" + dir);
   }
+
+  std::string zipfile = output_dir + ".zip";
+  emjs::open(zipfile.c_str(), "wb");
+  emscripten_sleep(100);
+  zip_ = zs_init(nullptr);
+  printf("opening zip file %s\n", zipfile.c_str());
 
   typedef std::pair<const processed_file*, uint64_t> output_location;
   std::vector<std::vector<output_location> > files_for_location;
@@ -497,7 +510,6 @@ void Context::verify_close_outputs(const std::vector<file_output*>& outputs,
     }
     output->close();
     output->settime(data.timestamp);
-    log_info << " - File " << output->path() << " unpacked.";
 
     if (output->file()->is_multipart()) {
       multi_outputs_.erase(output->file());
@@ -506,7 +518,10 @@ void Context::verify_close_outputs(const std::vector<file_output*>& outputs,
 }
 
 void Context::save_zip() {
-  zip_.close();
+  zs_finish(zip_, 0);
+  zs_free(zip_);
+  emjs::write(NULL, 0, 0);
+  emjs::close();
 }
 
 void Context::add_dirs(std::set<std::string>& vec, const std::string& path) const {

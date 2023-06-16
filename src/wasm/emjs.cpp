@@ -175,6 +175,10 @@ void close(){
 namespace {
 
 extern "C" {
+ssize_t emjs_write(void* buf, size_t len)
+{
+  return emjs::write(buf, 1, len);
+}
 
 EMSCRIPTEN_KEEPALIVE int load_file_return(char const *filename, char const *mime_type, char *buffer, size_t buffer_size, upload_handler callback, void *callback_data) {
   /// Load a file - this function is called from javascript when the file upload is activated
