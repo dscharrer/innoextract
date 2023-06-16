@@ -85,7 +85,7 @@ class Context {
   uint64_t total_size_;
   typedef boost::ptr_map<const processed_file*, file_output> multi_part_outputs;
   multi_part_outputs multi_outputs_;
-  ZIPstream* zip_ = NULL;
+  ZIPstream* zip_ = nullptr;
   void add_dirs(std::set<std::string>& vec, const std::string& path) const;
   uint64_t get_size() const;
   uint64_t copy_data(const stream::file_reader::pointer& source,

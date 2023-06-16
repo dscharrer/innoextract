@@ -47,7 +47,7 @@ class JSFile : public std::istream {
 extern "C" {
 int file_exist(char const* filename);
 int file_size(int file_idx);
-int read_bytes(int file_idx, void* ptr, int pos, int length);
+int read_bytes(int file_idx, void* ptr, uint64_t pos, uint64_t length);
 }
 }  // namespace wasm
 
