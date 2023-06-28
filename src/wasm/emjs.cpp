@@ -188,19 +188,19 @@ EMSCRIPTEN_KEEPALIVE int load_file_return(char const *filename, char const *mime
 
 EMSCRIPTEN_KEEPALIVE char const * load_exe(char const *filename) {
   static std::string result;
-  result = wasm::Context::get().LoadExe(std::string(filename));
+  result = wasm::extractor::get().load_exe(filename);
   return result.c_str();
 }
 
 EMSCRIPTEN_KEEPALIVE char const * list_files() {
   static std::string result;
-  result = wasm::Context::get().ListFiles().c_str();
+  result = wasm::extractor::get().list_files();
   return result.c_str();
 }
 
 EMSCRIPTEN_KEEPALIVE char const * extract(char const *list_json) {
   static std::string result;
-  result = wasm::Context::get().Extract(list_json).c_str();
+  result = wasm::extractor::get().extract(list_json);
   return result.c_str();
 }
 

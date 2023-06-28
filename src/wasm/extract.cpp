@@ -3,7 +3,7 @@
 // #include <zip.h>
 
 #include <iostream>
-#include <nlohmann/json.hpp>
+#include <algorithm>
 
 #include "cli/goggalaxy.hpp"
 #include "emjs.h"
@@ -133,153 +133,198 @@ bool file_output::calculate_checksum() {
 
 crypto::checksum file_output::checksum() { return checksum_.finalize(); }
 
-Context::Context() { color::init(color::disable, color::disable); }
+extractor& extractor::get() {
+  std::call_once(init_instance_flag, &extractor::init_singleton);
 
-Context& Context::get() {
-  static Context ctx;
-  return ctx;
+  return *singleton_instance;
 }
 
-std::string Context::LoadExe(std::string exe_file) {
-  installer_ = exe_file;
-  json obj;
+std::string extractor::load_exe(const std::string& exe_path) {
+  installer_path_ = fs::path(exe_path);
+
   emjs::ui_progbar_update(0);
+
   try {
-    if (ifs_.is_open()) {
-      ifs_.close();
-    }
-    log_info << "Opening \"" << exe_file << '"';
-    ifs_.open(exe_file, std::ios_base::in | std::ios_base::binary);
-    if (!ifs_.is_open()) {
-      throw std::exception();
-    }
-  } catch (...) {
-    return error_obj("Could not open file \"" + exe_file + '"');
+    open_installer_stream();
+    load_installer_data();
   }
-  offsets_.load(ifs_);
-  setup::info::entry_types entries = 0;
-  entries |= setup::info::Files;
-  entries |= setup::info::Directories;
-  entries |= setup::info::DataEntries;
-  entries |= setup::info::Languages;
-  ifs_.seekg(offsets_.header_offset);
-  try {
-    info_.load(ifs_, entries, 0);
-  } catch (const setup::version_error&) {
-    if (offsets_.found_magic) {
-      if (offsets_.header_offset == 0) {
-        return error_obj("Could not determine location of setup headers!");
+  catch (const setup::version_error&) {
+    if (installer_offsets_.found_magic) {
+      if (installer_offsets_.header_offset == 0) {
+        return error_obj("Could not determine the location of setup headers!");
       } else {
         return error_obj("Could not determine setup data version!");
       }
     }
     return error_obj("Not a supported Inno Setup installer!");
-  } catch (const std::exception& e) {
+  }
+  catch (const std::exception& e) {
     return error_obj(e.what());
   }
 
-  gog::parse_galaxy_files(info_, 0);
+  return dump_installer_info();
+}
 
-  obj["name"] = info_.header.app_versioned_name.empty() ? info_.header.app_name
-                                                        : info_.header.app_versioned_name;
-  obj["copyrights"] = info_.header.app_copyright;
-  obj["langs"] = json::array();
-  obj["size"] = get_size() / 1024 / 1024;
-  obj["files_num"] = info_.files.size();
+void extractor::open_installer_stream() {
+  if (installer_ifs_.is_open()) {
+    installer_ifs_.close();
+  }
 
-  for (const setup::language_entry& language : info_.languages) {
+  log_info << "Opening \"" << installer_path_.string() << '"';
+  installer_ifs_.open(installer_path_, std::ios_base::in | std::ios_base::binary);
+
+  if (!installer_ifs_.is_open()) {
+    throw std::runtime_error("Could not open the file \"" + installer_path_.string() + '"');
+  }
+}
+
+void extractor::load_installer_data() {
+  setup::info::entry_types entries = 0;
+  entries |= setup::info::Files;
+  entries |= setup::info::Directories;
+  entries |= setup::info::DataEntries;
+  entries |= setup::info::Languages;
+
+  installer_offsets_.load(installer_ifs_);
+  installer_ifs_.seekg(installer_offsets_.header_offset);
+  installer_info_.load(installer_ifs_, entries);
+
+  gog::parse_galaxy_files(installer_info_, false);
+}
+
+std::string extractor::dump_installer_info() const {
+  json installer_info_obj{};
+  installer_info_obj["name"] = installer_info_.header.app_versioned_name.empty()
+                              ? installer_info_.header.app_name
+                              : installer_info_.header.app_versioned_name;
+  installer_info_obj["copyrights"] = installer_info_.header.app_copyright;
+  installer_info_obj["langs"] = json::array();
+  installer_info_obj["size"] = get_size() / 1024 / 1024;
+  installer_info_obj["files_num"] = installer_info_.files.size();
+
+  for (const auto& language : installer_info_.languages) {
     json lang_obj;
     lang_obj["code"] = language.name;
     lang_obj["name"] = language.language_name;
-    obj["langs"].push_back(lang_obj);
+    installer_info_obj["langs"].push_back(lang_obj);
   }
-  return obj.dump();
+  return installer_info_obj.dump();
 }
 
-uint64_t Context::get_size() const {
-  uint64_t max_size = 0;
-  for (size_t i = 0; i < info_.data_entries.size(); i++) {
-    const setup::data_entry& location = info_.data_entries[i];
-    max_size += location.uncompressed_size;
-  }
-  return max_size;
+std::string extractor::list_files() {
+  clear_files_list();
+  fetch_files();
+
+  std::map<std::string, json::object_t*> dir_objs;
+  auto main_dir_obj = create_main_dir_obj(dir_objs);
+
+  return dump_dirs_info(main_dir_obj, dir_objs);
 }
 
-std::string Context::ListFiles() {
-  setup::filename_map filenames;
+void extractor::clear_files_list() {
   dirs_.clear();
   all_files_.clear();
-  all_files_.reserve(info_.files.size());
-  json main_obj;
-  json main_dir;
-  main_dir["text"] = info_.header.app_name;
-  main_dir["mainDir"] = true;
-  main_dir["nodes"] = json::array();
-  std::map<std::string, json::object_t*> json_dirs;
-  filenames.set_expand(true);
+  all_files_.reserve(installer_info_.files.size());
+}
 
-  for (const setup::directory_entry& directory : info_.directories) {
-    std::string path = filenames.convert(directory.name);
-    if (path.empty()) continue;
+static void add_dirs(std::set<std::string>& dirs, const std::string& path) {
+  const auto path_sep_pos = path.find_last_of(setup::path_sep);
+  if (path_sep_pos == std::string::npos) {
+    return;
+  }
+
+  const auto dir = path.substr(0, path_sep_pos);
+  dirs.insert(dir);
+
+  add_dirs(dirs, dir);
+}
+
+void extractor::fetch_files() {
+  setup::filename_map name_converter;
+  name_converter.set_expand(true);
+
+  for (const auto& directory : installer_info_.directories) {
+    const std::string path = name_converter.convert(directory.name);
+    if (path.empty()) {
+      continue;
+    }
+
     dirs_.insert(path);
     add_dirs(dirs_, path);
   }
 
-  for (const setup::file_entry& file : info_.files) {
-    if (file.location >= info_.data_entries.size()) {
+  for (const auto& file : installer_info_.files) {
+    if (file.location >= installer_info_.data_entries.size()) {
       continue;  // Ignore external files (copy commands)
     }
 
-    std::string path = filenames.convert(file.destination);
-    if (path.empty()) continue;
+    const std::string path = name_converter.convert(file.destination);
+    if (path.empty()) {
+      continue;
+    }
+
     add_dirs(dirs_, path);
     all_files_.push_back(processed_file(&file, path));
   }
+}
 
-  // create JSON objects for directories
-  for (const auto& p : dirs_) {
-    size_t pos = p.find_last_of(setup::path_sep);
-    if (pos == std::string::npos) {
-      json_dirs[p] = main_dir["nodes"].emplace_back(json{{"text", p}}).get_ptr<json::object_t*>();
+json extractor::create_main_dir_obj(std::map<std::string, json::object_t*>& dir_objs) const {
+  json main_dir;
+  main_dir["text"] = installer_info_.header.app_name;
+  main_dir["mainDir"] = true;
+  main_dir["nodes"] = json::array();
+
+  for (const auto& path : dirs_) {
+    const size_t sep_pos = path.find_last_of(setup::path_sep);
+    if (sep_pos == std::string::npos) {
+      dir_objs[path] = main_dir["nodes"].emplace_back(json{{"text", path}}).get_ptr<json::object_t*>();
     } else {
-      json::object_t* parent = json_dirs[p.substr(0, pos)];
+      json::object_t* const parent = dir_objs[path.substr(0, sep_pos)];
       if (!parent->count("nodes")) {
         parent->emplace("nodes", json::array());
       }
-      json_dirs[p] = parent->at("nodes")
-                         .emplace_back(json{{"text", p.substr(pos + 1)}})
+      dir_objs[path] = parent->at("nodes")
+                         .emplace_back(json{{"text", path.substr(sep_pos + 1)}})
                          .get_ptr<json::object_t*>();
     }
   }
 
-  uint32_t idx = 0;
-  for (const auto& f : all_files_) {
-    const std::string& path = f.path();
-    json file_obj;
-    size_t pos = path.find_last_of(setup::path_sep);
+  return main_dir;
+}
 
-    file_obj["text"] = path.substr(pos + 1);
+std::string extractor::dump_dirs_info(json& main_dir_obj,
+                                      std::map<std::string, json::object_t*>& dir_objs) const {
+  uint32_t idx = 0;
+  for (const auto& file : all_files_) {
+    const std::string& path = file.path();
+    json file_obj;
+    size_t sep_pos = path.find_last_of(setup::path_sep);
+
+    file_obj["text"] = path.substr(sep_pos + 1);
     file_obj["icon"] = "bi bi-file-earmark-fill";
     file_obj["fileId"] = idx++;
     file_obj["tags"] = json::array();
-    file_obj["tags"].push_back(f.entry().languages);
+    file_obj["tags"].push_back(file.entry().languages);
 
-    if (pos != std::string::npos) {
-      json::object_t* parent = json_dirs[path.substr(0, pos)];
+    if (sep_pos != std::string::npos) {
+      json::object_t* const parent = dir_objs[path.substr(0, sep_pos)];
       if (!parent->count("nodes")) {
         parent->emplace("nodes", json::array());
       }
       parent->at("nodes").push_back(file_obj);
     } else {
-      main_dir["nodes"].push_back(file_obj);
+      main_dir_obj["nodes"].push_back(file_obj);
     }
   }
-  main_obj.emplace_back(main_dir);
+
+  json main_obj;
+  main_obj.emplace_back(main_dir_obj);
+
   return main_obj.dump();
 }
 
-std::string Context::Extract(std::string list_json) {
-  const std::string& output_dir = info_.header.app_name;
+std::string extractor::extract(const std::string& list_json) {
+  const std::string& output_dir = installer_info_.header.app_name;
   auto input = json::parse(list_json);
   auto files = input["files"];
   std::string lang;
@@ -312,22 +357,22 @@ std::string Context::Extract(std::string list_json) {
   std::string zipfile = output_dir + ".zip";
   emjs::open(zipfile.c_str(), "wb");
   emscripten_sleep(100);
-  zip_ = zs_init(nullptr);
+  output_zip_stream_ = zs_init(nullptr);
   printf("opening zip file %s\n", zipfile.c_str());
 
   typedef std::pair<const processed_file*, uint64_t> output_location;
   std::vector<std::vector<output_location> > files_for_location;
-  files_for_location.resize(info_.data_entries.size());
+  files_for_location.resize(installer_info_.data_entries.size());
 
 
   for (const processed_file* file_ptr : selected_files) {
     if(file_ptr->entry().languages.empty() || lang.empty() || setup::expression_match(lang, file_ptr->entry().languages))
       files_for_location[file_ptr->entry().location].push_back(output_location(file_ptr, 0));
-    uint64_t offset = info_.data_entries[file_ptr->entry().location].uncompressed_size;
-    uint32_t sort_slice = info_.data_entries[file_ptr->entry().location].chunk.first_slice;
-    uint32_t sort_offset = info_.data_entries[file_ptr->entry().location].chunk.sort_offset;
+    uint64_t offset = installer_info_.data_entries[file_ptr->entry().location].uncompressed_size;
+    uint32_t sort_slice = installer_info_.data_entries[file_ptr->entry().location].chunk.first_slice;
+    uint32_t sort_offset = installer_info_.data_entries[file_ptr->entry().location].chunk.sort_offset;
     for (uint32_t location : file_ptr->entry().additional_locations) {
-      setup::data_entry& data = info_.data_entries[location];
+      setup::data_entry& data = installer_info_.data_entries[location];
       files_for_location[location].push_back(output_location(file_ptr, offset));
       offset += data.uncompressed_size;
       if (data.chunk.first_slice > sort_slice ||
@@ -350,9 +395,9 @@ std::string Context::Extract(std::string list_json) {
   typedef std::map<stream::file, size_t> Files;
   typedef std::map<stream::chunk, Files> Chunks;
   Chunks chunks;
-  for (size_t i = 0; i < info_.data_entries.size(); i++) {
+  for (size_t i = 0; i < installer_info_.data_entries.size(); i++) {
     if (!files_for_location[i].empty()) {
-      setup::data_entry& location = info_.data_entries[i];
+      setup::data_entry& location = installer_info_.data_entries[i];
       chunks[location.chunk][location.file] = i;
       total_size_ += location.uncompressed_size;
     }
@@ -362,22 +407,22 @@ std::string Context::Extract(std::string list_json) {
 
   try {
     std::unique_ptr<stream::slice_reader> slice_reader;
-    if (offsets_.data_offset) {
-      slice_reader.reset(new stream::slice_reader(&ifs_, offsets_.data_offset));
+    if (installer_offsets_.data_offset) {
+      slice_reader.reset(new stream::slice_reader(&installer_ifs_, installer_offsets_.data_offset));
     } else {
-      fs::path dir = installer_.parent_path();
-      std::string basename = installer_.stem().string();
-      std::string basename2 = info_.header.base_filename;
+      fs::path dir = installer_path_.parent_path();
+      std::string basename = installer_path_.stem().string();
+      std::string basename2 = installer_info_.header.base_filename;
       // Prevent access to unexpected files
       std::replace(basename2.begin(), basename2.end(), '/', '_');
       std::replace(basename2.begin(), basename2.end(), '\\', '_');
       // Older Inno Setup versions used the basename stored in the headers,
       // change our default accordingly
-      if (info_.version < INNO_VERSION(4, 1, 7) && !basename2.empty()) {
+      if (installer_info_.version < INNO_VERSION(4, 1, 7) && !basename2.empty()) {
         std::swap(basename2, basename);
       }
       slice_reader.reset(
-          new stream::slice_reader(dir, basename, basename2, info_.header.slices_per_disk));
+          new stream::slice_reader(dir, basename, basename2, installer_info_.header.slices_per_disk));
     }
 
     bytes_extracted_ = 0;
@@ -429,7 +474,7 @@ std::string Context::Extract(std::string list_json) {
           }
 
           if (!output) {
-            output = new file_output(output_dir, fileinfo, true, zip_);
+            output = new file_output(output_dir, fileinfo, true, output_zip_stream_);
             if (fileinfo->is_multipart()) {
               multi_outputs_.insert(fileinfo, output);
             }
@@ -440,7 +485,7 @@ std::string Context::Extract(std::string list_json) {
         }
 
         uint64_t output_size = copy_data(file_source, outputs);
-        const setup::data_entry& data = info_.data_entries[location.second];
+        const setup::data_entry& data = installer_info_.data_entries[location.second];
 
         if (output_size != data.uncompressed_size) {
           log_warning << "Unexpected output file size: " << output_size
@@ -470,22 +515,54 @@ std::string Context::Extract(std::string list_json) {
   return json::object().dump();
 }
 
-uint64_t Context::copy_data(const stream::file_reader::pointer& source,
-                            const std::vector<file_output*>& outputs) {
+void extractor::init_singleton() {
+  singleton_instance = new extractor();
+}
+
+const char* extractor::error_obj(const std::string& msg) {
+  static std::string result;
+
+  log_error << msg;
+
+  json error_obj;
+  error_obj["error"] = msg;
+  
+  result = error_obj.dump();
+  return result.c_str();
+}
+
+extractor* extractor::singleton_instance = {};
+std::once_flag extractor::init_instance_flag = {};
+
+extractor::extractor() { color::init(color::disable, color::disable); }
+
+uint64_t extractor::get_size() const {
+  return std::accumulate(
+    installer_info_.data_entries.cbegin(),
+    installer_info_.data_entries.cend(),
+    uint64_t{0},
+    [](const uint64_t acc, const setup::data_entry& entry) {
+      return acc + entry.uncompressed_size;
+    }
+  );
+}
+
+uint64_t extractor::copy_data(const stream::file_reader::pointer& source,
+                              const std::vector<file_output*>& outputs) {
   uint64_t output_size = 0;
   while (!source->eof()) {
     char buffer[8192 * 10];
-    std::streamsize buffer_size = std::streamsize(boost::size(buffer));
-    std::streamsize n = source->read(buffer, buffer_size).gcount();
-    if (n > 0) {
-      for (file_output* output : outputs) {
-        bool success = output->write(buffer, size_t(n));
+    const auto buffer_size = std::streamsize(boost::size(buffer));
+    const auto extracted_n = source->read(buffer, buffer_size).gcount();
+    if (extracted_n > 0) {
+      for (auto output : outputs) {
+        bool success = output->write(buffer, extracted_n);
         if (!success) {
           throw std::runtime_error("Error writing file \"" + output->path().string() + '"');
         }
       }
-      bytes_extracted_ += n;
-      output_size += n;
+      bytes_extracted_ += extracted_n;
+      output_size += extracted_n;
 
       emjs::ui_progbar_update(float(bytes_extracted_) / total_size_ * 100);
     }
@@ -494,14 +571,14 @@ uint64_t Context::copy_data(const stream::file_reader::pointer& source,
   return output_size;
 }
 
-void Context::verify_close_outputs(const std::vector<file_output*>& outputs,
-                                   const setup::data_entry& data) {
-  for (file_output* output : outputs) {
+void extractor::verify_close_outputs(const std::vector<file_output*>& outputs,
+                                    const setup::data_entry& data) {
+  for (const auto output : outputs) {
     if (output->file()->is_multipart() && !output->is_complete()) {
       continue;
     }
     if (output->file()->entry().checksum.type != crypto::None && output->calculate_checksum()) {
-      crypto::checksum output_checksum = output->checksum();
+      const auto output_checksum = output->checksum();
       if (output_checksum != output->file()->entry().checksum) {
         log_warning << "Output checksum mismatch for " << output->file()->path() << ":\n"
                     << " ├─ actual:   " << output_checksum << '\n'
@@ -517,30 +594,12 @@ void Context::verify_close_outputs(const std::vector<file_output*>& outputs,
   }
 }
 
-void Context::save_zip() {
-  zs_finish(zip_, 0);
-  zs_free(zip_);
-  emjs::write(NULL, 0, 0);
+void extractor::save_zip() {
+  zs_finish(output_zip_stream_, 0);
+  zs_free(output_zip_stream_);
+
+  emjs::write(nullptr, 0, 0);
   emjs::close();
-}
-
-void Context::add_dirs(std::set<std::string>& vec, const std::string& path) const {
-  size_t pos = path.find_last_of(setup::path_sep);
-  if (pos == std::string::npos) {
-    return;
-  }
-  std::string dir = path.substr(0, pos);
-  vec.insert(dir);
-  add_dirs(vec, dir);
-}
-
-const char* Context::error_obj(const std::string& msg) {
-  static std::string result;
-  static json error_obj;
-  error_obj["error"] = msg;
-  log_error << msg;
-  result = error_obj.dump();
-  return result.c_str();
 }
 
 }  // namespace wasm

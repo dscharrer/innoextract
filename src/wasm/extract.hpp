@@ -4,9 +4,11 @@
 #include <boost/filesystem.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <nlohmann/json.hpp>
 #include <set>
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include "crypto/checksum.hpp"
 #include "crypto/hasher.hpp"
@@ -37,63 +39,91 @@ class processed_file {
 };
 
 class file_output : private boost::noncopyable {
-  fs::path path_;
-  const processed_file* file_;
-  util::fstream stream_;
+  public:
+    file_output(const fs::path& dir, const processed_file* f, bool write, ZIPstream* zip);
+    
+    bool write(char* data, size_t n);
+    void seek(boost::uint64_t new_position);
+    void close();
+    const fs::path& path() const { return path_; }
+    const processed_file* file() const { return file_; }
+    bool is_complete() const;
+    bool has_checksum() const;
+    bool calculate_checksum();
+    crypto::checksum checksum();
+    void settime(time_t t);
 
-  crypto::hasher checksum_;
-  boost::uint64_t checksum_position_;
+  private:
+    fs::path path_;
+    const processed_file* file_;
+    util::fstream stream_;
 
-  boost::uint64_t position_;
-  boost::uint64_t total_written_;
+    crypto::hasher checksum_;
+    boost::uint64_t checksum_position_;
 
-  bool write_;
-  ZIPstream* zip_ = nullptr;
-	bool file_open_;
-	ZIPentry* zip_entry_;
+    boost::uint64_t position_;
+    boost::uint64_t total_written_;
 
- public:
-  explicit file_output(const fs::path& dir, const processed_file* f, bool write, ZIPstream* zip);
-  bool write(char* data, size_t n);
-  void seek(boost::uint64_t new_position);
-  void close();
-  const fs::path& path() const { return path_; }
-  const processed_file* file() const { return file_; }
-  bool is_complete() const;
-  bool has_checksum() const;
-  bool calculate_checksum();
-  crypto::checksum checksum();
-  void settime(time_t t);
+    bool write_;
+    ZIPstream* zip_ = nullptr;
+    bool file_open_;
+    ZIPentry* zip_entry_;
 };
 
-class Context {
+class extractor {
  public:
-  static Context& get();
-  std::string LoadExe(std::string exe_file);
-  std::string ListFiles();
-  std::string Extract(std::string list_json);
+  static extractor& get();
+
+  std::string load_exe(const std::string& exe_path);
+  std::string list_files();
+  std::string extract(const std::string& list_json);
 
  private:
-  Context();
-  fs::path installer_;
-  util::ifstream ifs_;
-  loader::offsets offsets_;
-  setup::info info_;
-  std::set<std::string> dirs_;
-  std::vector<processed_file> all_files_;
-  uint64_t bytes_extracted_;
-  uint64_t total_size_;
-  typedef boost::ptr_map<const processed_file*, file_output> multi_part_outputs;
-  multi_part_outputs multi_outputs_;
-  ZIPstream* zip_ = nullptr;
-  void add_dirs(std::set<std::string>& vec, const std::string& path) const;
+  using json = nlohmann::ordered_json;
+  using multi_part_outputs = boost::ptr_map<const processed_file*, file_output>;
+
+  static void init_singleton();
+
+  static const char* error_obj(const std::string& msg);
+
+  static extractor* singleton_instance;
+  static std::once_flag init_instance_flag;
+
+  extractor();
+  extractor(const extractor&) = delete;
+  extractor& operator=(const extractor&) = delete;
+  
+  void open_installer_stream();
+  void load_installer_data();
+  std::string dump_installer_info() const;
+
+  void clear_files_list();
+  void fetch_files();
+  json create_main_dir_obj(std::map<std::string, json::object_t*>& dir_objs) const;
+  std::string dump_dirs_info(json& main_dir_obj,
+                            std::map<std::string, json::object_t*>& dir_objs) const;
+
   uint64_t get_size() const;
   uint64_t copy_data(const stream::file_reader::pointer& source,
                      const std::vector<file_output*>& outputs);
   void verify_close_outputs(const std::vector<file_output*>& outputs,
                             const setup::data_entry& data);
   void save_zip();
-  static const char* error_obj(const std::string& msg);
+
+  fs::path installer_path_{};
+  util::ifstream installer_ifs_{};
+  loader::offsets installer_offsets_{};
+  setup::info installer_info_{};
+
+  std::set<std::string> dirs_{};
+  std::vector<processed_file> all_files_{};
+
+  uint64_t bytes_extracted_{};
+  uint64_t total_size_{};
+
+  multi_part_outputs multi_outputs_{};
+
+  ZIPstream* output_zip_stream_{};
 };
 
 }  // namespace wasm
