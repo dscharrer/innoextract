@@ -13,6 +13,7 @@ Library        ../src/page_objects/libraries/browser_lib.py
 ${BROWSER}             Firefox
 ${DOWNLOAD_FILE_NAME}  innoout.zip
 ${HOME_PAGE_PATH}      http://127.0.0.1:8000/index.html
+${TEST_FILE}           ${file_4mb}
 
 *** Test Cases ***
 Extract test file
@@ -22,13 +23,18 @@ Extract test file
     ${profile}  create_profile  ${download_path}
     Opening Browser  ${HOME_PAGE_PATH}  ${browser}  ${profile}
     Click Add Files Button
-    Upload Test File  ${file_4mb}[path]
+    Upload Test File  ${TEST_FILE}[path]
+
     Click Start Button
-    Check If Log Console Contains    Opening "${file_4mb}[name]"
+    Check If Log Console Contains    Opening "${TEST_FILE}[name]"
+    Validate Output Description  ${TEST_FILE}[archive_name]
+    Validate Output Archive File Size  ${TEST_FILE}[archive_size_bytes]
+    Validate Output Archive Files Number    ${TEST_FILE}[files_in_archive]
     Wait Until Page Does Not Contain Element  ${ExtractAndSaveDisabledButton}
     Click Extract And Save Button
-    Validate File Details In Log Console    ${file_4mb}
+    Validate File Details In Log Console    ${TEST_FILE}
     Check If Log Console Does Not Contain Errors
+
     ${downloaded_file_path}  Set Variable  ${download_path}${DOWNLOAD_FILE_NAME}
     Log  Validate file created: ${downloaded_file_path}  console=yes
     Wait Until Created  ${downloaded_file_path}
