@@ -4,7 +4,7 @@
 tasks:
   # Task names here are used when executing the bots, so renaming these is recommended.
   Run all tasks:
-    shell: python -m robot --report NONE --outputdir output --logtitle "Task log" tests/smoke_tests.robot
+    shell: python -m robot --report NONE --outputdir output --logtitle "Task log" tests/multiple_files_tests.robot
 
 condaConfigFile: conda.yaml
 
