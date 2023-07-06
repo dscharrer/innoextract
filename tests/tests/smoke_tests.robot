@@ -42,3 +42,4 @@ Extract test file
     Log  Validate file is not empty: ${downloaded_file_path}  console=yes
     File Should Not Be Empty  ${downloaded_file_path}
     Close Browser
+    
