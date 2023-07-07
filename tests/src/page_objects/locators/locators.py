@@ -5,6 +5,7 @@ InputTitle = '//h5[contains(text(),"Input")]'
 AddFilesButton = '//button[@id="addBtn"]'
 RemoveButton = '//button[@id="removeBtn"]'
 StartButton = '//button[@id="startBtn"]'
+RadioButton = 'firstRadio'
 
 EmptyListInfo = '//li[@id="emptyListInfo"]'
 

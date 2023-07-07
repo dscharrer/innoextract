@@ -31,6 +31,7 @@ Extract test file
     Validate Output Archive File Size  ${TEST_FILE}[archive_size_bytes]
     Validate Output Archive Files Number    ${TEST_FILE}[files_in_archive]
     Wait Until Page Does Not Contain Element  ${ExtractAndSaveDisabledButton}
+    
     Click Extract And Save Button
     Validate File Details In Log Console    ${TEST_FILE}
     Check If Log Console Does Not Contain Errors
