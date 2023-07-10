@@ -7,7 +7,6 @@ Variables  ../locators/locators.py
 
 *** Variables ***
 ${BROWSER}             Firefox
-${DOWNLOAD_FILE_NAME}  innoout.zip
 ${HOME_PAGE_PATH}      http://127.0.0.1:8000/index.html
 
 *** Keywords ***
@@ -24,15 +23,15 @@ Create Unique Download Path
     [return]    ${path}
 
 Rename Downloaded Zip File Name
-    [Arguments]    @{}    ${path}    ${new_name}=innout    ${postfix}=0   ${new_file_extenion}=.zip    ${old_name}=innoout.zip
+    [Arguments]    ${path}    ${test_file}    ${new_name}=innout    ${postfix}=0   ${new_file_extenion}=.zip
     ${file_name}    Catenate    SEPARATOR=    ${new_name}    ${postfix}    ${new_file_extenion}
-    Copy File    ${path}${old_name}    ${path}${file_name}
+    Copy File    ${path}${test_file}[archive_name].zip    ${path}${file_name}
     Wait Until Created    ${path}${file_name}
-    Remove File    ${path}${old_name}
+    Remove File    ${path}${test_file}[archive_name].zip
 
 Check If Zip File Is Not Empty
-    [Arguments]    ${download_path}    @{}    ${file_name}=innoout.zip
-    ${downloaded_file_path}    Set Variable    ${download_path}${file_name}
+    [Arguments]    ${download_path}    ${test_file}
+    ${downloaded_file_path}    Set Variable    ${download_path}${test_file}[archive_name].zip
     Log    Validate file created: ${downloaded_file_path}    console=yes
     Wait Until Created    ${downloaded_file_path}    timeout=15
     Sleep    1s

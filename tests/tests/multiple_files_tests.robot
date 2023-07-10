@@ -29,12 +29,12 @@ Extract two files one by one test
 
     # Adding and Extracting First File
     Extract File  ${TEST_FILE}  ${download_path}
-    Check If Zip File Is Not Empty   ${download_path}
+    Check If Zip File Is Not Empty   ${download_path}    ${TEST_FILE}
     # Adding and Extracting Second File
-    Rename Downloaded Zip File Name  path=${download_path}
+    Rename Downloaded Zip File Name  ${download_path}    ${TEST_FILE}
     Clean Input List
     Extract File  ${TEST_FILE}  ${download_path}
-    Check If Zip File Is Not Empty   ${download_path}
+    Check If Zip File Is Not Empty   ${download_path}    ${TEST_FILE}
     Close Browser
 
 Extract multiple files test
@@ -46,7 +46,7 @@ Extract multiple files test
     Opening Browser  ${HOME_PAGE_PATH}  ${browser}  ${profile}
     Log To Console    Extracting file consisting of multiple files
     Extract Multiple Files    ${MULTI_PART_TEST_FILE}    ${download_path}
-    Check If Zip File Is Not Empty   ${download_path}
+    Check If Zip File Is Not Empty   ${download_path}    ${MULTI_PART_TEST_FILE}
     Clean Input List
     Close Browser
 

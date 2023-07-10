@@ -11,7 +11,6 @@ Library        ../src/page_objects/libraries/browser_lib.py
 
 *** Variables ***
 ${BROWSER}             Firefox
-${DOWNLOAD_FILE_NAME}  innoout.zip
 ${HOME_PAGE_PATH}      http://127.0.0.1:8000/index.html
 ${TEST_FILE}           ${file_4mb}
 
@@ -36,7 +35,7 @@ Extract test file
     Validate File Details In Log Console    ${TEST_FILE}
     Check If Log Console Does Not Contain Errors
 
-    ${downloaded_file_path}  Set Variable  ${download_path}${DOWNLOAD_FILE_NAME}
+    ${downloaded_file_path}  Set Variable  ${download_path}${TEST_FILE}[archive_name].zip
     Log  Validate file created: ${downloaded_file_path}  console=yes
     Wait Until Created  ${downloaded_file_path}
     Sleep  1s
