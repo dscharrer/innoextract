@@ -138,11 +138,16 @@ function createList() {
     if (global_file_list.length == 0) {
         fileList.appendChild(emptyListInfo);
     } else {
+        let file_selected = false;
         for (let i = 0; i < global_file_list.length; i++) {
             let li = fileTemplate.content.cloneNode(true);
             li.querySelector('label').textContent = global_file_list[i].name;
             li.querySelector('small').textContent = `${Math.round(global_file_list[i].size/(1024*1024)  )} MB`;
             li.querySelector('input').value = i;
+            if (!file_selected && global_file_list[i].name.split('.').pop() == "exe") {
+                li.querySelector('input').checked = true;
+                file_selected = true;
+            }
             fileList.appendChild(li);
         }
     }
