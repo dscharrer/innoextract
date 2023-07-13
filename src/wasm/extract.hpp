@@ -77,6 +77,7 @@ class extractor {
   std::string load_exe(const std::string& exe_path);
   std::string list_files();
   std::string extract(const std::string& list_json);
+  void set_abort(bool state);
 
  private:
   using json = nlohmann::ordered_json;
@@ -88,6 +89,7 @@ class extractor {
 
   static extractor* singleton_instance;
   static std::once_flag init_instance_flag;
+  bool aborted;
 
   extractor();
   extractor(const extractor&) = delete;
@@ -109,6 +111,7 @@ class extractor {
   void verify_close_outputs(const std::vector<file_output*>& outputs,
                             const setup::data_entry& data);
   void save_zip();
+  void abort_zip();
 
   fs::path installer_path_{};
   util::ifstream installer_ifs_{};

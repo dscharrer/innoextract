@@ -26,18 +26,18 @@
                     <div class="card-header">
                         <div class="btn-toolbar justify-content-between" role="toolbar">
                             <div class="btn-group me-lg-2">
-                            <button id="addBtn" class="btn btn-success"><i class="bi bi-file-earmark-plus-fill"></i> Add files...</button>
+                            <button id="addBtn" class="btn btn-success"><i class="bi bi-file-earmark-plus-fill"></i> Add files</button>
                             <button id="removeBtn" class="btn btn-danger"><i class="bi bi-trash-fill"></i> Remove</button>
                             </div>
                             <div class="btn-group me-lg-2">
-                                <button id="startBtn" class="btn btn-primary"><i class="bi bi-rocket-takeoff-fill"></i> Start</button>
+                                <button id="startBtn" class="btn btn-primary"><i class="bi bi-rocket-takeoff-fill"></i> Load</button>
                             </div>
                         </div>
                     </div>
                     <ul class="list-group list-group-flush pane" id="fileList">
                         <li class="list-group-item text-center" id="emptyListInfo">
-                            <h5 class="card-title">The list is empty.</h5>
-                            <small>Add some files please.</small>
+                            <h5 class="card-title">Input files</h5>
+                            <small>Add installer files here</small>
                         </li>
                         <template id="fileTemplate">
                             <li class="list-group-item">
@@ -70,7 +70,7 @@
                     <div class="card-header">
                         <div class="d-flex w-100 justify-content-between">
                             <div>
-                                <h5 id="title" class="card-title">Add and choose a EXE file...</h5>
+                                <h5 id="title" class="card-title"></h5>
                                 <h6 id="desc" class="card-subtitle mb-2 text-muted"></h6>
                             </div>
                             <small id="details">Size: <span id="size">0</span>MB Files: <span id="filesNum">0</span></small>
@@ -78,8 +78,10 @@
                         <div class="progress mb-2">
                             <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
                         </div>
+                        <div class="mb-2">
+                            <p id="status"> </p>
+                        </div>
                         <div id="extract-group" class="input-group me-lg-2 w-100">
-                            <button id="extractBtn" class="btn btn-warning flex-fill" disabled><i class="bi bi-file-earmark-zip-fill"></i> Extract and save as a ZIP! </button>
                         </div>
                     </div>
                     <div id="tree"></div> 

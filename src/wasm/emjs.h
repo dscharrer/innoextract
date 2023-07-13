@@ -32,6 +32,7 @@ EMSCRIPTEN_KEEPALIVE int load_file_return(char const *filename, char const *mime
 EMSCRIPTEN_KEEPALIVE char const * load_exe(char const *filename);
 EMSCRIPTEN_KEEPALIVE char const * list_files();
 EMSCRIPTEN_KEEPALIVE char const * extract(char const *list_json);
+EMSCRIPTEN_KEEPALIVE void abort_down();
 }
 }
 

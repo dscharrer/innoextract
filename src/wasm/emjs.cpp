@@ -168,6 +168,10 @@ EM_JS(void, close_int, (void), {
   console.log("zipstream: close")
 });
 
+EM_ASYNC_JS(void, abort_int, (void), {
+  Module.writer.abort();
+});
+
 void close(){
   close_int();
 }
@@ -179,6 +183,11 @@ ssize_t emjs_write(void* buf, size_t len)
 {
   return emjs::write(buf, 1, len);
 }
+
+void abort_down(void) {
+  abort_int();
+}
+
 
 EMSCRIPTEN_KEEPALIVE int load_file_return(char const *filename, char const *mime_type, char *buffer, size_t buffer_size, upload_handler callback, void *callback_data) {
   /// Load a file - this function is called from javascript when the file upload is activated
@@ -204,6 +213,9 @@ EMSCRIPTEN_KEEPALIVE char const * extract(char const *list_json) {
   return result.c_str();
 }
 
+EMSCRIPTEN_KEEPALIVE void set_abort(void) {
+  wasm::extractor::get().set_abort(true);
+}
 }
 
 }

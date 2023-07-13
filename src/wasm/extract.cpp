@@ -53,6 +53,7 @@ bool file_output::write(char* data, size_t n) {
   ZIPentry* ze;
   if (!file_open_) {
     printf("Unpacking file %s\n", path_.c_str());
+    emjs::ui_innerhtml("status", path_.c_str());
     zip_entry_ = zs_entrybegin(zip_, path_.c_str(), time(0), ZS_STORE, 0);
     ze = zs_entrydata(zip_, zip_entry_, reinterpret_cast<uint8_t*>(data), n, 0);
 		file_open_ = true;
@@ -329,6 +330,7 @@ std::string extractor::extract(const std::string& list_json) {
   auto files = input["files"];
   std::string lang;
   std::vector<const processed_file*> selected_files;
+  set_abort(false);
   selected_files.reserve(all_files_.size());
 
   if (input.contains("lang")){
@@ -485,6 +487,16 @@ std::string extractor::extract(const std::string& list_json) {
         }
 
         uint64_t output_size = copy_data(file_source, outputs);
+
+        if (aborted) { // copy_data is the most likely function to be in while execution is being aborted
+          log_info << "Extraction aborted";
+          abort_zip();
+
+          json ret;
+          ret["status"]="Aborted by user";
+          return ret.dump();
+        }
+
         const setup::data_entry& data = installer_info_.data_entries[location.second];
 
         if (output_size != data.uncompressed_size) {
@@ -512,7 +524,9 @@ std::string extractor::extract(const std::string& list_json) {
   log_info << "Done. Creating ZIP file.";
   save_zip();
 
-  return json::object().dump();
+  json ret;
+  ret["status"]="Completed successfully";
+  return ret.dump();
 }
 
 void extractor::init_singleton() {
@@ -566,6 +580,10 @@ uint64_t extractor::copy_data(const stream::file_reader::pointer& source,
 
       emjs::ui_progbar_update(float(bytes_extracted_) / total_size_ * 100);
     }
+    if (aborted) {
+      return 0;
+    }
+
   }
 
   return output_size;
@@ -600,6 +618,15 @@ void extractor::save_zip() {
 
   emjs::write(nullptr, 0, 0);
   emjs::close();
+}
+
+void extractor::abort_zip() {
+  zs_free(output_zip_stream_);
+  emjs::abort_down();
+}
+
+void extractor::set_abort(bool state) {
+  aborted = state;
 }
 
 }  // namespace wasm
