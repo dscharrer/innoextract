@@ -17,3 +17,27 @@
 #langSelect {
     width: fit-content;
 }
+
+.collapse-name {
+    font-weight: normal;
+    text-decoration: solid;
+}
+
+.collapsible {
+    transition: max-height 0.5s;
+    max-height: 10em;
+    overflow: hidden;
+}
+
+.collapsed {
+    max-height: 0px !important;
+    overflow: hidden;
+}
+
+#footer {
+    margin: 2em;
+}
+
+html, #footer {
+    min-width: 470px;
+}

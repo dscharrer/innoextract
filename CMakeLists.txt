@@ -102,7 +102,6 @@ if(WASM)
 	-sINITIAL_MEMORY=1024MB -sSTACK_SIZE=512MB -sALLOW_MEMORY_GROWTH 
 	-sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sEXPORTED_FUNCTIONS=[_main,_malloc,_free] -sINVOKE_RUN=0 -sASYNCIFY -sASYNCIFY_STACK_SIZE=65565
 	--pre-js ../src/wasm/pre.js -sNO_DISABLE_EXCEPTION_CATCHING -sWASM_BIGINT)
-
 	add_compile_options("-fvisibility=hidden")
 	add_compile_options("-fvisibility-inlines-hidden")
 
@@ -594,6 +593,7 @@ if(WASM)
 	file(COPY src/wasm/html/css DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 	file(COPY src/wasm/html/img DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 	string(TIMESTAMP BUILD_DATE "%s")
+    execute_process(COMMAND bash -c "git describe --dirty --always --tags" OUTPUT_VARIABLE GIT_VERSION)
 	configure_file("src/wasm/html/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html")
 
 else() #NOT WASM

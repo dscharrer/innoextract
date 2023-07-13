@@ -132,6 +132,7 @@ function startInnoExtract() {
     if (checked) {
         clearFileInfo();
         extractBtn.disabled = true;
+        startBtn.disabled = true;
         var file = global_file_list[checked.value];
         Module.ccall('load_exe', 'string', ['string'], [file.name], {async: true}).then(result =>{
             var obj = JSON.parse(result)
@@ -154,9 +155,11 @@ function startInnoExtract() {
 
                 Module.ccall('list_files', 'string', [], [], {async: true}).then(result =>{
                     createTree(JSON.parse(result));
+                    console.log(JSON.parse(result));
                     extractBtn.disabled = false;
                 });
             }
+            startBtn.disabled = false;
         });
     }
 }
@@ -220,7 +223,6 @@ function createList() {
             }
             fileList.appendChild(li);
         }
-
         startBtn.disabled = false;
     }
 }
@@ -300,4 +302,29 @@ function abortExtraction() {
     Module.ccall("set_abort", "number", [], [], {async: true}).then(result => {
         console.debug("Abort requested");
     });
+}
+
+function unCollapse(id, button) {
+    var els = document.getElementsByClassName("collapsible");
+    elem = document.getElementById(id);
+    Array.from(els).forEach((el) => {
+        if (el == elem) {
+            elem.classList.toggle("collapsed");
+        }
+        else if (!el.classList.contains("collapsed")) {
+            el.classList.add("collapsed");
+        }
+    });
+
+
+    var els = document.getElementsByClassName("collapse-name");
+    Array.from(els).forEach((el) => {
+        el.style.fontWeight = "normal";
+        el.style.color = "var(--bs-link-color)";
+    });
+
+    if (!elem.classList.contains("collapsed")) {
+        button.style.fontWeight = "bold";
+        button.style.color = "var(--bs-link-hover-color)";
+    }
 }
