@@ -11,10 +11,10 @@ namespace wasm {
 class JSFile;
 
 class JSFileBuf : public std::streambuf {
- public:
+public:
   JSFileBuf(JSFile& file);
 
- private:
+private:
   JSFile& file_;
   std::streampos pos_;
   virtual std::streamsize xsgetn(char* s, std::streamsize n) override;
@@ -26,7 +26,7 @@ class JSFileBuf : public std::streambuf {
 };
 
 class JSFile : public std::istream {
- public:
+public:
   friend class JSFileBuf;
   JSFile();
   JSFile(const std::string& path, std::ios_base::openmode mode = ios_base::in);
@@ -38,7 +38,7 @@ class JSFile : public std::istream {
   size_t size() const;
   void close();
 
- private:
+private:
   std::string path_;
   int js_index_ = -1;
   size_t size_ = 0;
@@ -49,6 +49,6 @@ int file_exist(char const* filename);
 int file_size(int file_idx);
 int read_bytes(int file_idx, void* ptr, uint64_t pos, uint64_t length);
 }
-}  // namespace wasm
+} // namespace wasm
 
 #endif
