@@ -198,8 +198,9 @@ EMSCRIPTEN_KEEPALIVE int load_file_return(char const* filename, char const* mime
   return 1;
 }
 
-EMSCRIPTEN_KEEPALIVE char const* load_exe(char const* filename) {
+EMSCRIPTEN_KEEPALIVE char const* load_exe(char const* filename, char const* options_json) {
   static std::string result;
+  wasm::extractor::get().set_options(options_json);
   result = wasm::extractor::get().load_exe(filename);
   return result.c_str();
 }
@@ -218,6 +219,10 @@ EMSCRIPTEN_KEEPALIVE char const* extract(char const* list_json) {
 
 EMSCRIPTEN_KEEPALIVE void set_abort(void) {
   wasm::extractor::get().set_abort(true);
+}
+
+EMSCRIPTEN_KEEPALIVE int options_differ(char const * options_json) {
+  return wasm::extractor::get().options_differ(options_json);
 }
 }
 

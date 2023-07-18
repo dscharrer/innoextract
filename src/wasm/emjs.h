@@ -34,10 +34,11 @@ extern "C" {
 EMSCRIPTEN_KEEPALIVE int load_file_return(char const* filename, char const* mime_type, char* buffer,
                                           size_t buffer_size, upload_handler callback,
                                           void* callback_data);
-EMSCRIPTEN_KEEPALIVE char const* load_exe(char const* filename);
+EMSCRIPTEN_KEEPALIVE char const* load_exe(char const* filename, char const* options_json);
 EMSCRIPTEN_KEEPALIVE char const* list_files();
 EMSCRIPTEN_KEEPALIVE char const* extract(char const* list_json);
 EMSCRIPTEN_KEEPALIVE void abort_down();
+EMSCRIPTEN_KEEPALIVE int options_differ(char const* options_json);
 }
 } // namespace
 
