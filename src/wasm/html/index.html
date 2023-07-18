@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Innoextract wasm</title>
+    <title>Innoextract WASM</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/innoextract.css?v=${BUILD_DATE}" rel="stylesheet">
     <link href="css/bootstrap-icons.css" rel="stylesheet">
@@ -91,19 +91,19 @@
         <div id="footer" class="col-xl-8 mx-auto p-xl-5 p-3 fixed-bottom">
           <hr>
         <small>
-          <a class="collapse-name" onClick='unCollapse("about", this)' role="button">About</a>
-          • <a class="collapse-name" onClick='unCollapse("issues", this)' role="button">Known issues</a>
-          • <a class="collapse-name" onClick='unCollapse("techs", this)' role="button">Open source technologies</a>
+          <a class="collapse-name" onClick='uncollapse("about", this)' role="button">About</a>
+          • <a class="collapse-name" onClick='uncollapse("issues", this)' role="button">Known issues</a>
+          • <a class="collapse-name" onClick='uncollapse("techs", this)' role="button">Open source technologies</a>
           • <a class="collapse-name" href="https://github.com/Mobica/innoextract-wasm" target="_blank">Github repository</a>
           <div class="float-end">Innoextract-wasm ${GIT_VERSION}</div>
           <div id="footer-group">
             <div id="about" class="collapsible collapsed">
-                <p><a href="https://github.com/Mobica/innoextract-wasm">Innoextract-wasm</a> is created as a side project by <a href="https://mobica.com/">Mobica</a> employees. The main goal was to learn a bit of WASM and porting C/C++ code to a web application using emscripten.<br>
+                <p><a href="https://github.com/Mobica/innoextract-wasm">Innoextract-wasm</a> is created as a side project by <a href="https://mobica.com/">Mobica</a> employees. The main goal was to learn a bit of WASM and porting C++ code to a web application using Emscripten.<br>
                   The <a href="https://constexpr.org/innoextract/">original Innoextract</a> project was created by <a href="https://ds.me/">Daniel Scharrer</a>. This port is not directly related to Daniel's work, so any bugs or feature requests regarding this website should not be sent to him.</p>
             </div>
             <div id="issues" class="collapsible collapsed">
                 <ul>
-                <li>Some installers are using seek() on output file, which is not supported at this moment (eg. Stronghold HD)</li>
+                <li>Some installers use seek() on the output file, which is not supported at this moment (eg. Stronghold HD)</li>
                 <li>StreamSaver.js often presents issues on Firefox - try opening Innoextract in a brand new tab as a workaround</li>
                 <li>File collision handling and filtering apart from selecting output files is not supported</li>
                 </ul>

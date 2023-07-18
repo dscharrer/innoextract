@@ -304,7 +304,7 @@ function abortExtraction() {
     });
 }
 
-function unCollapse(id, button) {
+function uncollapse(id, button) {
     var els = document.getElementsByClassName("collapsible");
     elem = document.getElementById(id);
     Array.from(els).forEach((el) => {

@@ -593,7 +593,7 @@ if(WASM)
 	file(COPY src/wasm/html/css DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 	file(COPY src/wasm/html/img DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 	string(TIMESTAMP BUILD_DATE "%s")
-    execute_process(COMMAND bash -c "git describe --dirty --always --tags" OUTPUT_VARIABLE GIT_VERSION)
+    execute_process(COMMAND sh -c "git describe --dirty --always --tags" OUTPUT_VARIABLE GIT_VERSION)
 	configure_file("src/wasm/html/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html")
 
 else() #NOT WASM
