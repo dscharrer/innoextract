@@ -2,20 +2,20 @@
 
 // #include <zip.h>
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 
 #include "cli/goggalaxy.hpp"
 #include "emjs.h"
 #include "setup/data.hpp"
 #include "setup/directory.hpp"
+#include "setup/expression.hpp"
 #include "setup/filename.hpp"
 #include "setup/language.hpp"
 #include "stream/slice.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
 #include "util/time.hpp"
-#include "setup/expression.hpp"
 
 #include "wasm/fdzipstream/fdzipstream.h"
 
@@ -23,16 +23,10 @@ using json = nlohmann::ordered_json;
 
 namespace wasm {
 
-file_output::file_output(const fs::path& dir, const processed_file* f, bool write, ZIPstream *zip)
-    : path_(dir / f->path()),
-      file_(f),
-      checksum_(f->entry().checksum.type),
+file_output::file_output(const fs::path& dir, const processed_file* f, bool write, ZIPstream* zip)
+    : path_(dir / f->path()), file_(f), checksum_(f->entry().checksum.type),
       checksum_position_(f->entry().checksum.type == crypto::None ? boost::uint64_t(-1) : 0),
-      position_(0),
-      total_written_(0),
-      write_(write),
-      zip_(zip),
-      file_open_(false) {
+      position_(0), total_written_(0), write_(write), zip_(zip), file_open_(false) {
   if (write_) {
     try {
       std::ios_base::openmode flags =
@@ -56,8 +50,8 @@ bool file_output::write(char* data, size_t n) {
     emjs::ui_innerhtml("status", path_.c_str());
     zip_entry_ = zs_entrybegin(zip_, path_.c_str(), time(0), ZS_STORE, 0);
     ze = zs_entrydata(zip_, zip_entry_, reinterpret_cast<uint8_t*>(data), n, 0);
-		file_open_ = true;
-	} else {
+    file_open_ = true;
+  } else {
     ze = zs_entrydata(zip_, zip_entry_, reinterpret_cast<uint8_t*>(data), n, 0);
   }
 
@@ -88,15 +82,19 @@ void file_output::close() {
   return;
 }
 
-void file_output::settime(time_t t){
+void file_output::settime(time_t t) {
   if (file_open_) {
     zs_entrydatetime(zip_entry_, t);
   }
 }
 
-bool file_output::is_complete() const { return total_written_ == file_->entry().size; }
+bool file_output::is_complete() const {
+  return total_written_ == file_->entry().size;
+}
 
-bool file_output::has_checksum() const { return checksum_position_ == file_->entry().size; }
+bool file_output::has_checksum() const {
+  return checksum_position_ == file_->entry().size;
+}
 
 bool file_output::calculate_checksum() {
   if (has_checksum()) {
@@ -132,7 +130,9 @@ bool file_output::calculate_checksum() {
   return true;
 }
 
-crypto::checksum file_output::checksum() { return checksum_.finalize(); }
+crypto::checksum file_output::checksum() {
+  return checksum_.finalize();
+}
 
 extractor& extractor::get() {
   std::call_once(init_instance_flag, &extractor::init_singleton);
@@ -148,8 +148,7 @@ std::string extractor::load_exe(const std::string& exe_path) {
   try {
     open_installer_stream();
     load_installer_data();
-  }
-  catch (const setup::version_error&) {
+  } catch (const setup::version_error&) {
     if (installer_offsets_.found_magic) {
       if (installer_offsets_.header_offset == 0) {
         return error_obj("Could not determine the location of setup headers!");
@@ -158,8 +157,7 @@ std::string extractor::load_exe(const std::string& exe_path) {
       }
     }
     return error_obj("Not a supported Inno Setup installer!");
-  }
-  catch (const std::exception& e) {
+  } catch (const std::exception& e) {
     return error_obj(e.what());
   }
 
@@ -196,8 +194,8 @@ void extractor::load_installer_data() {
 std::string extractor::dump_installer_info() const {
   json installer_info_obj{};
   installer_info_obj["name"] = installer_info_.header.app_versioned_name.empty()
-                              ? installer_info_.header.app_name
-                              : installer_info_.header.app_versioned_name;
+                                   ? installer_info_.header.app_name
+                                   : installer_info_.header.app_versioned_name;
   installer_info_obj["copyrights"] = installer_info_.header.app_copyright;
   installer_info_obj["langs"] = json::array();
   installer_info_obj["size"] = get_size() / 1024 / 1024;
@@ -256,7 +254,7 @@ void extractor::fetch_files() {
 
   for (const auto& file : installer_info_.files) {
     if (file.location >= installer_info_.data_entries.size()) {
-      continue;  // Ignore external files (copy commands)
+      continue; // Ignore external files (copy commands)
     }
 
     const std::string path = name_converter.convert(file.destination);
@@ -278,15 +276,16 @@ json extractor::create_main_dir_obj(std::map<std::string, json::object_t*>& dir_
   for (const auto& path : dirs_) {
     const size_t sep_pos = path.find_last_of(setup::path_sep);
     if (sep_pos == std::string::npos) {
-      dir_objs[path] = main_dir["nodes"].emplace_back(json{{"text", path}}).get_ptr<json::object_t*>();
+      dir_objs[path] =
+          main_dir["nodes"].emplace_back(json{{"text", path}}).get_ptr<json::object_t*>();
     } else {
       json::object_t* const parent = dir_objs[path.substr(0, sep_pos)];
       if (!parent->count("nodes")) {
         parent->emplace("nodes", json::array());
       }
       dir_objs[path] = parent->at("nodes")
-                         .emplace_back(json{{"text", path.substr(sep_pos + 1)}})
-                         .get_ptr<json::object_t*>();
+                           .emplace_back(json{{"text", path.substr(sep_pos + 1)}})
+                           .get_ptr<json::object_t*>();
     }
   }
 
@@ -333,7 +332,7 @@ std::string extractor::extract(const std::string& list_json) {
   set_abort(false);
   selected_files.reserve(all_files_.size());
 
-  if (input.contains("lang")){
+  if (input.contains("lang")) {
     lang = input["lang"];
   }
 
@@ -363,16 +362,18 @@ std::string extractor::extract(const std::string& list_json) {
   printf("opening zip file %s\n", zipfile.c_str());
 
   typedef std::pair<const processed_file*, uint64_t> output_location;
-  std::vector<std::vector<output_location> > files_for_location;
+  std::vector<std::vector<output_location>> files_for_location;
   files_for_location.resize(installer_info_.data_entries.size());
 
-
   for (const processed_file* file_ptr : selected_files) {
-    if(file_ptr->entry().languages.empty() || lang.empty() || setup::expression_match(lang, file_ptr->entry().languages))
+    if (file_ptr->entry().languages.empty() || lang.empty() ||
+        setup::expression_match(lang, file_ptr->entry().languages))
       files_for_location[file_ptr->entry().location].push_back(output_location(file_ptr, 0));
     uint64_t offset = installer_info_.data_entries[file_ptr->entry().location].uncompressed_size;
-    uint32_t sort_slice = installer_info_.data_entries[file_ptr->entry().location].chunk.first_slice;
-    uint32_t sort_offset = installer_info_.data_entries[file_ptr->entry().location].chunk.sort_offset;
+    uint32_t sort_slice =
+        installer_info_.data_entries[file_ptr->entry().location].chunk.first_slice;
+    uint32_t sort_offset =
+        installer_info_.data_entries[file_ptr->entry().location].chunk.sort_offset;
     for (uint32_t location : file_ptr->entry().additional_locations) {
       setup::data_entry& data = installer_info_.data_entries[location];
       files_for_location[location].push_back(output_location(file_ptr, offset));
@@ -423,20 +424,20 @@ std::string extractor::extract(const std::string& list_json) {
       if (installer_info_.version < INNO_VERSION(4, 1, 7) && !basename2.empty()) {
         std::swap(basename2, basename);
       }
-      slice_reader.reset(
-          new stream::slice_reader(dir, basename, basename2, installer_info_.header.slices_per_disk));
+      slice_reader.reset(new stream::slice_reader(dir, basename, basename2,
+                                                  installer_info_.header.slices_per_disk));
     }
 
     bytes_extracted_ = 0;
     multi_outputs_.clear();
 
-    for (const Chunks::value_type& chunk : chunks) {  //[first = chunk, second = [file, location]]
+    for (const Chunks::value_type& chunk : chunks) { //[first = chunk, second = [file, location]]
       stream::chunk_reader::pointer chunk_source;
       if (chunk.first.encryption == stream::Plaintext) {
         chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first, "");
       }
       uint64_t offset = 0;
-      for (const Files::value_type& location : chunk.second) {  // 1 chunk => n files
+      for (const Files::value_type& location : chunk.second) { // 1 chunk => n files
         const stream::file& file = location.first;
         const std::vector<output_location>& output_locations = files_for_location[location.second];
         if (file.offset > offset) {
@@ -453,7 +454,7 @@ std::string extractor::extract(const std::string& list_json) {
         offset = file.offset + file.size;
 
         if (!chunk_source.get()) {
-          continue;  // Not extracting/testing this file
+          continue; // Not extracting/testing this file
         }
 
         crypto::checksum checksum;
@@ -463,7 +464,7 @@ std::string extractor::extract(const std::string& list_json) {
         file_source = stream::file_reader::get(*chunk_source, file, &checksum);
 
         std::vector<file_output*> outputs;
-        for (const output_location& output_loc : output_locations) {  // 1 file => n output files
+        for (const output_location& output_loc : output_locations) { // 1 file => n output files
           const processed_file* fileinfo = output_loc.first;
 
           // Re-use existing file output for multi-part files
@@ -488,12 +489,13 @@ std::string extractor::extract(const std::string& list_json) {
 
         uint64_t output_size = copy_data(file_source, outputs);
 
-        if (aborted) { // copy_data is the most likely function to be in while execution is being aborted
+        if (aborted) { // copy_data is the most likely function to be in while execution is being
+                       // aborted
           log_info << "Extraction aborted";
           abort_zip();
 
           json ret;
-          ret["status"]="Aborted by user";
+          ret["status"] = "Aborted by user";
           return ret.dump();
         }
 
@@ -525,7 +527,7 @@ std::string extractor::extract(const std::string& list_json) {
   save_zip();
 
   json ret;
-  ret["status"]="Completed successfully";
+  ret["status"] = "Completed successfully";
   return ret.dump();
 }
 
@@ -540,7 +542,7 @@ const char* extractor::error_obj(const std::string& msg) {
 
   json error_obj;
   error_obj["error"] = msg;
-  
+
   result = error_obj.dump();
   return result.c_str();
 }
@@ -548,17 +550,15 @@ const char* extractor::error_obj(const std::string& msg) {
 extractor* extractor::singleton_instance = {};
 std::once_flag extractor::init_instance_flag = {};
 
-extractor::extractor() { color::init(color::disable, color::disable); }
+extractor::extractor() {
+  color::init(color::disable, color::disable);
+}
 
 uint64_t extractor::get_size() const {
-  return std::accumulate(
-    installer_info_.data_entries.cbegin(),
-    installer_info_.data_entries.cend(),
-    uint64_t{0},
-    [](const uint64_t acc, const setup::data_entry& entry) {
-      return acc + entry.uncompressed_size;
-    }
-  );
+  return std::accumulate(installer_info_.data_entries.cbegin(), installer_info_.data_entries.cend(),
+                         uint64_t{0}, [](const uint64_t acc, const setup::data_entry& entry) {
+                           return acc + entry.uncompressed_size;
+                         });
 }
 
 uint64_t extractor::copy_data(const stream::file_reader::pointer& source,
@@ -583,14 +583,13 @@ uint64_t extractor::copy_data(const stream::file_reader::pointer& source,
     if (aborted) {
       return 0;
     }
-
   }
 
   return output_size;
 }
 
 void extractor::verify_close_outputs(const std::vector<file_output*>& outputs,
-                                    const setup::data_entry& data) {
+                                     const setup::data_entry& data) {
   for (const auto output : outputs) {
     if (output->file()->is_multipart() && !output->is_complete()) {
       continue;
@@ -629,4 +628,4 @@ void extractor::set_abort(bool state) {
   aborted = state;
 }
 
-}  // namespace wasm
+} // namespace wasm
