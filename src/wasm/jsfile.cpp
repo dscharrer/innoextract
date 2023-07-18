@@ -60,9 +60,7 @@ JSFileBuf::int_type JSFileBuf::uflow() {
   return traits_type::eof();
 }
 
-std::streamsize JSFileBuf::showmanyc() {
-  return std::streamsize(file_.size() - pos_);
-}
+std::streamsize JSFileBuf::showmanyc() { return std::streamsize(file_.size() - pos_); }
 
 std::streampos JSFileBuf::seekpos(std::streampos sp, std::ios_base::openmode mode) {
   pos_ = sp;
@@ -72,15 +70,15 @@ std::streampos JSFileBuf::seekpos(std::streampos sp, std::ios_base::openmode mod
 std::streampos JSFileBuf::seekoff(off_type off, std::ios_base::seekdir way,
                                   std::ios_base::openmode mode) {
   switch (way) {
-  case std::ios_base::beg:
-    pos_ = off;
-    break;
-  case std::ios_base::cur:
-    pos_ += off;
-    break;
-  case std::ios_base::end:
-    pos_ = file_.size() - off;
-    break;
+    case std::ios_base::beg:
+      pos_ = off;
+      break;
+    case std::ios_base::cur:
+      pos_ += off;
+      break;
+    case std::ios_base::end:
+      pos_ = file_.size() - off;
+      break;
   }
   return pos_;
 }
@@ -97,9 +95,7 @@ JSFile::JSFile(const fs::path& path, std::ios_base::openmode mode)
   open(path, mode);
 }
 
-JSFile::~JSFile() {
-  delete rdbuf();
-}
+JSFile::~JSFile() { delete rdbuf(); }
 
 void JSFile::open(const std::string& path, std::ios_base::openmode mode) {
   int file_idx = file_exist(path.c_str());
@@ -117,19 +113,11 @@ void JSFile::open(const std::string& path, std::ios_base::openmode mode) {
   }
 }
 
-void JSFile::open(const fs::path& path, std::ios_base::openmode mode) {
-  open(path.string(), mode);
-}
+void JSFile::open(const fs::path& path, std::ios_base::openmode mode) { open(path.string(), mode); }
 
-void JSFile::close() {
-  js_index_ = -1;
-}
+void JSFile::close() { js_index_ = -1; }
 
-bool JSFile::is_open() const {
-  return js_index_ != -1;
-}
+bool JSFile::is_open() const { return js_index_ != -1; }
 
-size_t JSFile::size() const {
-  return size_;
-}
-} // namespace wasm
+size_t JSFile::size() const { return size_; }
+}  // namespace wasm
