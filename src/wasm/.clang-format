@@ -1,0 +1,13 @@
+---
+BasedOnStyle: LLVM
+AllowShortBlocksOnASingleLine: 'false'
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: 'false'
+ColumnLimit: '100'
+Language: Cpp
+PointerAlignment: Left
+Standard: Cpp11
+TabWidth: '2'
+
+...
