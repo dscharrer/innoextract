@@ -7,6 +7,7 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/innoextract.css?v=${BUILD_DATE}" rel="stylesheet">
     <link href="css/bootstrap-icons.css" rel="stylesheet">
+    <script src="popper.min.js"></script>
     <script src="js/jquery-3.6.4.min.js"></script>
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/bootstrap-treeview.min.js"></script>
@@ -30,7 +31,15 @@
                             <button id="removeBtn" class="btn btn-danger"><i class="bi bi-trash-fill"></i> Remove</button>
                             </div>
                             <div class="btn-group me-lg-2">
-                                <button id="startBtn" class="btn btn-primary"><i class="bi bi-rocket-takeoff-fill"></i> Load</button>
+                                <button id="startBtn" class="btn btn-primary"><i class="bi bi-rocket-takeoff-fill"></i> Load
+                                    <span 
+                                    id="reloadBadge" 
+                                    class="badge text-bg-warning position-absolute top-0 start-100 translate-middle" 
+                                    data-toggle="tooltip" 
+                                    data-placement="top" 
+                                    title="Reload required">!
+                                    </span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -52,16 +61,37 @@
                         </template>
                     </ul>
                 </div>
+                <a class="btn btn-primary btn-sm mt-2" data-bs-toggle="collapse" href="#collapseOpts" role="button" onClick="switchIcon(this);"><i class="bi bi-plus-square-fill"></i> Options</a>
+                <div id="collapseOpts" class="collapse">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="optsEnableDebug">
+                                <label class="form-check-label" for="optsEnableDebug">Enable debug output</label>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="optsExcludeTemporary">
+                                <label class="form-check-label" for="optsExcludeTemporary">Exclude temporary files</label>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <h6 class="card-title">Extraction filter</h6>
+                            <select class="form-select" aria-label="Extraction filter" id="extractionLanguageFilterOptions">
+                                <option value="lang-plus-agn" selected>Chosen language and language agnostic files</option>
+                                <option value="all" >Everything</option>
+                                <option value="lang">Only chosen language files</option>
+                                <option value="lang-agn">Only language-agnostic files</option>
+                            </select>
+                        </li>
+                    </ul>
+                </div>
+                <a class="btn btn-primary btn-sm mt-2" data-bs-toggle="collapse" href="#collapseLogs" role="button" onClick="switchIcon(this);"><i class="bi bi-plus-square-fill"></i> Logs</a>
                 <div class="mt-2">
                     <div class="collapse mb-2" id="collapseLogs">
-                        <h5>Logs</h5>
                         <div id="con" class="card card-body"></div>
                     </div>
-                    <p>
-                        <a class="btn btn-primary btn-sm" data-bs-toggle="collapse" href="#collapseLogs" role="button" aria-expanded="false" aria-controls="collapseLogs">
-                            <i class="bi bi-terminal-fill"></i> Show/hide logs
-                        </a>
-                    </p>
                 </div>
             </div>
             <div class="col-lg-6">

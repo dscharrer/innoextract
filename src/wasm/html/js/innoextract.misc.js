@@ -2,11 +2,18 @@ const fileBrowser = document.getElementById("fileBrowser");
 const addBtn = document.getElementById("addBtn");
 const removeBtn = document.getElementById("removeBtn");
 const startBtn = document.getElementById("startBtn");
+const reloadBadge = document.getElementById("reloadBadge");
+reloadBadge.hidden = true;
 const extractGroup = document.getElementById("extract-group");
 const statusText = document.getElementById("status");
 const progressBar = document.getElementById("progress-bar");
 var extractBtn;
 var abortBtn;
+
+//Options
+const enableDebugOpt = document.getElementById("optsEnableDebug");
+const excludeTempsOpt = document.getElementById("optsExcludeTemporary");
+const extractionLanguageFilterOpt = document.getElementById("extractionLanguageFilterOptions");
 
 //File list
 const emptyListInfo = document.getElementById("emptyListInfo");
@@ -28,6 +35,10 @@ const details = document.getElementById("details");
 
 var global_file_list = []
 var tree;
+
+$(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+})
 
 addBtn.addEventListener("click", (e) => {
     if (fileBrowser) {
@@ -127,13 +138,50 @@ function resetUI() {
     setStatus(" ");
 }
 
+function switchIcon(elem) {
+    icon = elem.getElementsByTagName("i")[0];
+    if(icon.classList.contains("bi-plus-square-fill")){
+        icon.classList.replace("bi-plus-square-fill", "bi-dash-square-fill");
+    }
+    else{
+        icon.classList.replace("bi-dash-square-fill", "bi-plus-square-fill");
+    }
+}
+
+enableDebugOpt.addEventListener("change", updateReloadBadge, false);
+excludeTempsOpt.addEventListener("change", updateReloadBadge, false);
+extractionLanguageFilterOpt.addEventListener("change", updateReloadBadge, false);
+
+function updateReloadBadge() {
+    var optionsJson = createOptionsJson();
+    Module.ccall('options_differ', 'int', ['string'], [optionsJson], {async: true}).then(result =>{
+        if (result != 0) {
+            reloadBadge.hidden = false;
+        } else {
+            reloadBadge.hidden = true;
+        }
+    });
+}
+
+function createOptionsJson() {
+    var optionsJson = new Object();
+    optionsJson.enableDebug = enableDebugOpt.checked;
+    optionsJson.excludeTemps = excludeTempsOpt.checked;
+    optionsJson.extractionLanguageFilterOptions = extractionLanguageFilterOpt.value;
+
+    return JSON.stringify(optionsJson);
+}
+
 function startInnoExtract() {
     let checked = document.querySelector('input[name="exeRadio"]:checked');
     if (checked) {
         clearFileInfo();
         extractBtn.disabled = true;
+        reloadBadge.hidden = true;
         var file = global_file_list[checked.value];
-        Module.ccall('load_exe', 'string', ['string'], [file.name], {async: true}).then(result =>{
+        var optionsJson = createOptionsJson();
+
+        Module.ccall('load_exe', 'string', ['string', 'string'], [file.name, optionsJson], {async: true}).then(result =>{
             var obj = JSON.parse(result)
             if (parseReturn(obj) != "err") {
                 title.innerHTML = obj.name

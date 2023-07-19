@@ -436,8 +436,6 @@ set(INNOEXTRACT_SOURCES
 	src/release.hpp
 	src/release.cpp
 	
-	src/cli/debug.hpp
-	src/cli/debug.cpp if DEBUG
 	src/cli/extract.hpp
 	src/cli/extract.cpp
 	src/cli/gog.hpp
@@ -536,6 +534,8 @@ set(INNOEXTRACT_SOURCES
 	src/util/boostfs_compat.hpp
 	src/util/console.hpp
 	src/util/console.cpp
+	src/util/debug.hpp
+	src/util/debug.cpp
 	src/util/encoding.hpp
 	src/util/encoding.cpp
 	src/util/endian.hpp

@@ -13,8 +13,10 @@
 #include "setup/filename.hpp"
 #include "setup/language.hpp"
 #include "stream/slice.hpp"
+#include "util/debug.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
+#include "util/output.hpp"
 #include "util/time.hpp"
 
 #include "wasm/fdzipstream/fdzipstream.h"
@@ -140,6 +142,40 @@ extractor& extractor::get() {
   return *singleton_instance;
 }
 
+static LanguageFilterOptions languageFilterOptionsFromString(const std::string& options) {
+  if (options == "all") {
+    return LanguageFilterOptions::All;
+  } else if (options == "lang") {
+    return LanguageFilterOptions::SelectedLanguage;
+  } else if (options == "lang-agn") {
+    return LanguageFilterOptions::LanguageAgnostic;
+  } else if (options == "lang-plus-agn") {
+    return LanguageFilterOptions::SelectedLanguageAndAgnostic;
+  } else {
+    throw std::runtime_error("Wrong language filter options!");
+  }
+  return LanguageFilterOptions::All;
+}
+
+void extractor::set_options(const std::string &options_json) {
+  const auto options = json::parse(options_json);
+
+  debugMessagesEnabled_ = options["enableDebug"];
+  excludeTemporaryFilesEnabled_ = options["excludeTemps"];
+  languageFilterOptions_ = languageFilterOptionsFromString(options["extractionLanguageFilterOptions"]);
+}
+
+bool extractor::options_differ(const std::string &options_json) const {
+  const auto options = json::parse(options_json);
+
+  auto areDifferent = false;
+  areDifferent |= (debugMessagesEnabled_ != options["enableDebug"]);
+  areDifferent |= (excludeTemporaryFilesEnabled_ != options["excludeTemps"]);
+  areDifferent |= (languageFilterOptions_ != languageFilterOptionsFromString(options["extractionLanguageFilterOptions"]));
+
+  return areDifferent;
+}
+
 std::string extractor::load_exe(const std::string& exe_path) {
   installer_path_ = fs::path(exe_path);
 
@@ -148,6 +184,11 @@ std::string extractor::load_exe(const std::string& exe_path) {
   try {
     open_installer_stream();
     load_installer_data();
+
+    if (debugMessagesEnabled_) {
+      print_offsets(installer_offsets_);
+      print_info(installer_info_);
+    }
   } catch (const setup::version_error&) {
     if (installer_offsets_.found_magic) {
       if (installer_offsets_.header_offset == 0) {
@@ -248,6 +289,11 @@ void extractor::fetch_files() {
       continue;
     }
 
+    
+    if (excludeTemporaryFilesEnabled_ && (directory.options & setup::directory_entry::DeleteAfterInstall)) {
+			continue; // Ignore temporary dirs
+		}
+
     dirs_.insert(path);
     add_dirs(dirs_, path);
   }
@@ -261,6 +307,10 @@ void extractor::fetch_files() {
     if (path.empty()) {
       continue;
     }
+
+    if (excludeTemporaryFilesEnabled_ && (file.options & setup::file_entry::DeleteAfterInstall)) {
+			continue; // Ignore temporary files
+		}
 
     add_dirs(dirs_, path);
     all_files_.push_back(processed_file(&file, path));
@@ -366,9 +416,15 @@ std::string extractor::extract(const std::string& list_json) {
   files_for_location.resize(installer_info_.data_entries.size());
 
   for (const processed_file* file_ptr : selected_files) {
-    if (file_ptr->entry().languages.empty() || lang.empty() ||
-        setup::expression_match(lang, file_ptr->entry().languages))
+        const auto fileHasLanguage = !file_ptr->entry().languages.empty();
+    const auto languageIsSelected = !lang.empty();
+
+    auto shouldIncludeFile = (languageFilterOptions_ == LanguageFilterOptions::All);
+    shouldIncludeFile |= (((languageFilterOptions_ == LanguageFilterOptions::LanguageAgnostic) || (languageFilterOptions_ == LanguageFilterOptions::SelectedLanguageAndAgnostic)) && !fileHasLanguage);
+    shouldIncludeFile |= (((languageFilterOptions_ == LanguageFilterOptions::SelectedLanguage) || (languageFilterOptions_ == LanguageFilterOptions::SelectedLanguageAndAgnostic)) && languageIsSelected && fileHasLanguage && setup::expression_match(lang, file_ptr->entry().languages));
+    if (shouldIncludeFile) {
       files_for_location[file_ptr->entry().location].push_back(output_location(file_ptr, 0));
+    }
     uint64_t offset = installer_info_.data_entries[file_ptr->entry().location].uncompressed_size;
     uint32_t sort_slice =
         installer_info_.data_entries[file_ptr->entry().location].chunk.first_slice;

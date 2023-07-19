@@ -23,8 +23,8 @@
  *
  * Debug output functions.
  */
-#ifndef INNOEXTRACT_CLI_DEBUG_HPP
-#define INNOEXTRACT_CLI_DEBUG_HPP
+#ifndef INNOEXTRACT_UTIL_DEBUG_HPP
+#define INNOEXTRACT_UTIL_DEBUG_HPP
 
 #include <iosfwd>
 
@@ -32,7 +32,7 @@
 
 #include "cli/extract.hpp"
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(WASM_BUILD)
 
 namespace loader { struct offsets; }
 namespace setup { struct info; }
@@ -44,4 +44,4 @@ void dump_headers(std::istream & is, const loader::offsets & offsets, const extr
 
 #endif // DEBUG
 
-#endif // INNOEXTRACT_CLI_DEBUG_HPP
+#endif // INNOEXTRACT_UTIL_DEBUG_HPP

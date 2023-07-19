@@ -80,9 +80,19 @@ private:
   ZIPentry* zip_entry_;
 };
 
+enum class LanguageFilterOptions {
+  SelectedLanguageAndAgnostic,
+  All,
+  SelectedLanguage,
+  LanguageAgnostic
+};
+
 class extractor {
 public:
   static extractor& get();
+
+  void set_options(const std::string& options_json);
+  bool options_differ(const std::string& options_json) const;
 
   std::string load_exe(const std::string& exe_path);
   std::string list_files();
@@ -137,6 +147,10 @@ private:
   multi_part_outputs multi_outputs_{};
 
   ZIPstream* output_zip_stream_{};
+
+  bool debugMessagesEnabled_ = false;
+  bool excludeTemporaryFilesEnabled_ = false;
+  LanguageFilterOptions languageFilterOptions_ = LanguageFilterOptions::SelectedLanguageAndAgnostic;
 };
 
 } // namespace wasm
