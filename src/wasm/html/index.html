@@ -1,131 +1,170 @@
 <!doctype html>
 <html lang="en" data-bs-theme="dark">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Innoextract WASM</title>
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/innoextract.css?v=${BUILD_DATE}" rel="stylesheet">
-    <link href="css/bootstrap-icons.css" rel="stylesheet">
-    <script src="js/jquery-3.6.4.min.js"></script>
-    <script src="js/bootstrap.bundle.min.js"></script>
-    <script src="js/bootstrap-treeview.min.js"></script>
-    <script src="js/ponyfill.min.js"></script>
-    <script src="js/StreamSaver.js"></script>
-  </head>
-  <body>
-    <div class="col-xl-8 mx-auto p-xl-5 p-3">
-        <header class="align-items-center pb-3 mb-3 border-bottom">
-          <img class="me-2" src="img/icon_64.png" />
-          <span class="fs-4 align-bottom">Innoextract wasm</span>
-        </header>
-        <div class="row">
-          <div class="col-lg-6">
-            <h5>Input</h5>
-            <div class="card">
-                <div class="card-header">
-                  <div class="btn-toolbar justify-content-between" role="toolbar">
-                    <div class="btn-group me-lg-2">
-                    <button id="addBtn" class="btn btn-success"><i class="bi bi-file-earmark-plus-fill"></i> Add files</button>
-                    <button id="removeBtn" class="btn btn-danger"><i class="bi bi-trash-fill"></i> Remove</button>
-                    </div>
-                    <div class="btn-group me-lg-2">
-                        <button id="startBtn" class="btn btn-primary"><i class="bi bi-rocket-takeoff-fill"></i> Load</button>
-                    </div>
-                  </div>
-                </div>
-                <ul class="list-group list-group-flush pane" id="fileList">
-                  <li class="list-group-item text-center" id="emptyListInfo">
-                    <h5 class="card-title">Input files</h5>
-                    <small>Add installer files here</small>
-                  </li>
-                  <template id="fileTemplate">
-                    <li class="list-group-item">
-                        <div class="d-flex w-100 justify-content-between">
-                        <div>
-                          <input class="form-check-input me-1" type="radio" name="exeRadio" value="" id="firstRadio" checked>
-                          <label class="form-check-label fileName" for="firstRadio">Some name</label>
-                        </div>
-                        <small>Some size</small>
-                        </div>
-                    </li>
-                  </template>
-                </ul>
-            </div>
-            <div class="mt-2">
-                <div class="collapse mb-2" id="collapseLogs">
-                  <h5>Logs</h5>
-                  <div id="con" class="card card-body"></div>
-                </div>
-                <p>
-                  <a class="btn btn-primary btn-sm" data-bs-toggle="collapse" href="#collapseLogs" role="button" aria-expanded="false" aria-controls="collapseLogs">
-                    <i class="bi bi-terminal-fill"></i> Show/hide logs
-                  </a>
-                </p>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Innoextract WASM</title>
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/innoextract.css?v=${BUILD_DATE}" rel="stylesheet">
+  <link href="css/bootstrap-icons.css" rel="stylesheet">
+  <script src="popper.min.js"></script>
+  <script src="js/jquery-3.6.4.min.js"></script>
+  <script src="js/bootstrap.bundle.min.js"></script>
+  <script src="js/bootstrap-treeview.min.js"></script>
+  <script src="js/ponyfill.min.js"></script>
+  <script src="js/StreamSaver.js"></script>
+</head>
+
+<body>
+  <div class="col-xl-8 mx-auto p-xl-5 p-3">
+    <header class="align-items-center pb-3 mb-3 border-bottom">
+      <img class="me-2" src="img/icon_64.png" />
+      <span class="fs-4 align-bottom">Innoextract wasm</span>
+    </header>
+    <div class="row">
+      <div class="col-lg-6">
+        <h5>Input</h5>
+        <div class="card">
+          <div class="card-header">
+            <div class="btn-toolbar justify-content-between" role="toolbar">
+              <div class="btn-group me-lg-2">
+                <button id="addBtn" class="btn btn-success"><i class="bi bi-file-earmark-plus-fill"></i> Add
+                  files</button>
+                <button id="removeBtn" class="btn btn-danger"><i class="bi bi-trash-fill"></i> Remove</button>
+              </div>
+              <div class="btn-group me-lg-2">
+                <button id="startBtn" class="btn btn-primary"><i class="bi bi-rocket-takeoff-fill"></i> Load
+                  <span id="reloadBadge"
+                    class="badge text-bg-warning position-absolute top-0 start-100 translate-middle"
+                    data-toggle="tooltip" data-placement="top" title="Reload required">!
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
-          <div class="col-lg-6">
-            <h5>Output</h5>
-            <div class="card">
-                <div class="card-header">
-                  <div class="d-flex w-100 justify-content-between">
-                    <div>
-                        <h5 id="title" class="card-title"></h5>
-                        <h6 id="desc" class="card-subtitle mb-2 text-muted"></h6>
-                    </div>
-                    <small id="details">Size: <span id="size">0</span>MB Files: <span id="filesNum">0</span></small>
+          <ul class="list-group list-group-flush pane" id="fileList">
+            <li class="list-group-item text-center" id="emptyListInfo">
+              <h5 class="card-title">Input files</h5>
+              <small>Add installer files here</small>
+            </li>
+            <template id="fileTemplate">
+              <li class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                  <div>
+                    <input class="form-check-input me-1" type="radio" name="exeRadio" value="" id="firstRadio" checked>
+                    <label class="form-check-label fileName" for="firstRadio">Some name</label>
                   </div>
-                  <div class="progress mb-2">
-                    <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
-                  </div>
-                  <div class="mb-2">
-                    <p id="status"> </p>
-                  </div>
-                  <div id="extract-group" class="input-group me-lg-2 w-100">
-                  </div>
+                  <small>Some size</small>
                 </div>
-                <div id="tree"></div>
-            </div>
+              </li>
+            </template>
+          </ul>
+        </div>
+        <a class="btn btn-primary btn-sm mt-2" data-bs-toggle="collapse" href="#collapseOpts" role="button"
+          onClick="switchIcon(this);"><i class="bi bi-plus-square-fill"></i> Options</a>
+        <div id="collapseOpts" class="collapse">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="optsEnableDebug">
+                <label class="form-check-label" for="optsEnableDebug">Enable debug output</label>
+              </div>
+            </li>
+            <li class="list-group-item">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="optsExcludeTemporary">
+                <label class="form-check-label" for="optsExcludeTemporary">Exclude temporary files</label>
+              </div>
+            </li>
+            <li class="list-group-item">
+              <h6 class="card-title">Extraction filter</h6>
+              <select class="form-select" aria-label="Extraction filter" id="extractionLanguageFilterOptions">
+                <option value="lang-plus-agn" selected>Chosen language and language agnostic files</option>
+                <option value="all">Everything</option>
+                <option value="lang">Only chosen language files</option>
+                <option value="lang-agn">Only language-agnostic files</option>
+              </select>
+            </li>
+          </ul>
+        </div>
+        <a class="btn btn-primary btn-sm mt-2" data-bs-toggle="collapse" href="#collapseLogs" role="button"
+          onClick="switchIcon(this);"><i class="bi bi-plus-square-fill"></i> Logs</a>
+        <div class="mt-2">
+          <div class="collapse mb-2" id="collapseLogs">
+            <div id="con" class="card card-body"></div>
           </div>
         </div>
-        <div id="footer" class="col-xl-8 mx-auto p-xl-5 p-3 fixed-bottom">
-          <hr>
-        <small>
-          <a class="collapse-name" onClick='uncollapse("about", this)' role="button">About</a>
-          • <a class="collapse-name" onClick='uncollapse("issues", this)' role="button">Known issues</a>
-          • <a class="collapse-name" onClick='uncollapse("techs", this)' role="button">Open source technologies</a>
-          • <a class="collapse-name" href="https://github.com/Mobica/innoextract-wasm" target="_blank">Github repository</a>
-          <div class="float-end">Innoextract-wasm ${GIT_VERSION}</div>
-          <div id="footer-group">
-            <div id="about" class="collapsible collapsed">
-                <p><a href="https://github.com/Mobica/innoextract-wasm">Innoextract-wasm</a> is created as a side project by <a href="https://mobica.com/">Mobica</a> employees. The main goal was to learn a bit of WASM and porting C++ code to a web application using Emscripten.<br>
-                  The <a href="https://constexpr.org/innoextract/">original Innoextract</a> project was created by <a href="https://ds.me/">Daniel Scharrer</a>. This port is not directly related to Daniel's work, so any bugs or feature requests regarding this website should not be sent to him.</p>
+      </div>
+      <div class="col-lg-6">
+        <h5>Output</h5>
+        <div class="card">
+          <div class="card-header">
+            <div class="d-flex w-100 justify-content-between">
+              <div>
+                <h5 id="title" class="card-title"></h5>
+                <h6 id="desc" class="card-subtitle mb-2 text-muted"></h6>
+              </div>
+              <small id="details">Size: <span id="size">0</span>MB Files: <span id="filesNum">0</span></small>
             </div>
-            <div id="issues" class="collapsible collapsed">
-                <ul>
-                <li>Some installers use seek() on the output file, which is not supported at this moment (eg. Stronghold HD)</li>
-                <li>StreamSaver.js often presents issues on Firefox - try opening Innoextract in a brand new tab as a workaround</li>
-                <li>File collision handling and filtering apart from selecting output files is not supported</li>
-                </ul>
+            <div class="progress mb-2">
+              <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
             </div>
-            <div id="techs" class="collapsible collapsed">
-                <ul>
-                <li><a href="https://getbootstrap.com">Bootstrap</a></li>
-                <li><a href="https://emscripten.org/">emscripten</a></li>
-                <li><a href="https://github.com/CTrabant/fdzipstream">fdzipstream</a></li>
-                <li><a href="https://json.nlohmann.me/">nlohmann-json</a></li>
-                <li><a href="https://github.com/jimmywarting/StreamSaver.js">StreamSaver.js</a></li>
-                </ul>
+            <div class="mb-2">
+              <p id="status"> </p>
+            </div>
+            <div id="extract-group" class="input-group me-lg-2 w-100">
             </div>
           </div>
-          <!-- build date: ${BUILD_DATE} -->
-        </small>
+          <div id="tree"></div>
         </div>
+      </div>
     </div>
-    <input type="file" id="fileBrowser" multiple accept=".exe,.bin" style="display:none" />
-    <div id="errorModal" class="modal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
+    <div id="footer" class="col-xl-8 mx-auto p-xl-5 p-3 fixed-bottom">
+      <hr>
+      <small>
+        <a class="collapse-name" onClick='uncollapse("about", this)' role="button">About</a>
+        • <a class="collapse-name" onClick='uncollapse("issues", this)' role="button">Known issues</a>
+        • <a class="collapse-name" onClick='uncollapse("techs", this)' role="button">Open source technologies</a>
+        • <a class="collapse-name" href="https://github.com/Mobica/innoextract-wasm" target="_blank">Github
+          repository</a>
+        <div class="float-end">Innoextract-wasm ${GIT_VERSION}</div>
+        <div id="footer-group">
+          <div id="about" class="collapsible collapsed">
+            <p><a href="https://github.com/Mobica/innoextract-wasm">Innoextract-wasm</a> is created as a side project by
+              <a href="https://mobica.com/">Mobica</a> employees. The main goal was to learn a bit of WASM and porting
+              C++ code to a web application using Emscripten.<br>
+              The <a href="https://constexpr.org/innoextract/">original Innoextract</a> project was created by <a
+                href="https://ds.me/">Daniel Scharrer</a>. This port is not directly related to Daniel's work, so any
+              bugs or feature requests regarding this website should not be sent to him.</p>
+          </div>
+          <div id="issues" class="collapsible collapsed">
+            <ul>
+              <li>Some installers use seek() on the output file, which is not supported at this moment (eg. Stronghold
+                HD)</li>
+              <li>StreamSaver.js often presents issues on Firefox - try opening Innoextract in a brand new tab as a
+                workaround</li>
+              <li>File collision handling and filtering apart from selecting output files is not supported</li>
+            </ul>
+          </div>
+          <div id="techs" class="collapsible collapsed">
+            <ul>
+              <li><a href="https://getbootstrap.com">Bootstrap</a></li>
+              <li><a href="https://emscripten.org/">emscripten</a></li>
+              <li><a href="https://github.com/CTrabant/fdzipstream">fdzipstream</a></li>
+              <li><a href="https://json.nlohmann.me/">nlohmann-json</a></li>
+              <li><a href="https://github.com/jimmywarting/StreamSaver.js">StreamSaver.js</a></li>
+            </ul>
+          </div>
+        </div>
+        <!-- build date: ${BUILD_DATE} -->
+      </small>
+    </div>
+  </div>
+  <input type="file" id="fileBrowser" multiple accept=".exe,.bin" style="display:none" />
+  <div id="errorModal" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title"><i class="bi bi-exclamation-circle-fill"></i> Error</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -137,10 +176,11 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
-        </div>
       </div>
     </div>
-    <script src="innoextract.js?v=${BUILD_DATE}"></script>
-    <script src="js/innoextract.misc.js?v=${BUILD_DATE}"></script>
-  </body>
+  </div>
+  <script src="innoextract.js?v=${BUILD_DATE}"></script>
+  <script src="js/innoextract.misc.js?v=${BUILD_DATE}"></script>
+</body>
+
 </html>

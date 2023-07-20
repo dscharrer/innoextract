@@ -2,11 +2,18 @@ const fileBrowser = document.getElementById("fileBrowser");
 const addBtn = document.getElementById("addBtn");
 const removeBtn = document.getElementById("removeBtn");
 const startBtn = document.getElementById("startBtn");
+const reloadBadge = document.getElementById("reloadBadge");
+reloadBadge.hidden = true;
 const extractGroup = document.getElementById("extract-group");
 const statusText = document.getElementById("status");
 const progressBar = document.getElementById("progress-bar");
 var extractBtn;
 var abortBtn;
+
+//Options
+const enableDebugOpt = document.getElementById("optsEnableDebug");
+const excludeTempsOpt = document.getElementById("optsExcludeTemporary");
+const extractionLanguageFilterOpt = document.getElementById("extractionLanguageFilterOptions");
 
 //File list
 const emptyListInfo = document.getElementById("emptyListInfo");
@@ -28,6 +35,10 @@ const details = document.getElementById("details");
 
 var global_file_list = []
 var tree;
+
+$(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+})
 
 addBtn.addEventListener("click", (e) => {
     if (fileBrowser) {
@@ -59,7 +70,7 @@ function parseReturn(obj) {
         setStatus(obj.status);
 
         if (obj.status.indexOf("Aborted") >= 0) {
-            console.log("Aborted: "+obj.status);
+            console.log("Aborted: " + obj.status);
             resetUI();
         }
         return "ok";
@@ -68,14 +79,14 @@ function parseReturn(obj) {
 }
 
 function addLanguageSelector() {
-    if(!document.getElementById("langSelect")){
-        extractGroup.insertAdjacentHTML('afterbegin','<select id="langSelect" class="form-select flex-fill" aria-label="Select language"></select>');
+    if (!document.getElementById("langSelect")) {
+        extractGroup.insertAdjacentHTML('afterbegin', '<select id="langSelect" class="form-select flex-fill" aria-label="Select language"></select>');
         langSelect = document.getElementById("langSelect");
     }
 }
 
 function removeLanguageSelector() {
-    if(document.getElementById("langSelect")){
+    if (document.getElementById("langSelect")) {
         extractGroup.removeChild(langSelect);
         langSelect = undefined;
     }
@@ -88,7 +99,7 @@ function addExtractButton(state) {
     }
 
     if (!document.getElementById("extractBtn")) {
-        extractGroup.insertAdjacentHTML('beforeend','<button id="extractBtn" class="btn btn-warning flex-fill" '+state+'><i class="bi bi-file-earmark-zip-fill"></i> Extract and save as ZIP</button>');
+        extractGroup.insertAdjacentHTML('beforeend', '<button id="extractBtn" class="btn btn-warning flex-fill" ' + state + '><i class="bi bi-file-earmark-zip-fill"></i> Extract and save as ZIP</button>');
         extractBtn = document.getElementById("extractBtn")
         extractBtn.addEventListener("click", extractFiles, false);
     }
@@ -104,7 +115,7 @@ function addAbortButton() {
     }
 
     if (!document.getElementById("abortBtn")) {
-        extractGroup.insertAdjacentHTML('beforeend','<button id="abortBtn" class="btn btn-danger flex-fill"><i class="bi bi-x-octagon-fill"></i></i> Abort</button>');
+        extractGroup.insertAdjacentHTML('beforeend', '<button id="abortBtn" class="btn btn-danger flex-fill"><i class="bi bi-x-octagon-fill"></i></i> Abort</button>');
         abortBtn = document.getElementById("abortBtn")
         abortBtn.addEventListener("click", abortExtraction, false);
     }
@@ -127,14 +138,51 @@ function resetUI() {
     setStatus(" ");
 }
 
+function switchIcon(elem) {
+    icon = elem.getElementsByTagName("i")[0];
+    if (icon.classList.contains("bi-plus-square-fill")) {
+        icon.classList.replace("bi-plus-square-fill", "bi-dash-square-fill");
+    }
+    else {
+        icon.classList.replace("bi-dash-square-fill", "bi-plus-square-fill");
+    }
+}
+
+enableDebugOpt.addEventListener("change", updateReloadBadge, false);
+excludeTempsOpt.addEventListener("change", updateReloadBadge, false);
+extractionLanguageFilterOpt.addEventListener("change", updateReloadBadge, false);
+
+function updateReloadBadge() {
+    var optionsJson = createOptionsJson();
+    Module.ccall('options_differ', 'int', ['string'], [optionsJson], { async: true }).then(result => {
+        if (result != 0) {
+            reloadBadge.hidden = false;
+        } else {
+            reloadBadge.hidden = true;
+        }
+    });
+}
+
+function createOptionsJson() {
+    var optionsJson = new Object();
+    optionsJson.enableDebug = enableDebugOpt.checked;
+    optionsJson.excludeTemps = excludeTempsOpt.checked;
+    optionsJson.extractionLanguageFilterOptions = extractionLanguageFilterOpt.value;
+
+    return JSON.stringify(optionsJson);
+}
+
 function startInnoExtract() {
     let checked = document.querySelector('input[name="exeRadio"]:checked');
     if (checked) {
         clearFileInfo();
         extractBtn.disabled = true;
         startBtn.disabled = true;
+        reloadBadge.hidden = true;
         var file = global_file_list[checked.value];
-        Module.ccall('load_exe', 'string', ['string'], [file.name], {async: true}).then(result =>{
+        var optionsJson = createOptionsJson();
+
+        Module.ccall('load_exe', 'string', ['string', 'string'], [file.name, optionsJson], { async: true }).then(result => {
             var obj = JSON.parse(result)
             if (parseReturn(obj) != "err") {
                 title.innerHTML = obj.name
@@ -143,19 +191,18 @@ function startInnoExtract() {
                 filesNum.innerHTML = obj.files_num;
                 details.style.visibility = 'visible';
                 removeLanguageSelector();
-                if(obj.langs.length > 1) {
+                if (obj.langs.length > 1) {
                     addLanguageSelector();
                     obj.langs.forEach(lang => {
                         console.log(lang);
-                        if(!lang.name)
-                            lang.name=lang.code;
+                        if (!lang.name)
+                            lang.name = lang.code;
                         langSelect.insertAdjacentHTML('beforeend', `<option value="${lang.code}">${lang.name}</option>`);
                     });
                 }
 
-                Module.ccall('list_files', 'string', [], [], {async: true}).then(result =>{
+                Module.ccall('list_files', 'string', [], [], { async: true }).then(result => {
                     createTree(JSON.parse(result));
-                    console.log(JSON.parse(result));
                     extractBtn.disabled = false;
                 });
             }
@@ -171,13 +218,13 @@ function extractFiles() {
     var startDate = new Date();
     extractBtn.disabled = true;
     checked = tree.treeview('getChecked');
-    info = { files: []};
+    info = { files: [] };
     for (const element of checked) {
         if (element.fileId !== undefined)
             info.files.push(element.fileId);
     }
 
-    if(langSelect){
+    if (langSelect) {
         info.lang = langSelect.value;
     }
 
@@ -186,17 +233,17 @@ function extractFiles() {
         langSelect.disabled = true;
     }
 
-    Module.ccall('extract', 'string', ['string'], [JSON.stringify(info)], {async: true}).then(result =>{
-        console.debug("return: "+result)
+    Module.ccall('extract', 'string', ['string'], [JSON.stringify(info)], { async: true }).then(result => {
+        console.debug("return: " + result)
         res = JSON.parse(result);
         parseReturn(res);
 
-        var endDate   = new Date();
+        var endDate = new Date();
         var seconds = (endDate.getTime() - startDate.getTime()) / 1000;
         console.log("Time: " + seconds + "s");
 
         addExtractButton("");
-        if (document.getElementById("langSelect")){
+        if (document.getElementById("langSelect")) {
             langSelect.disabled = false;
         }
     });
@@ -215,7 +262,7 @@ function createList() {
         for (let i = 0; i < global_file_list.length; i++) {
             let li = fileTemplate.content.cloneNode(true);
             li.querySelector('label').textContent = global_file_list[i].name;
-            li.querySelector('small').textContent = `${Math.round(global_file_list[i].size/(1024*1024)  )} MB`;
+            li.querySelector('small').textContent = `${Math.round(global_file_list[i].size / (1024 * 1024))} MB`;
             li.querySelector('input').value = i;
             if (!file_selected && global_file_list[i].name.split('.').pop() == "exe") {
                 li.querySelector('input').checked = true;
@@ -249,13 +296,13 @@ function createTree(data) {
         onhoverColor: '#343a40',
         levels: 5,
         showTags: true,
-        onNodeUnchecked: function(event, node) {
+        onNodeUnchecked: function (event, node) {
             if (node.mainDir) {
                 tree.treeview('uncheckAll', { silent: true });
             } else {
                 if (node.nodes) {
                     for (const element of node.nodes) {
-                        tree.treeview('uncheckNode', [ element.nodeId, { silent: false } ]);
+                        tree.treeview('uncheckNode', [element.nodeId, { silent: false }]);
                     }
                 }
                 parent = tree.treeview('getParent', node);
@@ -263,26 +310,26 @@ function createTree(data) {
                     siblings = tree.treeview('getSiblings', node);
                     all_unchecked = siblings.every(element => !element.state.checked);
                     if (all_unchecked) {
-                        tree.treeview('uncheckNode', [ parent.nodeId, { silent: false } ]);
+                        tree.treeview('uncheckNode', [parent.nodeId, { silent: false }]);
                     }
                 }
             }
 
         },
-        onNodeChecked: function(event, node) {
+        onNodeChecked: function (event, node) {
             if (node.mainDir) {
-                if(!blockCheckingChildren)
+                if (!blockCheckingChildren)
                     tree.treeview('checkAll', { silent: true });
             } else {
                 if (node.nodes && !blockCheckingChildren) {
                     for (const element of node.nodes) {
-                        tree.treeview('checkNode', [ element.nodeId, { silent: false } ]);
+                        tree.treeview('checkNode', [element.nodeId, { silent: false }]);
                     }
                 }
                 parent = tree.treeview('getParent', node);
                 if (parent && parent.state) {
                     blockCheckingChildren = true;
-                    tree.treeview('checkNode', [ parent.nodeId, { silent: false } ]);
+                    tree.treeview('checkNode', [parent.nodeId, { silent: false }]);
                     blockCheckingChildren = false;
                 }
             }
@@ -293,13 +340,13 @@ function createTree(data) {
 }
 
 window.addEventListener('beforeunload', evt => {
-    if (Module.writer ) {
+    if (Module.writer) {
         Module.writer.abort();
     }
 });
 
 function abortExtraction() {
-    Module.ccall("set_abort", "number", [], [], {async: true}).then(result => {
+    Module.ccall("set_abort", "number", [], [], { async: true }).then(result => {
         console.debug("Abort requested");
     });
 }

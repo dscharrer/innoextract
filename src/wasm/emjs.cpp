@@ -1,18 +1,17 @@
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <iomanip>
-#include <emscripten/emscripten.h>
-#include "wasm/extract.hpp"
 #include "emjs.h"
+#include "wasm/extract.hpp"
+#include <emscripten/emscripten.h>
 #include <emscripten/val.h>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
 // Based on emscripten-browser-file package by Armchair Software, licensed under MIT
 // https://github.com/Armchair-Software/emscripten-browser-file
 
-namespace emjs{
+namespace emjs {
 
-using upload_handler = void(*)(std::string const&, std::string const&, std::string_view buffer, void*);
-
+// clang-format off
 EM_JS(void, upload, (char const *accept_types, upload_handler callback, void *callback_data), {
   /// Prompt the browser to open the file selector dialogue, and pass the file to the given handler
   /// Accept-types are in the format ".png,.jpeg,.jpg" as per https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/accept
@@ -42,11 +41,6 @@ EM_JS(void, upload, (char const *accept_types, upload_handler callback, void *ca
   file_selector.click();
 });
 
-void upload_wrap(std::string const &accept_types, upload_handler callback, void *callback_data) {
-  /// C++ wrapper for javascript upload call
-  upload(accept_types.c_str(), callback, callback_data);
-}
-
 EM_JS(void, download, (char const *filename, char const *mime_type, void const *buffer, size_t buffer_size), {
   /// Offer a buffer in memory as a file to download, specifying download filename and mime type
   var a = document.createElement('a');
@@ -55,11 +49,6 @@ EM_JS(void, download, (char const *filename, char const *mime_type, void const *
   a.click();
 });
 
-void download_wrap(std::string const &filename, std::string const &mime_type, std::string_view buffer) {
-  /// C++ wrapper for javascript download call, accepting a string_view
-  download(filename.c_str(), mime_type.c_str(), buffer.data(), buffer.size());
-}
-
 EM_JS(void, down, (char const *filename), {
 		/// Offer a buffer in memory as a file to download, specifying download filename and mime type
 		var a = document.createElement('a');
@@ -67,11 +56,6 @@ EM_JS(void, down, (char const *filename), {
 		a.href = URL.createObjectURL(new Blob([FS.readFile(UTF8ToString(filename)).buffer], {type: "application/octet-stream"}));
 		a.click();
 });
-
-void down_wrap(std::string const &filename) {
-  /// C++ wrapper for javascript download call, accepting a string_view
-  down(filename.c_str());
-}
 
 EM_JS(void, update_file_list, (char const *json), {
   var tree_data = JSON.parse(UTF8ToString(json));
@@ -98,16 +82,62 @@ EM_JS(void, ui_show_error_int, (), {
   showErrorModal();
 });
 
+EM_JS(void, open_int, (const char *name, const char *modes), {
+  var fileStream;
+  if(!fileStream){
+    fileStream = streamSaver.createWriteStream(UTF8ToString(name));
+    Module.writer = fileStream.getWriter();
+  }
+  Module.writer.ready.then(() => {
+  console.log("zipstream: open, ready");
+  });
+});
 
-void ui_innerhtml(const char *id, const char *value) {
+EM_ASYNC_JS(size_t, write_int, (const void *ptr, size_t size, size_t n), {
+  let buff = new Uint8Array(Module.HEAPU8.buffer, ptr, size*n);
+
+  await Module.writer.write(buff); //.then(() => {
+  console.log("zipstream: write "+(size*n));
+});
+
+EM_JS(void, close_int, (void), {
+  Module.writer.close();
+  console.log("zipstream: close")
+});
+
+EM_ASYNC_JS(void, abort_int, (void), {
+  Module.writer.abort();
+});
+// clang-format on
+
+using upload_handler = void (*)(std::string const&, std::string const&, std::string_view buffer,
+                                void*);
+
+void upload_wrap(std::string const& accept_types, upload_handler callback, void* callback_data) {
+  /// C++ wrapper for javascript upload call
+  upload(accept_types.c_str(), callback, callback_data);
+}
+
+void download_wrap(std::string const& filename, std::string const& mime_type,
+                   std::string_view buffer) {
+  /// C++ wrapper for javascript download call, accepting a string_view
+  download(filename.c_str(), mime_type.c_str(), buffer.data(), buffer.size());
+}
+
+void down_wrap(std::string const& filename) {
+  /// C++ wrapper for javascript download call, accepting a string_view
+  down(filename.c_str());
+}
+
+void ui_innerhtml(const char* id, const char* value) {
   ui_innerhtml_int(id, value);
 }
 
-void ui_setattr(const char *id, const char *attr, std::string const &value) {
+void ui_setattr(const char* id, const char* attr, std::string const& value) {
   ui_setattr_int(id, attr, value.c_str());
 }
 
-void ui_remattr(const char *id, const char *attr) {
+void ui_remattr(const char* id, const char* attr) {
   ui_remattr_int(id, attr);
 }
 
@@ -126,61 +156,33 @@ void ui_show_error() {
   ui_show_error_int();
 }
 
-EM_JS(void, open_int, (const char *name, const char *modes), {
-  var fileStream;
-  if(!fileStream){
-    fileStream = streamSaver.createWriteStream(UTF8ToString(name));
-    Module.writer = fileStream.getWriter();
-  }
-  Module.writer.ready.then(() => {
-  console.log("zipstream: open, ready");
-  });
-});
-
-void open(const char *name, const char *modes){
+void open(const char* name, const char* modes) {
   open_int(name, modes);
 }
 
-EM_ASYNC_JS(size_t, write_int, (const void *ptr, size_t size, size_t n), {
-  let buff = new Uint8Array(Module.HEAPU8.buffer, ptr, size*n);
-
-  await Module.writer.write(buff); //.then(() => {
-  console.log("zipstream: write "+(size*n));
-});
-
-size_t write(const void *ptr, size_t size, size_t n){
-  static char buff[64*1024*1024];
+size_t write(const void* ptr, size_t size, size_t n) {
+  static char buff[64 * 1024 * 1024];
   static int bpos = 0;
-  if((bpos+size*n > sizeof(buff)) || (ptr == NULL)) {
+  if ((bpos + size * n > sizeof(buff)) || (ptr == NULL)) {
     std::cout << "writing " << bpos << "bytes\n";
     write_int(buff, 1, bpos);
     bpos = 0;
   }
 
-  memcpy(buff+bpos, ptr, size*n);
-  bpos += size*n;
+  memcpy(buff + bpos, ptr, size * n);
+  bpos += size * n;
 
-  return size*n;
+  return size * n;
 }
 
-EM_JS(void, close_int, (void), {
-  Module.writer.close();
-  console.log("zipstream: close")
-});
-
-EM_ASYNC_JS(void, abort_int, (void), {
-  Module.writer.abort();
-});
-
-void close(){
+void close() {
   close_int();
 }
 
 namespace {
 
 extern "C" {
-ssize_t emjs_write(void* buf, size_t len)
-{
+ssize_t emjs_write(void* buf, size_t len) {
   return emjs::write(buf, 1, len);
 }
 
@@ -188,26 +190,28 @@ void abort_down(void) {
   abort_int();
 }
 
-
-EMSCRIPTEN_KEEPALIVE int load_file_return(char const *filename, char const *mime_type, char *buffer, size_t buffer_size, upload_handler callback, void *callback_data) {
+EMSCRIPTEN_KEEPALIVE int load_file_return(char const* filename, char const* mime_type, char* buffer,
+                                          size_t buffer_size, upload_handler callback,
+                                          void* callback_data) {
   /// Load a file - this function is called from javascript when the file upload is activated
   callback(filename, mime_type, {buffer, buffer_size}, callback_data);
   return 1;
 }
 
-EMSCRIPTEN_KEEPALIVE char const * load_exe(char const *filename) {
+EMSCRIPTEN_KEEPALIVE char const* load_exe(char const* filename, char const* options_json) {
   static std::string result;
+  wasm::extractor::get().set_options(options_json);
   result = wasm::extractor::get().load_exe(filename);
   return result.c_str();
 }
 
-EMSCRIPTEN_KEEPALIVE char const * list_files() {
+EMSCRIPTEN_KEEPALIVE char const* list_files() {
   static std::string result;
   result = wasm::extractor::get().list_files();
   return result.c_str();
 }
 
-EMSCRIPTEN_KEEPALIVE char const * extract(char const *list_json) {
+EMSCRIPTEN_KEEPALIVE char const* extract(char const* list_json) {
   static std::string result;
   result = wasm::extractor::get().extract(list_json);
   return result.c_str();
@@ -216,8 +220,12 @@ EMSCRIPTEN_KEEPALIVE char const * extract(char const *list_json) {
 EMSCRIPTEN_KEEPALIVE void set_abort(void) {
   wasm::extractor::get().set_abort(true);
 }
+
+EMSCRIPTEN_KEEPALIVE int options_differ(char const * options_json) {
+  return wasm::extractor::get().options_differ(options_json);
+}
 }
 
-}
+} // namespace
 
-}
+} // namespace emjs

@@ -4,11 +4,11 @@
 #include <boost/filesystem.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <set>
 #include <string>
 #include <vector>
-#include <mutex>
 
 #include "crypto/checksum.hpp"
 #include "crypto/hasher.hpp"
@@ -25,61 +25,81 @@ namespace fs = boost::filesystem;
 namespace wasm {
 
 class processed_file {
- public:
+public:
   processed_file(const setup::file_entry* entry, const std::string& path)
       : entry_(entry), path_(path) {}
 
-  bool is_multipart() const { return !entry_->additional_locations.empty(); }
-  const std::string& path() const { return path_; }
-  const setup::file_entry& entry() const { return *entry_; }
+  bool is_multipart() const {
+    return !entry_->additional_locations.empty();
+  }
+  const std::string& path() const {
+    return path_;
+  }
+  const setup::file_entry& entry() const {
+    return *entry_;
+  }
 
- private:
+private:
   const setup::file_entry* entry_;
   std::string path_;
 };
 
 class file_output : private boost::noncopyable {
-  public:
-    file_output(const fs::path& dir, const processed_file* f, bool write, ZIPstream* zip);
-    
-    bool write(char* data, size_t n);
-    void seek(boost::uint64_t new_position);
-    void close();
-    const fs::path& path() const { return path_; }
-    const processed_file* file() const { return file_; }
-    bool is_complete() const;
-    bool has_checksum() const;
-    bool calculate_checksum();
-    crypto::checksum checksum();
-    void settime(time_t t);
+public:
+  file_output(const fs::path& dir, const processed_file* f, bool write, ZIPstream* zip);
 
-  private:
-    fs::path path_;
-    const processed_file* file_;
-    util::fstream stream_;
+  bool write(char* data, size_t n);
+  void seek(boost::uint64_t new_position);
+  void close();
+  const fs::path& path() const {
+    return path_;
+  }
+  const processed_file* file() const {
+    return file_;
+  }
+  bool is_complete() const;
+  bool has_checksum() const;
+  bool calculate_checksum();
+  crypto::checksum checksum();
+  void settime(time_t t);
 
-    crypto::hasher checksum_;
-    boost::uint64_t checksum_position_;
+private:
+  fs::path path_;
+  const processed_file* file_;
+  util::fstream stream_;
 
-    boost::uint64_t position_;
-    boost::uint64_t total_written_;
+  crypto::hasher checksum_;
+  boost::uint64_t checksum_position_;
 
-    bool write_;
-    ZIPstream* zip_ = nullptr;
-    bool file_open_;
-    ZIPentry* zip_entry_;
+  boost::uint64_t position_;
+  boost::uint64_t total_written_;
+
+  bool write_;
+  ZIPstream* zip_ = nullptr;
+  bool file_open_;
+  ZIPentry* zip_entry_;
+};
+
+enum class LanguageFilterOptions {
+  SelectedLanguageAndAgnostic,
+  All,
+  SelectedLanguage,
+  LanguageAgnostic
 };
 
 class extractor {
- public:
+public:
   static extractor& get();
+
+  void set_options(const std::string& options_json);
+  bool options_differ(const std::string& options_json) const;
 
   std::string load_exe(const std::string& exe_path);
   std::string list_files();
   std::string extract(const std::string& list_json);
   void set_abort(bool state);
 
- private:
+private:
   using json = nlohmann::ordered_json;
   using multi_part_outputs = boost::ptr_map<const processed_file*, file_output>;
 
@@ -94,7 +114,7 @@ class extractor {
   extractor();
   extractor(const extractor&) = delete;
   extractor& operator=(const extractor&) = delete;
-  
+
   void open_installer_stream();
   void load_installer_data();
   std::string dump_installer_info() const;
@@ -103,7 +123,7 @@ class extractor {
   void fetch_files();
   json create_main_dir_obj(std::map<std::string, json::object_t*>& dir_objs) const;
   std::string dump_dirs_info(json& main_dir_obj,
-                            std::map<std::string, json::object_t*>& dir_objs) const;
+                             std::map<std::string, json::object_t*>& dir_objs) const;
 
   uint64_t get_size() const;
   uint64_t copy_data(const stream::file_reader::pointer& source,
@@ -127,8 +147,12 @@ class extractor {
   multi_part_outputs multi_outputs_{};
 
   ZIPstream* output_zip_stream_{};
+
+  bool debugMessagesEnabled_ = false;
+  bool excludeTemporaryFilesEnabled_ = false;
+  LanguageFilterOptions languageFilterOptions_ = LanguageFilterOptions::SelectedLanguageAndAgnostic;
 };
 
-}  // namespace wasm
+} // namespace wasm
 
-#endif  // INNOEXTRACT_WASM_H
+#endif // INNOEXTRACT_WASM_H

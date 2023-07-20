@@ -14,5 +14,33 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag innoextract-wasm:$(date +%s)
+    - name: Delete old innoextract-wasm Docker containers and images
+      run: |
+        # Delete docker volumes that are not in use by any containers
+        yes | docker volume prune
+        
+        # Check if container exist and delete
+        if [ "$(docker ps -a | grep -c innoextract-wasm)" -gt 0 ]; then
+            docker ps -q --filter "name=innoextract-wasm" | grep -q . && docker stop innoextract-wasm && docker rm -fv innoextract-wasm
+            echo "[---- Deleted container innoextract-wasm]"
+        else
+          echo "[---- Container with name: innoextract-wasm  doesn't exist. ]"
+        fi
+        
+        # Check if imgage exist and delete
+        if [ "$(docker images | grep -c innoextract-wasm)" -gt 0 ]; then
+            docker rmi innoextract-wasm
+            echo "[---- Deleted image innoextract-wasm]"
+        else
+          echo "[---- Image with name: innoextract-wasm  doesn't exist. ]"
+        fi
+
+    - name: Build innoextract-wasm Docker image
+      run: |
+        # Build innoextract-wasm image
+        docker build . --file Dockerfile --tag innoextract-wasm
+
+    - name: Run innoextract-wasm Docker container
+      run: |
+        # Create innoextract-wasm container
+        docker run -d --restart unless-stopped --name innoextract-wasm -p 80:6931 innoextract-wasm
