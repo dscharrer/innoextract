@@ -356,10 +356,10 @@ function uncollapse(id, button) {
     elem = document.getElementById(id);
     Array.from(els).forEach((el) => {
         if (el == elem) {
-            elem.classList.toggle("collapsed");
+            elem.classList.toggle("footer-collapsed");
         }
-        else if (!el.classList.contains("collapsed")) {
-            el.classList.add("collapsed");
+        else if (!el.classList.contains("footer-collapsed")) {
+            el.classList.add("footer-collapsed");
         }
     });
 
@@ -370,7 +370,7 @@ function uncollapse(id, button) {
         el.style.color = "var(--bs-link-color)";
     });
 
-    if (!elem.classList.contains("collapsed")) {
+    if (!elem.classList.contains("footer-collapsed")) {
         button.style.fontWeight = "bold";
         button.style.color = "var(--bs-link-hover-color)";
     }

@@ -29,7 +29,7 @@
     overflow: hidden;
 }
 
-.collapsed {
+.footer-collapsed {
     max-height: 0px !important;
     overflow: hidden;
 }
