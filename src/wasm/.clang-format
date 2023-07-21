@@ -1,0 +1,12 @@
+---
+BasedOnStyle: LLVM
+AllowShortBlocksOnASingleLine: 'false'
+AllowShortCaseLabelsOnASingleLine: 'false'
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: 'false'
+ColumnLimit: '100'
+PointerAlignment: Left
+TabWidth: '2'
+
+...
