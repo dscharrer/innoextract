@@ -2,7 +2,7 @@ name: mytries
 on:
   workflow_run:
     workflows: ["Docker Image CI"]
-    branches: [tests]
+    branches: [wasm-main]
     types: 
       - completed
 
