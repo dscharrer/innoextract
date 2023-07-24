@@ -1,0 +1,17 @@
+name: mytries
+on:
+  workflow_run:
+    workflows: ["Run Tests"]
+    branches: [tests]
+    types: 
+      - completed
+
+jobs:
+
+  build:
+
+    runs-on: rnd201
+
+    steps:
+    - name: touch simple file
+      run: touch /home/poma/ddd
