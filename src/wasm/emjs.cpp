@@ -70,7 +70,6 @@ EM_JS(void, ui_innerhtml_int, (const char *id, const char *value), {
 EM_JS(void, ui_setattr_int, (const char *id, const char *attr, const char *value), {
 	var elem = document.getElementById(UTF8ToString(id));
 	elem.setAttribute(UTF8ToString(attr),UTF8ToString(value));
-  // console.log("setattr="+UTF8ToString(attr)+", val="+UTF8ToString(value));
 });
 
 EM_JS(void, ui_remattr_int, (const char *id, const char *attr), {
@@ -89,7 +88,7 @@ EM_JS(void, open_int, (const char *name, const char *modes), {
     Module.writer = fileStream.getWriter();
   }
   Module.writer.ready.then(() => {
-  console.log("zipstream: open, ready");
+  innoLog("zipstream: open, ready");
   });
 });
 
@@ -97,12 +96,12 @@ EM_ASYNC_JS(size_t, write_int, (const void *ptr, size_t size, size_t n), {
   let buff = new Uint8Array(Module.HEAPU8.buffer, ptr, size*n);
 
   await Module.writer.write(buff); //.then(() => {
-  console.log("zipstream: write "+(size*n));
+  innoLog("zipstream: write "+(size*n));
 });
 
 EM_JS(void, close_int, (void), {
   Module.writer.close();
-  console.log("zipstream: close")
+  innoLog("zipstream: close")
 });
 
 EM_ASYNC_JS(void, abort_int, (void), {

@@ -1,9 +1,11 @@
+const html = document.documentElement;
+const content = document.getElementById("content");
+const footer = document.getElementById("footer");
 const fileBrowser = document.getElementById("fileBrowser");
 const addBtn = document.getElementById("addBtn");
 const removeBtn = document.getElementById("removeBtn");
 const startBtn = document.getElementById("startBtn");
 const reloadBadge = document.getElementById("reloadBadge");
-reloadBadge.hidden = true;
 const extractGroup = document.getElementById("extract-group");
 const statusText = document.getElementById("status");
 const progressBar = document.getElementById("progress-bar");
@@ -11,9 +13,16 @@ var extractBtn;
 var abortBtn;
 
 //Options
+const optsButton = document.getElementById("optsButton");
+const logsButton = document.getElementById("logsButton");
 const enableDebugOpt = document.getElementById("optsEnableDebug");
 const excludeTempsOpt = document.getElementById("optsExcludeTemporary");
 const extractionLanguageFilterOpt = document.getElementById("extractionLanguageFilterOptions");
+const logsToFileOpt = document.getElementById("optsLogsToFile");
+
+const optionsList = [addBtn, removeBtn, optsButton, logsButton, enableDebugOpt, excludeTempsOpt, extractionLanguageFilterOpt, logsToFileOpt];
+const collapseLogs = document.getElementById("collapseLogs");
+const themeSwitch = document.getElementById("themeSwitch");
 
 //File list
 const emptyListInfo = document.getElementById("emptyListInfo");
@@ -35,10 +44,57 @@ const details = document.getElementById("details");
 
 var global_file_list = []
 var tree;
+var logOut = "";
+var logLines = 0;
+var lastLogOut = new Date();
 
 $(function () {
     $('[data-toggle="tooltip"]').tooltip()
 })
+
+function innoLog(msg, level = 'info') {
+    if (logsToFileOpt.checked) {
+        logOut += level + ": " + msg + "\n";
+        logLines++;
+        refreshLogLines();
+    }
+    else {
+        console.log(msg);
+        con.insertAdjacentHTML('beforeend', '<p class="' + level + 'info">' + msg + '</p>');
+        con.scrollTop = con.scrollHeight;
+    }
+}
+
+function innoErr(msg) {
+    innoLog(msg, 'error');
+}
+
+function innoDebug(msg) {
+    innoLog(msg, 'debug')
+}
+
+function downloadLog() {
+    var a = document.createElement("a");
+    a.style = "display: none";
+    document.body.appendChild(a);
+
+    blob = new Blob([logOut], { type: "text/plain" });
+    url = window.URL.createObjectURL(blob);
+    window.open(url, '_blank');
+}
+
+function refreshLogLines(single = false) {
+    var now = new Date();
+    if (now - lastLogOut > 1000 || single) {
+        logLinesBadge.style.display = 'unset';
+        logLinesBadge.innerHTML = logLines.toString();
+        lastLogOut = now;
+        console.log("refreshloglines");
+    }
+    else if (!single) {
+        setTimeout(1000, refreshLogLines, true)
+    }
+}
 
 addBtn.addEventListener("click", (e) => {
     if (fileBrowser) {
@@ -70,7 +126,7 @@ function parseReturn(obj) {
         setStatus(obj.status);
 
         if (obj.status.indexOf("Aborted") >= 0) {
-            console.log("Aborted: " + obj.status);
+            innoLog("Aborted: " + obj.status);
             resetUI();
         }
         return "ok";
@@ -156,17 +212,47 @@ function updateReloadBadge() {
     var optionsJson = createOptionsJson();
     Module.ccall('options_differ', 'int', ['string'], [optionsJson], { async: true }).then(result => {
         if (result != 0) {
-            reloadBadge.hidden = false;
+            reloadBadge.style.display = 'unset';
         } else {
-            reloadBadge.hidden = true;
+            reloadBadge.style.display = 'none';
         }
     });
 }
+
+function mutateLogsButton() {
+    icon = logsButton.getElementsByTagName("i")[0];
+    text = logsButton.getElementsByTagName("span")[0];
+    if (logsToFileOpt.checked) {
+        logsButton.removeAttribute("data-bs-toggle");
+        logsButton.removeAttribute("href");
+        logsButton.setAttribute("onClick", "downloadLog();")
+        if (!icon.classList.replace("bi-plus-square-fill", "bi-download")) {
+            switchIcon(logsButton);
+            icon.classList.replace("bi-plus-square-fill", "bi-download")
+            collapseLogs.classList.remove("show");
+        }
+        text.innerHTML = "Download log";
+        if (logLines > 0) {
+            logLinesBadge.style.display = 'unset';
+        }
+    }
+    else {
+        logsButton.setAttribute("data-bs-toggle", "collapse");
+        logsButton.setAttribute("href", "#collapseLogs");
+        logsButton.setAttribute("onClick", "switchIcon(this);")
+        icon.classList.replace("bi-download", "bi-plus-square-fill");
+        text.innerHTML = "Logs";
+        logLinesBadge.style.display = 'none';
+    }
+}
+
+logsToFileOpt.addEventListener("change", mutateLogsButton, false);
 
 function createOptionsJson() {
     var optionsJson = new Object();
     optionsJson.enableDebug = enableDebugOpt.checked;
     optionsJson.excludeTemps = excludeTempsOpt.checked;
+    optionsJson.logsToFile = logsToFileOpt.checked;
     optionsJson.extractionLanguageFilterOptions = extractionLanguageFilterOpt.value;
 
     return JSON.stringify(optionsJson);
@@ -178,7 +264,8 @@ function startInnoExtract() {
         clearFileInfo();
         extractBtn.disabled = true;
         startBtn.disabled = true;
-        reloadBadge.hidden = true;
+        disableOpts();
+        reloadBadge.style.display = 'none';
         var file = global_file_list[checked.value];
         var optionsJson = createOptionsJson();
 
@@ -194,7 +281,7 @@ function startInnoExtract() {
                 if (obj.langs.length > 1) {
                     addLanguageSelector();
                     obj.langs.forEach(lang => {
-                        console.log(lang);
+                        innoLog(JSON.stringify(lang));
                         if (!lang.name)
                             lang.name = lang.code;
                         langSelect.insertAdjacentHTML('beforeend', `<option value="${lang.code}">${lang.name}</option>`);
@@ -207,6 +294,7 @@ function startInnoExtract() {
                 });
             }
             startBtn.disabled = false;
+            enableOpts();
         });
     }
 }
@@ -217,6 +305,7 @@ startBtn.disabled = true;
 function extractFiles() {
     var startDate = new Date();
     extractBtn.disabled = true;
+    startBtn.disabled = true;
     checked = tree.treeview('getChecked');
     info = { files: [] };
     for (const element of checked) {
@@ -229,20 +318,23 @@ function extractFiles() {
     }
 
     addAbortButton();
+    disableOpts();
     if (document.getElementById("langSelect")) {
         langSelect.disabled = true;
     }
 
     Module.ccall('extract', 'string', ['string'], [JSON.stringify(info)], { async: true }).then(result => {
-        console.debug("return: " + result)
+        innoDebug("return: " + result)
         res = JSON.parse(result);
         parseReturn(res);
 
         var endDate = new Date();
         var seconds = (endDate.getTime() - startDate.getTime()) / 1000;
-        console.log("Time: " + seconds + "s");
+        innoLog("Time: " + seconds + "s");
 
+        startBtn.disabled = false;
         addExtractButton("");
+        enableOpts();
         if (document.getElementById("langSelect")) {
             langSelect.disabled = false;
         }
@@ -347,7 +439,7 @@ window.addEventListener('beforeunload', evt => {
 
 function abortExtraction() {
     Module.ccall("set_abort", "number", [], [], { async: true }).then(result => {
-        console.debug("Abort requested");
+        innoDebug("Abort requested");
     });
 }
 
@@ -374,4 +466,76 @@ function uncollapse(id, button) {
         button.style.fontWeight = "bold";
         button.style.color = "var(--bs-link-hover-color)";
     }
+    hideOverflow();
 }
+
+function openOptsIfChecked() {
+    var opts = document.getElementsByClassName("form-check-input");
+    var collapsible = document.getElementById("collapseOpts");
+
+    Array.from(opts).forEach((opt) => {
+        if (opt.checked) {
+            collapsible.classList.add("show");
+        }
+    });
+}
+
+footer.addEventListener("transitionstart", () => {
+    hideOverflow();
+    updateFooter();
+});
+
+footer.addEventListener("transitionend", () => {
+    updateFooter();
+});
+
+content.addEventListener("transitionstart", () => {
+    hideOverflow();
+});
+
+function updateFooter() {
+    content.style.minHeight = "calc(100vh - " + footer.offsetHeight + "px)";
+}
+
+var overflowTimer
+function hideOverflow() {
+    document.body.style.overflow = "hidden";
+
+    clearTimeout(overflowTimer);
+    overflowTimer = setTimeout(() => {
+        document.body.style.overflow = "auto";
+    }, 600);
+}
+
+function disableOpts() {
+    optionsList.forEach((opt) => {
+        opt.disabled = true;
+    });
+}
+
+function enableOpts() {
+    optionsList.forEach((opt) => {
+        opt.disabled = false;
+    });
+}
+
+function setThemeText() {
+    var curr = html.getAttribute("data-bs-theme");
+    var next = (curr == "dark" ? "Light" : "Dark");
+    document.getElementById("themeSwitch").innerHTML = next + " mode";
+}
+
+function switchStyle() {
+    var old = html.getAttribute("data-bs-theme");
+    var curr = (old == "dark" ? "Light" : "Dark");
+    html.setAttribute("data-bs-theme", curr.toLowerCase());
+    document.cookie = 'theme=' + curr + ';';
+    setThemeText();
+    document.getElementById("cookieBadge").style.display = "unset";
+}
+
+setThemeText();
+mutateLogsButton();
+openOptsIfChecked();
+updateFooter();
+document.body.style.opacity = 1;

@@ -1,17 +1,21 @@
 #con {
     font-family: monospace;
     font-size: small;
-    overflow: scroll;
+    overflow-y: scroll;
     height: 250px;
     resize: vertical;
 }
 
-#con > p {
+#con>p {
     margin: 0px;
 }
 
-.err {
+.error {
     color: #dc3545;
+}
+
+.debug {
+    color: #808080;
 }
 
 #langSelect {
@@ -34,10 +38,21 @@
     overflow: hidden;
 }
 
+#content,
 #footer {
-    margin: 2em;
+    min-width: 470px;
+    transition: min-height 0.5s;
 }
 
-html, #footer {
-    min-width: 470px;
+body {
+    transition: opacity 0.25s;
+    opacity: 0;
+}
+
+body, * {
+    transition: background-color 0.5s, color 0.2s;
+}
+
+#reloadBadge, #cookieBadge, #logLinesBadge {
+    display: none;
 }

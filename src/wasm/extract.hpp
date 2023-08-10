@@ -150,6 +150,7 @@ private:
 
   bool debugMessagesEnabled_ = false;
   bool excludeTemporaryFilesEnabled_ = false;
+  bool logsToFile_ = false;
   LanguageFilterOptions languageFilterOptions_ = LanguageFilterOptions::SelectedLanguageAndAgnostic;
 };
 

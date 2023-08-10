@@ -163,6 +163,7 @@ void extractor::set_options(const std::string &options_json) {
   debugMessagesEnabled_ = options["enableDebug"];
   excludeTemporaryFilesEnabled_ = options["excludeTemps"];
   languageFilterOptions_ = languageFilterOptionsFromString(options["extractionLanguageFilterOptions"]);
+  logsToFile_ = options["logsToFile"];
 }
 
 bool extractor::options_differ(const std::string &options_json) const {

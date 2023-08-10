@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
@@ -8,16 +8,27 @@
   <link href="css/bootstrap.min.css" rel="stylesheet">
   <link href="css/innoextract.css?v=${BUILD_DATE}" rel="stylesheet">
   <link href="css/bootstrap-icons.css" rel="stylesheet">
-  <script src="popper.min.js"></script>
   <script src="js/jquery-3.6.4.min.js"></script>
   <script src="js/bootstrap.bundle.min.js"></script>
   <script src="js/bootstrap-treeview.min.js"></script>
   <script src="js/ponyfill.min.js"></script>
   <script src="js/StreamSaver.js"></script>
+  <script>
+    var theme;
+    if (theme = document.cookie.split("=")[1]) {
+      document.documentElement.setAttribute("data-bs-theme", theme.toLowerCase());
+    }
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute("data-bs-theme", "light");
+    }
+    else {
+      document.documentElement.setAttribute("data-bs-theme", "dark");
+    }
+  </script>
 </head>
 
 <body>
-  <div class="col-xl-8 mx-auto p-xl-5 p-3">
+  <div id="content" class="col-xl-8 mx-auto p-xl-5 p-3">
     <header class="align-items-center pb-3 mb-3 border-bottom">
       <img class="me-2" src="img/icon_64.png" />
       <span class="fs-4 align-bottom">Innoextract wasm</span>
@@ -61,10 +72,11 @@
             </template>
           </ul>
         </div>
-        <a class="btn btn-primary btn-sm mt-2" data-bs-toggle="collapse" href="#collapseOpts" role="button"
-          onClick="switchIcon(this);"><i class="bi bi-plus-square-fill"></i> Options</a>
-        <a class="btn btn-primary btn-sm mt-2" data-bs-toggle="collapse" href="#collapseLogs" role="button"
-        onClick="switchIcon(this);"><i class="bi bi-plus-square-fill"></i> Logs</a>
+        <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="collapse" href="#collapseOpts" id="optsButton"
+          onClick="switchIcon(this);"><i class="bi bi-plus-square-fill"> </i>Options</button>
+        <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="collapse" href="#collapseLogs" id="logsButton"
+          onClick="switchIcon(this);"><i class="bi bi-plus-square-fill"> </i><span>Logs</span>
+          <span id="logLinesBadge" class="badge text-bg-secondary"></span></button>
         <div id="collapseOpts" class="collapse">
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
@@ -77,6 +89,13 @@
               <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" role="switch" id="optsExcludeTemporary">
                 <label class="form-check-label" for="optsExcludeTemporary">Exclude temporary files</label>
+              </div>
+            </li>
+            <li class="list-group-item" data-bs-toggle="tooltip" data-bs-placement="right"
+              title="Might speed up the process when extracting thousands of small files">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="optsLogsToFile">
+                <label class="form-check-label" for="optsLogsToFile">Output logs to a file</label>
               </div>
             </li>
             <li class="list-group-item">
@@ -120,48 +139,53 @@
         </div>
       </div>
     </div>
-    <div id="footer" class="col-xl-8 mx-auto p-xl-5 p-3 fixed-bottom">
-      <hr>
-      <small>
-        <a class="collapse-name" onClick='uncollapse("about", this)' role="button">About</a>
-        • <a class="collapse-name" onClick='uncollapse("issues", this)' role="button">Known issues</a>
-        • <a class="collapse-name" onClick='uncollapse("techs", this)' role="button">Open source technologies</a>
-        • <a class="collapse-name" href="https://github.com/Mobica/innoextract-wasm" target="_blank">Github
-          repository</a>
-        <div class="float-end">Innoextract-wasm ${GIT_VERSION}</div>
-        <div id="footer-group">
-          <div id="about" class="collapsible footer-collapsed">
-            <p><a href="https://github.com/Mobica/innoextract-wasm">Innoextract-wasm</a> is created as a side project by
-              <a href="https://mobica.com/">Mobica</a> employees. The main goal was to learn a bit of WASM and porting
-              C++ code to a web application using Emscripten.<br>
-              The <a href="https://constexpr.org/innoextract/">original Innoextract</a> project was created by <a
-                href="https://ds.me/">Daniel Scharrer</a>. This port is not directly related to Daniel's work, so any
-              bugs or feature requests regarding this website should not be sent to him.</p>
-          </div>
-          <div id="issues" class="collapsible footer-collapsed">
-            <ul>
-              <li>Some installers use seek() on the output file, which is not supported at this moment (eg. Stronghold
-                HD)</li>
-              <li>StreamSaver.js often presents issues on Firefox - try opening Innoextract in a brand new tab as a
-                workaround</li>
-              <li>File collision handling and filtering apart from selecting output files is not supported</li>
-            </ul>
-          </div>
-          <div id="techs" class="collapsible footer-collapsed">
-            <ul>
-              <li><a href="https://getbootstrap.com">Bootstrap</a></li>
-              <li><a href="https://emscripten.org/">emscripten</a></li>
-              <li><a href="https://github.com/CTrabant/fdzipstream">fdzipstream</a></li>
-              <li><a href="https://json.nlohmann.me/">nlohmann-json</a></li>
-              <li><a href="https://github.com/jimmywarting/StreamSaver.js">StreamSaver.js</a></li>
-            </ul>
-          </div>
-        </div>
-        <!-- build date: ${BUILD_DATE} -->
-      </small>
-    </div>
   </div>
-  <input type="file" id="fileBrowser" multiple accept=".exe,.bin" style="display:none" />
+  <div id="footer" class="col-xl-8 mx-auto px-xl-5 p-3">
+    <small>
+      <p id="cookieBadge" class="float-end my-0">We use cookies exclusively to store the currently used color theme.</p>
+      <br>
+      <hr class="my-1">
+      <a class="collapse-name" onClick='uncollapse("about", this)' role="button">About</a>
+      • <a class="collapse-name" onClick='uncollapse("issues", this)' role="button">Known issues</a>
+      • <a class="collapse-name" onClick='uncollapse("techs", this)' role="button">Open source technologies</a>
+      • <a class="collapse-name" href="https://github.com/Mobica/innoextract-wasm" target="_blank">Github
+        repository</a>
+      <div class="float-end">
+        <a class="collapse-name" id="themeSwitch" onClick='switchStyle()' role="button">Dark mode</a>
+        • Innoextract-wasm ${GIT_VERSION}
+      </div>
+      <div id="footer-group">
+        <div id="about" class="collapsible footer-collapsed">
+          <p><a href="https://github.com/Mobica/innoextract-wasm">Innoextract-wasm</a> is created as a side project by
+            <a href="https://mobica.com/">Mobica</a> employees. The main goal was to learn a bit of WASM and porting
+            C++ code to a web application using Emscripten.<br>
+            The <a href="https://constexpr.org/innoextract/">original Innoextract</a> project was created by <a
+              href="https://ds.me/">Daniel Scharrer</a>. This port is not directly related to Daniel's work, so any
+            bugs or feature requests regarding this website should not be sent to him.
+          </p>
+        </div>
+        <div id="issues" class="collapsible footer-collapsed">
+          <ul>
+            <li>Some installers use seek() on the output file, which is not supported at this moment (eg. Stronghold
+              HD)</li>
+            <li>StreamSaver.js often presents issues on Firefox - try opening Innoextract in a brand new tab as a
+              workaround</li>
+            <li>File collision handling and filtering apart from selecting output files is not supported</li>
+          </ul>
+        </div>
+        <div id="techs" class="collapsible footer-collapsed">
+          <ul>
+            <li><a href="https://getbootstrap.com">Bootstrap</a></li>
+            <li><a href="https://emscripten.org/">emscripten</a></li>
+            <li><a href="https://github.com/CTrabant/fdzipstream">fdzipstream</a></li>
+            <li><a href="https://json.nlohmann.me/">nlohmann-json</a></li>
+            <li><a href="https://github.com/jimmywarting/StreamSaver.js">StreamSaver.js</a></li>
+          </ul>
+        </div>
+      </div>
+      <!-- build date: ${BUILD_DATE} -->
+    </small>
+  </div> <input type="file" id="fileBrowser" multiple accept=".exe,.bin" style="display:none" />
   <div id="errorModal" class="modal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
