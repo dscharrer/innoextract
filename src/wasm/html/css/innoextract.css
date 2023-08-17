@@ -42,17 +42,29 @@
 #footer {
     min-width: 470px;
     transition: min-height 0.5s;
+    transition: opacity 0.5s;
 }
 
 body {
-    transition: opacity 0.25s;
     opacity: 0;
 }
 
-body, * {
-    transition: background-color 0.5s, color 0.2s;
+body,
+* {
+    transition: background-color 0.5s, color 0.2s, opacity 0.2s;
 }
 
-#reloadBadge, #cookieBadge, #logLinesBadge {
+#reloadBadge,
+#cookieBadge,
+#logLinesBadge {
     display: none;
+}
+
+#dragDrop {
+    text-align: center;
+    vertical-align: middle;
+    font-size: xx-large;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.5s;
 }

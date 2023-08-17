@@ -28,6 +28,7 @@ const themeSwitch = document.getElementById("themeSwitch");
 const emptyListInfo = document.getElementById("emptyListInfo");
 const fileTemplate = document.getElementById("fileTemplate");
 const fileList = document.getElementById("fileList");
+const dragDrop = document.getElementById("dragDrop");
 var langSelect;
 
 //Error dialog
@@ -366,9 +367,21 @@ function createList() {
     }
 }
 
-function handleAddFiles() {
-    for (let i = 0; i < this.files.length; i++) {
-        global_file_list.push(this.files[i]);
+function handleAddFiles(event) {
+    if (event.type == "change") {
+        files = event.target.files;
+    }
+    else if (event.type == "drop") {
+        let dt = event.dataTransfer
+        files = dt.files;
+    }
+    else {
+        innoErr("handleAddFiles(): Unknown event type: " + event.type);
+        return;
+    }
+
+    for (let i = 0; i < files.length; i++) {
+        global_file_list.push(files[i]);
     }
     createList();
 }
@@ -532,6 +545,58 @@ function switchStyle() {
     document.cookie = 'theme=' + curr + ';';
     setThemeText();
     document.getElementById("cookieBadge").style.display = "unset";
+}
+
+["dragenter", "dragleave", "dragover", "drop"].forEach((e) => {
+    window.addEventListener(e, dragHandler);
+    dragDrop.addEventListener(e, dragHandler);
+});
+
+var dragCounter = 0;
+function dragHandler(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    let dragLast = dragCounter;
+
+    switch (event.type) {
+        case "dragenter":
+            dragCounter++;
+            break;
+        case "dragleave":
+            dragCounter--;
+            break;
+        case "drop":
+            dragCounter = 0;
+            handleAddFiles(event)
+            break;
+        case "dragover":
+            // ignore completely
+            break;
+        default:
+            console.debug("dragHandler: unknown event" + event.type + " dragCounter=" + dragCounter);
+            break;
+    }
+
+    if (dragLast <= 0 && dragCounter > 0) {
+        content.style.opacity = "0.25";
+        footer.style.opacity = "0.25";
+        dragDrop.style.display = "unset";
+        setTimeout(() => {
+            if (dragDrop.style.display == "unset") {
+                dragDrop.style.opacity = "1";
+            }
+        }, 10);
+    }
+    else if (dragLast > 0 && dragCounter <= 0) {
+        content.style.opacity = "1";
+        footer.style.opacity = "1";
+        dragDrop.style.opacity = "0";
+        setTimeout(() => {
+            if (dragDrop.style.opacity == "0") {
+                dragDrop.style.display = "none";
+            }
+        }, 550);
+    }
 }
 
 setThemeText();
