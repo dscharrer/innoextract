@@ -9,9 +9,10 @@ Click Add Files Button
     Log  Click Add Files Button  console=yes
 
 Click Extract And Save Button
+    [Arguments]    ${timeout}
     Wait Until Page Does Not Contain Element  ${ExtractAndSaveDisabledButton}
     Click Element  ${ExtractAndSaveButton}
-    Wait Until Page Contains    100%
+    Wait Until Element Contains    ${ProgressBar}    100%    timeout=${timeout}
     Log  Click Extract And Save Button  console=yes
 
 Click Remove Button
@@ -23,12 +24,12 @@ Click Start Button
     Log  Click Start Button  console=yes
 
 Log Console Is Visible
-    Wait Until Element Is Visible   css=${CollapseLogsButton}
-    ${variable}    Run Keyword And Return Status    Element Should Be Visible   xpath=${LogsTitle}
+    Wait Until Element Is Visible   ${CollapseLogsButton}
+    ${variable}    Run Keyword And Return Status    Element Should Be Visible   ${LogsTitle}
     RETURN    ${variable}
 
  Click Show/Hide Logs Button
-    Click Element    css=${CollapseLogsButton}
+    Click Element    ${CollapseLogsButton}
 
 Unhide Log Window
     Log    Unhide window with logs

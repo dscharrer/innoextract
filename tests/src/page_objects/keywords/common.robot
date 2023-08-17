@@ -18,7 +18,7 @@ Opening Browser
 
 Create Unique Download Path
     ${random_string}    Generate Random String    20   
-    ${path}    Catenate    SEPARATOR=\\    ${TEMPDIR}    ${random_string}    \
+    ${path}    Catenate    SEPARATOR=/    ${CURDIR}    ${random_string}/
     Log  \nUnique download path created: ${path}    console=yes
     [return]    ${path}
 

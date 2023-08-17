@@ -17,11 +17,13 @@ FileDetails = '//small[@id="details"]'
 FileSize = '//*[@id="size"]'
 FileNum = '//*[@id="filesNum"]'
 Description = '//*[@id="title"]'
+ProgressBar = '//div[@id="progress-bar"]'
 
 # Logs section
-LogsTitle = '//h5[contains(text(),"Logs")]'
-CollapseLogsButton = 'a.btn[aria-controls="collapseLogs"]'
-LogsConsole = '//div[@id="con"]'
+LogsTitle = '//div[@id="collapseLogs"]'
+CollapseLogsButton = '//button[@id="logsButton"]'
+
+LogsConsole = '//div[@id="collapseLogs"]'
 
 # Popup notifications
 # TODO add scenarios for Popup notifications
