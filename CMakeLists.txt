@@ -445,6 +445,7 @@ set(INNOEXTRACT_SOURCES
 
 	src/wasm/jsfile.hpp if WASM
 	src/wasm/jsfile.cpp if WASM
+	src/wasm/emjs.cpp if WASM
 	src/wasm/extract.hpp if WASM
 	src/wasm/extract.cpp if WASM
 	src/wasm/fdzipstream/fdzipstream.c if WASM
@@ -556,7 +557,6 @@ set(INNOEXTRACT_SOURCES
 	src/util/unique_ptr.hpp
 	src/util/windows.hpp   
 	src/util/windows.cpp if WIN32
-	src/wasm/emjs.cpp if WASM
 )
 
 filter_list(INNOEXTRACT_SOURCES ALL_INNOEXTRACT_SOURCES)

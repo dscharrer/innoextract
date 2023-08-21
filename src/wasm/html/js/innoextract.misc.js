@@ -18,9 +18,10 @@ const logsButton = document.getElementById("logsButton");
 const enableDebugOpt = document.getElementById("optsEnableDebug");
 const excludeTempsOpt = document.getElementById("optsExcludeTemporary");
 const extractionLanguageFilterOpt = document.getElementById("extractionLanguageFilterOptions");
+const collisionResolutionOpt = document.getElementById("collisionResolutionOptions");
 const logsToFileOpt = document.getElementById("optsLogsToFile");
 
-const optionsList = [addBtn, removeBtn, optsButton, logsButton, enableDebugOpt, excludeTempsOpt, extractionLanguageFilterOpt, logsToFileOpt];
+const optionsList = [addBtn, removeBtn, optsButton, logsButton, enableDebugOpt, excludeTempsOpt, extractionLanguageFilterOpt, collisionResolutionOpt, logsToFileOpt];
 const collapseLogs = document.getElementById("collapseLogs");
 const themeSwitch = document.getElementById("themeSwitch");
 
@@ -208,6 +209,7 @@ function switchIcon(elem) {
 enableDebugOpt.addEventListener("change", updateReloadBadge, false);
 excludeTempsOpt.addEventListener("change", updateReloadBadge, false);
 extractionLanguageFilterOpt.addEventListener("change", updateReloadBadge, false);
+collisionResolutionOpt.addEventListener("change", updateReloadBadge, false);
 
 function updateReloadBadge() {
     var optionsJson = createOptionsJson();
@@ -255,6 +257,7 @@ function createOptionsJson() {
     optionsJson.excludeTemps = excludeTempsOpt.checked;
     optionsJson.logsToFile = logsToFileOpt.checked;
     optionsJson.extractionLanguageFilterOptions = extractionLanguageFilterOpt.value;
+    optionsJson.collisionResolutionOptions = collisionResolutionOpt.value;
 
     return JSON.stringify(optionsJson);
 }
