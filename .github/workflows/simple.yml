@@ -13,5 +13,5 @@ jobs:
     runs-on: rnd201
 
     steps:
-    - name: touch simple file
+    - name: info
       run: git status
