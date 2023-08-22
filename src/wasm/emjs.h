@@ -25,7 +25,7 @@ void ui_remattr(const char* id, const char* attr);
 void ui_progbar_update(int value);
 void ui_show_error();
 
-void open(const char* name, const char* __restrict modes);
+void open(const char* name, const char* __restrict modes, uint64_t output_size);
 size_t write(const void* ptr, size_t size, size_t n);
 void close();
 

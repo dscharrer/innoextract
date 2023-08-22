@@ -406,12 +406,6 @@ std::string extractor::extract(const std::string& list_json) {
     fs::create_directory(output_dir + "/" + dir);
   }
 
-  std::string zipfile = output_dir + ".zip";
-  emjs::open(zipfile.c_str(), "wb");
-  emscripten_sleep(100);
-  output_zip_stream_ = zs_init(nullptr);
-  printf("opening zip file %s\n", zipfile.c_str());
-
   typedef std::pair<const processed_file*, uint64_t> output_location;
   std::vector<std::vector<output_location>> files_for_location;
   files_for_location.resize(installer_info_.data_entries.size());
@@ -462,6 +456,12 @@ std::string extractor::extract(const std::string& list_json) {
       total_size_ += location.uncompressed_size;
     }
   }
+
+  std::string zipfile = output_dir + ".zip";
+  emjs::open(zipfile.c_str(), "wb", total_size_);
+  emscripten_sleep(100);
+  output_zip_stream_ = zs_init(nullptr);
+  printf("opening zip file %s\n", zipfile.c_str());
 
   log_info << "Total size: " << total_size_ << " bytes";
 

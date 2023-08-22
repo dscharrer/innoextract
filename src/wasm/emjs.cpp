@@ -81,10 +81,10 @@ EM_JS(void, ui_show_error_int, (), {
   showErrorModal();
 });
 
-EM_JS(void, open_int, (const char *name, const char *modes), {
+EM_JS(void, open_int, (const char *name, const char *modes, uint64_t output_size), {
   var fileStream;
   if(!fileStream){
-    fileStream = streamSaver.createWriteStream(UTF8ToString(name));
+    fileStream = streamSaver.createWriteStream(UTF8ToString(name), {size: output_size});
     Module.writer = fileStream.getWriter();
   }
   Module.writer.ready.then(() => {
@@ -155,8 +155,8 @@ void ui_show_error() {
   ui_show_error_int();
 }
 
-void open(const char* name, const char* modes) {
-  open_int(name, modes);
+void open(const char* name, const char* modes, uint64_t output_size) {
+  open_int(name, modes, output_size);
 }
 
 size_t write(const void* ptr, size_t size, size_t n) {
