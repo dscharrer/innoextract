@@ -16,4 +16,4 @@ jobs:
     - name: info
       run: git status
     - name: start robot tests
-      run: xvfb-run -n 56 -e /dev/stdout -s '-screen 0 1366x768x24' -f /home/runner/.Xauthority sh -c 'startlxde& ./run_test.sh'
+      run: xvfb-run -n 56 -e /dev/stdout -s '-screen 0 1366x768x24' -f /home/runner/.Xauthority sh -c 'startlxde& /home/runner/run_test.sh'
