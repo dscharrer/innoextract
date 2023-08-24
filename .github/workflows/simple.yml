@@ -1,4 +1,4 @@
-name: mytries
+name: robot-tests
 on:
   workflow_run:
     workflows: ["Docker Image CI"]
