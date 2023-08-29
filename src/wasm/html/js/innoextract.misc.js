@@ -493,17 +493,23 @@ function openOptsIfChecked() {
     });
 }
 
-footer.addEventListener("transitionstart", () => {
-    hideOverflow();
-    updateFooter();
+footer.addEventListener("transitionstart", (ev) => {
+    if (ev.target.classList.contains("collapsible")) {
+        hideOverflow();
+        updateFooter();
+    }
 });
 
-footer.addEventListener("transitionend", () => {
-    updateFooter();
+footer.addEventListener("transitionend", (ev) => {
+    if (ev.target.classList.contains("collapsible")) {
+        updateFooter();
+    }
 });
 
-content.addEventListener("transitionstart", () => {
-    hideOverflow();
+content.addEventListener("transitionstart", (ev) => {
+    if (ev.target == content) {
+        hideOverflow();
+    }
 });
 
 function updateFooter() {

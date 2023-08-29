@@ -41,8 +41,7 @@
 #content,
 #footer {
     min-width: 470px;
-    transition: min-height 0.5s;
-    transition: opacity 0.5s;
+    transition: min-height 0.5s, opacity 0.5s;
 }
 
 body {
