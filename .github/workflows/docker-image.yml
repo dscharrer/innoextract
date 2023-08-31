@@ -39,7 +39,7 @@ jobs:
       run: |
         # Build innoextract-wasm image
         docker build . --file Dockerfile --tag innoextract-wasm
-
+    
     - name: Delete files in old /home/runner/build folder
       run: |
         # Delete files in /build folder.
@@ -49,8 +49,9 @@ jobs:
         else
           echo "[---- Folder /home/runner/build empty. No actions needed. ]"
         fi
+        
     - name: Copy build page from docker to /home/runner/build
       run: |
         # Copy files from innoextract-wasm docker container to /home/runner/build
-        docker cp innoextract-wasm:/root/innoextract/build /home/runner
+        docker cp $(docker container ls -a | grep 'innoextract-wasm' | awk '{print $1}'):/root/innoextract/build /home/runner
       
