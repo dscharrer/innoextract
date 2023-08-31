@@ -39,6 +39,11 @@ jobs:
       run: |
         # Build innoextract-wasm image
         docker build . --file Dockerfile --tag innoextract-wasm
+        
+    - name: Run innoextract-wasm
+      run: |
+        # Run innoextract-wasm
+        docker run innoextract-wasm
     
     - name: Delete files in old /home/runner/build folder
       run: |
