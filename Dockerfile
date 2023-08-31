@@ -70,7 +70,5 @@ RUN \
   cd innoextract && \
   ./build.sh
 
-# Define default command, working directory and expose port.
-WORKDIR /root/innoextract/build
-EXPOSE 6931
-CMD [ "python3", "-m", "http.server", "6931" ]
+RUN \
+  echo "Build done."
