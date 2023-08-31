@@ -40,7 +40,17 @@ jobs:
         # Build innoextract-wasm image
         docker build . --file Dockerfile --tag innoextract-wasm
 
-    - name: Run innoextract-wasm Docker container
+    - name: Delete files in old /home/runner/build folder
       run: |
-        # Create innoextract-wasm container
-        docker run -d --restart unless-stopped --name innoextract-wasm -p 80:6931 innoextract-wasm
+        # Delete files in /build folder.
+        if [ "$(ls /home/runner/build | wc -l)" -gt 0 ]; then
+            rm -r /home/runner/build/*
+            echo "[---- All files and folders remover in /home/runner/build ]"
+        else
+          echo "[---- Folder /home/runner/build empty. No actions needed. ]"
+        fi
+    - name: Copy build page from docker to /home/runner/build
+      run: |
+        # Copy files from innoextract-wasm docker container to /home/runner/build
+        docker cp innoextract-wasm:/root/innoextract/build /home/runner
+      
