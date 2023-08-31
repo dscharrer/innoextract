@@ -10,6 +10,18 @@ ${BROWSER}             Firefox
 ${HOME_PAGE_PATH}      http://127.0.0.1:8000/index.html
 
 *** Keywords ***
+Prepare Test Environment
+    Log To Console    Cleaning ${CURDIR}/../../../output 
+    Remove Files   ${CURDIR}/../../../output/selenium*    ${CURDIR}/../../../output/geckodriver*
+
+Prepare For Test
+    ${DOWNLOAD_PATH}  Create Unique Download Path
+    Set Global Variable    ${DOWNLOAD_PATH}
+
+Clean After Test
+    Remove Directory    ${DOWNLOAD_PATH}    recursive=${True}
+    Close Browser
+
 Opening Browser
     [Arguments]    ${site_url}    ${browser}    ${profile}
     Open Browser    ${site_url}    ${browser}    ff_profile_dir=${profile}
