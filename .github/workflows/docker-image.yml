@@ -21,7 +21,7 @@ jobs:
         
         # Check if container exist and delete
         if [ "$(docker ps -a | grep -c innoextract-wasm)" -gt 0 ]; then
-            docker ps -q --filter "name=innoextract-wasm" | grep -q . && docker stop innoextract-wasm && docker rm -fv innoextract-wasm
+            docker rm innoextract-wasm
             echo "[---- Deleted container innoextract-wasm]"
         else
           echo "[---- Container with name: innoextract-wasm  doesn't exist. ]"
