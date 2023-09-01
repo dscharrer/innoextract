@@ -28,4 +28,4 @@ jobs:
 
     - name: Symlink creation for viewing html in output folder
       if: always()
-      run: ln -s /home/runner/build/output/log.html /home/runner/build/output/index.html
+      run: cd /home/runner/build/output && ln -s log.html index.html
