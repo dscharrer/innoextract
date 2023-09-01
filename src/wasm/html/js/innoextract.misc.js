@@ -34,6 +34,7 @@ var langSelect;
 //Error dialog
 const errorModal = new bootstrap.Modal(document.getElementById("errorModal"));
 const errorMsg = document.getElementById("errorMsg");
+const nonSecure = document.getElementById("nonSecure");
 
 //Installer info
 const title = document.getElementById("title");
@@ -609,4 +610,8 @@ setThemeText();
 mutateLogsButton();
 openOptsIfChecked();
 updateFooter();
+if(!window.isSecureContext){
+    nonSecure.style.display = "unset";
+}
+
 document.body.style.opacity = 1;

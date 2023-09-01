@@ -10,8 +10,8 @@
     margin: 0px;
 }
 
-.error {
-    color: #dc3545;
+.error, .error a{
+    color: #db3646;
 }
 
 .debug {
@@ -55,7 +55,8 @@ body,
 
 #reloadBadge,
 #cookieBadge,
-#logLinesBadge {
+#logLinesBadge,
+#nonSecure {
     display: none;
 }
 
