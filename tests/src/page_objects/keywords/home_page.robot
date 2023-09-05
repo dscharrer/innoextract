@@ -15,6 +15,7 @@ Click Extract And Save Button
     Wait Until Page Does Not Contain Element  ${ExtractAndSaveDisabledButton}
     Click Element  ${ExtractAndSaveButton}
     Wait Until Element Contains    ${ProgressBar}    100%    timeout=${timeout}
+    Sleep    10s
     Log  Click Extract And Save Button  console=yes
 
 Click Remove Button
@@ -50,25 +51,13 @@ Check If Log Console Does Not Contain Errors
     FOR    ${element}    IN    @{possible_errors}
         Element Should Not Contain    ${LogsConsole}    ${element}    ignore_case=True
     END
-
-Check If JS Console Does Not Contain Errors
-    # For firefox logs must be routed to geckodriver.log
-    # See profile settings - fp.set_preference("bdevtools.console.stdout.content", True)
-    Log to Console   Check if there are no errors in JS console
-    File Should Exist    ${CURDIR}/../../../output/geckodriver-1.log
-    ${file}=    Get File    ${CURDIR}/../../../output/geckodriver-1.log
-    @{file_lines}=    Split To Lines    ${file}
-    FOR    ${line}   IN    @{file_lines}
-       Should Not Contain    ${line}    ERROR
-       ${error}=    Get Lines Matching Regexp    ${line}     console\.error: \(\{(.*?)\}\)
-       Should Be Empty    ${error}
-    END
  
 Validate File Details In Log Console
     [Arguments]    ${file}
     Log    Validate file details in Log Console    console=yes
     Check If Log Console Contains    Total size: ${file}[archive_size_bytes] bytes    10
     Check If Log Console Contains    Done. Creating ZIP file
+    
 Validate Output Description
     [Arguments]    ${expected_output}
     Log    Validate Output Description    console=yes

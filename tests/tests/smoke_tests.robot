@@ -14,7 +14,7 @@ Test Teardown    Clean After Test
 
 *** Variables ***
 ${BROWSER}             Firefox
-${HOME_PAGE_PATH}      http://127.0.0.1:8000/index.html
+${HOME_PAGE_PATH}      http://localhost:8000
 ${TEST_FILE}           ${file_4mb}
 ${EXTRACTION_TIMEOUT}    30s
 
@@ -24,6 +24,7 @@ Extract test file
     [documentation]  Extract smoke file successfully
     [tags]  Smoke
     #TODO: Move some steps to TEST SETUP or SUITE SETUP
+    ${downloaded_file_path}  Set Variable  ${DOWNLOAD_PATH}${TEST_FILE}[archive_name].zip
     ${profile}  create_profile  ${DOWNLOAD_PATH}
     Opening Browser  ${HOME_PAGE_PATH}  ${browser}  ${profile}
     
@@ -37,14 +38,9 @@ Extract test file
     Wait Until Page Does Not Contain Element  ${ExtractAndSaveDisabledButton}
     
     Click Extract And Save Button    ${EXTRACTION_TIMEOUT}
+    Wait Until Created  ${downloaded_file_path}
+
+    Validate and Unzip Test File    ${downloaded_file_path}
     Validate File Details In Log Console    ${TEST_FILE}
     Check If Log Console Does Not Contain Errors
     Check If JS Console Does Not Contain Errors
-
-    ${downloaded_file_path}  Set Variable  ${DOWNLOAD_PATH}${TEST_FILE}[archive_name].zip
-    Log  Validate file created: ${downloaded_file_path}  console=yes
-    Wait Until Created  ${downloaded_file_path}
-    Sleep  10s
-    Log  Validate file is not empty: ${downloaded_file_path}  console=yes
-    File Should Not Be Empty  ${downloaded_file_path}
-    

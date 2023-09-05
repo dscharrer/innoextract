@@ -3,23 +3,22 @@ Library    OperatingSystem
 Library    SeleniumLibrary
 Library    String
 Library    ../libraries/browser_lib.py
+Library    Process
 Variables  ../locators/locators.py
 
 *** Variables ***
-${BROWSER}             Firefox
-${HOME_PAGE_PATH}      http://127.0.0.1:8000/index.html
 
 *** Keywords ***
 Prepare Test Environment
     Log To Console    Cleaning ${CURDIR}/../../../output 
     Remove Files   ${CURDIR}/../../../output/selenium*    ${CURDIR}/../../../output/geckodriver*
+    Remove Directory    ${CURDIR}/../../../output/tmp/*    recursive=${True}
 
 Prepare For Test
     ${DOWNLOAD_PATH}  Create Unique Download Path
     Set Global Variable    ${DOWNLOAD_PATH}
 
 Clean After Test
-    Remove Directory    ${DOWNLOAD_PATH}    recursive=${True}
     Close Browser
 
 Opening Browser
@@ -30,7 +29,7 @@ Opening Browser
 
 Create Unique Download Path
     ${random_string}    Generate Random String    20   
-    ${path}    Catenate    SEPARATOR=/    ${CURDIR}    ${random_string}/
+    ${path}    Catenate    SEPARATOR=/    ${CURDIR}/../../../output/tmp    ${random_string}/
     Log  \nUnique download path created: ${path}    console=yes
     [return]    ${path}
 
@@ -42,10 +41,56 @@ Rename Downloaded Zip File Name
     Remove File    ${path}${test_file}[archive_name].zip
 
 Check If Zip File Is Not Empty
-    [Arguments]    ${download_path}    ${test_file}
-    ${downloaded_file_path}    Set Variable    ${download_path}${test_file}[archive_name].zip
-    Log    Validate file created: ${downloaded_file_path}    console=yes
+    [Arguments]    ${path}    ${test_file}
+    ${file_path}    Set Variable    ${download_path}${test_file}[archive_name].zip
+    Wait Until Created    ${file_path}    timeout=15
+    Sleep    5s
+    File Should Not Be Empty    ${file_path}
+    Log To Console    File created and is not empty - ${file_path}
+
+Check If Downloaded Zip File Is Not Empty
+    [Arguments]    ${downloaded_file_path}
+    Log To Console    SCIEZKA POBRANIA: ${downloaded_file_path}
     Wait Until Created    ${downloaded_file_path}    timeout=15
-    Sleep    1s
-    Log    Validate file is not empty: ${downloaded_file_path}    console=yes
+    Sleep    5s
     File Should Not Be Empty    ${downloaded_file_path}
+    Log To Console    File created and is not empty - ${downloaded_file_path}
+
+Check If JS Console Does Not Contain Errors
+    # For firefox logs must be routed to geckodriver.log
+    # See profile settings - fp.set_preference("bdevtools.console.stdout.content", True)
+    Log to Console   Check if there are no errors in JS console
+    File Should Exist    ${CURDIR}/../../../output/geckodriver-1.log
+    ${file}=    Get File    ${CURDIR}/../../../output/geckodriver-1.log
+    @{file_lines}=    Split To Lines    ${file}
+    FOR    ${line}   IN    @{file_lines}
+        Should Not Contain    ${line}    ERROR
+        Should Not Contain    ${line}    Error
+        ${error}=    String.Get Regexp Matches    ${line}    console\.error: (.*?)$    1
+        IF    $error
+           ${error_content}=    Set Variable    ${error[0]}
+           IF     $error_content!='({})'
+               Fail
+            END
+        END
+    END
+
+Validate ZIP File
+    [Arguments]    ${downloaded_file_path}
+    Check If Downloaded Zip File Is Not Empty   ${downloaded_file_path}
+    ${rc}    ${output}    Run And Return Rc And Output   7za t ${downloaded_file_path}
+    Should Be Equal As Integers    ${rc}    0
+    Should Not Contain	${output}	FAIL
+    Log To Console    ZIP file validated: OK!
+
+Unzip File
+    [Arguments]    ${downloaded_file_path}
+    ${rc}    ${output}    Run And Return Rc And Output   7za e -y ${downloaded_file_path} -o./
+    Should Be Equal As Integers    ${rc}    0
+    Should Not Contain	${output}	FAIL
+    Log To Console    ZIP file extracted successfully!
+
+Validate and Unzip Test File
+    [Arguments]    ${downloaded_file_path}
+    Validate ZIP File    ${downloaded_file_path}
+    Unzip File    ${downloaded_file_path}

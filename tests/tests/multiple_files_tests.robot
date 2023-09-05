@@ -12,7 +12,6 @@ Library    Collections
 Variables      ../src/page_objects/locators/locators.py
 Suite Setup   Prepare Test Environment
 Test Setup    Prepare For Test
-Test Teardown    Clean After Test
 
 *** Variables ***
 ${BROWSER}             Firefox
