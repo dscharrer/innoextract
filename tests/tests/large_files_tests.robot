@@ -21,7 +21,7 @@ ${EXTRACTION_TIMEOUT}    30s
 Extract test file
     [documentation]  Extract smoke file successfully
     [tags]  Smoke
-    #TODO: Move some steps to TEST SETUP or SUITE SETUP
+
     ${downloaded_file_path}  Set Variable  ${DOWNLOAD_PATH}${TEST_FILE}[archive_name].zip
     
     Click Add Files Button
