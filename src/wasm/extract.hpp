@@ -87,6 +87,16 @@ enum class LanguageFilterOptions {
   LanguageAgnostic
 };
 
+enum class CollisionResolutionOptions { Overwrite, Rename, RenameAll, Error };
+
+struct ExtractionSettings {
+  bool debug_messages_enabled;
+  bool exclude_temporary_files_enabled;
+  bool logs_to_file;
+  LanguageFilterOptions language_filter_options;
+  CollisionResolutionOptions collision_resolution_options;
+};
+
 class extractor {
 public:
   static extractor& get();
@@ -124,6 +134,9 @@ private:
   json create_main_dir_obj(std::map<std::string, json::object_t*>& dir_objs) const;
   std::string dump_dirs_info(json& main_dir_obj,
                              std::map<std::string, json::object_t*>& dir_objs) const;
+  std::vector<processed_file>
+  resolve_collisions(const std::vector<const processed_file*>& selected_files,
+                     const std::string& default_language) const;
 
   uint64_t get_size() const;
   uint64_t copy_data(const stream::file_reader::pointer& source,
@@ -148,10 +161,7 @@ private:
 
   ZIPstream* output_zip_stream_{};
 
-  bool debugMessagesEnabled_ = false;
-  bool excludeTemporaryFilesEnabled_ = false;
-  bool logsToFile_ = false;
-  LanguageFilterOptions languageFilterOptions_ = LanguageFilterOptions::SelectedLanguageAndAgnostic;
+  ExtractionSettings extraction_settings_{};
 };
 
 } // namespace wasm

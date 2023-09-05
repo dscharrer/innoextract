@@ -157,22 +157,44 @@ static LanguageFilterOptions languageFilterOptionsFromString(const std::string& 
   return LanguageFilterOptions::All;
 }
 
-void extractor::set_options(const std::string &options_json) {
-  const auto options = json::parse(options_json);
-
-  debugMessagesEnabled_ = options["enableDebug"];
-  excludeTemporaryFilesEnabled_ = options["excludeTemps"];
-  languageFilterOptions_ = languageFilterOptionsFromString(options["extractionLanguageFilterOptions"]);
-  logsToFile_ = options["logsToFile"];
+static CollisionResolutionOptions collisionResolutionOptionsFromString(const std::string& options) {
+  if (options == "overwrite") {
+    return CollisionResolutionOptions::Overwrite;
+  } else if (options == "rename") {
+    return CollisionResolutionOptions::Rename;
+  } else if (options == "rename-all") {
+    return CollisionResolutionOptions::RenameAll;
+  } else if (options == "error") {
+    return CollisionResolutionOptions::Error;
+  } else {
+    throw std::runtime_error("Wrong collision resolution options!");
+  }
+  return CollisionResolutionOptions::Overwrite;
 }
 
-bool extractor::options_differ(const std::string &options_json) const {
+void extractor::set_options(const std::string& options_json) {
+  const auto options = json::parse(options_json);
+
+  extraction_settings_.debug_messages_enabled = options["enableDebug"];
+  extraction_settings_.exclude_temporary_files_enabled = options["excludeTemps"];
+  extraction_settings_.logs_to_file = options["logsToFile"];
+  extraction_settings_.language_filter_options =
+      languageFilterOptionsFromString(options["extractionLanguageFilterOptions"]);
+  extraction_settings_.collision_resolution_options =
+      collisionResolutionOptionsFromString(options["collisionResolutionOptions"]);
+}
+
+bool extractor::options_differ(const std::string& options_json) const {
   const auto options = json::parse(options_json);
 
   auto areDifferent = false;
-  areDifferent |= (debugMessagesEnabled_ != options["enableDebug"]);
-  areDifferent |= (excludeTemporaryFilesEnabled_ != options["excludeTemps"]);
-  areDifferent |= (languageFilterOptions_ != languageFilterOptionsFromString(options["extractionLanguageFilterOptions"]));
+  areDifferent |= (extraction_settings_.debug_messages_enabled != options["enableDebug"]);
+  areDifferent |= (extraction_settings_.exclude_temporary_files_enabled != options["excludeTemps"]);
+  areDifferent |= (extraction_settings_.logs_to_file != options["logsToFile"]);
+  areDifferent |= (extraction_settings_.language_filter_options !=
+                   languageFilterOptionsFromString(options["extractionLanguageFilterOptions"]));
+  areDifferent |= (extraction_settings_.collision_resolution_options !=
+                   collisionResolutionOptionsFromString(options["collisionResolutionOptions"]));
 
   return areDifferent;
 }
@@ -186,7 +208,7 @@ std::string extractor::load_exe(const std::string& exe_path) {
     open_installer_stream();
     load_installer_data();
 
-    if (debugMessagesEnabled_) {
+    if (extraction_settings_.debug_messages_enabled) {
       print_offsets(installer_offsets_);
       print_info(installer_info_);
     }
@@ -290,10 +312,10 @@ void extractor::fetch_files() {
       continue;
     }
 
-    
-    if (excludeTemporaryFilesEnabled_ && (directory.options & setup::directory_entry::DeleteAfterInstall)) {
-			continue; // Ignore temporary dirs
-		}
+    if (extraction_settings_.exclude_temporary_files_enabled &&
+        (directory.options & setup::directory_entry::DeleteAfterInstall)) {
+      continue; // Ignore temporary dirs
+    }
 
     dirs_.insert(path);
     add_dirs(dirs_, path);
@@ -309,9 +331,10 @@ void extractor::fetch_files() {
       continue;
     }
 
-    if (excludeTemporaryFilesEnabled_ && (file.options & setup::file_entry::DeleteAfterInstall)) {
-			continue; // Ignore temporary files
-		}
+    if (extraction_settings_.exclude_temporary_files_enabled &&
+        (file.options & setup::file_entry::DeleteAfterInstall)) {
+      continue; // Ignore temporary files
+    }
 
     add_dirs(dirs_, path);
     all_files_.push_back(processed_file(&file, path));
@@ -374,6 +397,241 @@ std::string extractor::dump_dirs_info(json& main_dir_obj,
   return main_obj.dump();
 }
 
+static bool should_change_base_file(const setup::file_entry& oldfile,
+                                    const setup::data_entry& olddata,
+                                    const setup::file_entry& newfile,
+                                    const setup::data_entry& newdata,
+                                    const std::string& default_language) {
+
+  bool allow_timestamp = true;
+
+  if (!(newfile.options & setup::file_entry::IgnoreVersion)) {
+    bool version_info_valid = !!(newdata.options & setup::data_entry::VersionInfoValid);
+
+    if (olddata.options & setup::data_entry::VersionInfoValid) {
+      allow_timestamp = false;
+
+      if (!version_info_valid || olddata.file_version > newdata.file_version) {
+        if (!(newfile.options & setup::file_entry::PromptIfOlder)) {
+          return false;
+        }
+      } else if (newdata.file_version == olddata.file_version &&
+                 !(newfile.options & setup::file_entry::OverwriteSameVersion)) {
+        if ((newfile.options & setup::file_entry::ReplaceSameVersionIfContentsDiffer) &&
+            olddata.file.checksum == newdata.file.checksum) {
+          return false;
+        }
+
+        if (!(newfile.options & setup::file_entry::CompareTimeStamp)) {
+          return false;
+        }
+
+        allow_timestamp = true;
+      }
+    } else if (version_info_valid) {
+      allow_timestamp = false;
+    }
+  }
+
+  if (allow_timestamp && (newfile.options & setup::file_entry::CompareTimeStamp)) {
+    if (newdata.timestamp == olddata.timestamp &&
+        newdata.timestamp_nsec == olddata.timestamp_nsec) {
+      return false;
+    }
+
+    if (newdata.timestamp < olddata.timestamp ||
+        (newdata.timestamp == olddata.timestamp &&
+         newdata.timestamp_nsec < olddata.timestamp_nsec)) {
+      if (!(newfile.options & setup::file_entry::PromptIfOlder)) {
+        return false;
+      }
+    }
+  }
+
+  if (!default_language.empty()) {
+    bool oldlang = setup::expression_match(default_language, newfile.languages);
+    bool newlang = setup::expression_match(default_language, oldfile.languages);
+    if (oldlang && !newlang) {
+      return true;
+    } else if (!oldlang && newlang) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+static std::vector<processed_file>
+get_renamed_collisions(const std::string& path,
+                       const std::vector<const processed_file*>& colliding_files,
+                       const processed_file* base_file, const std::string& default_language) {
+  std::vector<processed_file> renamed_collisions;
+
+  static const setup::file_entry::flags ARCH_FLAGS =
+      setup::file_entry::Bits32 | setup::file_entry::Bits64;
+
+  // We only want to append postfixes if these elements differ
+  bool common_component = true;
+  bool common_language = true;
+  bool common_arch = true;
+  for (const auto file : colliding_files) {
+    common_component =
+        common_component && file->entry().components == colliding_files[0]->entry().components;
+    common_language =
+        common_language && file->entry().languages == colliding_files[0]->entry().languages;
+    common_arch = common_arch && (file->entry().options & ARCH_FLAGS) ==
+                                     (colliding_files[0]->entry().options & ARCH_FLAGS);
+  }
+
+  for (const auto file : colliding_files) {
+    if (file == base_file) {
+      renamed_collisions.push_back(*file);
+    } else {
+      std::ostringstream oss;
+
+      bool require_number_suffix = true;
+      if (!common_component && !file->entry().components.empty()) {
+        if (setup::is_simple_expression(file->entry().components)) {
+          require_number_suffix = false;
+          oss << '#' << file->entry().components;
+        }
+      }
+      if (!common_language && !file->entry().languages.empty()) {
+        if (setup::is_simple_expression(file->entry().languages)) {
+          require_number_suffix = false;
+          if (file->entry().languages != default_language) {
+            oss << '@' << file->entry().languages;
+          }
+        }
+      }
+      if (!common_arch && (file->entry().options & ARCH_FLAGS) == setup::file_entry::Bits32) {
+        require_number_suffix = false;
+        oss << "@32bit";
+      } else if (!common_arch &&
+                 (file->entry().options & ARCH_FLAGS) == setup::file_entry::Bits64) {
+        require_number_suffix = false;
+        oss << "@64bit";
+      }
+
+      // If no postfixes were added already or the names still aren't unique,
+      // we want to differentiate them with indices
+      size_t i = 0;
+      std::string suffix = oss.str();
+      if (require_number_suffix) {
+        oss << '$' << i++;
+      }
+      while (true) {
+        if (std::none_of(renamed_collisions.cbegin(), renamed_collisions.cend(),
+                         [&](const processed_file& x) {
+                           std::string lowercase_path;
+                           std::transform(x.path().cbegin(), x.path().cend(),
+                                          std::back_inserter(lowercase_path),
+                                          [](unsigned char c) { return std::tolower(c); });
+                           return lowercase_path == path + oss.str();
+                         })) {
+          renamed_collisions.emplace_back(&file->entry(), file->path() + oss.str());
+          break;
+        }
+        oss.str(suffix);
+        oss << '$' << i++;
+      }
+    }
+  }
+
+  return renamed_collisions;
+}
+
+std::vector<processed_file>
+extractor::resolve_collisions(const std::vector<const processed_file*>& selected_files,
+                              const std::string& default_language) const {
+  switch (extraction_settings_.collision_resolution_options) {
+    case CollisionResolutionOptions::Overwrite: {
+      log_info << "Collision resolution option: Overwrite";
+      break;
+    }
+    case CollisionResolutionOptions::Rename: {
+      log_info << "Collision resolution option: Rename";
+      break;
+    }
+    case CollisionResolutionOptions::RenameAll: {
+      log_info << "Collision resolution option: Rename All";
+      break;
+    }
+    case CollisionResolutionOptions::Error: {
+      log_info << "Collision resolution option: Error";
+      break;
+    }
+    default: {
+      log_info << "Collision resolution option: Unknown";
+      break;
+    }
+  }
+
+  // Creating a map of possibly colliding files
+  std::unordered_map<std::string, std::vector<const processed_file*>> path_to_files_map;
+  for (auto file : selected_files) {
+    std::string lowercase_path;
+    std::transform(file->path().cbegin(), file->path().cend(), std::back_inserter(lowercase_path),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    path_to_files_map[lowercase_path].push_back(file);
+  }
+
+  std::vector<processed_file> resolved_files;
+  resolved_files.reserve(all_files_.size());
+
+  // Remove not colliding files from the map, and add them to resolved files
+  for (auto it = path_to_files_map.begin(); it != path_to_files_map.end();) {
+    if (it->second.size() == 1) {
+      resolved_files.push_back(*it->second[0]);
+      it = path_to_files_map.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  for (const auto entry : path_to_files_map) {
+    if (extraction_settings_.debug_messages_enabled) {
+      log_info << "Collision detected for file: " << entry.first;
+    }
+
+    if (extraction_settings_.collision_resolution_options == CollisionResolutionOptions::Error) {
+      throw std::runtime_error("Error! Collision detected with Error resolution method used!");
+    } else if (extraction_settings_.collision_resolution_options ==
+               CollisionResolutionOptions::RenameAll) {
+      const auto renamed_files =
+          get_renamed_collisions(entry.first, entry.second, nullptr, default_language);
+      resolved_files.insert(resolved_files.begin(), renamed_files.cbegin(), renamed_files.cend());
+    } else {
+      // Determine the base file (the one which will be chosen as the overwriting one)
+      auto base_it = entry.second.cbegin();
+      for (auto it = std::next(base_it); it != entry.second.cend(); ++it) {
+        const setup::file_entry& base_file_entry = (*base_it)->entry();
+        const setup::file_entry& file_entry = (*it)->entry();
+        const setup::data_entry& base_data = installer_info_.data_entries[base_file_entry.location];
+        const setup::data_entry& data = installer_info_.data_entries[file_entry.location];
+
+        if (should_change_base_file(base_file_entry, base_data, file_entry, data,
+                                    default_language)) {
+          base_it = it;
+        }
+      }
+
+      if (extraction_settings_.collision_resolution_options ==
+          CollisionResolutionOptions::Overwrite) {
+        resolved_files.push_back(**base_it);
+      } else if (extraction_settings_.collision_resolution_options ==
+                 CollisionResolutionOptions::Rename) {
+        const auto renamed_files =
+            get_renamed_collisions(entry.first, entry.second, *base_it, default_language);
+        resolved_files.insert(resolved_files.begin(), renamed_files.cbegin(), renamed_files.cend());
+      }
+    }
+  }
+
+  return resolved_files;
+}
+
 std::string extractor::extract(const std::string& list_json) {
   const std::string& output_dir = installer_info_.header.app_name;
   auto input = json::parse(list_json);
@@ -393,6 +651,8 @@ std::string extractor::extract(const std::string& list_json) {
     selected_files.push_back(&all_files_[f]);
   }
 
+  auto resolved_files = resolve_collisions(selected_files, lang);
+
   // cleaning MEMFS
   if (fs::exists(output_dir)) {
     fs::remove_all(output_dir);
@@ -410,13 +670,24 @@ std::string extractor::extract(const std::string& list_json) {
   std::vector<std::vector<output_location>> files_for_location;
   files_for_location.resize(installer_info_.data_entries.size());
 
-  for (const processed_file* file_ptr : selected_files) {
-        const auto fileHasLanguage = !file_ptr->entry().languages.empty();
+  for (const processed_file& file : resolved_files) {
+    const processed_file* file_ptr = &file;
+    const auto fileHasLanguage = !file_ptr->entry().languages.empty();
     const auto languageIsSelected = !lang.empty();
 
-    auto shouldIncludeFile = (languageFilterOptions_ == LanguageFilterOptions::All);
-    shouldIncludeFile |= (((languageFilterOptions_ == LanguageFilterOptions::LanguageAgnostic) || (languageFilterOptions_ == LanguageFilterOptions::SelectedLanguageAndAgnostic)) && !fileHasLanguage);
-    shouldIncludeFile |= (((languageFilterOptions_ == LanguageFilterOptions::SelectedLanguage) || (languageFilterOptions_ == LanguageFilterOptions::SelectedLanguageAndAgnostic)) && languageIsSelected && fileHasLanguage && setup::expression_match(lang, file_ptr->entry().languages));
+    auto shouldIncludeFile =
+        (extraction_settings_.language_filter_options == LanguageFilterOptions::All);
+    shouldIncludeFile |= (((extraction_settings_.language_filter_options ==
+                            LanguageFilterOptions::LanguageAgnostic) ||
+                           (extraction_settings_.language_filter_options ==
+                            LanguageFilterOptions::SelectedLanguageAndAgnostic)) &&
+                          !fileHasLanguage);
+    shouldIncludeFile |= (((extraction_settings_.language_filter_options ==
+                            LanguageFilterOptions::SelectedLanguage) ||
+                           (extraction_settings_.language_filter_options ==
+                            LanguageFilterOptions::SelectedLanguageAndAgnostic)) &&
+                          languageIsSelected && fileHasLanguage &&
+                          setup::expression_match(lang, file_ptr->entry().languages));
     if (shouldIncludeFile) {
       files_for_location[file_ptr->entry().location].push_back(output_location(file_ptr, 0));
     }
