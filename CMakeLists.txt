@@ -595,6 +595,7 @@ if(WASM)
 	string(TIMESTAMP BUILD_DATE "%s")
     execute_process(COMMAND sh -c "git describe --dirty --always --tags" OUTPUT_VARIABLE GIT_VERSION)
 	configure_file("src/wasm/html/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html")
+	file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/.version" "${BUILD_DATE} ${GIT_VERSION}")
 
 else() #NOT WASM
 	# Prepare generated files
