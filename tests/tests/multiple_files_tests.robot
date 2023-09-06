@@ -5,18 +5,17 @@ Library        SeleniumLibrary
 Library        String
 Resource       ../src/page_objects/keywords/common.robot
 Resource       ../src/page_objects/keywords/home_page.robot
-Resource       ../src/page_objects/keywords/windows.robot
 Resource       ../src/test_files/test_files.resource
+Resource       ../src/page_objects/keywords/ubuntu.robot
 Library        ../src/page_objects/libraries/browser_lib.py
 Library    Collections
 Variables      ../src/page_objects/locators/locators.py
 Suite Setup   Prepare Test Environment
 Test Setup    Prepare For Test
-Test Teardown    Clean After Test
 
 *** Variables ***
 ${BROWSER}             Firefox
-${HOME_PAGE_PATH}      http://127.0.0.1:8000/index.html
+${HOME_PAGE_PATH}      http://localhost:8000
 ${TEST_FILE}           ${file_4mb}
 ${MULTI_PART_TEST_FILE}           ${multi_part_4mb}
 ${EXTRACTION_TIMEOUT}    30s
@@ -26,8 +25,6 @@ ${EXTRACTION_TIMEOUT}    30s
 Extract two files one by one test
     [documentation]  Extract two files one by one
     [tags]  multiple  performance
-    ${profile}  create_profile  ${DOWNLOAD_PATH}
-    Opening Browser  ${HOME_PAGE_PATH}  ${browser}  ${profile}
 
     # Adding and Extracting First File
     Extract File  ${TEST_FILE}  ${DOWNLOAD_PATH}
@@ -41,9 +38,6 @@ Extract two files one by one test
 Extract multiple files test
     [documentation]  Extract file consisting of multiple files
     [tags]  multiple  performance
-    ${DOWNLOAD_PATH}  Create Unique Download Path
-    ${profile}  create_profile  ${DOWNLOAD_PATH}
-    Opening Browser  ${HOME_PAGE_PATH}  ${browser}  ${profile}
     Log To Console    Extracting file consisting of multiple files
     Extract Multiple Files    ${MULTI_PART_TEST_FILE}    ${DOWNLOAD_PATH}
     Check If Zip File Is Not Empty   ${DOWNLOAD_PATH}    ${MULTI_PART_TEST_FILE}
@@ -53,7 +47,7 @@ Extract multiple files test
 Extract File
     [Arguments]  ${test_file}  ${DOWNLOAD_PATH}
     Click Add Files Button
-    Upload Test File  ${test_file}[path]
+    Ubuntu Upload Test File  ${test_file}[path]
     Click Start Button
     Click Extract And Save Button    ${EXTRACTION_TIMEOUT}
 
@@ -70,7 +64,7 @@ Extract Multiple Files
     FOR    ${file}    IN    @{file_list}
         ${test_file_path}    Catenate    SEPARATOR=    ${test_file}[path]\\${file}
         Click Add Files Button
-        Upload Test File  ${test_file_path}
+        Ubuntu Upload Test File  ${test_file_path}
     END
     Click Start Button
     Click Extract And Save Button    ${EXTRACTION_TIMEOUT}
