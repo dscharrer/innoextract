@@ -14,7 +14,7 @@ ${BROWSER}             Firefox
 Prepare Test Environment
     Log To Console    Cleaning ${CURDIR}/../../../output 
     Remove Files   ${CURDIR}/../../../output/selenium*    ${CURDIR}/../../../output/geckodriver*
-    Remove Directory    ${CURDIR}/../../../output/tmp/*    recursive=${True} 
+    Remove Directory    ${CURDIR}/../../../output/tmp/*    recursive=${True}
 
 Prepare For Test
     ${DOWNLOAD_PATH}  Create Unique Download Path
