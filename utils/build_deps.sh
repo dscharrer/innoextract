@@ -39,7 +39,7 @@ if ! env | grep -q EMSDK; then die "EMSDK not found in env, exiting" ; fi
 function make_lzma() {
     cd $DEPDIR
     info "Downloading LZMA..."
-    wget -nv https://tukaani.org/xz/xz-5.2.10.tar.gz || die "Building LZMA failed"
+    wget -nv https://github.com/tukaani-project/xz/releases/download/v5.2.10/xz-5.2.10.tar.gz || die "Building LZMA failed"
 
     info "Unpacking LZMA..."
     tar -xaf xz-5.2.10.tar.gz && cd xz-5.2.10 || die "Unpacking LZMA failed"
