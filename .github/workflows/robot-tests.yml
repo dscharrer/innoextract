@@ -17,7 +17,7 @@ jobs:
       run: cd /home/runner/innoextract-wasm && git status && git switch tests && git pull
 
     - name: Remove old logs from robot /output folder
-      run: if [ -e /home/runner/innoextract-wasm/tests/output/log.html ]; then rm -r /home/runner/innoextract-wasm/tests/output/* ; else echo "File not found.";fi
+      run: if [ -e /home/runner/build/output/log.html ]; then rm -r /home/runner/build/output/* ; else echo "File not found." ; fi
       
     - name: Start robot tests
       run: xvfb-run -n 56 -e /dev/stdout -s '-screen 0 1366x768x24' -f /home/runner/.Xauthority sh -c 'startlxde& /home/runner/run_test.sh'
