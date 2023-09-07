@@ -22,10 +22,7 @@ jobs:
     - name: Start robot tests
       run: xvfb-run -n 56 -e /dev/stdout -s '-screen 0 1366x768x24' -f /home/runner/.Xauthority sh -c 'startlxde& /home/runner/run_test.sh'
       
-    - name: Copy logs
+    - name: Run post test scripts
       if: always()
-      run: cp -r /home/runner/innoextract-wasm/tests/output /home/runner/build
-
-    - name: Symlink creation for viewing html in output folder
-      if: always()
-      run: cd /home/runner/build/output && ln -s log.html index.html
+      run: /home/runner/run_post_test.sh
+      
