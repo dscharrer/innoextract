@@ -7,14 +7,14 @@ Library    Process
 Variables  ../locators/locators.py
 
 *** Variables ***
-${HOME_PAGE_PATH}      http://localhost
+${HOME_PAGE_PATH}      http://localhost:8000
 ${BROWSER}             Firefox
 
 *** Keywords ***
 Prepare Test Environment
     Log To Console    Cleaning ${CURDIR}/../../../output 
     Remove Files   ${CURDIR}/../../../output/selenium*    ${CURDIR}/../../../output/geckodriver*
-    Remove Directory    ${CURDIR}/../../../output/tmp/*    recursive=${True}
+    Remove Directory    ${CURDIR}/../../../output/tmp    recursive=${True}
 
 Prepare For Test
     ${DOWNLOAD_PATH}  Create Unique Download Path
@@ -33,7 +33,8 @@ Opening Browser
 
 Create Unique Download Path
     ${random_string}    Generate Random String    20   
-    ${path}    Catenate    SEPARATOR=/    ${CURDIR}/../../../output/tmp    ${random_string}/
+    # ${path}    Catenate    SEPARATOR=/    ${CURDIR}/../../../output/tmp    ${random_string}/
+    ${path}    Catenate    SEPARATOR=/    /tmp/output    ${random_string}/
     Log  \nUnique download path created: ${path}    console=yes
     [return]    ${path}
 
@@ -82,6 +83,7 @@ Validate ZIP File
     [Arguments]    ${downloaded_file_path}
     Check If Downloaded Zip File Is Not Empty   ${downloaded_file_path}
     ${rc}    ${output}    Run And Return Rc And Output   7za t ${downloaded_file_path}
+    Log To Console    output: ${output}
     Should Be Equal As Integers    ${rc}    0
     Should Not Contain	${output}	FAIL
     Log To Console    ZIP file validated: OK!
@@ -89,6 +91,7 @@ Validate ZIP File
 Unzip File
     [Arguments]    ${downloaded_file_path}
     ${rc}    ${output}    Run And Return Rc And Output   7za x ${downloaded_file_path} -o${DOWNLOAD_PATH}
+    Log To Console    output: ${output}
     Should Be Equal As Integers    ${rc}    0
     Should Not Contain	${output}	FAIL
     Log To Console    ZIP file extracted successfully!
