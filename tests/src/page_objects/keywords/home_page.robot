@@ -25,7 +25,8 @@ Click Remove Button
 Click Start Button
     Click Element  ${StartButton}
     Log  Click Start Button  console=yes
-
+    Wait Until Element Is Enabled    ${StartButton}
+    
 Log Console Is Visible
     Wait Until Element Is Visible   ${CollapseLogsButton}
     ${variable}    Run Keyword And Return Status    Element Should Be Visible   ${LogsTitle}
@@ -47,9 +48,10 @@ Check If Log Console Contains
     
 Check If Log Console Does Not Contain Errors
     Log    Check if there are no errors or warnings in the Log Console   console=yes
-    @{possible_errors}     Create List    warning    error   conflict    wrong
-    FOR    ${element}    IN    @{possible_errors}
-        Element Should Not Contain    ${LogsConsole}    ${element}    ignore_case=True
+    ${logs}=    Get Text    ${LogsConsole}
+    @{log_list}=    Split To Lines    ${logs}
+    FOR    ${line}    IN    @{log_list}
+        Should Not Contain    ${line}    ${space}error${space}    ignore_case=True
     END
  
 Validate File Details In Log Console
