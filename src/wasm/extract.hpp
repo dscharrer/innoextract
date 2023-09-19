@@ -136,7 +136,7 @@ private:
                              std::map<std::string, json::object_t*>& dir_objs) const;
   std::vector<processed_file>
   resolve_collisions(const std::vector<const processed_file*>& selected_files,
-                     const std::string& default_language) const;
+                     const std::string& default_language);
 
   uint64_t get_size() const;
   uint64_t copy_data(const stream::file_reader::pointer& source,
