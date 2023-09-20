@@ -7,7 +7,7 @@ Library    Process
 Variables  ../locators/locators.py
 
 *** Variables ***
-${HOME_PAGE_PATH}      http://localhost
+${HOME_PAGE_PATH}      http://localhost:8000
 ${BROWSER}             Firefox
 
 *** Keywords ***

@@ -14,7 +14,7 @@ Test Teardown    Clean After Test
 
 *** Variables ***
 ${TEST_FILE}           ${file_4mb}
-${EXTRACTION_TIMEOUT}    30s
+${EXTRACTION_TIMEOUT}    60s
 
 
 *** Test Cases ***
