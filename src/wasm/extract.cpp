@@ -543,7 +543,7 @@ get_renamed_collisions(const std::string& path,
 
 std::vector<processed_file>
 extractor::resolve_collisions(const std::vector<const processed_file*>& selected_files,
-                              const std::string& default_language) const {
+                              const std::string& default_language) {
   switch (extraction_settings_.collision_resolution_options) {
     case CollisionResolutionOptions::Overwrite: {
       log_info << "Collision resolution option: Overwrite";
@@ -590,14 +590,18 @@ extractor::resolve_collisions(const std::vector<const processed_file*>& selected
     }
   }
 
+  if (!path_to_files_map.empty() && extraction_settings_.collision_resolution_options == CollisionResolutionOptions::Error) {
+    log_info << "Error! Collision detected with Error resolution method used!";
+    set_abort(true);
+    return {};
+  }
+
   for (const auto entry : path_to_files_map) {
     if (extraction_settings_.debug_messages_enabled) {
       log_info << "Collision detected for file: " << entry.first;
     }
 
-    if (extraction_settings_.collision_resolution_options == CollisionResolutionOptions::Error) {
-      throw std::runtime_error("Error! Collision detected with Error resolution method used!");
-    } else if (extraction_settings_.collision_resolution_options ==
+    if (extraction_settings_.collision_resolution_options ==
                CollisionResolutionOptions::RenameAll) {
       const auto renamed_files =
           get_renamed_collisions(entry.first, entry.second, nullptr, default_language);
