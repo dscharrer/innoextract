@@ -651,6 +651,29 @@ std::string extractor::extract(const std::string& list_json) {
     selected_files.push_back(&all_files_[f]);
   }
 
+  switch (extraction_settings_.language_filter_options) {
+    case LanguageFilterOptions::All: {
+      log_info << "Language filter option: All";
+      break;
+    }
+    case LanguageFilterOptions::LanguageAgnostic: {
+      log_info << "Language filter option: Language agnostic";
+      break;
+    }
+    case LanguageFilterOptions::SelectedLanguage: {
+      log_info << "Language filter option: Selected language";
+      break;
+    }
+    case LanguageFilterOptions::SelectedLanguageAndAgnostic: {
+      log_info << "Language filter option: Selected language and agnostic";
+      break;
+    }
+    default: {
+      log_info << "Language filter option: Unknown";
+      break;
+    }
+  }
+
   auto resolved_files = resolve_collisions(selected_files, lang);
 
   // cleaning MEMFS
