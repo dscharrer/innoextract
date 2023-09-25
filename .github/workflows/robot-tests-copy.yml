@@ -20,4 +20,4 @@ jobs:
 
     steps:
     - name: Hash config
-      run:  /home/runner/test.sh ${{ inputs.testTag }}
+      run:  /home/runner/test.sh "${{ inputs.testTag }}"
