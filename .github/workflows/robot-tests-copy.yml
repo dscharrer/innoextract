@@ -1,0 +1,34 @@
+name: robot-tests
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Test tags'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+        - smoke
+        - something else
+        - 3rd choice
+
+jobs:
+
+  build:
+
+    runs-on: rnd201
+
+    steps:
+    - name: Git config
+      run: cd /home/runner/innoextract-wasm && git status && git switch tests && git pull
+
+    - name: Remove old logs from robot /output folder
+      if: always()
+      run: if [ -e /home/runner/build/output/log.html ]; then rm -r /home/runner/build/output/* ; else echo "File not found." ; fi
+      
+    - name: Start robot tests
+      run: xvfb-run -n 56 -e /dev/stdout -s '-screen 0 1366x768x24' -f /home/runner/.Xauthority sh -c 'startlxde& /home/runner/innoextract-wasm/tests/scripts/run_test.sh'
+      
+    - name: Run post test scripts
+      if: always()
+      run: /home/runner/innoextract-wasm/tests/scripts/run_post_test.sh
