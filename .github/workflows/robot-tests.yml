@@ -1,4 +1,4 @@
-name: robot-tests
+name: Smoke tests, after completed Docker Image CI
 on:
   workflow_run:
     workflows: ["Docker Image CI"]
