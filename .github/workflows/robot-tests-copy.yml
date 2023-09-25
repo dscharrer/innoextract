@@ -8,7 +8,7 @@ on:
         default: 'smoke'
         type: choice
         options:
-        - smoke
+        - Smoke
         - something else
         - 3rd choice
 
@@ -19,5 +19,16 @@ jobs:
     runs-on: rnd201
 
     steps:
-    - name: Hash config
-      run:  /home/runner/test.sh "${{ inputs.testTag }}"
+    - name: Git config
+      run: cd /home/runner/innoextract-wasm && git status && git switch tests && git pull
+
+    - name: Remove old logs from robot /output folder
+      if: always()
+      run: if [ -e /home/runner/build/output/log.html ]; then rm -r /home/runner/build/output/* ; else echo "File not found." ; fi
+      
+    - name: Start robot tests with tag
+      run: xvfb-run -n 56 -e /dev/stdout -s '-screen 0 1366x768x24' -f /home/runner/.Xauthority sh -c 'startlxde& /home/runner/innoextract-wasm/tests/scripts/run_tag.sh "${{ inputs.testTag }}"'
+      
+    - name: Run post test scripts
+      if: always()
+      run: /home/runner/innoextract-wasm/tests/scripts/run_post_test.sh
