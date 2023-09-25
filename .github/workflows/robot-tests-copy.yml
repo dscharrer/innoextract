@@ -1,4 +1,5 @@
-name: robot-tests-copy
+name: robot-tests-with-tags
+run-name: robot-tests-with-tags:${{ inputs.testTag }}
 on:
   workflow_dispatch:
     inputs:
