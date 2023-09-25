@@ -19,5 +19,5 @@ jobs:
     runs-on: rnd201
 
     steps:
-    - name: Git config
-      run:  echo ${{ inputs.testTag }}
+    - name: Hash config
+      run:  /home/runner/test.sh ${{ inputs.testTag }}
