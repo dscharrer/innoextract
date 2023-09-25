@@ -2,7 +2,7 @@ name: robot-tests-copy
 on:
   workflow_dispatch:
     inputs:
-      logLevel:
+      testTag:
         description: 'Test tags'
         required: true
         default: 'smoke'
@@ -20,4 +20,4 @@ jobs:
 
     steps:
     - name: Git config
-      run: echo "lalala"
+      run:  echo ${{ inputs.testTag }}
