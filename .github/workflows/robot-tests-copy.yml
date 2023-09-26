@@ -10,8 +10,9 @@ on:
         type: choice
         options:
         - Smoke
-        - something else
-        - 3rd choice
+        - Daily
+        - multiple
+        - performance
 
 jobs:
 
