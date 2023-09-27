@@ -1,0 +1,21 @@
+TestFiles:
+  - name: file_4MB.exe
+    archive_size_bytes: 4722512
+    archive_name: smol11
+    files_in_archive: 2
+    extraction_time: 60s
+  - name: 10k_files.exe
+    archive_size_bytes: 42537871
+    archive_name: 10000 koni wielkości kaczki
+    files_in_archive: 10001
+    extraction_time: 60s
+  - name: file_4MB-copy.exe
+    archive_size_bytes: 4722512
+    archive_name: smol11
+    files_in_archive: 2
+    extraction_time: 60s
+  - name: test_file_4.exe
+    archive_size_bytes: 78643380
+    archive_name: test_file_4
+    files_in_archive: 8
+    extraction_time: 60s
