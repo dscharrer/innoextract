@@ -13,6 +13,8 @@ on:
         - Daily
         - multiple
         - performance
+        - poma
+        - mrpo
 
 jobs:
 
