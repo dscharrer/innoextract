@@ -23,9 +23,7 @@ jobs:
     runs-on: rnd201
 
     steps:
-    - name: Git config
-      run: cd /home/runner/innoextract-wasm && git status && git switch tests && git pull
-
+    
     - name: Remove old logs from robot /output folder
       if: always()
       run: if [ -e /home/runner/build/output/log.html ]; then rm -r /home/runner/build/output/* ; else echo "File not found." ; fi
