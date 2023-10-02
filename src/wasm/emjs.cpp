@@ -100,12 +100,22 @@ EM_ASYNC_JS(size_t, write_int, (const void *ptr, size_t size, size_t n), {
 });
 
 EM_JS(void, close_int, (void), {
-  Module.writer.close();
-  innoLog("zipstream: close")
+  if(Module.writer) {
+    Module.writer.close();
+    innoLog("zipstream: close")
+  }
+  else {
+    innoLog("writer.close() requested, but writer is not yet constructed")
+  }
 });
 
 EM_ASYNC_JS(void, abort_int, (void), {
-  Module.writer.abort();
+  if(Module.writer) {
+    Module.writer.abort();
+  }
+  else {
+    innoLog("writer.abort() requested, but writer is not yet constructed")
+  }
 });
 // clang-format on
 

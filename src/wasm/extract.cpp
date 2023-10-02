@@ -545,26 +545,26 @@ std::vector<processed_file>
 extractor::resolve_collisions(const std::vector<const processed_file*>& selected_files,
                               const std::string& default_language) {
   switch (extraction_settings_.collision_resolution_options) {
-    case CollisionResolutionOptions::Overwrite: {
-      log_info << "Collision resolution option: Overwrite";
-      break;
-    }
-    case CollisionResolutionOptions::Rename: {
-      log_info << "Collision resolution option: Rename";
-      break;
-    }
-    case CollisionResolutionOptions::RenameAll: {
-      log_info << "Collision resolution option: Rename All";
-      break;
-    }
-    case CollisionResolutionOptions::Error: {
-      log_info << "Collision resolution option: Error";
-      break;
-    }
-    default: {
-      log_info << "Collision resolution option: Unknown";
-      break;
-    }
+  case CollisionResolutionOptions::Overwrite: {
+    log_info << "Collision resolution option: Overwrite";
+    break;
+  }
+  case CollisionResolutionOptions::Rename: {
+    log_info << "Collision resolution option: Rename";
+    break;
+  }
+  case CollisionResolutionOptions::RenameAll: {
+    log_info << "Collision resolution option: Rename All";
+    break;
+  }
+  case CollisionResolutionOptions::Error: {
+    log_info << "Collision resolution option: Error";
+    break;
+  }
+  default: {
+    log_info << "Collision resolution option: Unknown";
+    break;
+  }
   }
 
   // Creating a map of possibly colliding files
@@ -590,7 +590,8 @@ extractor::resolve_collisions(const std::vector<const processed_file*>& selected
     }
   }
 
-  if (!path_to_files_map.empty() && extraction_settings_.collision_resolution_options == CollisionResolutionOptions::Error) {
+  if (!path_to_files_map.empty() &&
+      extraction_settings_.collision_resolution_options == CollisionResolutionOptions::Error) {
     log_info << "Error! Collision detected with Error resolution method used!";
     set_abort(true);
     return {};
@@ -602,7 +603,7 @@ extractor::resolve_collisions(const std::vector<const processed_file*>& selected
     }
 
     if (extraction_settings_.collision_resolution_options ==
-               CollisionResolutionOptions::RenameAll) {
+        CollisionResolutionOptions::RenameAll) {
       const auto renamed_files =
           get_renamed_collisions(entry.first, entry.second, nullptr, default_language);
       resolved_files.insert(resolved_files.begin(), renamed_files.cbegin(), renamed_files.cend());
@@ -656,29 +657,37 @@ std::string extractor::extract(const std::string& list_json) {
   }
 
   switch (extraction_settings_.language_filter_options) {
-    case LanguageFilterOptions::All: {
-      log_info << "Language filter option: All";
-      break;
-    }
-    case LanguageFilterOptions::LanguageAgnostic: {
-      log_info << "Language filter option: Language agnostic";
-      break;
-    }
-    case LanguageFilterOptions::SelectedLanguage: {
-      log_info << "Language filter option: Selected language";
-      break;
-    }
-    case LanguageFilterOptions::SelectedLanguageAndAgnostic: {
-      log_info << "Language filter option: Selected language and agnostic";
-      break;
-    }
-    default: {
-      log_info << "Language filter option: Unknown";
-      break;
-    }
+  case LanguageFilterOptions::All: {
+    log_info << "Language filter option: All";
+    break;
+  }
+  case LanguageFilterOptions::LanguageAgnostic: {
+    log_info << "Language filter option: Language agnostic";
+    break;
+  }
+  case LanguageFilterOptions::SelectedLanguage: {
+    log_info << "Language filter option: Selected language";
+    break;
+  }
+  case LanguageFilterOptions::SelectedLanguageAndAgnostic: {
+    log_info << "Language filter option: Selected language and agnostic";
+    break;
+  }
+  default: {
+    log_info << "Language filter option: Unknown";
+    break;
+  }
   }
 
   auto resolved_files = resolve_collisions(selected_files, lang);
+  if (aborted) {
+    log_info << "Extraction aborted";
+    abort_zip();
+
+    json ret;
+    ret["status"] = "Aborted: Error due to the file collision";
+    return ret.dump();
+  }
 
   // cleaning MEMFS
   if (fs::exists(output_dir)) {
