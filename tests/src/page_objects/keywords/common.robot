@@ -4,6 +4,7 @@ Library    SeleniumLibrary
 Library    String
 Library    ../libraries/browser_lib.py
 Library    Process
+Library    Collections
 Variables  ../locators/locators.py
 
 *** Variables ***
@@ -98,5 +99,35 @@ Unzip File
 
 Validate and Unzip Test File
     [Arguments]    ${downloaded_file_path}
+    Log To Console    Validating and unziping file
     Validate ZIP File    ${downloaded_file_path}
     Unzip File    ${downloaded_file_path}
+
+Remove Spaces From File Name
+    [Arguments]    ${downloaded_file_path}
+    ${downloaded_file_path_new_name}    Replace String    ${downloaded_file_path}    ${space}    ${empty}
+    Copy File    ${downloaded_file_path}    ${downloaded_file_path_new_name}
+    Wait Until Created    ${downloaded_file_path_new_name}
+    RETURN    ${downloaded_file_path_new_name}
+
+Remove Spaces From Directory Name
+    [Arguments]    ${downloaded_file_path}
+    ${downloaded_file_path_new_name}    Replace String    ${downloaded_file_path}    ${space}    ${empty}
+    Copy Directory   ${downloaded_file_path}    ${downloaded_file_path_new_name}
+    Wait Until Created    ${downloaded_file_path_new_name}
+    Log To Console    Removed spaces from folder name: ${downloaded_file_path_new_name}
+    RETURN    ${downloaded_file_path_new_name}
+
+Compare Directory And Files Tree
+    [Arguments]    ${path_to_unzipped_folder}    ${path_to_unzipped_folder_pattern}
+    ${rc}    ${output}    Run And Return Rc And Output   diff -qr ${path_to_unzipped_folder} ${path_to_unzipped_folder_pattern}
+    Should Be Equal As Integers    ${rc}    0
+    Log To Console    Directory tree is the same as pattern: OK.
+
+ Compare Cheksum For Each File
+    [Arguments]    ${path_to_unzipped_folder}    ${path_to_unzipped_folder_pattern}
+    Log To Console    Checking checksums for    ${path_to_unzipped_folder}
+    # rclone is a programm comparing file sizes and hashes for each file in a given path
+    ${rc}    ${output}    Run And Return Rc And Output    rclone check ${path_to_unzipped_folder_pattern} ${path_to_unzipped_folder}
+    Should Be Equal As Integers    ${rc}    0
+    Log To Console    Checksums and file sizes are the same as pattern: OK.

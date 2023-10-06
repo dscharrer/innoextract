@@ -26,7 +26,7 @@ Extract test file
     
     Click Add Files Button
     Ubuntu Upload Test File  ${TEST_FILE}[path]
-    Click Start Button
+    Click Load Button
     Check If Log Console Contains    Opening "${TEST_FILE}[name]"
     Validate Output Description  ${TEST_FILE}[archive_name]
     Validate Output Archive File Size  ${TEST_FILE}[archive_size_bytes]

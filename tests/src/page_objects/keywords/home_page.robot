@@ -22,7 +22,7 @@ Click Remove Button
     Click Element  ${RemoveButton}
     Log  Click Remove Button  console=yes
 
-Click Start Button
+Click Load Button
     Click Element  ${StartButton}
     Log  Click Start Button  console=yes
     Wait Until Element Is Enabled    ${StartButton}

@@ -64,7 +64,7 @@ Extract File
     [Arguments]  ${test_file}    ${test_file_path}    ${EXTRACTION_TIMEOUT}=30s
     Click Add Files Button
     Ubuntu Upload Test File  ${test_file_path}
-    Click Start Button
+    Click Load Button
     Click Extract And Save Button    ${EXTRACTION_TIMEOUT}
     Wait Until Page Does Not Contain Element  ${ExtractAndSaveDisabledButton}
 
@@ -83,7 +83,7 @@ Extract Multiple Files
         Click Add Files Button
         Ubuntu Upload Test File  ${test_file_path}
     END
-    Click Start Button
+    Click Load Button
     Click Extract And Save Button    ${EXTRACTION_TIMEOUT}
     
 Clean Input List
