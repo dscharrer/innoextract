@@ -25,5 +25,4 @@ jobs:
       
     - name: Run post test scripts
       if: always()
-      run: /home/runner/innoextract-wasm/tests/scripts/run_post_test.sh
-      
+      run: /home/runner/innoextract-wasm/tests/scripts/run_post_test.sh ${{ inputs.testTag }} $GITHUB_ACTOR      
