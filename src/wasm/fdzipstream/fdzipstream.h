@@ -100,7 +100,7 @@ extern ZIPstream * zs_init ( ZIPstream *zs );
 extern void zs_free ( ZIPstream *zs );
 
 extern ZIPentry * zs_writeentry ( ZIPstream *zstream, uint8_t *entry, int64_t entrySize,
-                                  char *name, time_t modtime, int methodID, int64_t *writestatus );
+                                  const char *name, time_t modtime, int methodID, int64_t *writestatus );
 
 extern ZIPentry * zs_entrybegin ( ZIPstream *zstream, const char *name,
                                   time_t modtime, int methodID,

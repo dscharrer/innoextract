@@ -62,7 +62,16 @@ function innoLog(msg, level = 'info') {
         refreshLogLines();
     }
     else {
-        console.log(msg);
+        switch (level) {
+            case 'error':
+                console.error(msg);
+                break;
+            case 'debug':
+                console.debug(msg);
+                break;
+            default:
+                console.log(msg);
+        }
         con.insertAdjacentHTML('beforeend', '<p class="' + level + 'info">' + msg + '</p>');
         con.scrollTop = con.scrollHeight;
     }
@@ -307,15 +316,27 @@ function startInnoExtract() {
 startBtn.addEventListener("click", startInnoExtract, false);
 startBtn.disabled = true;
 
+
+function getDirPath(id) {
+    if (tree.treeview('getNode', id).parentId != undefined) {
+        return getDirPath(tree.treeview('getNode', id).parentId) + "/" + tree.treeview('getNode', id).text;
+    }
+    return tree.treeview('getNode', id).text;
+}
+
 function extractFiles() {
     var startDate = new Date();
     extractBtn.disabled = true;
     startBtn.disabled = true;
     checked = tree.treeview('getChecked');
-    info = { files: [] };
+    info = { files: [], dirs: [] };
     for (const element of checked) {
-        if (element.fileId !== undefined)
+        if (element.fileId !== undefined) {
             info.files.push(element.fileId);
+        }
+        else if (element.nodeId) {
+            info.dirs.push(getDirPath(element.nodeId) + "/");
+        }
     }
 
     if (langSelect) {
@@ -583,7 +604,7 @@ function dragHandler(event) {
             // ignore completely
             break;
         default:
-            console.debug("dragHandler: unknown event" + event.type + " dragCounter=" + dragCounter);
+            innoDebug("dragHandler: unknown event" + event.type + " dragCounter=" + dragCounter);
             break;
     }
 
@@ -613,7 +634,7 @@ setThemeText();
 mutateLogsButton();
 openOptsIfChecked();
 updateFooter();
-if(!window.isSecureContext){
+if (!window.isSecureContext) {
     nonSecure.style.display = "unset";
 }
 

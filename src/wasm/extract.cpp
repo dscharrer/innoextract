@@ -641,6 +641,7 @@ std::string extractor::extract(const std::string& list_json) {
   const std::string& output_dir = installer_info_.header.app_name;
   auto input = json::parse(list_json);
   auto files = input["files"];
+  auto dirs = input["dirs"];
   std::string lang;
   std::vector<const processed_file*> selected_files;
   set_abort(false);
@@ -694,12 +695,16 @@ std::string extractor::extract(const std::string& list_json) {
     fs::remove_all(output_dir);
   }
 
-  // creating empty directories - ignoring user input
-  // writing directly to the ZIP will resolve that in the future
-  fs::create_directory(output_dir);
+  const std::string zipfile = output_dir + ".zip";
+  emjs::open(zipfile.c_str(), "wb", total_size_);
+  emscripten_sleep(100);
+  output_zip_stream_ = zs_init(nullptr);
+  printf("opening zip file %s\n", zipfile.c_str());
 
-  for (const auto& dir : dirs_) {
-    fs::create_directory(output_dir + "/" + dir);
+  // creating empty directories if they were were selected
+  for (const std::string& dir : dirs) {
+    zs_writeentry(output_zip_stream_, nullptr, 0, dir.c_str(), time(0), ZS_STORE, 0);
+    debug("Creating empty dir: %s\n", dir.c_str());
   }
 
   typedef std::pair<const processed_file*, uint64_t> output_location;
@@ -763,12 +768,6 @@ std::string extractor::extract(const std::string& list_json) {
       total_size_ += location.uncompressed_size;
     }
   }
-
-  std::string zipfile = output_dir + ".zip";
-  emjs::open(zipfile.c_str(), "wb", total_size_);
-  emscripten_sleep(100);
-  output_zip_stream_ = zs_init(nullptr);
-  printf("opening zip file %s\n", zipfile.c_str());
 
   log_info << "Total size: " << total_size_ << " bytes";
 
@@ -932,7 +931,7 @@ uint64_t extractor::copy_data(const stream::file_reader::pointer& source,
     char buffer[8192 * 10];
     const auto buffer_size = std::streamsize(boost::size(buffer));
     const auto extracted_n = source->read(buffer, buffer_size).gcount();
-    if (extracted_n > 0) {
+    if (extracted_n > 0 || (source->eof() && !source->bad())) {
       for (auto output : outputs) {
         bool success = output->write(buffer, extracted_n);
         if (!success) {
