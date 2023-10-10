@@ -1,9 +1,9 @@
 #!/bin/sh
 
-tag=$1
-user=$2
+workflow=$1
+run_no=$2
 current_date=$(date +%s)
-log_path="/home/runner/logs/$current_date-$tag-$user"
+log_path="/home/runner/logs/$current_date--$workflow-#$run_no"
 
 #date and version number taken from .version file
 version_file="/home/runner/build/.version"
