@@ -28,3 +28,6 @@ LogsConsole = '//div[@id="collapseLogs"]'
 # Popup notifications
 # TODO add scenarios for Popup notifications
 
+# Web site footer sections
+AboutButton = '//a[contains(text(),"About")]'
+InnoextractText = '//a[contains(text(),"Innoextract-wasm")]'
