@@ -112,6 +112,10 @@ public:
 private:
   using json = nlohmann::ordered_json;
   using multi_part_outputs = boost::ptr_map<const processed_file*, file_output>;
+  using output_location = std::pair<const processed_file*, uint64_t>;
+
+  using files_t = std::map<stream::file, size_t>;
+  using chunks_t = std::map<stream::chunk, files_t>;
 
   static void init_singleton();
 
@@ -138,9 +142,27 @@ private:
   resolve_collisions(const std::vector<const processed_file*>& selected_files,
                      const std::string& default_language);
 
-  uint64_t get_size() const;
+  void print_extraction_options() const;
+  std::vector<const processed_file*>
+  fetch_selected_files(const nlohmann::ordered_json& input) const;
+  void clean_memfs(const std::string& output_dir) const;
+  void create_empty_dirs(const nlohmann::ordered_json& input) const;
+  std::vector<std::vector<output_location>>
+  get_files_for_location(const std::vector<processed_file>& resolved_files,
+                         const std::string& lang);
+  chunks_t
+  create_chunks(const std::vector<std::vector<extractor::output_location>>& files_for_location);
+  void open_zip_stream(const std::string& output_dir);
+
+  std::unique_ptr<stream::slice_reader> create_slice_reader();
+  std::vector<file_output*> open_outputs(const std::vector<output_location>& output_locations,
+                                         const std::string& output_dir);
+  uint64_t seek_input_stream(stream::chunk_reader::type* chunk_source, const stream::file& file,
+                             uint64_t current_offset);
   uint64_t copy_data(const stream::file_reader::pointer& source,
                      const std::vector<file_output*>& outputs);
+
+  uint64_t get_size() const;
   void verify_close_outputs(const std::vector<file_output*>& outputs,
                             const setup::data_entry& data);
   void save_zip();

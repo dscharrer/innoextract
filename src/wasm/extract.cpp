@@ -544,29 +544,6 @@ get_renamed_collisions(const std::string& path,
 std::vector<processed_file>
 extractor::resolve_collisions(const std::vector<const processed_file*>& selected_files,
                               const std::string& default_language) {
-  switch (extraction_settings_.collision_resolution_options) {
-  case CollisionResolutionOptions::Overwrite: {
-    log_info << "Collision resolution option: Overwrite";
-    break;
-  }
-  case CollisionResolutionOptions::Rename: {
-    log_info << "Collision resolution option: Rename";
-    break;
-  }
-  case CollisionResolutionOptions::RenameAll: {
-    log_info << "Collision resolution option: Rename All";
-    break;
-  }
-  case CollisionResolutionOptions::Error: {
-    log_info << "Collision resolution option: Error";
-    break;
-  }
-  default: {
-    log_info << "Collision resolution option: Unknown";
-    break;
-  }
-  }
-
   // Creating a map of possibly colliding files
   std::unordered_map<std::string, std::vector<const processed_file*>> path_to_files_map;
   for (auto file : selected_files) {
@@ -637,26 +614,7 @@ extractor::resolve_collisions(const std::vector<const processed_file*>& selected
   return resolved_files;
 }
 
-std::string extractor::extract(const std::string& list_json) {
-  const std::string& output_dir = installer_info_.header.app_name;
-  auto input = json::parse(list_json);
-  auto files = input["files"];
-  auto dirs = input["dirs"];
-  std::string lang;
-  std::vector<const processed_file*> selected_files;
-  set_abort(false);
-  selected_files.reserve(all_files_.size());
-
-  if (input.contains("lang")) {
-    lang = input["lang"];
-  }
-
-  std::sort(files.begin(), files.end());
-  log_info << "Unpacking " << files.size() << " files have been started.";
-  for (const auto& f : files) {
-    selected_files.push_back(&all_files_[f]);
-  }
-
+void extractor::print_extraction_options() const {
   switch (extraction_settings_.language_filter_options) {
   case LanguageFilterOptions::All: {
     log_info << "Language filter option: All";
@@ -680,58 +638,90 @@ std::string extractor::extract(const std::string& list_json) {
   }
   }
 
-  auto resolved_files = resolve_collisions(selected_files, lang);
-  if (aborted) {
-    log_info << "Extraction aborted";
-    abort_zip();
+  switch (extraction_settings_.collision_resolution_options) {
+  case CollisionResolutionOptions::Overwrite: {
+    log_info << "Collision resolution option: Overwrite";
+    break;
+  }
+  case CollisionResolutionOptions::Rename: {
+    log_info << "Collision resolution option: Rename";
+    break;
+  }
+  case CollisionResolutionOptions::RenameAll: {
+    log_info << "Collision resolution option: Rename All";
+    break;
+  }
+  case CollisionResolutionOptions::Error: {
+    log_info << "Collision resolution option: Error";
+    break;
+  }
+  default: {
+    log_info << "Collision resolution option: Unknown";
+    break;
+  }
+  }
+}
 
-    json ret;
-    ret["status"] = "Aborted: Error due to the file collision";
-    return ret.dump();
+std::vector<const processed_file*>
+extractor::fetch_selected_files(const nlohmann::ordered_json& input) const {
+  auto files = input["files"];
+  log_info << "Unpacking " << files.size() << " files have been started.";
+
+  std::vector<const processed_file*> selected_files;
+  selected_files.reserve(all_files_.size());
+
+  std::sort(files.begin(), files.end());
+  for (const auto& f : files) {
+    selected_files.push_back(&all_files_[f]);
   }
 
-  // cleaning MEMFS
+  return selected_files;
+}
+
+void extractor::clean_memfs(const std::string& output_dir) const {
   if (fs::exists(output_dir)) {
     fs::remove_all(output_dir);
   }
+}
 
-  const std::string zipfile = output_dir + ".zip";
-  emjs::open(zipfile.c_str(), "wb", total_size_);
-  emscripten_sleep(100);
-  output_zip_stream_ = zs_init(nullptr);
-  printf("opening zip file %s\n", zipfile.c_str());
+void extractor::create_empty_dirs(const nlohmann::ordered_json& input) const {
+  auto dirs = input["dirs"];
 
   // creating empty directories if they were were selected
   for (const std::string& dir : dirs) {
     zs_writeentry(output_zip_stream_, nullptr, 0, dir.c_str(), time(0), ZS_STORE, 0);
     debug("Creating empty dir: %s\n", dir.c_str());
   }
+}
 
-  typedef std::pair<const processed_file*, uint64_t> output_location;
+std::vector<std::vector<extractor::output_location>>
+extractor::get_files_for_location(const std::vector<processed_file>& resolved_files,
+                                  const std::string& lang) {
   std::vector<std::vector<output_location>> files_for_location;
   files_for_location.resize(installer_info_.data_entries.size());
 
   for (const processed_file& file : resolved_files) {
-    const processed_file* file_ptr = &file;
-    const auto fileHasLanguage = !file_ptr->entry().languages.empty();
-    const auto languageIsSelected = !lang.empty();
+    const auto file_ptr = &file;
+    const auto file_has_language = !file_ptr->entry().languages.empty();
+    const auto language_is_selected = !lang.empty();
 
-    auto shouldIncludeFile =
+    auto should_include_file =
         (extraction_settings_.language_filter_options == LanguageFilterOptions::All);
-    shouldIncludeFile |= (((extraction_settings_.language_filter_options ==
-                            LanguageFilterOptions::LanguageAgnostic) ||
-                           (extraction_settings_.language_filter_options ==
-                            LanguageFilterOptions::SelectedLanguageAndAgnostic)) &&
-                          !fileHasLanguage);
-    shouldIncludeFile |= (((extraction_settings_.language_filter_options ==
-                            LanguageFilterOptions::SelectedLanguage) ||
-                           (extraction_settings_.language_filter_options ==
-                            LanguageFilterOptions::SelectedLanguageAndAgnostic)) &&
-                          languageIsSelected && fileHasLanguage &&
-                          setup::expression_match(lang, file_ptr->entry().languages));
-    if (shouldIncludeFile) {
+    should_include_file |= (((extraction_settings_.language_filter_options ==
+                              LanguageFilterOptions::LanguageAgnostic) ||
+                             (extraction_settings_.language_filter_options ==
+                              LanguageFilterOptions::SelectedLanguageAndAgnostic)) &&
+                            !file_has_language);
+    should_include_file |= (((extraction_settings_.language_filter_options ==
+                              LanguageFilterOptions::SelectedLanguage) ||
+                             (extraction_settings_.language_filter_options ==
+                              LanguageFilterOptions::SelectedLanguageAndAgnostic)) &&
+                            language_is_selected && file_has_language &&
+                            setup::expression_match(lang, file_ptr->entry().languages));
+    if (should_include_file) {
       files_for_location[file_ptr->entry().location].push_back(output_location(file_ptr, 0));
     }
+
     uint64_t offset = installer_info_.data_entries[file_ptr->entry().location].uncompressed_size;
     uint32_t sort_slice =
         installer_info_.data_entries[file_ptr->entry().location].chunk.first_slice;
@@ -755,13 +745,14 @@ std::string extractor::extract(const std::string& list_json) {
       }
     }
   }
+  return files_for_location;
+}
 
-  total_size_ = 0;
+extractor::chunks_t extractor::create_chunks(
+    const std::vector<std::vector<extractor::output_location>>& files_for_location) {
+  chunks_t chunks;
 
-  typedef std::map<stream::file, size_t> Files;
-  typedef std::map<stream::chunk, Files> Chunks;
-  Chunks chunks;
-  for (size_t i = 0; i < installer_info_.data_entries.size(); i++) {
+  for (std::size_t i = 0; i < installer_info_.data_entries.size(); i++) {
     if (!files_for_location[i].empty()) {
       setup::data_entry& location = installer_info_.data_entries[i];
       chunks[location.chunk][location.file] = i;
@@ -769,91 +760,178 @@ std::string extractor::extract(const std::string& list_json) {
     }
   }
 
+  return chunks;
+}
+
+void extractor::open_zip_stream(const std::string& output_dir) {
+  std::string zipfile = output_dir + ".zip";
+  emjs::open(zipfile.c_str(), "wb", total_size_);
+  emscripten_sleep(100);
+  output_zip_stream_ = zs_init(nullptr);
+  printf("opening zip file %s\n", zipfile.c_str());
+
   log_info << "Total size: " << total_size_ << " bytes";
+}
+
+std::unique_ptr<stream::slice_reader> extractor::create_slice_reader() {
+  if (installer_offsets_.data_offset) {
+    return std::unique_ptr<stream::slice_reader>(
+        new stream::slice_reader(&installer_ifs_, installer_offsets_.data_offset));
+  } else {
+    fs::path dir = installer_path_.parent_path();
+    std::string basename = installer_path_.stem().string();
+    std::string basename2 = installer_info_.header.base_filename;
+
+    // Prevent access to unexpected files
+    std::replace(basename2.begin(), basename2.end(), '/', '_');
+    std::replace(basename2.begin(), basename2.end(), '\\', '_');
+
+    // Older Inno Setup versions used the basename stored in the headers,
+    // change our default accordingly
+    if (installer_info_.version < INNO_VERSION(4, 1, 7) && !basename2.empty()) {
+      std::swap(basename2, basename);
+    }
+
+    return std::unique_ptr<stream::slice_reader>(
+        new stream::slice_reader(dir, basename, basename2, installer_info_.header.slices_per_disk));
+  }
+}
+
+std::vector<file_output*>
+extractor::open_outputs(const std::vector<output_location>& output_locations,
+                        const std::string& output_dir) {
+  std::vector<file_output*> outputs;
+  for (const output_location& output_loc : output_locations) { // 1 file => n output files
+    const processed_file* fileinfo = output_loc.first;
+
+    // Re-use existing file output for multi-part files
+    file_output* output = nullptr;
+    if (fileinfo->is_multipart()) {
+      multi_part_outputs::iterator it = multi_outputs_.find(fileinfo);
+      if (it != multi_outputs_.end()) {
+        output = it->second;
+      }
+    }
+
+    if (!output) {
+      output = new file_output(output_dir, fileinfo, true, output_zip_stream_);
+      if (fileinfo->is_multipart()) {
+        multi_outputs_.insert(fileinfo, output);
+      }
+    }
+
+    outputs.push_back(output);
+    output->seek(output_loc.second);
+  }
+
+  return outputs;
+}
+
+uint64_t extractor::seek_input_stream(stream::chunk_reader::type* chunk_source,
+                                      const stream::file& file, uint64_t current_offset) {
+  if (file.offset > current_offset) {
+    util::discard(*chunk_source, file.offset - current_offset);
+  } else if (file.offset < current_offset) {
+    std::ostringstream oss;
+    oss << "Bad offset while extracting files: file start (" << file.offset
+        << ") is before end of previous file (" << current_offset << ")!";
+    throw std::runtime_error(oss.str());
+  }
+
+  return file.offset + file.size;
+}
+
+uint64_t extractor::copy_data(const stream::file_reader::pointer& source,
+                              const std::vector<file_output*>& outputs) {
+  uint64_t output_size = 0;
+  while (!source->eof()) {
+    char buffer[8192 * 10];
+    const auto buffer_size = std::streamsize(boost::size(buffer));
+    const auto extracted_n = source->read(buffer, buffer_size).gcount();
+    if (extracted_n > 0 || (source->eof() && !source->bad())) {
+      for (auto output : outputs) {
+        bool success = output->write(buffer, extracted_n);
+        if (!success) {
+          throw std::runtime_error("Error writing file \"" + output->path().string() + '"');
+        }
+      }
+      bytes_extracted_ += extracted_n;
+      output_size += extracted_n;
+
+      emjs::ui_progbar_update(float(bytes_extracted_) / total_size_ * 100);
+    }
+    if (aborted) {
+      return 0;
+    }
+  }
+
+  return output_size;
+}
+
+std::string extractor::extract(const std::string& list_json) {
+
+  set_abort(false);
+  print_extraction_options();
+
+  const auto input = json::parse(list_json);
+
+  std::string lang;
+  if (input.contains("lang")) {
+    lang = input["lang"];
+  }
+
+  const auto selected_files = fetch_selected_files(input);
+  const auto resolved_files = resolve_collisions(selected_files, lang);
+  if (aborted) {
+    log_info << "Extraction aborted";
+
+    abort_zip();
+
+    json ret;
+    ret["status"] = "Aborted: Error due to the file collision";
+    return ret.dump();
+  }
+
+  const auto& output_dir = installer_info_.header.app_name;
+  clean_memfs(output_dir);
+  open_zip_stream(output_dir);
+  create_empty_dirs(input);
+
+  auto files_for_location = get_files_for_location(resolved_files, lang);
+  const auto chunks = create_chunks(files_for_location);
 
   try {
-    std::unique_ptr<stream::slice_reader> slice_reader;
-    if (installer_offsets_.data_offset) {
-      slice_reader.reset(new stream::slice_reader(&installer_ifs_, installer_offsets_.data_offset));
-    } else {
-      fs::path dir = installer_path_.parent_path();
-      std::string basename = installer_path_.stem().string();
-      std::string basename2 = installer_info_.header.base_filename;
-      // Prevent access to unexpected files
-      std::replace(basename2.begin(), basename2.end(), '/', '_');
-      std::replace(basename2.begin(), basename2.end(), '\\', '_');
-      // Older Inno Setup versions used the basename stored in the headers,
-      // change our default accordingly
-      if (installer_info_.version < INNO_VERSION(4, 1, 7) && !basename2.empty()) {
-        std::swap(basename2, basename);
-      }
-      slice_reader.reset(new stream::slice_reader(dir, basename, basename2,
-                                                  installer_info_.header.slices_per_disk));
-    }
+    auto slice_reader = create_slice_reader();
 
     bytes_extracted_ = 0;
     multi_outputs_.clear();
 
-    for (const Chunks::value_type& chunk : chunks) { //[first = chunk, second = [file, location]]
-      stream::chunk_reader::pointer chunk_source;
+    for (const auto& chunk : chunks) { //[first = chunk, second = [file, location]]
+      stream::chunk_reader::pointer chunk_source{};
       if (chunk.first.encryption == stream::Plaintext) {
         chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first, "");
       }
+      if (!chunk_source.get()) {
+        continue; // Not extracting/testing this file
+      }
+
       uint64_t offset = 0;
-      for (const Files::value_type& location : chunk.second) { // 1 chunk => n files
+      for (const auto& location : chunk.second) { // 1 chunk => n files
         const stream::file& file = location.first;
         const std::vector<output_location>& output_locations = files_for_location[location.second];
-        if (file.offset > offset) {
-          if (chunk_source.get()) {
-            util::discard(*chunk_source, file.offset - offset);
-          }
-        }
-        if (chunk_source.get() && file.offset < offset) {
-          std::ostringstream oss;
-          oss << "Bad offset while extracting files: file start (" << file.offset
-              << ") is before end of previous file (" << offset << ")!";
-          throw std::runtime_error(oss.str());
-        }
-        offset = file.offset + file.size;
 
-        if (!chunk_source.get()) {
-          continue; // Not extracting/testing this file
-        }
+        offset = seek_input_stream(chunk_source.get(), file, offset);
 
         crypto::checksum checksum;
+        auto input = stream::file_reader::get(*chunk_source, file, &checksum);
+        auto outputs = open_outputs(output_locations, output_dir);
 
-        // Open input file
-        stream::file_reader::pointer file_source;
-        file_source = stream::file_reader::get(*chunk_source, file, &checksum);
+        uint64_t output_size = copy_data(input, outputs);
 
-        std::vector<file_output*> outputs;
-        for (const output_location& output_loc : output_locations) { // 1 file => n output files
-          const processed_file* fileinfo = output_loc.first;
+        if (aborted) {
+          // copy_data is the most likely function to be in while execution is being
+          // aborted
 
-          // Re-use existing file output for multi-part files
-          file_output* output = NULL;
-          if (fileinfo->is_multipart()) {
-            multi_part_outputs::iterator it = multi_outputs_.find(fileinfo);
-            if (it != multi_outputs_.end()) {
-              output = it->second;
-            }
-          }
-
-          if (!output) {
-            output = new file_output(output_dir, fileinfo, true, output_zip_stream_);
-            if (fileinfo->is_multipart()) {
-              multi_outputs_.insert(fileinfo, output);
-            }
-          }
-
-          outputs.push_back(output);
-          output->seek(output_loc.second);
-        }
-
-        uint64_t output_size = copy_data(file_source, outputs);
-
-        if (aborted) { // copy_data is the most likely function to be in while execution is being
-                       // aborted
           log_info << "Extraction aborted";
           abort_zip();
 
@@ -922,33 +1000,6 @@ uint64_t extractor::get_size() const {
                          uint64_t{0}, [](const uint64_t acc, const setup::data_entry& entry) {
                            return acc + entry.uncompressed_size;
                          });
-}
-
-uint64_t extractor::copy_data(const stream::file_reader::pointer& source,
-                              const std::vector<file_output*>& outputs) {
-  uint64_t output_size = 0;
-  while (!source->eof()) {
-    char buffer[8192 * 10];
-    const auto buffer_size = std::streamsize(boost::size(buffer));
-    const auto extracted_n = source->read(buffer, buffer_size).gcount();
-    if (extracted_n > 0 || (source->eof() && !source->bad())) {
-      for (auto output : outputs) {
-        bool success = output->write(buffer, extracted_n);
-        if (!success) {
-          throw std::runtime_error("Error writing file \"" + output->path().string() + '"');
-        }
-      }
-      bytes_extracted_ += extracted_n;
-      output_size += extracted_n;
-
-      emjs::ui_progbar_update(float(bytes_extracted_) / total_size_ * 100);
-    }
-    if (aborted) {
-      return 0;
-    }
-  }
-
-  return output_size;
 }
 
 void extractor::verify_close_outputs(const std::vector<file_output*>& outputs,
