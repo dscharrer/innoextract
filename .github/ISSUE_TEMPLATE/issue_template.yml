@@ -10,10 +10,9 @@ body:
   - type: input
     id: download-link
     attributes:
-      label: Download link
+      label: Download link of installer
       description: |
         If you had an issue, it is highly recommended to include a download link to the incompatible software.
-
         If not, you can type something like "Not relevant" or "Not available".
       placeholder: https://
     validations:
