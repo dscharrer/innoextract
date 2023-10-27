@@ -4,9 +4,7 @@ body:
   - type: textarea
     id: what-happened
     attributes:
-      label: Describe what you noticed and did
-      description: |
-        Describe your issue
+      label: Describe your issue
     validations:
       required: true
   - type: input
