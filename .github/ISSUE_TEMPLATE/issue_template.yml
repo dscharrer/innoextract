@@ -42,8 +42,6 @@ body:
       placeholder: |
         innoextract 1.x
         Extracts installers created by Inno Setup 1.2.10 to x.x.x
-        .....
-
       render: shell
     validations:
       required: true
