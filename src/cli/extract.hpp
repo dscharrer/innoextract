@@ -33,7 +33,9 @@
 #include <boost/cstdint.hpp>
 #include <boost/filesystem/path.hpp>
 
+#include "loader/offsets.hpp"
 #include "setup/filename.hpp"
+#include "setup/info.hpp"
 
 struct format_error : public std::runtime_error {
 	explicit format_error(const std::string & reason) : std::runtime_error(reason) { }
@@ -60,6 +62,7 @@ struct extract_options {
 	#ifdef DEBUG
 	bool dump_headers; //!< Dump setup headers
 	#endif
+	bool dump_compiledcode; //!< Dump compiled code
 	bool list; //!< List files
 	bool test; //!< Test files (but don't extract)
 	bool extract; //!< Extract files
@@ -118,5 +121,7 @@ struct extract_options {
 };
 
 void process_file(const boost::filesystem::path & installer, const extract_options & o);
+
+void dump_compiledcode(std::istream & is, const loader::offsets & offsets, const setup::info & info, const extract_options & o);
 
 #endif // INNOEXTRACT_CLI_EXTRACT_HPP

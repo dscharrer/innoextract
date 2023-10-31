@@ -144,6 +144,7 @@ int main(int argc, char * argv[]) {
 		#ifdef DEBUG
 		("dump-headers", "Dump decompressed setup headers")
 		#endif
+		("dump-compiledcode", "Dump decompressed compiled code binary")
 	;
 	
 	po::options_description modifiers("Modifiers");
@@ -441,6 +442,14 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	#endif
+	
+	o.dump_compiledcode = (options.count("dump-compiledcode") != 0);
+	if(o.dump_compiledcode) {
+		if(explicit_action || o.data_version) {
+			log_error << "Combining --dump-compiledcode with other options is not allowed";
+			return ExitUserError;
+		}
+	}
 	
 	o.extract_unknown = (options.count("no-extract-unknown") == 0);
 	
