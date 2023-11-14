@@ -888,7 +888,7 @@ std::string extractor::extract(const std::string& list_json) {
     abort_zip();
 
     json ret;
-    ret["status"] = "Aborted: Error due to the file collision";
+    ret["error"] = "Aborted: Error due to the file collision";
     return ret.dump();
   }
 

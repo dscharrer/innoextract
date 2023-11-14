@@ -140,6 +140,7 @@ function parseReturn(obj) {
         if (obj.status.indexOf("Aborted") >= 0) {
             innoLog("Aborted: " + obj.status);
             resetUI();
+            setStatus(obj.status)
         }
         return "ok";
     }
