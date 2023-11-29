@@ -10,6 +10,8 @@
 // https://github.com/Armchair-Software/emscripten-browser-file
 
 namespace emjs {
+char buff[64 * 1024 * 1024];
+uint32_t bpos = 0;
 
 // clang-format off
 EM_JS(void, upload, (char const *accept_types, upload_handler callback, void *callback_data), {
@@ -166,12 +168,11 @@ void ui_show_error() {
 }
 
 void open(const char* name, const char* modes, uint64_t output_size) {
+  bpos = 0; // Reset output buffer
   open_int(name, modes, output_size);
 }
 
 size_t write(const void* ptr, size_t size, size_t n) {
-  static char buff[64 * 1024 * 1024];
-  static int bpos = 0;
   if ((bpos + size * n > sizeof(buff)) || (ptr == NULL)) {
     std::cout << "writing " << bpos << "bytes\n";
     write_int(buff, 1, bpos);
