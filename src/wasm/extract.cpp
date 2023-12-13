@@ -751,6 +751,7 @@ extractor::get_files_for_location(const std::vector<processed_file>& resolved_fi
 extractor::chunks_t extractor::create_chunks(
     const std::vector<std::vector<extractor::output_location>>& files_for_location) {
   chunks_t chunks;
+  total_size_ = 0;
 
   for (std::size_t i = 0; i < installer_info_.data_entries.size(); i++) {
     if (!files_for_location[i].empty()) {
@@ -892,13 +893,13 @@ std::string extractor::extract(const std::string& list_json) {
     return ret.dump();
   }
 
+  auto files_for_location = get_files_for_location(resolved_files, lang);
+  const auto chunks = create_chunks(files_for_location);
+
   const auto& output_dir = installer_info_.header.app_name;
   clean_memfs(output_dir);
   open_zip_stream(output_dir);
   create_empty_dirs(input);
-
-  auto files_for_location = get_files_for_location(resolved_files, lang);
-  const auto chunks = create_chunks(files_for_location);
 
   try {
     auto slice_reader = create_slice_reader();
