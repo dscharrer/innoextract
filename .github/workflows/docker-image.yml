@@ -5,7 +5,7 @@ on:
     branches: [ "wasm-main" ]
   pull_request:
     branches: [ "wasm-main" ]
-  workflow_dispatch
+  workflow_dispatch:
 
 jobs:
 
@@ -22,6 +22,7 @@ jobs:
 
         # Check if container exist and delete
         if [ "$(docker ps -a | grep -c innoextract-wasm)" -gt 0 ]; then
+            docker container stop $(docker container ls -a | grep 'innoextract-wasm' | awk '{print $1}')
             docker container rm $(docker container ls -a | grep 'innoextract-wasm' | awk '{print $1}')
             echo "[---- Deleted container innoextract-wasm]"
         else
