@@ -15,7 +15,7 @@ RUN \
 # Set environment variables.
 ENV HOME /root
 ENV EMSDK /root/emsdk
-ENV EMSCRIPTEN_VERSION latest
+ENV EMSCRIPTEN_VERSION 3.1.51
 ENV INNOEXTRACT /root/innoextract
 
 # Define working directory.
@@ -72,6 +72,3 @@ RUN \
 
 RUN \
   echo "Build done."
-
-WORKDIR ${INNOEXTRACT}
-CMD ["python3", "-m", "http.server", "8000"]

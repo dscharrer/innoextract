@@ -5,6 +5,7 @@ on:
     branches: [ "wasm-main" ]
   pull_request:
     branches: [ "wasm-main" ]
+  workflow_dispatch
 
 jobs:
 
@@ -18,7 +19,7 @@ jobs:
       run: |
         # Delete docker volumes that are not in use by any containers
         yes | docker volume prune
-        
+
         # Check if container exist and delete
         if [ "$(docker ps -a | grep -c innoextract-wasm)" -gt 0 ]; then
             docker container rm $(docker container ls -a | grep 'innoextract-wasm' | awk '{print $1}')
@@ -26,7 +27,7 @@ jobs:
         else
           echo "[---- Container with name: innoextract-wasm  doesn't exist. ]"
         fi
-        
+
         # Check if imgage exist and delete
         if [ "$(docker images | grep -c innoextract-wasm)" -gt 0 ]; then
             docker rmi innoextract-wasm
@@ -39,12 +40,12 @@ jobs:
       run: |
         # Build innoextract-wasm image
         docker build . --file Dockerfile --tag innoextract-wasm
-        
+
     - name: Run innoextract-wasm
       run: |
         # Run innoextract-wasm
         docker run innoextract-wasm
-    
+
     - name: Delete files in old /home/runner/build folder
       run: |
         # Delete files in /build folder.
@@ -54,9 +55,9 @@ jobs:
         else
           echo "[---- Folder /home/runner/build empty. No actions needed. ]"
         fi
-        
+
     - name: Copy build page from docker to /home/runner/build
       run: |
         # Copy files from innoextract-wasm docker container to /home/runner/build
         docker cp $(docker container ls -a | grep 'innoextract-wasm' | awk '{print $1}'):/root/innoextract/build /home/runner
-      
+
