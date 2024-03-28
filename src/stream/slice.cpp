@@ -27,6 +27,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/directory.hpp>
 #include <boost/range/size.hpp>
 
 #include "util/console.hpp"
