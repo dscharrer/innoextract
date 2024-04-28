@@ -107,7 +107,7 @@ void run_entry::load(std::istream & is, const info & i) {
 		flagreader.add(DontLogParameters);
 	}
 	
-	options = flagreader;
+	options = flagreader.finalize();
 }
 
 } // namespace setup

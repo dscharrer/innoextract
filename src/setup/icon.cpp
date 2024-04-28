@@ -110,7 +110,7 @@ void icon_entry::load(std::istream & is, const info & i) {
 		flagreader.add(HasAppUserModelToastActivatorCLSID);
 	}
 	
-	options = flagreader;
+	options = flagreader.finalize();
 }
 
 } // namespace setup

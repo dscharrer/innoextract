@@ -663,7 +663,7 @@ void header::load(std::istream & is, const version & version) {
 		flagreader.add(WizardResizable);
 	}
 	
-	options |= flagreader;
+	options |= flagreader.finalize();
 	
 	if(version < INNO_VERSION(3, 0, 4)) {
 		privileges_required = (options & AdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;

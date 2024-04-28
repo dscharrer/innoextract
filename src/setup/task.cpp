@@ -72,7 +72,7 @@ void task_entry::load(std::istream & is, const info & i) {
 		flagreader.add(DontInheritCheck);
 	}
 	
-	options = flagreader;
+	options = flagreader.finalize();
 }
 
 } // namespace setup

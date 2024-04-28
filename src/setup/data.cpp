@@ -155,7 +155,7 @@ void data_entry::load(std::istream & is, const info & i) {
 		flagreader.add(SignOnce);
 	}
 	
-	options |= flagreader;
+	options |= flagreader.finalize();
 	
 	if(options & ChunkCompressed) {
 		chunk.compression = i.header.compression;
