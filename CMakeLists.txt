@@ -163,7 +163,7 @@ link_directories(${Boost_LIBRARY_DIRS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 if(NOT Boost_VERSION_MACRO)
 	# CMP0093 changed Boost_VERSION to x.y.z format and provide the old format in Boost_VERSION_MACRO
-	set(Boost_VERSION_MACRO ${Boost_VERSION})
+	set(Boost_VERSION_MACRO ${BOOST_VERSION})
 endif()
 
 has_static_libs(Boost Boost_LIBRARIES)
