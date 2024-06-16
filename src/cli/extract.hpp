@@ -64,6 +64,7 @@ struct extract_options {
 	bool test; //!< Test files (but don't extract)
 	bool extract; //!< Extract files
 	bool list_languages; //!< List available languages
+	bool list_components; //!< List available components
 	bool gog_game_id; //!< Show the GOG.com game id
 	bool show_password; //!< Show password check information
 	bool check_password; //!< Abort if the provided password is incorrect
@@ -102,6 +103,7 @@ struct extract_options {
 		, test(false)
 		, extract(false)
 		, list_languages(false)
+		, list_components(false)
 		, gog_game_id(false)
 		, show_password(false)
 		, check_password(false)

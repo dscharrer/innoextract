@@ -137,6 +137,7 @@ int main(int argc, char * argv[]) {
 		("list-checksums", "List file checksums")
 		("info,i", "Print information about the installer")
 		("list-languages", "List languages supported by the installer")
+		("list-components", "List components supported by the installer")
 		("gog-game-id", "Determine the installer's GOG.com game ID")
 		("show-password", "Show password check information")
 		("check-password", "Abort if the password is incorrect")
@@ -261,16 +262,19 @@ int main(int argc, char * argv[]) {
 	o.extract = (options.count("extract") != 0);
 	o.test = (options.count("test") != 0);
 	o.list_languages = (options.count("list-languages") != 0);
+	o.list_components = (options.count("list-components") != 0);
 	o.gog_game_id = (options.count("gog-game-id") != 0);
 	o.show_password = (options.count("show-password") != 0);
 	o.check_password = (options.count("check-password") != 0);
 	if(options.count("info") != 0) {
+		o.list_components = true;
 		o.list_languages = true;
 		o.gog_game_id = true;
 		o.show_password = true;
 	}
 	bool explicit_action = o.list || o.test || o.extract || o.list_languages
-	                       || o.gog_game_id || o.show_password || o.check_password;
+	                       || o.gog_game_id || o.show_password || o.check_password
+	                       || o.list_components;
 	if(!explicit_action) {
 		o.extract = true;
 	}
