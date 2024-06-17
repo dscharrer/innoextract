@@ -149,13 +149,24 @@ void data_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(5, 1, 13)) {
 		flagreader.add(SolidBreak);
 	}
-	if(i.version >= INNO_VERSION(5, 5, 7)) {
+	if(i.version >= INNO_VERSION(5, 5, 7) && i.version < INNO_VERSION(6, 3, 0)) {
 		// Actually added in Inno Setup 5.5.9 but the data version was not bumped
 		flagreader.add(Sign);
 		flagreader.add(SignOnce);
 	}
 	
 	options |= flagreader;
+
+	if (i.version >= INNO_VERSION(6, 3, 0)) {
+		stored_flag_reader<sign> flagreader2(is, i.version.bits());
+
+		flagreader2.add(NoSetting);
+		flagreader2.add(Yes);
+		flagreader2.add(Once);
+		flagreader2.add(Check);
+
+		sign_options |= flagreader2;
+	}
 	
 	if(options & ChunkCompressed) {
 		chunk.compression = i.header.compression;
@@ -206,3 +217,10 @@ NAMES(setup::data_entry::flags, "File Location Option",
 	"sign once",
 	"bzipped",
 )
+
+NAMES(setup::data_entry::sign, "File Sign Option",
+	"no setting",
+	"yes",
+	"once",
+	"check"
+	)

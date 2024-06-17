@@ -261,6 +261,10 @@ void header::load(std::istream & is, const version & version) {
 		changes_environment.clear();
 		changes_associations.clear();
 	}
+	if(version >= INNO_VERSION(6, 3, 0)) {
+		is >> util::binary_string(architectures_allowed_1);
+		is >> util::binary_string(architectures_installed_in_64bit_mode_1);
+	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
@@ -462,10 +466,10 @@ void header::load(std::istream & is, const version & version) {
 		compression = stored_enum<stored_compression_method_0>(is).get();
 	}
 	
-	if(version >= INNO_VERSION(5, 6, 0)) {
+	if(version >= INNO_VERSION(5, 6, 0) && version < INNO_VERSION(6, 3, 0)) {
 		architectures_allowed = stored_flags<stored_architectures_1>(is).get();
 		architectures_installed_in_64bit_mode = stored_flags<stored_architectures_1>(is).get();
-	} else if(version >= INNO_VERSION(5, 1, 0)) {
+	} else if(version >= INNO_VERSION(5, 1, 0) && version < INNO_VERSION(6, 3, 0)) {
 		architectures_allowed = stored_flags<stored_architectures_0>(is).get();
 		architectures_installed_in_64bit_mode = stored_flags<stored_architectures_0>(is).get();
 	} else {
@@ -661,6 +665,9 @@ void header::load(std::istream & is, const version & version) {
 		flagreader.add(AppNameHasConsts);
 		flagreader.add(UsePreviousPrivileges);
 		flagreader.add(WizardResizable);
+	}
+	if(version >= INNO_VERSION(6, 3, 0)) {
+		flagreader.add(UninstallLogging);
 	}
 	
 	options |= flagreader;

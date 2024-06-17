@@ -45,12 +45,12 @@ struct icon_entry : public item {
 		NeverUninstall,
 		CreateOnlyIfFileExists,
 		UseAppPaths,
-		FolderShortcut,
 		ExcludeFromShowInNewInstall,
 		PreventPinning,
 		HasAppUserModelToastActivatorCLSID,
 		// obsolete options:
-		RunMinimized
+		RunMinimized,
+		FolderShortcut
 	);
 	
 	enum close_setting {

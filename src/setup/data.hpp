@@ -60,6 +60,14 @@ struct data_entry {
 		// obsolete:
 		BZipped
 	);
+
+	FLAGS(sign,
+
+		NoSetting,
+		Yes,
+		Once,
+		Check
+	);
 	
 	stream::chunk chunk;
 	
@@ -73,6 +81,8 @@ struct data_entry {
 	boost::uint64_t file_version;
 	
 	flags options;
+
+	sign sign_options;
 	
 	/*!
 	 * Load one data entry.
@@ -86,5 +96,6 @@ struct data_entry {
 } // namespace setup
 
 NAMED_FLAGS(setup::data_entry::flags)
+NAMED_FLAGS(setup::data_entry::sign)
 
 #endif // INNOEXTRACT_SETUP_DATA_HPP
