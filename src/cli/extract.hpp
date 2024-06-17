@@ -64,6 +64,7 @@ struct extract_options {
 	bool test; //!< Test files (but don't extract)
 	bool extract; //!< Extract files
 	bool list_languages; //!< List available languages
+	bool list_components; //!< List available components
 	bool gog_game_id; //!< Show the GOG.com game id
 	bool show_password; //!< Show password check information
 	bool check_password; //!< Abort if the provided password is incorrect
@@ -76,6 +77,7 @@ struct extract_options {
 	
 	bool extract_unknown; //!< Try to extract unknown Inno Setup versions
 	
+	std::string component; //!< Extract only files for this component
 	bool extract_temp; //!< Extract temporary files
 	bool language_only; //!< Extract files not associated with any language
 	std::string language; //!< Extract only files for this language
@@ -102,6 +104,7 @@ struct extract_options {
 		, test(false)
 		, extract(false)
 		, list_languages(false)
+		, list_components(false)
 		, gog_game_id(false)
 		, show_password(false)
 		, check_password(false)

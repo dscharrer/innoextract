@@ -103,7 +103,7 @@ Documentation is also available as a man page:
 
 ## Limitations
 
-* There is no support for extracting individual components and limited support for filtering by name.
+* Limited support for filtering by name.
 
 * Included scripts and checks are not executed.
 

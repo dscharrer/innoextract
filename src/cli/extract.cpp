@@ -59,6 +59,7 @@
 #include "setup/file.hpp"
 #include "setup/info.hpp"
 #include "setup/language.hpp"
+#include "setup/component.hpp"
 
 #include "stream/chunk.hpp"
 #include "stream/file.hpp"
@@ -628,11 +629,11 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 	}
 	#endif
 	
-	bool multiple_sections = (o.list_languages + o.gog_game_id + o.list + o.show_password > 1);
+	bool multiple_sections = (o.list_languages + o.list_components + o.gog_game_id + o.list + o.show_password > 1);
 	if(!o.quiet && multiple_sections) {
 		std::cout << '\n';
 	}
-	
+
 	if(o.list_languages) {
 		if(o.silent) {
 			BOOST_FOREACH(const setup::language_entry & language, info.languages) {
@@ -654,6 +655,26 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 			}
 		}
 		if((o.silent || !o.quiet) && multiple_sections) {
+			std::cout << '\n';
+		}
+	}
+
+	if (o.list_components) {
+		if (multiple_sections) {
+			std::cout << "Components:\n";
+		}
+		BOOST_FOREACH(const setup::component_entry & component, info.components) {
+			std::cout << " - " << color::green << component.name << color::reset;
+			if (!component.description.empty()) {
+				std::cout << ": " << color::white << component.description << color::reset;
+			}
+			std::cout << '\n';
+		}
+		if (info.components.empty()) {
+			std::cout << " (none)\n";
+		}
+
+		if ((o.silent || !o.quiet) && multiple_sections) {
 			std::cout << '\n';
 		}
 	}
@@ -747,7 +768,13 @@ processed_entries filter_entries(const extract_options & o, const setup::info & 
 		} else if(o.language_only) {
 			continue; // Ignore language-agnostic dirs
 		}
-		
+
+		if(!directory.components.empty()) {
+			if(!o.component.empty() && !setup::expression_match(o.component, directory.components)) {
+				continue;
+			}
+		}
+
 		std::string path = o.filenames.convert(directory.name);
 		if(path.empty()) {
 			continue; // Don't know what to do with this
@@ -792,7 +819,13 @@ processed_entries filter_entries(const extract_options & o, const setup::info & 
 		} else if(o.language_only) {
 			continue; // Ignore language-agnostic files
 		}
-		
+
+		if (!file.components.empty()) {
+			if (!o.component.empty() && !setup::expression_match(o.component, file.components)) {
+				continue;
+			}
+		}
+
 		std::string path = o.filenames.convert(file.destination);
 		if(path.empty()) {
 			continue; // Internal file, not extracted
@@ -952,6 +985,9 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	if(o.list_languages) {
 		entries |= setup::info::Languages;
 	}
+	if(o.list_components) {
+		entries |= setup::info::Components;
+	}
 	if(o.gog_game_id || o.gog) {
 		entries |= setup::info::RegistryEntries;
 	}
@@ -992,7 +1028,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 		throw format_error(oss.str());
 	}
 	
-	if(o.gog_galaxy && (o.list || o.test || o.extract || o.list_languages)) {
+	if(o.gog_galaxy && (o.list || o.test || o.extract || o.list_languages || o.list_components)) {
 		gog::parse_galaxy_files(info, o.gog);
 	}
 	
