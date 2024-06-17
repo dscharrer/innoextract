@@ -165,6 +165,7 @@ int main(int argc, char * argv[]) {
 	
 	po::options_description filter("Filters");
 	filter.add_options()
+		("component", po::value<std::string>(), "Extract only files for this component")
 		("exclude-temp,m", "Don't extract temporary files")
 		("language", po::value<std::string>(), "Extract only files for this language")
 		("language-only", "Only extract language-specific files")
@@ -354,6 +355,12 @@ int main(int argc, char * argv[]) {
 			o.language = i->second.as<std::string>();
 		}
 		o.language_only = (options.count("language-only") != 0);
+	}
+	{
+		po::variables_map::const_iterator i = options.find("component");
+		if(i != options.end()) {
+			o.component = i->second.as<std::string>();
+		}
 	}
 	{
 		po::variables_map::const_iterator i = options.find("include");

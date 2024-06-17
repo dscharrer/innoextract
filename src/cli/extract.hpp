@@ -77,6 +77,7 @@ struct extract_options {
 	
 	bool extract_unknown; //!< Try to extract unknown Inno Setup versions
 	
+	std::string component; //!< Extract only files for this component
 	bool extract_temp; //!< Extract temporary files
 	bool language_only; //!< Extract files not associated with any language
 	std::string language; //!< Extract only files for this language

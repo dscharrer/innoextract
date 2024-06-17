@@ -633,7 +633,7 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 	if(!o.quiet && multiple_sections) {
 		std::cout << '\n';
 	}
-	
+
 	if(o.list_languages) {
 		if(o.silent) {
 			BOOST_FOREACH(const setup::language_entry & language, info.languages) {
@@ -768,7 +768,13 @@ processed_entries filter_entries(const extract_options & o, const setup::info & 
 		} else if(o.language_only) {
 			continue; // Ignore language-agnostic dirs
 		}
-		
+
+		if(!directory.components.empty()) {
+			if(!o.component.empty() && !setup::expression_match(o.component, directory.components)) {
+				continue;
+			}
+		}
+
 		std::string path = o.filenames.convert(directory.name);
 		if(path.empty()) {
 			continue; // Don't know what to do with this
@@ -813,7 +819,13 @@ processed_entries filter_entries(const extract_options & o, const setup::info & 
 		} else if(o.language_only) {
 			continue; // Ignore language-agnostic files
 		}
-		
+
+		if (!file.components.empty()) {
+			if (!o.component.empty() && !setup::expression_match(o.component, file.components)) {
+				continue;
+			}
+		}
+
 		std::string path = o.filenames.convert(file.destination);
 		if(path.empty()) {
 			continue; // Internal file, not extracted
