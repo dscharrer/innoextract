@@ -123,6 +123,7 @@ NAMES(setup::run_entry::flags, "Run Option",
 	"32 bit",
 	"64 bit",
 	"run as original user",
+	"don't log parameters",
 )
 
 NAMES(setup::run_entry::wait_condition, "Run Wait Type",
