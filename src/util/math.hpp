@@ -101,6 +101,11 @@ template <class T> T rotl_fixed(T x, unsigned int y) {
 	return T((x << y) | (x >> (sizeof(T) * 8 - y)));
 }
 
+//! Rotate right.
+template <class T> T rotr_fixed(T x, unsigned int y) {
+	return T((x >> y) | (x << (sizeof(T) * 8 - y)));
+}
+
 #if defined(_MSC_VER) && _MSC_VER >= 1400 && !defined(__INTEL_COMPILER)
 
 template <>
