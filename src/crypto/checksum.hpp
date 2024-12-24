@@ -44,6 +44,7 @@ enum checksum_type {
 	CRC32,
 	MD5,
 	SHA1,
+	SHA256,
 };
 
 struct checksum {
@@ -53,6 +54,7 @@ struct checksum {
 		boost::uint32_t crc32;
 		char md5[16];
 		char sha1[20];
+		char sha256[32];
 	};
 	
 	checksum_type type;

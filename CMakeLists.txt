@@ -370,6 +370,8 @@ set(INNOEXTRACT_SOURCES
 	src/crypto/md5.cpp
 	src/crypto/sha1.hpp
 	src/crypto/sha1.cpp
+	src/crypto/sha256.hpp
+	src/crypto/sha256.cpp
 	
 	src/loader/exereader.hpp
 	src/loader/exereader.cpp
@@ -470,6 +472,7 @@ set(UNITTEST_SOURCES
 	src/crypto/crc32.cpp
 	src/crypto/md5.cpp
 	src/crypto/sha1.cpp
+	src/crypto/sha256.cpp
 	
 	src/util/test.hpp
 	src/util/test.cpp

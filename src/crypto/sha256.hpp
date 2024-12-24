@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2019 Daniel Scharrer
+ * Copyright (C) 2024 Daniel Scharrer
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the author(s) be held liable for any damages
@@ -21,47 +21,35 @@
 /*!
  * \file
  *
- * Utility to hash data with a configurable hash function.
+ * SHA-256 hashing routines.
  */
-#ifndef INNOEXTRACT_CRYPTO_HASHER_HPP
-#define INNOEXTRACT_CRYPTO_HASHER_HPP
+#ifndef INNOEXTRACT_CRYPTO_SHA256_HPP
+#define INNOEXTRACT_CRYPTO_SHA256_HPP
 
-#include "crypto/adler32.hpp"
-#include "crypto/checksum.hpp"
-#include "crypto/crc32.hpp"
-#include "crypto/md5.hpp"
-#include "crypto/sha1.hpp"
-#include "crypto/sha256.hpp"
-#include "util/enum.hpp"
+#include <boost/cstdint.hpp>
 
-struct checksum_uninitialized_error { };
+#include "crypto/iteratedhash.hpp"
+#include "util/endian.hpp"
 
 namespace crypto {
 
-class hasher : checksum_base<hasher> {
+class sha256_transform {
 	
 public:
 	
-	explicit hasher(checksum_type type);
+	typedef boost::uint32_t hash_word;
+	typedef util::big_endian byte_order;
+	static const size_t offset = 1;
+	static const size_t block_size = 64;
+	static const size_t hash_size = 32;
 	
-	void update(const char * data, size_t size);
+	static void init(hash_word * state);
 	
-	checksum finalize();
-	
-private:
-	
-	checksum_type active_type;
-	
-	union {
-		crypto::adler32 adler32;
-		crypto::crc32 crc32;
-		crypto::md5 md5;
-		crypto::sha1 sha1;
-		crypto::sha256 sha256;
-	};
-	
+	static void transform(hash_word * state, const hash_word * data);
 };
+
+typedef iterated_hash<sha256_transform> sha256;
 
 } // namespace crypto
 
-#endif // INNOEXTRACT_CRYPTO_HASHER_HPP;
+#endif // INNOEXTRACT_CRYPTO_SHA256_HPP
