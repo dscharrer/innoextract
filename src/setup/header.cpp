@@ -261,6 +261,11 @@ void header::load(std::istream & is, const version & version) {
 		changes_environment.clear();
 		changes_associations.clear();
 	}
+	if(version >= INNO_VERSION(6, 3, 0)) {
+		// Valid architectures: 'Unknown', 'x86', 'x64', 'Arm32', 'Arm64'
+		is >> util::binary_string(architectures_allowed_expr);
+		is >> util::binary_string(architectures_installed_in_64bit_mode_expr);
+	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
@@ -462,7 +467,10 @@ void header::load(std::istream & is, const version & version) {
 		compression = stored_enum<stored_compression_method_0>(is).get();
 	}
 	
-	if(version >= INNO_VERSION(5, 6, 0)) {
+	if(version >= INNO_VERSION(6, 3, 0)) {
+		architectures_allowed = 0; // see architectures_allowed_expr
+		architectures_installed_in_64bit_mode = 0; // see architectures_installed_in_64bit_mode_expr
+	} else if(version >= INNO_VERSION(5, 6, 0)) {
 		architectures_allowed = stored_flags<stored_architectures_1>(is).get();
 		architectures_installed_in_64bit_mode = stored_flags<stored_architectures_1>(is).get();
 	} else if(version >= INNO_VERSION(5, 1, 0)) {
@@ -662,6 +670,9 @@ void header::load(std::istream & is, const version & version) {
 		flagreader.add(UsePreviousPrivileges);
 		flagreader.add(WizardResizable);
 	}
+	if(version >= INNO_VERSION(6, 3, 0)) {
+		flagreader.add(UninstallLogging);
+	}
 	
 	options |= flagreader.finalize();
 	
@@ -792,6 +803,7 @@ NAMES(setup::header::flags, "Setup Option",
 	"app name_has_consts",
 	"use_previous_privileges",
 	"wizard_resizable",
+	"uninstall_logging",
 	"uninstallable",
 	"disable dir page",
 	"disable program group page",
@@ -812,6 +824,7 @@ NAMES(setup::header::architecture_types, "Architecture",
 	"x86",
 	"x64",
 	"Itanium",
+	"Arm32",
 	"Arm64",
 )
 

@@ -97,7 +97,7 @@ void icon_entry::load(std::istream & is, const info & i) {
 	if(i.version.bits() != 16) {
 		flagreader.add(UseAppPaths);
 	}
-	if(i.version >= INNO_VERSION(5, 0, 3)) {
+	if(i.version >= INNO_VERSION(5, 0, 3) && i.version < INNO_VERSION(6, 3, 0)) {
 		flagreader.add(FolderShortcut);
 	}
 	if(i.version >= INNO_VERSION(5, 4, 2)) {

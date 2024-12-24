@@ -183,6 +183,7 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (5.6.2) (u)", /* prerelease */ INNO_VERSION_EXT(5, 6,  2, 0), version::Unicode },
 	{ "Inno Setup Setup Data (6.0.0) (u)",                  INNO_VERSION_EXT(6, 0,  0, 0), version::Unicode },
 	{ "Inno Setup Setup Data (6.1.0) (u)",                  INNO_VERSION_EXT(6, 1,  0, 0), version::Unicode },
+	{ "Inno Setup Setup Data (6.3.0)",                      INNO_VERSION_EXT(6, 3,  0, 0), version::Unicode },
 };
 
 } // anonymous namespace
@@ -345,7 +346,8 @@ void version::load(std::istream & is) {
 	}
 	
 	variant = 0;
-	if(boost::contains(version_str, "(u)") || boost::contains(version_str, "(U)")) {
+	if(value >= INNO_VERSION(6, 3, 0) ||
+	   boost::contains(version_str, "(u)") || boost::contains(version_str, "(U)")) {
 		variant |= Unicode;
 	}
 	if(boost::contains(version_str, "My Inno Setup Extensions") || boost::contains(version_str, "with ISX")) {

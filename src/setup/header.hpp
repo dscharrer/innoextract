@@ -103,6 +103,7 @@ struct header {
 		AppNameHasConsts,
 		UsePreviousPrivileges,
 		WizardResizable,
+		UninstallLogging,
 		
 		// Obsolete flags
 		Uninstallable,
@@ -126,6 +127,7 @@ struct header {
 		X86,
 		Amd64,
 		IA64,
+		ARM32,
 		ARM64
 	);
 	
@@ -165,6 +167,8 @@ struct header {
 	std::string setup_mutex;
 	std::string changes_environment;
 	std::string changes_associations;
+	std::string architectures_allowed_expr;
+	std::string architectures_installed_in_64bit_mode_expr;
 	std::string license_text;
 	std::string info_before;
 	std::string info_after;
