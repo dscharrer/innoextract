@@ -810,9 +810,9 @@ NAMES(setup::header::flags, "Setup Option",
 NAMES(setup::header::architecture_types, "Architecture",
 	"unknown",
 	"x86",
-	"amd64",
-	"IA64",
-	"ARM64",
+	"x64",
+	"Itanium",
+	"Arm64",
 )
 
 NAMES(setup::header::privileges_required_overrides, "Privilege Override"
