@@ -73,7 +73,10 @@ void data_entry::load(std::istream & is, const info & i) {
 	}
 	uncompressed_size = file.size;
 	
-	if(i.version >= INNO_VERSION(5, 3, 9)) {
+	if(i.version >= INNO_VERSION(6, 4, 0)) {
+		is.read(file.checksum.sha256, std::streamsize(sizeof(file.checksum.sha256)));
+		file.checksum.type = crypto::SHA256;
+	} else if(i.version >= INNO_VERSION(5, 3, 9)) {
 		is.read(file.checksum.sha1, std::streamsize(sizeof(file.checksum.sha1)));
 		file.checksum.type = crypto::SHA1;
 	} else if(i.version >= INNO_VERSION(4, 2, 0)) {
@@ -189,7 +192,9 @@ void data_entry::load(std::istream & is, const info & i) {
 	}
 	
 	if(options & ChunkEncrypted) {
-		if(i.version >= INNO_VERSION(5, 3, 9)) {
+		if(i.version >= INNO_VERSION(6, 4, 0)) {
+			chunk.encryption = stream::XChaCha20;
+		} else if(i.version >= INNO_VERSION(5, 3, 9)) {
 			chunk.encryption = stream::ARC4_SHA1;
 		} else {
 			chunk.encryption = stream::ARC4_MD5;

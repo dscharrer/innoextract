@@ -373,17 +373,23 @@ void header::load(std::istream & is, const version & version) {
 		image_alpha_format = AlphaIgnored;
 	}
 	
-	if(version < INNO_VERSION(4, 2, 0)) {
-		password.crc32 = util::load<boost::uint32_t>(is);
-		password.type = crypto::CRC32;
-	} else if(version < INNO_VERSION(5, 3, 9)) {
+	if(version >= INNO_VERSION(6, 4, 0)) {
+		is.read(password.sha256, 4);
+		password.type = crypto::PBKDF2_SHA256_XChaCha20;
+	} else if(version >= INNO_VERSION(5, 3, 9)) {
+		is.read(password.sha1, std::streamsize(sizeof(password.sha1)));
+		password.type = crypto::SHA1;
+	} else if(version >= INNO_VERSION(4, 2, 0)) {
 		is.read(password.md5, std::streamsize(sizeof(password.md5)));
 		password.type = crypto::MD5;
 	} else {
-		is.read(password.sha1, std::streamsize(sizeof(password.sha1)));
-		password.type = crypto::SHA1;
+		password.crc32 = util::load<boost::uint32_t>(is);
+		password.type = crypto::CRC32;
 	}
-	if(version >= INNO_VERSION(4, 2, 2)) {
+	if(version >= INNO_VERSION(6, 4, 0)) {
+		password_salt.resize(44); // PBKDF2 salt + iteration count + ChaCha2 base nonce
+		is.read(&password_salt[0], std::streamsize(password_salt.length()));
+	} else if(version >= INNO_VERSION(4, 2, 2)) {
 		password_salt.resize(8);
 		is.read(&password_salt[0], std::streamsize(password_salt.length()));
 		password_salt.insert(0, "PasswordCheckHash");

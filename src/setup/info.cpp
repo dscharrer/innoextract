@@ -124,7 +124,7 @@ void load_wizard_and_decompressor(std::istream & is, const setup::version & vers
 	}
 	
 	info.decrypt_dll.clear();
-	if(header.options & header::EncryptionUsed) {
+	if((header.options & header::EncryptionUsed) && version < INNO_VERSION(6, 4, 0)) {
 		if(entries & (info::DecryptDll | info::NoSkip)) {
 			is >> util::binary_string(info.decrypt_dll);
 		} else {

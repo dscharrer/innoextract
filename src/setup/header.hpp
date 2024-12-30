@@ -44,8 +44,6 @@ namespace setup {
 
 struct version;
 
-typedef char salt[8];
-
 struct header {
 	
 	// Setup data header.
