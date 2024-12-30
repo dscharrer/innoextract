@@ -27,6 +27,11 @@ option(DEVELOPER "Use build settings suitable for developers" OFF)
 option(CONTINUOUS_INTEGRATION "Use build settings suitable for CI" OFF)
 
 # Components
+set(default_BUILD_TESTS OFF)
+if(CONTINUOUS_INTEGRATION OR DEVELOPER)
+	set(default_BUILD_TESTS ON)
+endif()
+suboption(BUILD_TESTS "Build tests" BOOL ${default_BUILD_TESTS})
 option(USE_ARC4 "Build ARC4 decryption support" ON)
 
 # Optional dependencies
@@ -82,6 +87,15 @@ if(STRICT_USE)
 else()
 	set(OPTIONAL_DEPENDENCY)
 endif()
+
+# Test configuration
+set(RUN_TARGET CACHE STRING "Wrapper to run built targets")
+mark_as_advanced(RUN_TARGET)
+set(default_RUN_TESTS OFF)
+if((DEVELOPER OR CONTINUOUS_INTEGRATION) AND (NOT CMAKE_CROSSCOMPILING OR NOT RUN_TARGET STREQUAL ""))
+	set(default_RUN_TESTS ON)
+endif()
+suboption(RUN_TESTS "Run tests as part of the default build target" BOOL ${default_RUN_TESTS})
 
 # Install destinations
 if(CMAKE_VERSION VERSION_LESS 2.8.5)
@@ -441,6 +455,7 @@ set(INNOEXTRACT_SOURCES
 	src/util/storedenum.hpp
 	src/util/time.hpp
 	src/util/time.cpp
+	src/util/test.hpp
 	src/util/types.hpp
 	src/util/unique_ptr.hpp
 	src/util/windows.hpp
@@ -448,7 +463,15 @@ set(INNOEXTRACT_SOURCES
 	
 )
 
+set(UNITTEST_SOURCES
+	
+	src/util/test.hpp
+	src/util/test.cpp
+	
+)
+
 filter_list(INNOEXTRACT_SOURCES ALL_INNOEXTRACT_SOURCES)
+filter_list(UNITTEST_SOURCES ALL_UNITTEST_SOURCES)
 
 create_source_groups(ALL_INNOEXTRACT_SOURCES)
 
@@ -479,6 +502,44 @@ target_link_libraries(innoextract ${LIBRARIES})
 install(TARGETS innoextract RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 install(FILES ${MAN_FILE} DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL)
+
+
+# Test target
+
+if(BUILD_TESTS)
+	
+	enable_testing()
+	
+	set(run_tests)
+	if(RUN_TESTS)
+		set(run_tests ALL)
+	endif()
+	
+	add_executable(unittest ${UNITTEST_SOURCES})
+	target_link_libraries(unittest ${LIBRARIES})
+	target_compile_definitions(unittest PRIVATE INNOEXTRACT_BUILD_TESTS)
+	
+	set(unittest_binary "$<TARGET_FILE:unittest>")
+	
+	add_test(NAME "unit tests"
+		COMMAND ${RUN_TARGET} "${unittest_binary}"
+		WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+	)
+	
+	add_custom_command(
+		OUTPUT "${PROJECT_BINARY_DIR}/unittest.check"
+		COMMAND ${RUN_TARGET} "${unittest_binary}"
+		COMMAND ${CMAKE_COMMAND} -E touch "${PROJECT_BINARY_DIR}/unittest.check"
+		DEPENDS unittest
+		WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+		COMMENT "Running unit tests" VERBATIM
+	)
+	
+	add_custom_target(check ${run_tests}
+		DEPENDS "${PROJECT_BINARY_DIR}/unittest.check"
+	)
+	
+endif()
 
 
 # Additional targets.
@@ -525,10 +586,22 @@ print_configuration("Charset conversion"
 message("")
 
 if(DEVELOPER)
+	
 	file(READ "README.md" readme)
 	parse_version_file("VERSION" "VERSION")
 	string(REPLACE "${VERSION_2}" "" readme_without_version "${readme}")
 	if(readme_without_version STREQUAL readme)
 		message(WARNING "Could not find '${VERSION_2}' in README.md.")
 	endif()
+	
+	foreach(file IN LISTS ALL_INNOEXTRACT_SOURCES)
+		file(READ "${file}" source)
+		if(source MATCHES ".*INNOEXTRACT_TEST.*")
+			list(FIND ALL_UNITTEST_SOURCES ${file} result)
+			if(result EQUAL -1)
+				message(WARNING "Could not find '${file}' in UNITTEST_SOURCES")
+			endif()
+		endif()
+	endforeach()
+	
 endif()
