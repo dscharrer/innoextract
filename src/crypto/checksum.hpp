@@ -45,6 +45,7 @@ enum checksum_type {
 	MD5,
 	SHA1,
 	SHA256,
+	PBKDF2_SHA256_XChaCha20
 };
 
 struct checksum {
@@ -55,6 +56,7 @@ struct checksum {
 		char md5[16];
 		char sha1[20];
 		char sha256[32];
+		char check[4];
 	};
 	
 	checksum_type type;

@@ -26,6 +26,10 @@
 
 #include <boost/foreach.hpp>
 
+#include "crypto/hasher.hpp"
+#include "crypto/pbkdf2.hpp"
+#include "crypto/sha256.hpp"
+#include "crypto/xchacha20.hpp"
 #include "setup/component.hpp"
 #include "setup/data.hpp"
 #include "setup/delete.hpp"
@@ -42,6 +46,7 @@
 #include "setup/task.hpp"
 #include "setup/type.hpp"
 #include "stream/block.hpp"
+#include "util/endian.hpp"
 #include "util/fstream.hpp"
 #include "util/load.hpp"
 #include "util/log.hpp"
@@ -309,6 +314,76 @@ void info::load(std::istream & is, entry_types entries, util::codepage_id force_
 			ambiguous = version.is_ambiguous();
 			
 		}
+		
+	}
+	
+}
+
+std::string info::get_key(const std::string & password) {
+	
+	std::string encoded_password;
+	util::from_utf8(password, encoded_password, codepage);
+	
+	if(header.password.type == crypto::PBKDF2_SHA256_XChaCha20) {
+		
+		#if INNOEXTRACT_HAVE_DECRYPTION
+		
+		// 16 bytes PBKDF2 salt + 4 bytes PBKDF2 iterations + 24 bytes ChaCha20 base nonce
+		if(header.password_salt.length() != 20 + crypto::xchacha20::nonce_size) {
+			throw std::runtime_error("unexpected password salt size");
+		}
+		
+		std::string result;
+		result.resize(crypto::xchacha20::key_size + crypto::xchacha20::nonce_size);
+		typedef crypto::pbkdf2<crypto::sha256> pbkdf2;
+		pbkdf2::derive(encoded_password.c_str(), encoded_password.length(), &header.password_salt[0], 16,
+		               util::little_endian::load<boost::uint32_t>(&header.password_salt[16]), &result[0],
+		               crypto::xchacha20::key_size);
+		
+		std::memcpy(&result[crypto::xchacha20::key_size], &header.password_salt[20],
+		            crypto::xchacha20::nonce_size);
+		
+		return result;
+		
+		#endif
+		
+	}
+	
+	return encoded_password;
+}
+
+bool info::check_key(const std::string & key) {
+	
+	if(header.password.type == crypto::PBKDF2_SHA256_XChaCha20) {
+		
+		#if INNOEXTRACT_HAVE_DECRYPTION
+		
+		if(key.length() != crypto::xchacha20::key_size + crypto::xchacha20::nonce_size) {
+			throw std::runtime_error("unexpected key size");
+		}
+		
+		crypto::xchacha20 cipher;
+		
+		char nonce[crypto::xchacha20::nonce_size];
+		std::memcpy(nonce, key.c_str() + crypto::xchacha20::key_size, crypto::xchacha20::nonce_size);
+		*reinterpret_cast<boost::uint32_t *>(nonce + 8) = ~*reinterpret_cast<boost::uint32_t *>(nonce + 8);
+		cipher.init(key.c_str(), nonce);
+		
+		char buffer[] = { 0, 0, 0, 0 };
+		cipher.crypt(buffer, buffer, sizeof(buffer));
+		
+		return (std::memcmp(buffer, header.password.check, sizeof(buffer)) == 0);
+		
+		#else
+		throw std::runtime_error("XChaCha20 decryption not supported in this build");
+		#endif
+		
+	} else {
+		
+		crypto::hasher checksum(header.password.type);
+		checksum.update(header.password_salt.c_str(), header.password_salt.length());
+		checksum.update(key.c_str(), key.length());
+		return (checksum.finalize() == header.password);
 		
 	}
 	

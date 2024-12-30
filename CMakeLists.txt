@@ -368,6 +368,8 @@ set(INNOEXTRACT_SOURCES
 	src/crypto/iteratedhash.hpp
 	src/crypto/md5.hpp
 	src/crypto/md5.cpp
+	src/crypto/pbkdf2.hpp if INNOEXTRACT_HAVE_DECRYPTION
+	src/crypto/pbkdf2.cpp if INNOEXTRACT_HAVE_DECRYPTION
 	src/crypto/sha1.hpp
 	src/crypto/sha1.cpp
 	src/crypto/sha256.hpp
@@ -473,6 +475,7 @@ set(UNITTEST_SOURCES
 	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_DECRYPTION
 	src/crypto/crc32.cpp
 	src/crypto/md5.cpp
+	src/crypto/pbkdf2.cpp if INNOEXTRACT_HAVE_DECRYPTION
 	src/crypto/sha1.cpp
 	src/crypto/sha256.cpp
 	src/crypto/xchacha20.cpp if INNOEXTRACT_HAVE_DECRYPTION

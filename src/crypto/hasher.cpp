@@ -31,6 +31,7 @@ hasher::hasher(checksum_type type) : active_type(type) {
 		case crypto::MD5: md5.init(); break;
 		case crypto::SHA1: sha1.init(); break;
 		case crypto::SHA256: sha256.init(); break;
+		case crypto::PBKDF2_SHA256_XChaCha20: break;
 	};
 	
 }
@@ -44,6 +45,7 @@ void hasher::update(const char * data, size_t size) {
 		case crypto::MD5: md5.update(data, size); break;
 		case crypto::SHA1: sha1.update(data, size); break;
 		case crypto::SHA256: sha256.update(data, size); break;
+		case crypto::PBKDF2_SHA256_XChaCha20: break;
 	};
 	
 }
@@ -61,6 +63,7 @@ checksum hasher::finalize() {
 		case crypto::MD5: md5.finalize(result.md5); break;
 		case crypto::SHA1: sha1.finalize(result.sha1); break;
 		case crypto::SHA256: sha256.finalize(result.sha256); break;
+		case crypto::PBKDF2_SHA256_XChaCha20: break;
 	};
 	
 	return result;

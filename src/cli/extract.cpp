@@ -687,7 +687,11 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 				std::cout << "Password salt: " << color::yellow
 				          << print_hex(info.header.password_salt) << color::reset;
 				if(!o.quiet) {
-					std::cout << " (hex bytes, prepended to password)";
+					if(info.header.password.type == crypto::PBKDF2_SHA256_XChaCha20) {
+						std::cout << " (PBKDF2 salt, iteration count and XChaCha base nonce)";
+					} else {
+						std::cout << " (hex bytes, prepended to password)";
+					}
 				}
 				std::cout << '\n';
 			}
@@ -998,30 +1002,25 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	
 	bool multiple_sections = print_file_info(o, info);
 	
-	std::string password;
+	std::string key;
 	if(o.password.empty()) {
 		if(!o.quiet && (o.list || o.test || o.extract) && (info.header.options & setup::header::EncryptionUsed)) {
 			log_warning << "Setup contains encrypted files, use the --password option to extract them";
 		}
 	} else {
-		util::from_utf8(o.password, password, info.codepage);
-		if(info.header.options & setup::header::Password) {
-			crypto::hasher checksum(info.header.password.type);
-			checksum.update(info.header.password_salt.c_str(), info.header.password_salt.length());
-			checksum.update(password.c_str(), password.length());
-			if(checksum.finalize() != info.header.password) {
-				if(o.check_password) {
-					throw std::runtime_error("Incorrect password provided");
-				}
-				log_error << "Incorrect password provided";
-				password.clear();
+		key = info.get_key(o.password);
+		if((info.header.options & setup::header::Password) && !info.check_key(key)) {
+			if(o.check_password) {
+				throw std::runtime_error("Incorrect password provided");
 			}
+			log_error << "Incorrect password provided";
+			key.clear();
 		}
 		#if !INNOEXTRACT_HAVE_DECRYPTION
 		if((o.extract || o.test) && (info.header.options & setup::header::EncryptionUsed)) {
 			log_warning << "Decryption not supported in this build, skipping compressed chunks";
 		}
-		password.clear();
+		key.clear();
 		#endif
 	}
 	
@@ -1147,8 +1146,8 @@ void process_file(const fs::path & installer, const extract_options & o) {
 		      << ']');
 		
 		stream::chunk_reader::pointer chunk_source;
-		if((o.extract || o.test) && (chunk.first.encryption == stream::Plaintext || !password.empty())) {
-			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first, password);
+		if((o.extract || o.test) && (chunk.first.encryption == stream::Plaintext || !key.empty())) {
+			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first, key);
 		}
 		boost::uint64_t offset = 0;
 		
@@ -1197,7 +1196,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 							named = true;
 						}
 						if(chunk.first.encryption != stream::Plaintext) {
-							if(password.empty()) {
+							if(key.empty()) {
 								std::cout << '"' << color::dim_yellow << output.first->path() << color::reset << '"';
 							} else {
 								std::cout << '"' << color::yellow << output.first->path() << color::reset << '"';
@@ -1216,7 +1215,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 							std::cout << ' ';
 							print_checksum_info(file, checksum);
 						}
-						if(chunk.first.encryption != stream::Plaintext && password.empty()) {
+						if(chunk.first.encryption != stream::Plaintext && key.empty()) {
 							std::cout << " - encrypted";
 						}
 						std::cout << '\n';
