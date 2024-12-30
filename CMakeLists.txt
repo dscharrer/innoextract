@@ -469,6 +469,7 @@ set(UNITTEST_SOURCES
 	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_ARC4
 	src/crypto/crc32.cpp
 	src/crypto/md5.cpp
+	src/crypto/sha1.cpp
 	
 	src/util/test.hpp
 	src/util/test.cpp

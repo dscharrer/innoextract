@@ -24,6 +24,7 @@
 #include "crypto/sha1.hpp"
 
 #include "util/math.hpp"
+#include "util/test.hpp"
 
 namespace crypto {
 
@@ -196,5 +197,21 @@ void sha1_transform::transform(hash_word * state, const hash_word * data) {
 	#undef blk0
 	
 }
+
+INNOEXTRACT_TEST(sha1,
+	
+	const boost::uint8_t expected[] = {
+		0x7f, 0xe5, 0x54, 0xd3, 0x47, 0x1e, 0xc7, 0xba, 0xb3, 0x37,
+		0x4f, 0xfd, 0x46, 0xb3, 0x88, 0x85, 0x12, 0x2b, 0x13, 0x14
+	};
+	
+	sha1 checksum;
+	checksum.init();
+	checksum.update(testdata, testlen);
+	char buffer[20];
+	checksum.finalize(buffer);
+	test_equals("checksum", buffer, expected, sizeof(expected));
+	
+)
 
 } // namespace crypto
