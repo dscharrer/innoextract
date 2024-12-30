@@ -372,6 +372,8 @@ set(INNOEXTRACT_SOURCES
 	src/crypto/sha1.cpp
 	src/crypto/sha256.hpp
 	src/crypto/sha256.cpp
+	src/crypto/xchacha20.hpp if INNOEXTRACT_HAVE_DECRYPTION
+	src/crypto/xchacha20.cpp if INNOEXTRACT_HAVE_DECRYPTION
 	
 	src/loader/exereader.hpp
 	src/loader/exereader.cpp
@@ -473,6 +475,7 @@ set(UNITTEST_SOURCES
 	src/crypto/md5.cpp
 	src/crypto/sha1.cpp
 	src/crypto/sha256.cpp
+	src/crypto/xchacha20.cpp if INNOEXTRACT_HAVE_DECRYPTION
 	
 	src/util/test.hpp
 	src/util/test.cpp

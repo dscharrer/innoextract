@@ -34,9 +34,11 @@
 #include "crypto/arc4.hpp"
 #include "crypto/checksum.hpp"
 #include "crypto/hasher.hpp"
+#include "crypto/xchacha20.hpp"
 #include "stream/lzma.hpp"
 #include "stream/restrict.hpp"
 #include "stream/slice.hpp"
+#include "util/endian.hpp"
 #include "util/log.hpp"
 
 
@@ -85,6 +87,43 @@ public:
 private:
 	
 	crypto::arc4 arc4;
+	
+	
+};
+/*!
+ * Filter to en-/decrypt files files stored by Inno Setup.
+ */
+class inno_xchacha20_crypter : public boost::iostreams::multichar_input_filter {
+	
+private:
+	
+	typedef boost::iostreams::multichar_input_filter base_type;
+	
+public:
+	
+	typedef base_type::char_type char_type;
+	typedef base_type::category category;
+	
+	inno_xchacha20_crypter(const char key[32], const char nonce[24]) {
+		
+		xchacha20.init(key, nonce);
+		
+	}
+	
+	template <typename Source>
+	std::streamsize read(Source & src, char * dest, std::streamsize n) {
+		
+		std::streamsize length = boost::iostreams::read(src, dest, n);
+		if(length != EOF) {
+			xchacha20.crypt(dest, dest, size_t(n));
+		}
+		
+		return length;
+	}
+	
+private:
+	
+	crypto::xchacha20 xchacha20;
 	
 };
 
@@ -145,22 +184,37 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 		default: throw chunk_error("unknown chunk compression");
 	}
 	
-	if(chunk.encryption != Plaintext) {
+	switch(chunk.encryption) {
+		case Plaintext: break;
 		#if INNOEXTRACT_HAVE_DECRYPTION
-		char salt[8];
-		if(base.read(salt, 8) != 8) {
-			throw chunk_error("could not read chunk salt");
+		case ARC4_MD5: /* fall-through */
+		case ARC4_SHA1: {
+			char salt[8];
+			if(base.read(salt, 8) != 8) {
+				throw chunk_error("could not read chunk salt");
+			}
+			crypto::hasher hasher(chunk.encryption == ARC4_SHA1 ? crypto::SHA1 : crypto::MD5);
+			hasher.update(salt, sizeof(salt));
+			hasher.update(key.c_str(), key.length());
+			crypto::checksum checksum = hasher.finalize();
+			const char * salted_key = chunk.encryption == ARC4_SHA1 ? checksum.sha1 : checksum.md5;
+			size_t key_length = chunk.encryption == ARC4_SHA1 ? sizeof(checksum.sha1) : sizeof(checksum.md5);
+			result->push(inno_arc4_crypter(salted_key, key_length), 8192);
+			break;
 		}
-		crypto::hasher hasher(chunk.encryption == ARC4_SHA1 ? crypto::SHA1 : crypto::MD5);
-		hasher.update(salt, sizeof(salt));
-		hasher.update(key.c_str(), key.length());
-		crypto::checksum checksum = hasher.finalize();
-		const char * salted_key = chunk.encryption == ARC4_SHA1 ? checksum.sha1 : checksum.md5;
-		size_t key_length = chunk.encryption == ARC4_SHA1 ? sizeof(checksum.sha1) : sizeof(checksum.md5);
-		result->push(inno_arc4_crypter(salted_key, key_length), 8192);
+		case XChaCha20: {
+			if(key.length() != crypto::xchacha20::key_size + crypto::xchacha20::nonce_size) {
+				throw chunk_error("unexpected key size");
+			}
+			char nonce[crypto::xchacha20::nonce_size];
+			std::memcpy(nonce, key.c_str() + crypto::xchacha20::key_size, crypto::xchacha20::nonce_size);
+			util::little_endian::store(util::little_endian::load<boost::uint64_t>(nonce) ^ chunk.offset, nonce);
+			util::little_endian::store(util::little_endian::load<boost::uint32_t>(nonce + 8) ^ chunk.first_slice, nonce + 8);
+			result->push(inno_xchacha20_crypter(key.c_str(), nonce), 8192);
+			break;
+		}
 		#else
-		(void)key;
-		throw chunk_error("Decryption not supported in this build");
+		default: (void)key, throw chunk_error("XChaCha20 decryption not supported in this build");
 		#endif
 	}
 	
@@ -184,4 +238,5 @@ NAMES(stream::encryption_method, "Encryption Method",
 	"plaintext",
 	"rc4 + md5",
 	"rc4 + sha1",
+	"xchacha20",
 )
