@@ -25,6 +25,7 @@
 #include "crypto/md5.hpp"
 
 #include "util/math.hpp"
+#include "util/test.hpp"
 
 namespace crypto {
 
@@ -132,5 +133,20 @@ void md5_transform::transform(hash_word * state, const hash_word * data) {
 	#undef F1
 	
 }
+
+INNOEXTRACT_TEST(md5,
+	
+	const boost::uint8_t expected[] = {
+		0x6f, 0x6f, 0xfc, 0xc7, 0xb5, 0x85, 0x7d, 0xaf, 0x00, 0x6b, 0x9f, 0xcb, 0x13, 0x5c, 0xaa, 0x07
+	};
+	
+	md5 checksum;
+	checksum.init();
+	checksum.update(testdata, testlen);
+	char buffer[16];
+	checksum.finalize(buffer);
+	test_equals("checksum", buffer, expected, sizeof(expected));
+	
+)
 
 } // namespace crypto
