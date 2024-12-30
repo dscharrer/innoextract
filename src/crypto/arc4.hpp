@@ -59,4 +59,3 @@ private:
 #endif // INNOEXTRACT_HAVE_ARC4
 
 #endif // INNOEXTRACT_CRYPTO_ARC4_HPP
-
