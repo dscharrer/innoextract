@@ -464,6 +464,8 @@ set(INNOEXTRACT_SOURCES
 )
 
 set(UNITTEST_SOURCES
+
+	src/crypto/adler32.cpp
 	
 	src/util/test.hpp
 	src/util/test.cpp
