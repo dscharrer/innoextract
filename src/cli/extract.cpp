@@ -1017,9 +1017,9 @@ void process_file(const fs::path & installer, const extract_options & o) {
 				password.clear();
 			}
 		}
-		#if !INNOEXTRACT_HAVE_ARC4
+		#if !INNOEXTRACT_HAVE_DECRYPTION
 		if((o.extract || o.test) && (info.header.options & setup::header::EncryptionUsed)) {
-			log_warning << "ARC4 decryption not supported in this build, skipping compressed chunks";
+			log_warning << "Decryption not supported in this build, skipping compressed chunks";
 		}
 		password.clear();
 		#endif

@@ -3,6 +3,7 @@ innoextract 1.10 (TBD)
  - Added support for Inno Setup 6.3.x installers
  - Added support for a modified Inno Setup 5.3.10 variant
  - Added unit tests
+ - Replaced USE_ARC4 build option with BUILD_DECRYPTION
 
 innoextract 1.9 (2020-08-09)
  - Added preliminary support for Inno Setup 6.1.0

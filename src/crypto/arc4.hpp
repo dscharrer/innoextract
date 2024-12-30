@@ -32,7 +32,7 @@
 
 #include "configure.hpp"
 
-#if INNOEXTRACT_HAVE_ARC4
+#if INNOEXTRACT_HAVE_DECRYPTION
 
 namespace crypto {
 
@@ -56,6 +56,6 @@ private:
 
 } // namespace crypto
 
-#endif // INNOEXTRACT_HAVE_ARC4
+#endif // INNOEXTRACT_HAVE_DECRYPTION
 
 #endif // INNOEXTRACT_CRYPTO_ARC4_HPP

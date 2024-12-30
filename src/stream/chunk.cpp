@@ -48,7 +48,7 @@ namespace {
 
 const char chunk_id[4] = { 'z', 'l', 'b', 0x1a };
 
-#if INNOEXTRACT_HAVE_ARC4
+#if INNOEXTRACT_HAVE_DECRYPTION
 
 /*!
  * Filter to en-/decrypt files files stored by Inno Setup.
@@ -88,7 +88,7 @@ private:
 	
 };
 
-#endif // INNOEXTRACT_HAVE_ARC4
+#endif // INNOEXTRACT_HAVE_DECRYPTION
 
 } // anonymous namespace
 
@@ -146,7 +146,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 	}
 	
 	if(chunk.encryption != Plaintext) {
-		#if INNOEXTRACT_HAVE_ARC4
+		#if INNOEXTRACT_HAVE_DECRYPTION
 		char salt[8];
 		if(base.read(salt, 8) != 8) {
 			throw chunk_error("could not read chunk salt");
@@ -160,7 +160,7 @@ chunk_reader::pointer chunk_reader::get(slice_reader & base, const chunk & chunk
 		result->push(inno_arc4_crypter(salted_key, key_length), 8192);
 		#else
 		(void)key;
-		throw chunk_error("ARC4 decryption not supported");
+		throw chunk_error("Decryption not supported in this build");
 		#endif
 	}
 	

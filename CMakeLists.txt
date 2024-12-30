@@ -32,7 +32,7 @@ if(CONTINUOUS_INTEGRATION OR DEVELOPER)
 	set(default_BUILD_TESTS ON)
 endif()
 suboption(BUILD_TESTS "Build tests" BOOL ${default_BUILD_TESTS})
-option(USE_ARC4 "Build ARC4 decryption support" ON)
+option(BUILD_DECRYPTION "Build decryption support" ON)
 
 # Optional dependencies
 option(USE_LZMA "Build LZMA decompression support" ON)
@@ -149,8 +149,8 @@ endif()
 
 unset(LIBRARIES)
 
-if(USE_ARC4)
-	set(INNOEXTRACT_HAVE_ARC4 1)
+if(BUILD_DECRYPTION)
+	set(INNOEXTRACT_HAVE_DECRYPTION 1)
 endif()
 
 if(USE_LZMA)
@@ -357,8 +357,8 @@ set(INNOEXTRACT_SOURCES
 	
 	src/crypto/adler32.hpp
 	src/crypto/adler32.cpp
-	src/crypto/arc4.hpp if INNOEXTRACT_HAVE_ARC4
-	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_ARC4
+	src/crypto/arc4.hpp if INNOEXTRACT_HAVE_DECRYPTION
+	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_DECRYPTION
 	src/crypto/checksum.hpp
 	src/crypto/checksum.cpp
 	src/crypto/crc32.hpp
@@ -468,7 +468,7 @@ set(INNOEXTRACT_SOURCES
 set(UNITTEST_SOURCES
 	
 	src/crypto/adler32.cpp
-	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_ARC4
+	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_DECRYPTION
 	src/crypto/crc32.cpp
 	src/crypto/md5.cpp
 	src/crypto/sha1.cpp
@@ -569,9 +569,9 @@ elseif(NOT DEBUG AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(BUILD_TYPE_SUFFIX "${BUILD_TYPE_SUFFIX} without debug output")
 endif()
 message(" - Build type: ${CMAKE_BUILD_TYPE}${BUILD_TYPE_SUFFIX}")
-print_configuration("ARC4 decryption" FIRST
-	INNOEXTRACT_HAVE_ARC4 "enabled"
-	1                     "disabled"
+print_configuration("Decryption support" FIRST
+	INNOEXTRACT_HAVE_DECRYPTION "enabled"
+	1                           "disabled"
 )
 print_configuration("LZMA decompression" FIRST
 	INNOEXTRACT_HAVE_LZMA "enabled"
