@@ -43,8 +43,10 @@ namespace crypto {
 template <typename T>
 struct hmac {
 	
-	static const size_t block_size = T::block_size;
-	static const size_t hash_size = T::hash_size * sizeof(typename T::hash_word);
+	enum constants {
+		block_size = T::block_size,
+		hash_size = T::hash_size * sizeof(typename T::hash_word),
+	};
 	
 	void init(const char ikey[block_size]) {
 		inner.init();
@@ -100,8 +102,10 @@ template <typename T>
 struct pbkdf2 {
 	
 	typedef hmac<T> hmac_t;
-	static const size_t block_size = hmac_t::block_size;
-	static const size_t hash_size = hmac_t::hash_size;
+	enum constants {
+		block_size = hmac_t::block_size,
+		hash_size = hmac_t::hash_size,
+	};
 	
 	static void derive(const char * password, size_t password_length, const char * salt, size_t salt_length,
 	                   size_t iterations, char * key, size_t key_length) {
@@ -133,7 +137,7 @@ struct pbkdf2 {
 				}
 			}
 			
-			size_t n = std::min(hash_size, key_length);
+			size_t n = std::min(size_t(hash_size), key_length);
 			std::memcpy(key, f, n);
 			key += n;
 			key_length -= n;
