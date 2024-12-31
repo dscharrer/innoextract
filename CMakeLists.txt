@@ -533,7 +533,7 @@ if(BUILD_TESTS)
 	add_executable(unittest ${UNITTEST_SOURCES})
 	target_link_libraries(unittest ${LIBRARIES})
 	
-	if(CMAKE_VERSION VERSION_LESS 3.12)
+	if(CMAKE_VERSION VERSION_LESS 3.0)
 		set_target_properties(unittest PROPERTIES COMPILE_DEFINITIONS INNOEXTRACT_BUILD_TESTS)
 		get_property(unittest_binary TARGET unittest PROPERTY LOCATION)
 	else()
