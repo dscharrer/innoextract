@@ -1919,7 +1919,7 @@ def CheckSpacing(filename, clean_lines, linenum, error):
           'Extra space for operator %s' % match.group(1))
 
   # A pet peeve of mine: no spaces after an if, while, switch, or for
-  match = Search(r' (if\s\(|for\s\(|while\s\(|switch\s\()', line)
+  match = Search(r'\s(if\s\(|for\s\(|while\s\(|switch\s\()', line)
   if match:
     error(filename, linenum, 'whitespace/parens', 5,
           'Extra space before ( in %s' % match.group(1))
