@@ -17,7 +17,13 @@
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 
-find_package(PythonInterp)
+if(CMAKE_VERSION VERSION_LESS 3.12)
+	find_package(PythonInterp)
+	set(Python_Interpreter_FOUND ${PYTHONINTERP_FOUND})
+	set(Python_EXECUTABLE ${PYTHON_EXECUTABLE})
+else()
+	find_package(Python COMPONENTS Interpreter)
+endif()
 
 set(STYLE_FILTER)
 
@@ -65,7 +71,7 @@ set(STYLE_CHECK_SCRIPT "${STYLE_CHECK_DIR}/cpplint.py")
 # - SOURCES_LIST a complete list of source and include files to check
 function(add_style_check_target TARGET_NAME SOURCES_LIST PROJECT)
 	
-	if(NOT PYTHONINTERP_FOUND)
+	if(NOT Python_Interpreter_FOUND)
 		return()
 	endif()
 	
@@ -75,7 +81,7 @@ function(add_style_check_target TARGET_NAME SOURCES_LIST PROJECT)
 	add_custom_target(${TARGET_NAME}
 		COMMAND "${CMAKE_COMMAND}" -E chdir
 			"${PROJECT_SOURCE_DIR}"
-			"${PYTHON_EXECUTABLE}"
+			"${Python_EXECUTABLE}"
 			"${STYLE_CHECK_SCRIPT}"
 			"--filter=${STYLE_FILTER}"
 			"--project=${PROJECT}"
