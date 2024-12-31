@@ -64,8 +64,8 @@ void sha256_transform::transform(hash_word * state, const hash_word * data) {
 	#define blk0(i) (W[i] = data[i])
 	#define blk2(i) (W[i & 15] += s1(W[(i - 2) & 15]) + W[(i - 7) & 15] + s0(W[(i - 15) & 15]))
 	
-	#define Ch(x,y,z) (z ^ (x & (y ^ z)))
-	#define Maj(x,y,z) (y ^ ((x ^ y) & (y ^ z)))
+	#define Ch(x, y, z) (z ^ (x & (y ^ z)))
+	#define Maj(x, y, z) (y ^ ((x ^ y) & (y ^ z)))
 	
 	#define R(i) \
 		h(i) += S1(e(i)) + Ch(e(i), f(i), g(i)) + sha256_k[i + j] + (j ? blk2(i) : blk0(i)); \
