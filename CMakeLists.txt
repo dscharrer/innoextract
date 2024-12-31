@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 2.8...3.31)
 
-# CMake 30
-if(POLICY CMP0167)
-	cmake_policy(SET CMP0167 OLD)
-endif()
-
 if(CMAKE_VERSION VERSION_LESS 3.12)
 	cmake_policy(VERSION ${CMAKE_VERSION})
 endif()
