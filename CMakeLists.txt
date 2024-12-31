@@ -4,6 +4,10 @@ if(CMAKE_VERSION VERSION_LESS 3.12)
 	cmake_policy(VERSION ${CMAKE_VERSION})
 endif()
 
+if(DEFINED CMAKE_POLICY_DEFAULT_CMP0167)
+	cmake_policy(SET CMP0167 ${CMAKE_POLICY_DEFAULT_CMP0167})
+endif()
+
 project(innoextract)
 
 
