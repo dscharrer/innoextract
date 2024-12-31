@@ -80,7 +80,7 @@ int Testsuite::run_all() {
 		std::printf("\r\x1b[K");
 	}
 	if(test_failed == 0) {
-		std::printf("all %d test suites ok\n", count);
+		std::printf("all %d test suites passed\n", count);
 	}
 	
 	return test_failed > 0 ? 1 : 0;
