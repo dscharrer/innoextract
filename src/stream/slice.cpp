@@ -27,7 +27,9 @@
 #include <boost/cstdint.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem/operations.hpp>
+#if BOOST_VERSION >= 107200
 #include <boost/filesystem/directory.hpp>
+#endif
 #include <boost/range/size.hpp>
 
 #include "util/console.hpp"
