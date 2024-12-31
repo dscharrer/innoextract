@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '21 11 * * 5'
+
+jobs:
+
+  linux:
+    name: Linux build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Update
+      run: sudo apt-get update
+
+    - name: Dependencies
+      run: sudo apt-get install build-essential cmake libboost-all-dev liblzma-dev
+
+    - name: Configure
+      run: cmake --version && cmake -B ${{github.workspace}}/build -Werror=dev -Werror=deprecated -DCONTINUOUS_INTEGRATION=1
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build
+
+    - name: Check Style
+      run: cmake --build ${{github.workspace}}/build --target style
+
+  macos:
+    name: macOS build
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Update
+      run: brew update
+
+    - name: Workaround for Python install isssues - https://github.com/actions/runner-images/issues/8838
+      run: brew install python@3 || brew link --overwrite python@3
+
+    - name: Dependencies
+      env:
+        HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
+      run: brew install boost xz
+
+    - name: Configure
+      run: cmake --version && cmake -B ${{github.workspace}}/build -Werror=dev -Werror=deprecated -DCONTINUOUS_INTEGRATION=1
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build
