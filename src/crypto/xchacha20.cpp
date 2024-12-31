@@ -60,7 +60,7 @@ void xchacha20::discard(size_t length) {
 	
 	if(length % sizeof(keystream)) {
 		update();
-		pos = length % sizeof(keystream);
+		pos = boost::uint8_t(length % sizeof(keystream));
 	}
 	
 }
