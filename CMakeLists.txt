@@ -532,11 +532,16 @@ if(BUILD_TESTS)
 	
 	add_executable(unittest ${UNITTEST_SOURCES})
 	target_link_libraries(unittest ${LIBRARIES})
-	target_compile_definitions(unittest PRIVATE INNOEXTRACT_BUILD_TESTS)
 	
-	set(unittest_binary "$<TARGET_FILE:unittest>")
+	if(CMAKE_VERSION VERSION_LESS 3.12)
+		set_target_properties(unittest PROPERTIES COMPILE_DEFINITIONS INNOEXTRACT_BUILD_TESTS)
+		get_property(unittest_binary TARGET unittest PROPERTY LOCATION)
+	else()
+		target_compile_definitions(unittest PRIVATE INNOEXTRACT_BUILD_TESTS)
+		set(unittest_binary "$<TARGET_FILE:unittest>")
+	endif()
 	
-	add_test(NAME "unit tests"
+	add_test(NAME "unittest"
 		COMMAND ${RUN_TARGET} "${unittest_binary}"
 		WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
 	)
