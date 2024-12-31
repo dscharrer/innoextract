@@ -20,8 +20,6 @@
 
 #include "util/test.hpp"
 
-#include "util/windows.hpp"
-
 #include "configure.hpp"
 
 #if INNOEXTRACT_HAVE_ISATTY
@@ -100,12 +98,13 @@ void Testsuite::test(const char * testcase, bool ok) {
 
 int main(int argc, const char * argv[]) {
 	
+	
 	if((argc > 1 && std::strcmp(argv[1], "--verbose") == 0) || \
 	   (argc > 1 && argv[1][0] == '-' && argv[1][1] != '-' && std::strchr(argv[1], 'v')) || \
 	   (std::getenv("VERBOSE") && std::strcmp(std::getenv("VERBOSE"), "0") != 0)) {
 		test_verbose = true;
 	} else {
-		#if defined(_WIN32) || INNOEXTRACT_HAVE_ISATTY
+		#if INNOEXTRACT_HAVE_ISATTY
 		test_progress = isatty(1) && isatty(2);
 		#endif
 		if(test_progress) {
