@@ -42,7 +42,8 @@ static const size_t testlen = std::strlen(testdata);
 
 struct Testsuite {
 	
-	Testsuite(const char * suitename);
+	explicit Testsuite(const char * suitename);
+	virtual ~Testsuite() { }
 	
 	static int run_all();
 	
