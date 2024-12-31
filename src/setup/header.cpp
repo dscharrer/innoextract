@@ -522,6 +522,48 @@ void header::load(std::istream & is, const version & version) {
 		(void)util::load<boost::uint8_t>(is);
 	}
 	
+	options |= load_flags(is, version);
+	
+	if(version < INNO_VERSION(3, 0, 4)) {
+		privileges_required = (options & AdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;
+	}
+	
+	if(version < INNO_VERSION(4, 0, 10)) {
+		show_language_dialog = (options & ShowLanguageDialog) ? Yes : No;
+		language_detection = (options & DetectLanguageUsingLocale) ? LocaleLanguage : UILanguage;
+	}
+	
+	if(version < INNO_VERSION(4, 1, 5)) {
+		compression = (options & BzipUsed) ? stream::BZip2 : stream::Zlib;
+	}
+	
+	if(version < INNO_VERSION(5, 3, 3)) {
+		disable_dir_page = (options & DisableDirPage) ? Yes : No;
+		disable_program_group_page = (options & DisableProgramGroupPage) ? Yes : No;
+	}
+	
+	if(version < INNO_VERSION(1, 3, 0)) {
+		if(license_size > 0) {
+			license_text.resize(size_t(license_size));
+			is.read(&license_text[0], license_size);
+			util::to_utf8(license_text);
+		}
+		if(info_before_size > 0) {
+			info_before.resize(size_t(info_before_size));
+			is.read(&info_before[0], info_before_size);
+			util::to_utf8(info_before);
+		}
+		if(info_after_size > 0) {
+			info_after.resize(size_t(info_after_size));
+			is.read(&info_after[0], info_after_size);
+			util::to_utf8(info_after);
+		}
+	}
+	
+}
+
+header::flags header::load_flags(std::istream & is, const version & version) {
+	
 	stored_flag_reader<flags> flagreader(is, version.bits());
 	
 	flagreader.add(DisableStartupPrompt);
@@ -682,44 +724,7 @@ void header::load(std::istream & is, const version & version) {
 		flagreader.add(UninstallLogging);
 	}
 	
-	options |= flagreader.finalize();
-	
-	if(version < INNO_VERSION(3, 0, 4)) {
-		privileges_required = (options & AdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;
-	}
-	
-	if(version < INNO_VERSION(4, 0, 10)) {
-		show_language_dialog = (options & ShowLanguageDialog) ? Yes : No;
-		language_detection = (options & DetectLanguageUsingLocale) ? LocaleLanguage : UILanguage;
-	}
-	
-	if(version < INNO_VERSION(4, 1, 5)) {
-		compression = (options & BzipUsed) ? stream::BZip2 : stream::Zlib;
-	}
-	
-	if(version < INNO_VERSION(5, 3, 3)) {
-		disable_dir_page = (options & DisableDirPage) ? Yes : No;
-		disable_program_group_page = (options & DisableProgramGroupPage) ? Yes : No;
-	}
-	
-	if(version < INNO_VERSION(1, 3, 0)) {
-		if(license_size > 0) {
-			license_text.resize(size_t(license_size));
-			is.read(&license_text[0], license_size);
-			util::to_utf8(license_text);
-		}
-		if(info_before_size > 0) {
-			info_before.resize(size_t(info_before_size));
-			is.read(&info_before[0], info_before_size);
-			util::to_utf8(info_before);
-		}
-		if(info_after_size > 0) {
-			info_after.resize(size_t(info_after_size));
-			is.read(&info_after[0], info_after_size);
-			util::to_utf8(info_after);
-		}
-	}
-	
+	return flagreader.finalize();
 }
 
 void header::decode(util::codepage_id codepage) {

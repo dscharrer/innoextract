@@ -283,6 +283,10 @@ struct header {
 	
 	void decode(util::codepage_id codepage);
 	
+private:
+	
+	flags load_flags(std::istream & is, const version & version);
+	
 };
 
 } // namespace setup
