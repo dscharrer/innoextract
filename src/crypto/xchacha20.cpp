@@ -103,8 +103,14 @@ void xchacha20::derive_subkey(const char key[key_size], const char nonce[16], ch
 	state[14] = util::little_endian::load<word>(nonce + 8);
 	state[15] = util::little_endian::load<word>(nonce + 12);
 	run_rounds(state);
-	std::memcpy(subkey, state, 16);
-	std::memcpy(subkey + 16, state + 12, 16);
+	util::little_endian::store<word>(state[0], subkey);
+	util::little_endian::store<word>(state[1], subkey + 4);
+	util::little_endian::store<word>(state[2], subkey + 8);
+	util::little_endian::store<word>(state[3], subkey + 12);
+	util::little_endian::store<word>(state[12], subkey + 16);
+	util::little_endian::store<word>(state[13], subkey + 20);
+	util::little_endian::store<word>(state[14], subkey + 24);
+	util::little_endian::store<word>(state[15], subkey + 28);
 	
 }
 
