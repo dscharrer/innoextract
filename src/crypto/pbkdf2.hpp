@@ -43,36 +43,35 @@ namespace crypto {
 template <typename T>
 struct hmac {
 	
+	typedef typename T::state_t state_t;
 	enum constants {
 		block_size = T::block_size,
 		hash_size = T::hash_size * sizeof(typename T::hash_word),
 	};
 	
-	void init(const char ikey[block_size]) {
-		inner.init();
-		inner.update(ikey, block_size);
+	void init(const state_t istate) {
+		inner.init(istate, 1);
 	}
 	
 	void update(const char * data, size_t length) {
 		inner.update(data, length);
 	}
 	
-	void finalize(const char okey[block_size], char mac[hash_size]) {
+	void finalize(const state_t ostate, char mac[hash_size]) {
 		
 		char buffer[hash_size];
 		inner.finalize(buffer);
 		
 		T outer;
-		outer.init();
-		outer.update(okey, block_size);
+		outer.init(ostate, 1);
 		outer.update(buffer, hash_size);
 		outer.finalize(mac);
 		
 	}
 	
-	static void prepare_key(const char * password, size_t length,
-	                        char ikey[block_size], char okey[block_size]) {
+	static void prepare_state(const char * password, size_t length, state_t istate, state_t ostate) {
 		
+		char ikey[block_size], okey[block_size];
 		if(length > block_size) {
 			T hash;
 			hash.init();
@@ -88,6 +87,9 @@ struct hmac {
 			okey[i] = char(boost::uint8_t(ikey[i]) ^ boost::uint8_t(0x5c));
 			ikey[i] = char(boost::uint8_t(ikey[i]) ^ boost::uint8_t(0x36));
 		}
+		
+		T::prepare_state(ikey, 1, istate);
+		T::prepare_state(okey, 1, ostate);
 		
 	}
 	
@@ -110,8 +112,8 @@ struct pbkdf2 {
 	static void derive(const char * password, size_t password_length, const char * salt, size_t salt_length,
 	                   size_t iterations, char * key, size_t key_length) {
 		
-		char ikey[block_size], okey[block_size];
-		hmac_t::prepare_key(password, password_length, ikey, okey);
+		typename hmac_t::state_t istate, ostate;
+		hmac_t::prepare_state(password, password_length, istate, ostate);
 		
 		for(size_t block = 1; key_length > 0; block++) {
 			
@@ -119,19 +121,19 @@ struct pbkdf2 {
 			{
 				char b[4] = { char(block >> 24), char(block >> 16), char(block >> 8), char(block) };
 				hmac_t mac;
-				mac.init(ikey);
+				mac.init(istate);
 				mac.update(salt, salt_length);
 				mac.update(b, sizeof(b));
-				mac.finalize(okey, u);
+				mac.finalize(ostate, u);
 			}
 			char f[hash_size];
 			std::memcpy(f, u, hash_size);
 			
 			for(size_t i = 1; i < iterations; i++) {
 				hmac_t mac;
-				mac.init(ikey);
+				mac.init(istate);
 				mac.update(u, hash_size);
-				mac.finalize(okey, u);
+				mac.finalize(ostate, u);
 				for(size_t j = 0; j < hash_size; j++) {
 					f[j] = char(boost::uint8_t(f[j]) ^ boost::uint8_t(u[j]));
 				}
