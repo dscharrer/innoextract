@@ -131,13 +131,21 @@ if(MSVC)
 else(MSVC)
 	
 	set(linker_used)
-	if(NOT linker_used AND USE_LD STREQUAL "mold")
-		# Does not really support LTO yet
-		add_ldflag("-fuse-ld=mold")
-		if(FLAG_FOUND)
-			set(linker_used "mold")
-		elseif(STRICT_USE AND NOT USE_LD STREQUAL "best")
-			message(FATAL_ERROR "Requested linker is not available")
+	if(NOT linker_used AND (USE_LD STREQUAL "mold" OR USE_LD STREQUAL "best"))
+		# Old versions are unstable or don't support LTO
+		if(USE_LD STREQUAL "best")
+			execute_process(COMMAND ${CMAKE_CXX_COMPILER} "-fuse-ld=mold" "-Wl,-version"
+			                OUTPUT_VARIABLE _Mold_Version ERROR_QUIET)
+		endif()
+		if(USE_LD STREQUAL "best" AND _Mold_Version MATCHES "mold [0-1]\\.*")
+			message(STATUS "Not using ancient ${CMAKE_MATCH_0}")
+		else()
+			add_ldflag("-fuse-ld=mold")
+			if(FLAG_FOUND)
+				set(linker_used "mold")
+			elseif(STRICT_USE AND NOT USE_LD STREQUAL "best")
+				message(FATAL_ERROR "Requested linker is not available")
+			endif()
 		endif()
 	endif()
 	if(NOT linker_used AND (USE_LD STREQUAL "lld" OR
