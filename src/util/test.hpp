@@ -68,7 +68,7 @@ protected:
 
 #define INNOEXTRACT_TEST(Name, ...) \
 	struct Name ## _test : public Testsuite { \
-		Name ## _test() : Testsuite(# Name) { } \
+		Name ## _test() : Testsuite(# Name) { (void)testdata, (void)testlen; } \
 		void run(); \
 	} test_ ## Name; \
 	void Name ## _test::run() { __VA_ARGS__ }
