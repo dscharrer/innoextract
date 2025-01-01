@@ -337,6 +337,7 @@ else(MSVC)
 		
 		if(IS_LIBCXX)
 			add_definitions(-D_LIBCPP_ENABLE_NODISCARD)
+			add_definitions(-D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS)
 		endif()
 		
 	endif(SET_WARNING_FLAGS)
