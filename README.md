@@ -68,6 +68,7 @@ The default build settings are tuned for users - if you plan to make changes to 
 | `DEVELOPER`               | `OFF`     | Enable build options suitable for developers⁵.
 | `FASTLINK`                | `OFF`⁶    | Optimize for link speed.
 | `USE_LTO`                 | `ON`²     | Use link-time code generation.
+| `USE_LD`                  | `best`⁸   | Linker to use - `default`, `mold`, `lld`, `gold`, `bfd` or `best`
 | `BUILD_TESTS`             | `OFF`⁶    | Build unit tests that can be run using `make check`
 | `RUN_TESTS`               | `OFF`⁷    | Automatically run tests
 | `RUN_TARGET`              | (none)    | Wrapper to run binaries produced in the build process
@@ -78,6 +79,7 @@ The default build settings are tuned for users - if you plan to make changes to 
 5. Currently this and enables `DEBUG`, `BUILD_TESTS`, `RUN_TESTS` and `FASTLINK` for faster incremental builds and improved debug output, unless those options have been explicitly specified by the user.
 6. Enabled automatically if `DEVELOPER` is enabled.
 7. Enabled automatically if `DEVELOPER` is enabled unless cross-compiling without `RUN_TARGET` set
+8. Disabled automatically (set to `default`) if both `SET_OPTIMIZATION_FLAGS` and `FASTLINK` are disabled. `best` will select the most suited linker based on availability and other settings such as `USE_LTO`.
 
 Install options:
 
