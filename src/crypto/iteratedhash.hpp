@@ -51,6 +51,7 @@ public:
 	typedef typename transform::byte_order byte_order;
 	static const size_t block_size = transform::block_size;
 	static const size_t hash_size = transform::hash_size / sizeof(hash_word);
+	typedef hash_word state_t[hash_size];
 	
 	void init() { count_lo = count_hi = 0; transform::init(state); }
 	
@@ -58,9 +59,20 @@ public:
 	
 	void finalize(char * result);
 	
+	static void prepare_state(const char * data, size_t count, state_t state) {
+		transform::init(state);
+		hash(state, data, count * block_size);
+	}
+	
+	void init(const state_t init_state, size_t init_count) {
+		count_lo = hash_word(init_count * block_size);
+		count_hi = hash_word(util::safe_right_shift<8 * sizeof(hash_word)>(init_count * block_size));
+		std::memcpy(state, init_state, sizeof(state));
+	}
+	
 private:
 
-	size_t hash(const char * input, size_t length);
+	static size_t hash(state_t state, const char * input, size_t length);
 	void pad(size_t last_block_size, char pad_first = '\x80');
 	
 	hash_word bit_count_hi() const {
@@ -69,7 +81,7 @@ private:
 	hash_word bit_count_lo() const { return count_lo << 3; }
 	
 	char buffer[block_size];
-	hash_word state[hash_size];
+	state_t state;
 	
 	hash_word count_lo, count_hi;
 	
@@ -91,7 +103,7 @@ void iterated_hash<T>::update(const char * data, size_t length) {
 	if(num != 0) { // process left over data
 		if(num + length >= block_size) {
 			std::memcpy(buffer + num, data, block_size - num);
-			hash(buffer, block_size);
+			hash(state, buffer, block_size);
 			data += (block_size - num);
 			length -= (block_size - num);
 			// drop through and do the rest
@@ -103,7 +115,7 @@ void iterated_hash<T>::update(const char * data, size_t length) {
 	
 	// now process the input data in blocks of BlockSize bytes and save the leftovers to m_data
 	if(length >= block_size) {
-		size_t left_over = hash(data, length);
+		size_t left_over = hash(state, data, length);
 		data += (length - left_over);
 		length = left_over;
 	}
@@ -114,7 +126,7 @@ void iterated_hash<T>::update(const char * data, size_t length) {
 }
 
 template <class T>
-size_t iterated_hash<T>::hash(const char * input, size_t length) {
+size_t iterated_hash<T>::hash(hash_word state[hash_size], const char * input, size_t length) {
 	
 	if(byte_order::native() && util::is_aligned<hash_word>(input)) {
 		
@@ -157,7 +169,7 @@ void iterated_hash<T>::pad(size_t last_block_size, char pad_first) {
 		memset(buffer + num, 0, last_block_size - num);
 	} else {
 		memset(buffer + num, 0, block_size - num);
-		hash(buffer, block_size);
+		hash(state, buffer, block_size);
 		memset(buffer, 0, last_block_size);
 	}
 }
@@ -172,7 +184,7 @@ void iterated_hash<T>::finalize(char * result) {
 	byte_order::store(bit_count_lo(), buffer + size + order);
 	byte_order::store(bit_count_hi(), buffer + size + sizeof(hash_word) - order);
 	
-	hash(buffer, block_size);
+	hash(state, buffer, block_size);
 	
 	byte_order::store(state, hash_size, result);
 	
