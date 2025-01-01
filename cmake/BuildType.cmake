@@ -1,9 +1,18 @@
 
 include(CompileCheck)
 
-if(NOT CMAKE_VERSION VERSION_LESS 2.8.6)
+if(NOT MSVC)
 	include(CheckCXXSymbolExists)
 	check_cxx_symbol_exists(_LIBCPP_VERSION "cstddef" IS_LIBCXX)
+	if(IS_LIBCXX AND (DEBUG OR DEBUG_EXTRA))
+		check_cxx_symbol_exists(_LIBCPP_HARDENING_MODE "version" ARX_HAVE_LIBCPP_HARDENING_MODE)
+		if(NOT ARX_HAVE_LIBCPP_HARDENING_MODE)
+			check_cxx_symbol_exists(_LIBCPP_ENABLE_HARDENED_MODE "version" ARX_HAVE_LIBCPP_ENABLE_HARDENED_MODE)
+			if(NOT ARX_HAVE_LIBCPP_ENABLE_HARDENED_MODE)
+				check_cxx_symbol_exists(_LIBCPP_ENABLE_ASSERTIONS "version" ARX_HAVE_LIBCPP_ENABLE_ASSERTIONS)
+			endif()
+		endif()
+	endif()
 else()
 	set(IS_LIBCXX OFF)
 endif()
@@ -341,16 +350,46 @@ else(MSVC)
 		add_cxxflag("-fcatch-undefined-behavior")
 		add_cxxflag("-fstack-protector-all")
 		add_cxxflag("-fsanitize=address")
-		add_cxxflag("-fsanitize=thread")
+		# add_cxxflag("-fsanitize=thread") does not work together with -fsanitize=address
 		add_cxxflag("-fsanitize=leak")
-		if(IS_LIBCXX)
-			add_definitions(-D_LIBCPP_DEBUG=1) # libc++
-			# libc++'s debug checks fail with -fsanitize=undefined
+		add_cxxflag("-fsanitize=undefined")
+		if(ARX_HAVE_LIBCPP_HARDENING_MODE)
+			# libc++ 18+
+			add_definitions(-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
+		elseif(ARX_HAVE_LIBCPP_ENABLE_HARDENED_MODE)
+			# libc++ 17 - Full debug mode is now a compile-time option and all -D_LIBCPP_DEBUG=1 does is
+			# generate an #error if the library was not built in debug mode :|
+			add_definitions(-D_LIBCPP_ENABLE_HARDENED_MODE=1)
+		elseif(ARX_HAVE_LIBCPP_ENABLE_ASSERTIONS)
+			# libc++ 15-16 - Full debug mode is now a compile-time option and all -D_LIBCPP_DEBUG=1 does is
+			# generate an #error if the library was not built in debug mode :|
+			add_definitions(-D_LIBCPP_ENABLE_ASSERTIONS=1)
+		elseif(IS_LIBCXX)
+			# older libc++
+			add_definitions(-D_LIBCPP_DEBUG=1)
 		else()
-			add_definitions(-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC) # libstdc++
-			add_cxxflag("-fsanitize=undefined")
+			# libstdc++
+			add_definitions(-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_SANITIZE_VECTOR)
+			set(disable_libstdcxx_debug "-U_GLIBCXX_DEBUG -U_GLIBCXX_DEBUG_PEDANTIC")
 		endif()
-	endif(DEBUG_EXTRA)
+	elseif(DEBUG)
+		if(ARX_HAVE_LIBCPP_HARDENING_MODE)
+			#libc++ 18+
+			add_definitions(-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE)
+		elseif(ARX_HAVE_LIBCPP_ENABLE_HARDENED_MODE)
+			# libc++ 17
+			add_definitions(-D_LIBCPP_ENABLE_HARDENED_MODE=1)
+		elseif(ARX_HAVE_LIBCPP_ENABLE_ASSERTIONS)
+			# libc++ 15-16
+			add_definitions(-D_LIBCPP_ENABLE_ASSERTIONS=1)
+		elseif(IS_LIBCXX)
+			# older libc++ - 0 means light checks only, it does not mean no checks
+			add_definitions(-D_LIBCPP_DEBUG=0)
+		else()
+			# libstdc++
+			add_definitions(-D_GLIBCXX_ASSERTIONS=1)
+		endif()
+	endif()
 	
 	if(CMAKE_BUILD_TYPE STREQUAL "")
 		set(CMAKE_BUILD_TYPE "Release")
