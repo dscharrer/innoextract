@@ -135,7 +135,10 @@ else(MSVC)
 	endif()
 	
 	if(USE_LTO)
-		add_cxxflag("-flto")
+		add_cxxflag("-flto=auto")
+		if(NOT FLAG_FOUND)
+			add_cxxflag("-flto")
+		endif()
 		# TODO set CMAKE_INTERPROCEDURAL_OPTIMIZATION instead
 		add_ldflag("-fuse-linker-plugin")
 	endif()
