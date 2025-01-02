@@ -98,6 +98,7 @@ void Testsuite::test(const char * testcase, bool ok) {
 
 int main(int argc, const char * argv[]) {
 	
+	(void)testdata, (void)testlen;
 	
 	if((argc > 1 && std::strcmp(argv[1], "--verbose") == 0) || \
 	   (argc > 1 && argv[1][0] == '-' && argv[1][1] != '-' && std::strchr(argv[1], 'v')) || \
