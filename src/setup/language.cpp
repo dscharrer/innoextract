@@ -38,11 +38,18 @@ struct windows_language {
 	boost::uint16_t language_id;
 	boost::uint16_t codepage;
 	
-	bool operator<(boost::uint32_t language) const {
-		return language_id < language;
-	}
-	
 };
+
+bool operator<(windows_language language, boost::uint32_t language_id) {
+	return language.language_id < language_id;
+}
+
+#if defined(__clang_major__) && __clang_major__ < 8
+// Required for debug builds with Clang < 8
+bool operator<(boost::uint32_t language_id, windows_language language) {
+	return language_id < language.language_id;
+}
+#endif
 
 /*
  * Sorted list of Windows language IDs with their default ANSI codepages.
