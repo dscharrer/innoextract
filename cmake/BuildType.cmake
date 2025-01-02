@@ -1,7 +1,7 @@
 
 include(CompileCheck)
 
-if(NOT MSVC)
+if(NOT MSVC AND NOT CMAKE_VERSION VERSION_LESS 2.8.6)
 	include(CheckCXXSymbolExists)
 	check_cxx_symbol_exists(_LIBCPP_VERSION "cstddef" IS_LIBCXX)
 	if(IS_LIBCXX AND (DEBUG OR DEBUG_EXTRA))
