@@ -1,0 +1,44 @@
+name: Problem report
+description: Please report your problem here.
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Describe your issue
+    validations:
+      required: true
+  - type: input
+    id: download-link
+    attributes:
+      label: Download link of installer
+      description: |
+        If you had an issue, it is highly recommended to include a download link to the incompatible software.
+        If not, you can type something like "Not relevant" or "Not available".
+      placeholder: https://
+    validations:
+      required: true
+  - type: input
+    id: security-software
+    attributes:
+      label: Please mention any installed security software
+      placeholder: e.g. Microsoft Defender Antivirus
+    validations:
+      required: true
+  - type: input
+    id: regression
+    attributes:
+      label: Is it a regression?
+      description: If applicable, specify in which innoextract version this problem was introduced the first time.
+      placeholder: e.g. Since v1.8
+  - type: textarea
+    id: innoextract-version
+    attributes:
+      label: Output of innoextract -v
+      description: |
+        Please paste the output of innoextract -v
+      placeholder: |
+        innoextract 1.x
+        Extracts installers created by Inno Setup 1.2.10 to x.x.x
+      render: shell
+    validations:
+      required: true
