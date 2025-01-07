@@ -187,6 +187,10 @@ if(NOT Boost_VERSION_MACRO)
 	# CMP0093 changed Boost_VERSION to x.y.z format and provide the old format in Boost_VERSION_MACRO
 	set(Boost_VERSION_MACRO ${Boost_VERSION})
 endif()
+add_definitions(-DBOOST_SYSTEM_DISABLE_THREADS)
+if(win32)
+	add_definitions(-DBOOST_SYSTEM_USE_UTF8)
+endif()
 
 has_static_libs(Boost Boost_LIBRARIES)
 if(Boost_HAS_STATIC_LIBS)
