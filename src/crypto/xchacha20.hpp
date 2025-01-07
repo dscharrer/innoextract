@@ -39,8 +39,10 @@ namespace crypto {
 //! ChaCha20 en-/decryption calculation
 struct xchacha20 {
 	
-	static const size_t key_size = 32;
-	static const size_t nonce_size = 24;
+	enum constants {
+		key_size = 32,
+		nonce_size = 24,
+	};
 	
 	typedef boost::uint32_t word;
 	
