@@ -554,7 +554,7 @@ if(BUILD_TESTS)
 	endif()
 	
 	add_test(NAME "unittest"
-		COMMAND ${RUN_TARGET} "${unittest_binary}"
+		COMMAND ${RUN_TARGET} "${unittest_binary}" --verbose
 		WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
 	)
 	
