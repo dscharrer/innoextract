@@ -49,8 +49,10 @@ public:
 	typedef T transform;
 	typedef typename transform::hash_word hash_word;
 	typedef typename transform::byte_order byte_order;
-	static const size_t block_size = transform::block_size;
-	static const size_t hash_size = transform::hash_size / sizeof(hash_word);
+	enum constants {
+		block_size = transform::block_size,
+		hash_size = transform::hash_size / sizeof(hash_word),
+	};
 	typedef hash_word state_t[hash_size];
 	
 	void init() { count_lo = count_hi = 0; transform::init(state); }
