@@ -340,8 +340,12 @@ void header::load(std::istream & is, const version & version) {
 	
 	winver.load(is, version);
 	
-	back_color = util::load<boost::uint32_t>(is);
-	if(version >= INNO_VERSION(1, 3, 3)) {
+	if(version < INNO_VERSION_EXT(6, 4, 0, 1)) {
+		back_color = util::load<boost::uint32_t>(is);
+	} else {
+		back_color = 0;
+	}
+	if(version >= INNO_VERSION(1, 3, 3) && version < INNO_VERSION_EXT(6, 4, 0, 1)) {
 		back_color2 = util::load<boost::uint32_t>(is);
 	} else {
 		back_color2 = 0;
@@ -588,10 +592,12 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 		flagreader.add(BackSolid);
 	}
 	flagreader.add(AlwaysUsePersonalGroup);
-	flagreader.add(WindowVisible);
-	flagreader.add(WindowShowCaption);
-	flagreader.add(WindowResizable);
-	flagreader.add(WindowStartMaximized);
+	if(version < INNO_VERSION_EXT(6, 4, 0, 1)) {
+		flagreader.add(WindowVisible);
+		flagreader.add(WindowShowCaption);
+		flagreader.add(WindowResizable);
+		flagreader.add(WindowStartMaximized);
+	}
 	flagreader.add(EnableDirDoesntExistWarning);
 	if(version < INNO_VERSION(4, 1, 2)) {
 		flagreader.add(DisableAppendDir);
@@ -623,7 +629,7 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(1, 3, 1)) {
 		flagreader.add(UsePreviousAppDir);
 	}
-	if(version >= INNO_VERSION(1, 3, 3)) {
+	if(version >= INNO_VERSION(1, 3, 3) && version < INNO_VERSION_EXT(6, 4, 0, 1)) {
 		flagreader.add(BackColorHorizontal);
 	}
 	if(version >= INNO_VERSION(1, 3, 10)) {
