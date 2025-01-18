@@ -138,6 +138,8 @@ static void print_entry(const setup::info & info, size_t i,
 	std::cout << " - " << quoted(entry.name);
 	if(entry.language < 0) {
 		std::cout << " (default) = ";
+	} else if(size_t(entry.language) >= info.languages.size()) {
+		std::cout << " [" << color::red << size_t(entry.language) << color::reset << "] = ";
 	} else {
 		std::cout << " (" << color::cyan << info.languages[size_t(entry.language)].name
 		          << color::reset << ") = ";
