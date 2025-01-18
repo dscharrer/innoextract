@@ -1266,7 +1266,8 @@ void process_file(const fs::path & installer, const extract_options & o) {
 			
 			// Open output files
 			boost::ptr_vector<file_output> single_outputs;
-			std::vector<file_output *> outputs;
+			typedef std::pair<file_output *, boost::uint64_t> file_output_location;
+			std::vector<file_output_location> outputs;
 			BOOST_FOREACH(const output_location & output_loc, output_locations) {
 				const processed_file * fileinfo = output_loc.first;
 				try {
@@ -1293,9 +1294,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 						}
 					}
 					
-					outputs.push_back(output);
-					
-					output->seek(output_loc.second);
+					outputs.push_back(file_output_location(output, output_loc.second));
 					
 				} catch(boost::bad_pointer &) {
 					// should never happen
@@ -1310,7 +1309,9 @@ void process_file(const fs::path & installer, const extract_options & o) {
 				std::streamsize buffer_size = std::streamsize(boost::size(buffer));
 				std::streamsize n = file_source->read(buffer, buffer_size).gcount();
 				if(n > 0) {
-					BOOST_FOREACH(file_output * output, outputs) {
+					BOOST_FOREACH(file_output_location & out, outputs) {
+						file_output * output = out.first;
+						output->seek(out.second + output_size);
 						bool success = output->write(buffer, size_t(n));
 						if(!success) {
 							throw std::runtime_error("Error writing file \"" + output->path().string() + '"');
@@ -1332,9 +1333,10 @@ void process_file(const fs::path & installer, const extract_options & o) {
 				filetime = util::to_local_time(filetime);
 			}
 			
-			BOOST_FOREACH(file_output * output, outputs) {
+			BOOST_FOREACH(file_output_location & out, outputs) {
+				file_output * output = out.first;
 				
-				if(output->file()->is_multipart() && !output->is_complete()) {
+				if(!output || (output->file()->is_multipart() && !output->is_complete())) {
 					continue;
 				}
 				
@@ -1356,6 +1358,12 @@ void process_file(const fs::path & installer, const extract_options & o) {
 					output->close();
 					if(!util::set_file_time(output->path(), filetime, data.timestamp_nsec)) {
 						log_warning << "Error setting timestamp on file " << output->path();
+					}
+				}
+				
+				BOOST_FOREACH(file_output_location & other, outputs) {
+					if(other.first == output) {
+						other.first = NULL;
 					}
 				}
 				
