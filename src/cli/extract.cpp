@@ -366,6 +366,23 @@ void print_checksum_info(const stream::file & file, const crypto::checksum * che
 	std::cout << color::dim_magenta << *checksum << color::reset;
 }
 
+void print_file_details(const extract_options & o, const stream::file & file, const stream::chunk & chunk,
+                        boost::uint64_t size, const crypto::checksum * checksum, const std::string & key) {
+	
+	if(o.list_sizes) {
+		print_size_info(file, size);
+	}
+	if(o.list_checksums) {
+		std::cout << ' ';
+		print_checksum_info(file, checksum);
+	}
+	if(chunk.encryption != stream::Plaintext && key.empty()) {
+		std::cout << " - encrypted";
+	}
+	std::cout << '\n';
+	
+}
+
 bool prompt_overwrite() {
 	return true; // TODO the user always overwrites
 }
@@ -1177,17 +1194,25 @@ void process_file(const fs::path & installer, const extract_options & o) {
 						if(output.second != 0) {
 							continue;
 						}
+						bool mismatch = false;
 						if(output.first->entry().size != 0) {
 							if(size != 0 && size != output.first->entry().size) {
-								log_warning << "Mismatched output sizes";
+								mismatch = true;
 							}
 							size = output.first->entry().size;
 						}
 						if(output.first->entry().checksum.type != crypto::None) {
 							if(checksum && *checksum != output.first->entry().checksum) {
-								log_warning << "Mismatched output checksums";
+								mismatch = true;
 							}
 							checksum = &output.first->entry().checksum;
+						}
+						if(mismatch) {
+							// Different file even though the starting location is the same
+							if(named) {
+								print_file_details(o, file, chunk.first, size, checksum, key);
+								named = false;
+							}
 						}
 						if(named) {
 							std::cout << ", ";
@@ -1208,17 +1233,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 					}
 					
 					if(named) {
-						if(o.list_sizes) {
-							print_size_info(file, size);
-						}
-						if(o.list_checksums) {
-							std::cout << ' ';
-							print_checksum_info(file, checksum);
-						}
-						if(chunk.first.encryption != stream::Plaintext && key.empty()) {
-							std::cout << " - encrypted";
-						}
-						std::cout << '\n';
+						print_file_details(o, file, chunk.first, size, checksum, key);
 					}
 					
 				} else {
