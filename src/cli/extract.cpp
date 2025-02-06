@@ -911,6 +911,42 @@ void create_output_directory(const extract_options & o) {
 
 } // anonymous namespace
 
+void dump_compiledcode(std::istream & is, const loader::offsets & offsets, const setup::info & info, const extract_options & o) {
+	setup::version version;
+	is.seekg(offsets.header_offset);
+	version.load(is);
+	
+	std::string filename = "compiledCode.bin";
+	
+	if(!o.quiet) {
+		std::cout << "Dumping compiled setup code to \""
+		          << color::white << filename << color::reset << "\"\n";
+	} else if(!o.silent) {
+		std::cout << filename << '\n';
+	}
+	
+	fs::path path = o.output_dir / filename;
+	util::ofstream ofs;
+	try {
+		ofs.open(path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
+		if(!ofs.is_open()) {
+			throw std::exception();
+		}
+	} catch(...) {
+		throw std::runtime_error("Could not open output file \"" + path.string() + '"');
+	}
+	
+	try {
+		ofs.write(info.header.compiled_code.c_str(), static_cast<std::streamsize>(info.header.compiled_code.length()));
+	} catch(const std::exception & e) {
+		std::ostringstream oss;
+		oss << "Stream error while dumping compiled setup code!\n";
+		oss << " ├─ detected setup version: " << version << '\n';
+		oss << " └─ error reason: " << e.what();
+		throw format_error(oss.str());
+	}
+}
+
 void process_file(const fs::path & installer, const extract_options & o) {
 	
 	bool is_directory;
@@ -1011,6 +1047,12 @@ void process_file(const fs::path & installer, const extract_options & o) {
 		oss << " ├─ detected setup version: " << info.version << '\n';
 		oss << " └─ error reason: " << e.what();
 		throw format_error(oss.str());
+	}
+	
+	if(o.dump_compiledcode)  {
+		create_output_directory(o);
+		dump_compiledcode(ifs, offsets, info, o);
+		return;
 	}
 	
 	if(o.gog_galaxy && (o.list || o.test || o.extract || o.list_languages)) {
