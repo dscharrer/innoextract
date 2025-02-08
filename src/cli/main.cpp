@@ -132,6 +132,7 @@ int main(int argc, char * argv[]) {
 	action.add_options()
 		("test,t", "Only verify checksums, don't write anything")
 		("extract,e", "Extract files (default action)")
+		("code", "Extract compiled code")
 		("list,l", "Only list files, don't write anything")
 		("list-sizes", "List file sizes")
 		("list-checksums", "List file checksums")
@@ -259,6 +260,7 @@ int main(int argc, char * argv[]) {
 	bool explicit_list = (options.count("list") != 0);
 	o.list = explicit_list || o.list_sizes || o.list_checksums;
 	o.extract = (options.count("extract") != 0);
+	o.extract_code = (options.count("code") != 0);
 	o.test = (options.count("test") != 0);
 	o.list_languages = (options.count("list-languages") != 0);
 	o.gog_game_id = (options.count("gog-game-id") != 0);
@@ -270,7 +272,7 @@ int main(int argc, char * argv[]) {
 		o.show_password = true;
 	}
 	bool explicit_action = o.list || o.test || o.extract || o.list_languages
-	                       || o.gog_game_id || o.show_password || o.check_password;
+	                       || o.gog_game_id || o.show_password || o.check_password || o.extract_code;
 	if(!explicit_action) {
 		o.extract = true;
 	}

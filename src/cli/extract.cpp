@@ -76,6 +76,7 @@
 namespace fs = boost::filesystem;
 
 namespace {
+void create_output_directory(const extract_options & o);
 
 template <typename Entry>
 class processed_item {
@@ -631,6 +632,8 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 			verb = "Testing";
 		} else if(o.list) {
 			verb = "Listing";
+		} else if(o.extract_code) {
+			verb = "Extracting compiled code";
 		}
 		std::cout << verb << " \"" << color::green << name << color::reset
 		          << "\" - setup data version " << color::white << info.version << color::reset
@@ -644,7 +647,17 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 		std::cout << '\n';
 	}
 	#endif
-	
+
+	if (o.extract_code) {
+		util::fstream stream;
+
+		create_output_directory(o);
+		stream.open(o.output_dir / "compiled_code.bin", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+
+		stream.write(info.header.compiled_code.data(), static_cast<std::streamsize>(info.header.compiled_code.size()));
+		stream.close();
+	}
+
 	bool multiple_sections = (o.list_languages + o.gog_game_id + o.list + o.show_password > 1);
 	if(!o.quiet && multiple_sections) {
 		std::cout << '\n';
@@ -1054,6 +1067,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	if(o.extract) {
 		create_output_directory(o);
 	}
+
 	
 	if(o.list || o.extract) {
 		
