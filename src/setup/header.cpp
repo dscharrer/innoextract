@@ -266,6 +266,11 @@ void header::load(std::istream & is, const version & version) {
 		is >> util::binary_string(architectures_allowed_expr);
 		is >> util::binary_string(architectures_installed_in_64bit_mode_expr);
 	}
+	if(version >= INNO_VERSION(6, 4, 2)) {
+		is >> util::binary_string(close_applications_filter_excludes);
+	} else {
+		close_applications_filter_excludes.clear();
+	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
@@ -765,6 +770,7 @@ void header::decode(util::codepage_id codepage) {
 	util::to_utf8(setup_mutex, codepage, &lead_bytes);
 	util::to_utf8(changes_environment, codepage);
 	util::to_utf8(changes_associations, codepage);
+	util::to_utf8(close_applications_filter_excludes, codepage);
 	
 }
 
