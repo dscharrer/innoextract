@@ -90,8 +90,8 @@ std::ostream & operator<<(std::ostream & os, const crypto::checksum & checksum) 
 			break;
 		}
 		case crypto::SHA256: {
-			for(size_t i = 0; i < size_t(boost::size(checksum.sha1)); i++) {
-				os << std::setfill('0') << std::hex << std::setw(2) << int(boost::uint8_t(checksum.sha1[i]));
+			for(size_t i = 0; i < size_t(boost::size(checksum.sha256)); i++) {
+				os << std::setfill('0') << std::hex << std::setw(2) << int(boost::uint8_t(checksum.sha256[i]));
 			}
 			break;
 		}
