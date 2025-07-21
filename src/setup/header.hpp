@@ -167,6 +167,7 @@ struct header {
 	std::string changes_associations;
 	std::string architectures_allowed_expr;
 	std::string architectures_installed_in_64bit_mode_expr;
+	std::string close_applications_filter_excludes;
 	std::string license_text;
 	std::string info_before;
 	std::string info_after;
