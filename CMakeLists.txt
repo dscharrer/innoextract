@@ -173,13 +173,17 @@ else()
 	set(INNOEXTRACT_HAVE_LZMA 0)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS
+set(BOOST_REQUIRED_COMPONENTS
 	iostreams
 	filesystem
 	date_time
-	system
 	program_options
 )
+find_package(Boost REQUIRED COMPONENTS ${BOOST_REQUIRED_COMPONENTS})
+if(Boost_MAJOR_VERSION EQUAL 1 AND Boost_MINOR_VERSION LESS 69)
+	list(APPEND BOOST_REQUIRED_COMPONENTS system)
+	find_package(Boost REQUIRED COMPONENTS ${BOOST_REQUIRED_COMPONENTS})
+endif()
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
