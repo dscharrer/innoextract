@@ -186,6 +186,13 @@ const known_version versions[] = {
 	{ "Inno Setup Setup Data (6.3.0)",                      INNO_VERSION_EXT(6, 3,  0, 0), version::Unicode },
 	{ "Inno Setup Setup Data (6.4.0)",     /* prerelease */ INNO_VERSION_EXT(6, 4,  0, 0), version::Unicode },
 	{ "Inno Setup Setup Data (6.4.0.1)",        /* 6.4.0 */ INNO_VERSION_EXT(6, 4,  0, 1), version::Unicode },
+	{ "Inno Setup Setup Data (6.4.2)",                      INNO_VERSION_EXT(6, 4,  2, 0), version::Unicode },
+	{ "Inno Setup Setup Data (6.4.3)",                      INNO_VERSION_EXT(6, 4,  3, 0), version::Unicode },
+	{ "Inno Setup Setup Data (6.5.0)",                      INNO_VERSION_EXT(6, 5,  0, 0), version::Unicode },
+	{ "Inno Setup Setup Data (6.5.1)",                      INNO_VERSION_EXT(6, 5,  1, 0), version::Unicode },
+	{ "Inno Setup Setup Data (6.5.2)",                      INNO_VERSION_EXT(6, 5,  2, 0), version::Unicode },
+	{ "Inno Setup Setup Data (6.5.3)",                      INNO_VERSION_EXT(6, 5,  3, 0), version::Unicode },
+	{ "Inno Setup Setup Data (6.5.4)",                      INNO_VERSION_EXT(6, 5,  4, 0), version::Unicode },
 };
 
 } // anonymous namespace
