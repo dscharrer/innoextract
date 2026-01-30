@@ -81,9 +81,9 @@ struct chunk {
 	boost::uint32_t first_slice;    //!< Slice where the chunk starts.
 	boost::uint32_t last_slice;     //!< Slice where the chunk ends.
 	
-	boost::uint32_t sort_offset;
+	boost::uint64_t sort_offset;
 	
-	boost::uint32_t offset;         //!< Offset of the compressed chunk in firstSlice.
+	boost::uint64_t offset;         //!< Offset of the compressed chunk in firstSlice.
 	boost::uint64_t size;           //! Total compressed size of the chunk.
 	
 	compression_method compression; //!< Compression method used by the chunk.

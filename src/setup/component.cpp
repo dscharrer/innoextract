@@ -74,7 +74,9 @@ void component_entry::load(std::istream & is, const info & i) {
 	} else {
 		extra_disk_pace_required = util::load<boost::uint32_t>(is);
 	}
-	if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(3, 0, 3))) {
+	if(i.version >= INNO_VERSION(6, 7, 0)) {
+		level = util::load<boost::uint8_t>(is);
+	} else if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(3, 0, 3))) {
 		level = util::load<boost::int32_t>(is);
 	} else {
 		level = 0;

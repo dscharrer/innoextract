@@ -51,7 +51,8 @@ struct version {
 	FLAGS(flags,
 		Bits16,
 		Unicode,
-		ISX
+		ISX,
+		Bits64
 	);
 	
 	version_constant value;
@@ -78,8 +79,11 @@ struct version {
 	void load(std::istream & is);
 	
 	boost::uint16_t bits() const { return (variant & Bits16) ? 16 : 32; }
+
+	void set_64bit() { variant |= Bits64; }
 	bool is_unicode() const { return (variant & Unicode) != 0; }
 	bool is_isx() const { return (variant & ISX) != 0; }
+	bool is_64bit() const { return (variant & Bits64) != 0; }
 	
 	//! \return true if the version stored might not be correct
 	bool is_ambiguous() const;

@@ -126,7 +126,7 @@ public:
 	 * \return \c false if the requested slice could not be opened, or if the requested
 	 *         offset is not a valid position in that slice - \c true otherwise.
 	 */
-	bool seek(size_t slice, boost::uint32_t offset);
+	bool seek(size_t slice, boost::uint64_t offset);
 	
 	/*!
 	 * Read a number of bytes starting at the current slice and offset within that slice.

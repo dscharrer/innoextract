@@ -46,6 +46,7 @@ namespace {
 const char slice_ids[][8] = {
 	{ 'i', 'd', 's', 'k', 'a', '1', '6', 0x1a },
 	{ 'i', 'd', 's', 'k', 'a', '3', '2', 0x1a },
+	{ 'i', 'd', 's', 'k', 'b', '3', '2', 0x1a },
 };
 
 } // anonymous namespace
@@ -109,31 +110,69 @@ bool slice_reader::open_file(const path_type & file) {
 		ifs.close();
 		throw slice_error("could not read slice magic number in \"" + file.string() + "\"");
 	}
+	
 	bool found = false;
-	for(size_t i = 0; boost::size(slice_ids); i++) {
+	bool is_64bit_size = false;
+	
+	for(size_t i = 0; i < boost::size(slice_ids); i++) {
 		if(!std::memcmp(magic, slice_ids[i], 8)) {
 			found = true;
+			if(magic[4] == 'b') {
+				is_64bit_size = true;
+			}
 			break;
 		}
 	}
+	
 	if(!found) {
 		ifs.close();
 		throw slice_error("bad slice magic number in \"" + file.string() + "\"");
 	}
 	
-	slice_size = util::load<boost::uint32_t>(ifs);
-	if(ifs.fail()) {
-		ifs.close();
-		throw slice_error("could not read slice size in \"" + file.string() + "\"");
-	} else if(std::streampos(slice_size) > file_size) {
+	std::streampos header_end_pos;
+	
+	if(is_64bit_size) {
+		boost::uint64_t slice_size_64 = util::load<boost::uint64_t>(ifs);
+		if(ifs.fail()) {
+			ifs.close();
+			throw slice_error("could not read slice size in \"" + file.string() + "\"");
+		}
+		
+		header_end_pos = ifs.tellg();
+		
+		if(slice_size_64 > std::numeric_limits<boost::uint32_t>::max()) {
+			ifs.close();
+			throw slice_error("slice size exceeds 32-bit limit in \"" + file.string() + "\"");
+		}
+		
+		slice_size = boost::uint32_t(slice_size_64);
+		
+		if(slice_size_64 > boost::uint64_t(file_size)) {
+			ifs.close();
+			std::ostringstream oss;
+			oss << "bad slice size in " << file << ": " << slice_size_64 << " > " << file_size;
+			throw slice_error(oss.str());
+		}
+	} else {
+		slice_size = util::load<boost::uint32_t>(ifs);
+		if(ifs.fail()) {
+			ifs.close();
+			throw slice_error("could not read slice size in \"" + file.string() + "\"");
+		}
+		
+		header_end_pos = ifs.tellg();
+		
+		if(std::streampos(slice_size) > file_size) {
+			ifs.close();
+			std::ostringstream oss;
+			oss << "bad slice size in " << file << ": " << slice_size << " > " << file_size;
+			throw slice_error(oss.str());
+		}
+	}
+	if(std::streampos(slice_size) < header_end_pos) {
 		ifs.close();
 		std::ostringstream oss;
-		oss << "bad slice size in " << file << ": " << slice_size << " > " << file_size;
-		throw slice_error(oss.str());
-	} else if(std::streampos(slice_size) < ifs.tellg()) {
-		ifs.close();
-		std::ostringstream oss;
-		oss << "bad slice size in " << file << ": " << slice_size << " < " << ifs.tellg();
+		oss << "bad slice size in " << file << ": " << slice_size << " < " << header_end_pos;
 		throw slice_error(oss.str());
 	}
 	
@@ -208,7 +247,7 @@ void slice_reader::open(size_t slice) {
 	throw slice_error(oss.str());
 }
 
-bool slice_reader::seek(size_t slice, boost::uint32_t offset) {
+bool slice_reader::seek(size_t slice, boost::uint64_t offset) {
 	
 	seek(slice);
 	
@@ -218,7 +257,7 @@ bool slice_reader::seek(size_t slice, boost::uint32_t offset) {
 		return false;
 	}
 	
-	if(is->seekg(offset).fail()) {
+	if(is->seekg(std::streamoff(offset)).fail()) {
 		return false;
 	}
 	

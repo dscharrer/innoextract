@@ -1,57 +1,97 @@
-name: CI
+name: Release
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  schedule:
-    - cron: '21 11 * * 5'
+    tags:
+      - '*'
 
 jobs:
-
-  linux:
-    name: Linux build
-    runs-on: ubuntu-latest
-
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Update
-      run: sudo apt-get update
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-toolchain
+            base-devel
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-boost
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-bzip2
+            mingw-w64-x86_64-xz
 
-    - name: Dependencies
-      run: sudo apt-get install build-essential cmake libboost-all-dev liblzma-dev
+      - name: Build
+        run: |
+          mkdir build
+          cd build
+          cmake -G"MSYS Makefiles" \
+            -DUSE_LTO=OFF \
+            -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DUSE_STATIC_LIBS=ON \
+            -DBUILD_SHARED_LIBS=OFF ..
+          mingw32-make -j8
+          strip innoextract.exe
 
-    - name: Configure
-      run: cmake --version && cmake -B ${{github.workspace}}/build -Werror=dev -Werror=deprecated -DCONTINUOUS_INTEGRATION=1
+      - name: Find and Copy Required DLLs
+        run: |
+          mkdir release
+          cp build/innoextract.exe release/
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build
+          echo "Checking for missing DLL dependencies..."
+          ldd release/innoextract.exe | grep "not found" || true
 
-    - name: Check Style
-      run: cmake --build ${{github.workspace}}/build --target style
+          echo "Copying necessary DLLs..."
+          for dll in $(ldd release/innoextract.exe | grep mingw64 | awk '{print $3}'); do
+            cp -v "$dll" release/ || true
+          done
 
-  macos:
-    name: macOS build
-    runs-on: macos-latest
+          echo "Final dependency check..."
+          ldd release/innoextract.exe | grep "not found" || true
 
-    steps:
-    - uses: actions/checkout@v4
+      - name: Package Binaries
+        shell: pwsh
+        run: |
+          $VERSION = if ($env:GITHUB_REF -match '^refs/tags/(.+)') { $matches[1] } else { 'dev' }
+          $ZIP_NAME = "innoextract$VERSION.zip"
 
-    - name: Update
-      run: brew update
+          Set-Location release
+          7z a "..\$ZIP_NAME" *
 
-    - name: Workaround for Python install isssues - https://github.com/actions/runner-images/issues/8838
-      run: brew install python@3 || brew link --overwrite python@3
+          echo "UPLOAD_FILE=$ZIP_NAME" >> $env:GITHUB_ENV
 
-    - name: Dependencies
-      env:
-        HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
-      run: brew install boost xz
+          $TAG = $VERSION
+          if ($TAG.Length -ge 3) {
+            $X = $TAG[0]
+            $Y = $TAG[1]
+            $Z = $TAG[2]
+            $INNO_VERSION = "$X.$Y.$Z"
+          } else {
+            $INNO_VERSION = "dev"
+          }
 
-    - name: Configure
-      run: cmake --version && cmake -B ${{github.workspace}}/build -Werror=dev -Werror=deprecated -DCONTINUOUS_INTEGRATION=1
+          echo "INNO_VERSION=$INNO_VERSION" >> $env:GITHUB_ENV
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        #if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: Windows version
+          body: Latest innoextract Windows x64 build with support of Inno Setup installers up to version ${{ env.INNO_VERSION }}
+          files: ${{ env.UPLOAD_FILE }}
+          draft: false
+          prerelease: false
+          generate_release_notes: false

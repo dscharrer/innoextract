@@ -142,44 +142,66 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	checksum.init();
 	checksum.update(magic, sizeof(magic));
 	
-	if(version >= INNO_VERSION(5, 1,  5)) {
-		boost::uint32_t revision = checksum.load<boost::uint32_t>(is);
+	revision = 1;
+	if(version >= INNO_VERSION(5, 1, 5)) {
+		revision = checksum.load<boost::uint32_t>(is);
 		if(is.fail()) {
 			is.clear();
 			debug("could not read loader header revision");
 			return false;
-		} else if(revision != 1) {
+		} else if(revision != 1 && revision != 2) {
 			log_warning << "Unexpected setup loader revision: " << revision;
 		}
 	}
 	
-	(void)checksum.load<boost::uint32_t>(is);
-	exe_offset = checksum.load<boost::uint32_t>(is);
-	
-	if(version >= INNO_VERSION(4, 1, 6)) {
-		exe_compressed_size = 0;
-	} else {
-		exe_compressed_size = checksum.load<boost::uint32_t>(is);
-	}
-	
-	exe_uncompressed_size = checksum.load<boost::uint32_t>(is);
-	
-	if(version >= INNO_VERSION(4, 0, 3)) {
+	if(revision == 2) {
+		
+		exe_offset =  static_cast<boost::uint32_t>(checksum.load<boost::uint64_t>(is));
+		exe_uncompressed_size =  static_cast<boost::uint32_t>(checksum.load<boost::uint64_t>(is));
+		
 		exe_checksum.type = crypto::CRC32;
 		exe_checksum.crc32 = checksum.load<boost::uint32_t>(is);
-	} else {
-		exe_checksum.type = crypto::Adler32;
-		exe_checksum.adler32 = checksum.load<boost::uint32_t>(is);
-	}
-	
-	if(version >= INNO_VERSION(4, 0, 0)) {
+		
+		(void)checksum.load<boost::uint32_t>(is);
+		
+		header_offset = static_cast<boost::uint32_t>(checksum.load<boost::uint64_t>(is));
+		data_offset =  static_cast<boost::uint32_t>(checksum.load<boost::uint64_t>(is));
+		
+		(void)checksum.load<boost::uint32_t>(is);
+		
+		exe_compressed_size = 0;
 		message_offset = 0;
+		
 	} else {
-		message_offset = util::load<boost::uint32_t>(is);
+		
+		(void)checksum.load<boost::uint32_t>(is);
+		exe_offset = checksum.load<boost::uint32_t>(is);
+		
+		if(version >= INNO_VERSION(4, 1, 6)) {
+			exe_compressed_size = 0;
+		} else {
+			exe_compressed_size = checksum.load<boost::uint32_t>(is);
+		}
+		
+		exe_uncompressed_size = checksum.load<boost::uint32_t>(is);
+		
+		if(version >= INNO_VERSION(4, 0, 3)) {
+			exe_checksum.type = crypto::CRC32;
+			exe_checksum.crc32 = checksum.load<boost::uint32_t>(is);
+		} else {
+			exe_checksum.type = crypto::Adler32;
+			exe_checksum.adler32 = checksum.load<boost::uint32_t>(is);
+		}
+		
+		if(version >= INNO_VERSION(4, 0, 0)) {
+			message_offset = 0;
+		} else {
+			message_offset = util::load<boost::uint32_t>(is);
+		}
+		
+		header_offset = checksum.load<boost::uint32_t>(is);
+		data_offset = checksum.load<boost::uint32_t>(is);
 	}
-	
-	header_offset = checksum.load<boost::uint32_t>(is);
-	data_offset = checksum.load<boost::uint32_t>(is);
 	
 	if(is.fail()) {
 		is.clear();
@@ -194,13 +216,17 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 			debug("could not read loader header checksum");
 			return false;
 		}
-		if(checksum.finalize() != expected) {
-			log_warning << "Setup loader checksum mismatch!";
+		boost::uint32_t actual = checksum.finalize();
+		if(actual != expected) {
+			log_warning << "Setup loader checksum mismatch! Expected: "
+			            << print_hex(expected)
+			            << " Actual: " << print_hex(actual);
 		}
 	}
 	
 	return true;
 }
+
 
 void offsets::load(std::istream & is) {
 	

@@ -182,6 +182,67 @@ inline detail::print_hex_string print_hex(const std::string & data) {
 	return print_hex(data.c_str(), data.size());
 }
 
+namespace detail {
+
+struct print_hex_dump {
+	
+	const char * data;
+	size_t size;
+	size_t start_offset;
+	size_t bytes_per_line;
+	
+	explicit print_hex_dump(const char * buffer, size_t length, size_t offset = 0, size_t width = 16)
+		: data(buffer), size(length), start_offset(offset), bytes_per_line(width) { }
+	
+};
+
+inline std::ostream & operator<<(std::ostream & os, const print_hex_dump & s) {
+	
+	std::ios_base::fmtflags old = os.flags();
+	char oldfill = os.fill('0');
+	
+	for(size_t i = 0; i < s.size; i += s.bytes_per_line) {
+		os << std::hex << std::setw(8) << (s.start_offset + i) << ": ";
+		size_t line_bytes = std::min(s.bytes_per_line, s.size - i);
+		for(size_t j = 0; j < s.bytes_per_line; j++) {
+			if(j < line_bytes) {
+				os << std::hex << std::setw(2) << int(boost::uint8_t(s.data[i + j])) << " ";
+			} else {
+				os << "   ";
+			}
+			if(j == 7) os << " ";
+		}
+		os << " |";
+		for(size_t j = 0; j < line_bytes; j++) {
+			char c = s.data[i + j];
+			if(c >= 0x20 && c < 0x7F) {
+				os << c;
+			} else {
+				os << '.';
+			}
+		}
+		for(size_t j = line_bytes; j < s.bytes_per_line; j++) {
+			os << ' ';
+		}
+		
+		os << "|\n";
+	}
+	
+	os.fill(oldfill);
+	os.setf(old, std::ios_base::basefield);
+	return os;
+}
+
+} // namespace detail
+
+inline detail::print_hex_dump print_hex_dump(const char * data, size_t size, size_t offset = 0, size_t width = 16) {
+	return detail::print_hex_dump(data, size, offset, width);
+}
+
+inline detail::print_hex_dump print_hex_dump(const std::string & data, size_t offset = 0, size_t width = 16) {
+	return print_hex_dump(data.c_str(), data.size(), offset, width);
+}
+
 const char * const byte_size_units[] = {
 	"B",
 	"KiB",

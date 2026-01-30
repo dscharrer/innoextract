@@ -56,6 +56,11 @@ struct offsets {
 	bool found_magic;
 	
 	/*!
+	 * Marks 64 bit offset usage if 2
+	 */
+	boost::uint32_t revision;
+	
+	/*!
 	 * Offset of compressed `setup.e32` (the actual installer code)
 	 *
 	 * A value of \c 0 means there is no setup.e32 embedded in this file

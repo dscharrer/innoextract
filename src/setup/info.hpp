@@ -31,6 +31,7 @@
 
 #include "setup/header.hpp"
 #include "setup/version.hpp"
+#include "setup/issigkey.hpp"
 #include "util/encoding.hpp"
 #include "util/flags.hpp"
 
@@ -40,6 +41,7 @@ struct component_entry;
 struct data_entry;
 struct delete_entry;
 struct directory_entry;
+struct issig_key_entry;
 struct file_entry;
 struct icon_entry;
 struct ini_entry;
@@ -66,6 +68,7 @@ struct info {
 		DeleteEntries,
 		UninstallDeleteEntries,
 		Directories,
+		ISSigs,
 		Files,
 		Icons,
 		IniEntries,
@@ -95,6 +98,7 @@ struct info {
 	std::vector<delete_entry>     delete_entries;           //! \c DeleteEntries
 	std::vector<delete_entry>     uninstall_delete_entries; //! \c UninstallDeleteEntries
 	std::vector<directory_entry>  directories;              //! \c Directories
+	std::vector<issig_key_entry>  issig_keys;               //! \c ISSigKeys
 	std::vector<file_entry>       files;                    //! \c Files
 	std::vector<icon_entry>       icons;                    //! \c Icons
 	std::vector<ini_entry>        ini_entries;              //! \c IniEntries
@@ -111,6 +115,7 @@ struct info {
 	//! Loading enabled by \c WizardImages
 	std::vector<std::string> wizard_images;
 	std::vector<std::string> wizard_images_small;
+	std::vector<std::string> wizard_images_back;
 	
 	//! Contents of the helper DLL used to decompress setup data in some versions.
 	//! Loading enabled by \c DecompressorDll
@@ -130,7 +135,8 @@ struct info {
 	 * \param entries What kinds of entries to load.
 	 * \param force_codepage Windows codepage to use for strings in ANSI installers.
 	 */
-	void load(std::istream & is, entry_types entries, util::codepage_id force_codepage = 0);
+	void load(std::istream & is, entry_types entries, util::codepage_id force_codepage = 0,
+	          boost::uint32_t loader_revision = 1);
 	
 	std::string get_key(const std::string & password);
 	

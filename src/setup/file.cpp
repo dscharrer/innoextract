@@ -29,6 +29,11 @@
 namespace setup {
 
 namespace {
+STORED_ENUM_MAP(stored_file_verification_type, file_entry::fvNone,
+	file_entry::fvNone,
+	file_entry::fvHash,
+	file_entry::fvISSig,
+);
 
 enum file_copy_mode {
 	cmNormal,
@@ -59,6 +64,14 @@ STORED_ENUM_MAP(stored_file_type_1, file_entry::UserFile,
 } // anonymous namespace
 
 } // namespace setup
+
+NAMED_ENUM(setup::file_entry::file_verification_type)
+
+NAMES(setup::file_entry::file_verification_type, "File Verification Type",
+	"none",
+	"hash",
+	"IS sig",
+)
 
 NAMED_ENUM(setup::file_copy_mode)
 
@@ -91,6 +104,26 @@ void file_entry::load(std::istream & is, const info & i) {
 	}
 	
 	load_condition_data(is, i);
+	
+	if(i.version >= INNO_VERSION(6, 5, 0)) {
+		is >> util::encoded_string(excludes, i.codepage, i.header.lead_bytes);
+		is >> util::encoded_string(download_issig_source, i.codepage, i.header.lead_bytes);
+		is >> util::encoded_string(download_user_name, i.codepage, i.header.lead_bytes);
+		is >> util::encoded_string(download_password, i.codepage, i.header.lead_bytes);
+		is >> util::encoded_string(extract_archive_password, i.codepage, i.header.lead_bytes);
+
+		// Verification structure
+		is >> util::ansi_string(issig_allowed_keys);
+		is.read(checksum.sha256, std::streamsize(sizeof(checksum.sha256)));
+		checksum.type = crypto::SHA256;
+		verification = stored_enum<stored_file_verification_type>(is).get();
+	} else {
+		excludes.clear();
+		download_issig_source.clear();
+		download_user_name.clear();
+		download_password.clear();
+		extract_archive_password.clear();
+	}
 	
 	load_version_data(is, i.version);
 	
@@ -189,8 +222,19 @@ void file_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(5, 2, 5)) {
 		flagreader.add(GacInstall);
 	}
+	if(i.version >= INNO_VERSION(6, 5, 0)) {
+		flagreader.add(Download);
+		flagreader.add(ExtractArchive);
+	}
 	
 	options |= flagreader.finalize();
+	if(i.version >= INNO_VERSION(6, 7, 0)) {
+		// Inno forces the TSetupFileEntryOption enum to be 8 bytes,
+		// but currently only contains 5 bytes of values
+		(void)util::load<boost::uint8_t>(is);
+		(void)util::load<boost::uint8_t>(is);
+		(void)util::load<boost::uint8_t>(is);
+	}
 	
 	if(i.version.bits() == 16 || i.version >= INNO_VERSION(5, 0, 0)) {
 		type = stored_enum<stored_file_type_0>(is).get();
@@ -239,6 +283,8 @@ NAMES(setup::file_entry::flags, "File Option",
 	"set ntfs compression",
 	"unset ntfs compression",
 	"gac install",
+	"download",
+	"extract archive",
 	"readme",
 )
 

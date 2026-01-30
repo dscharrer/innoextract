@@ -25,6 +25,10 @@ option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
 
 if(MSVC)
 	
+	if(DEBUG)
+		add_compile_options(/MP /MT $<$<CONFIG:Debug>:/MTd>)
+	endif()
+
 	if(USE_LTO)
 		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GL")
 		set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
