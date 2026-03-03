@@ -177,8 +177,9 @@ find_package(Boost REQUIRED COMPONENTS
 	iostreams
 	filesystem
 	date_time
-	system
 	program_options
+	OPTIONAL_COMPONENTS
+	system
 )
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 link_directories(${Boost_LIBRARY_DIRS})
