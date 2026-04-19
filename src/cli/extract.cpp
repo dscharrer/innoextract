@@ -981,7 +981,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	}
 #ifdef DEBUG
 	if(logger::debug) {
-		entries = setup::info::entry_types::all();
+		entries = setup::info::entry_types::all() & ~setup::info::NoUnknownVersion;
 	}
 #endif
 	

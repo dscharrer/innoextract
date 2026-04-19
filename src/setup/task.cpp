@@ -55,7 +55,6 @@ void task_entry::load(std::istream & is, const info & i) {
 	} else {
 		used = true;
 	}
-	
 	winver.load(is, i.version);
 	
 	stored_flag_reader<flags> flagreader(is);

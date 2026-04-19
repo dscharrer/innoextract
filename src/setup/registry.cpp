@@ -103,6 +103,7 @@ void registry_entry::load(std::istream & is, const info & i) {
 		type = stored_enum<stored_registry_entry_type_0>(is).get();
 	}
 	
+	options = 0;
 	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
 	if(i.version.bits() != 16) {
@@ -130,7 +131,7 @@ void registry_entry::load(std::istream & is, const info & i) {
 		flagreader.add(Bits64);
 	}
 	
-	options = flagreader.finalize();
+	options |= flagreader.finalize();
 }
 
 } // namespace setup

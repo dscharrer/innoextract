@@ -23,7 +23,6 @@
 #include "setup/info.hpp"
 #include "setup/version.hpp"
 #include "util/load.hpp"
-#include "util/log.hpp"
 #include "util/storedenum.hpp"
 
 namespace setup {
@@ -91,6 +90,34 @@ void file_entry::load(std::istream & is, const info & i) {
 	}
 	
 	load_condition_data(is, i);
+
+	excludes.clear();
+	download_issig_source.clear();
+	download_user_name.clear();
+	download_password.clear();
+	extract_archive_password.clear();
+	checksum.type = crypto::None;
+	if(i.version >= INNO_VERSION(6, 5, 0)) {
+		is >> util::encoded_string(excludes, i.codepage);
+		is >> util::encoded_string(download_issig_source, i.codepage);
+		is >> util::encoded_string(download_user_name, i.codepage);
+		is >> util::encoded_string(download_password, i.codepage);
+		is >> util::encoded_string(extract_archive_password, i.codepage);
+		std::string issig_allowed_keys;
+		is >> util::binary_string(issig_allowed_keys);
+		(void)issig_allowed_keys;
+		is.read(checksum.sha256, std::streamsize(sizeof(checksum.sha256)));
+		switch(util::load<boost::uint8_t>(is)) {
+			case 1:
+				checksum.type = crypto::SHA256;
+				break;
+			case 0:
+			case 2:
+			default:
+				checksum.type = crypto::None;
+				break;
+		}
+	}
 	
 	load_version_data(is, i.version);
 	
@@ -189,6 +216,10 @@ void file_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(5, 2, 5)) {
 		flagreader.add(GacInstall);
 	}
+	if(i.version >= INNO_VERSION(6, 5, 0)) {
+		flagreader.add(Download);
+		flagreader.add(ExtractArchive);
+	}
 	
 	options |= flagreader.finalize();
 	
@@ -199,7 +230,6 @@ void file_entry::load(std::istream & is, const info & i) {
 	}
 	
 	additional_locations.clear();
-	checksum.type = crypto::None;
 	size = 0;
 	
 }
@@ -239,6 +269,8 @@ NAMES(setup::file_entry::flags, "File Option",
 	"set ntfs compression",
 	"unset ntfs compression",
 	"gac install",
+	"download",
+	"extract archive",
 	"readme",
 )
 

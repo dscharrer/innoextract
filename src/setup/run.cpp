@@ -66,7 +66,6 @@ void run_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(2, 0, 0) || i.version.is_isx()) {
 		is >> util::encoded_string(description, i.codepage);
 	}
-	
 	load_condition_data(is, i);
 	
 	load_version_data(is, i.version);
@@ -78,6 +77,7 @@ void run_entry::load(std::istream & is, const info & i) {
 	}
 	
 	wait = stored_enum<stored_run_wait_condition>(is).get();
+	options = 0;
 	
 	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
@@ -110,7 +110,7 @@ void run_entry::load(std::istream & is, const info & i) {
 		flagreader.add(LogOutput);
 	}
 	
-	options = flagreader.finalize();
+	options |= flagreader.finalize();
 }
 
 } // namespace setup

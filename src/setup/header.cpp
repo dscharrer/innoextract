@@ -265,19 +265,27 @@ void header::load(std::istream & is, const version & version) {
 		// Valid architectures: 'Unknown', 'x86', 'x64', 'Arm32', 'Arm64'
 		is >> util::binary_string(architectures_allowed_expr);
 		is >> util::binary_string(architectures_installed_in_64bit_mode_expr);
+	} else {
+		architectures_allowed_expr.clear();
+		architectures_installed_in_64bit_mode_expr.clear();
+	}
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		is >> util::binary_string(close_applications_filter_excludes);
+		is >> util::binary_string(sevenzip_library_name);
+	} else {
+		close_applications_filter_excludes.clear();
+		sevenzip_library_name.clear();
 	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
 		is >> util::ansi_string(info_after);
+		is >> util::ansi_string(compiled_code);
 	}
 	if(version >= INNO_VERSION(5, 2, 1) && version < INNO_VERSION(5, 3, 10)) {
 		is >> util::binary_string(uninstaller_signature);
 	} else {
 		uninstaller_signature.clear();
-	}
-	if(version >= INNO_VERSION(5, 2, 5)) {
-		is >> util::binary_string(compiled_code);
 	}
 	
 	if(version >= INNO_VERSION(2, 0, 6) && !version.is_unicode()) {
@@ -319,8 +327,13 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	directory_count = util::load<boost::uint32_t>(is, version.bits());
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		issig_key_count = util::load<boost::uint32_t>(is, version.bits());
+	} else {
+		issig_key_count = 0;
+	}
 	file_count = util::load<boost::uint32_t>(is, version.bits());
-	data_entry_count = util::load<boost::uint32_t>(is, version.bits());
+	data_entry_count = util::load<boost::uint32_t>(is, version.bits()); // NumFileLocationEntries
 	icon_count = util::load<boost::uint32_t>(is, version.bits());
 	ini_entry_count = util::load<boost::uint32_t>(is, version.bits());
 	registry_entry_count = util::load<boost::uint32_t>(is, version.bits());
@@ -328,7 +341,7 @@ void header::load(std::istream & is, const version & version) {
 	uninstall_delete_entry_count = util::load<boost::uint32_t>(is, version.bits());
 	run_entry_count = util::load<boost::uint32_t>(is, version.bits());
 	uninstall_run_entry_count = util::load<boost::uint32_t>(is, version.bits());
-	
+
 	boost::int32_t license_size = 0;
 	boost::int32_t info_before_size = 0;
 	boost::int32_t info_after_size = 0;
@@ -336,6 +349,36 @@ void header::load(std::istream & is, const version & version) {
 		license_size = util::load<boost::int32_t>(is, version.bits());
 		info_before_size = util::load<boost::int32_t>(is, version.bits());
 		info_after_size = util::load<boost::int32_t>(is, version.bits());
+	}
+	
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		winver.load(is, version);
+		wizard_style = stored_enum<stored_setup_style>(is).get();
+		wizard_resize_percent_x = util::load<boost::uint32_t>(is);
+		wizard_resize_percent_y = util::load<boost::uint32_t>(is);
+		image_alpha_format = stored_enum<stored_alpha_format>(is).get();
+		back_color = 0;
+		back_color2 = 0;
+		image_back_color = 0;
+		small_image_back_color = 0;
+		password.type = crypto::None;
+		password_salt.clear();
+		extra_disk_space_required = util::load<boost::int64_t>(is);
+		slices_per_disk = util::load<boost::uint32_t>(is);
+		install_mode = NormalInstallMode;
+		uninstall_log_mode = stored_enum<stored_log_mode>(is).get();
+		uninstall_style = wizard_style;
+		dir_exists_warning = stored_enum<stored_bool_auto_no_yes>(is).get();
+		privileges_required = stored_enum<stored_privileges_1>(is).get();
+		privileges_required_override_allowed = stored_flags<stored_privileges_required_overrides>(is).get();
+		show_language_dialog = stored_enum<stored_bool_yes_no_auto>(is).get();
+		language_detection = stored_enum<stored_language_detection_method>(is).get();
+		compression = stored_enum<stored_compression_method_3>(is).get();
+		disable_dir_page = stored_enum<stored_bool_auto_no_yes>(is).get();
+		disable_program_group_page = stored_enum<stored_bool_auto_no_yes>(is).get();
+		uninstall_display_size = util::load<boost::uint64_t>(is);
+		options |= load_flags(is, version);
+		return;
 	}
 	
 	winver.load(is, version);
@@ -765,6 +808,8 @@ void header::decode(util::codepage_id codepage) {
 	util::to_utf8(setup_mutex, codepage, &lead_bytes);
 	util::to_utf8(changes_environment, codepage);
 	util::to_utf8(changes_associations, codepage);
+	util::to_utf8(close_applications_filter_excludes, codepage);
+	util::to_utf8(sevenzip_library_name, codepage, &lead_bytes);
 	
 }
 

@@ -142,20 +142,59 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	checksum.init();
 	checksum.update(magic, sizeof(magic));
 	
+	boost::uint32_t revision = 0;
 	if(version >= INNO_VERSION(5, 1,  5)) {
-		boost::uint32_t revision = checksum.load<boost::uint32_t>(is);
+		revision = checksum.load<boost::uint32_t>(is);
 		if(is.fail()) {
 			is.clear();
 			debug("could not read loader header revision");
 			return false;
-		} else if(revision != 1) {
+		} else if(revision != 1 && revision != 2) {
 			log_warning << "Unexpected setup loader revision: " << revision;
 		}
+	}
+
+	if(revision == 2) {
+		boost::uint64_t total_size = checksum.load<boost::uint64_t>(is);
+		boost::uint64_t offset_exe = checksum.load<boost::uint64_t>(is);
+		exe_uncompressed_size = checksum.load<boost::uint32_t>(is);
+		exe_checksum.type = crypto::CRC32;
+		exe_checksum.crc32 = checksum.load<boost::uint32_t>(is);
+		boost::uint64_t offset0 = checksum.load<boost::uint64_t>(is);
+		boost::uint64_t offset1 = checksum.load<boost::uint64_t>(is);
+		(void)checksum.load<boost::uint32_t>(is); // ReservedPadding
+		if(is.fail()) {
+			is.clear();
+			debug("could not read revision 2 loader header");
+			return false;
+		}
+		if(total_size > std::numeric_limits<boost::uint32_t>::max()
+		   || offset_exe > std::numeric_limits<boost::uint32_t>::max()
+		   || offset0 > std::numeric_limits<boost::uint32_t>::max()
+		   || offset1 > std::numeric_limits<boost::uint32_t>::max()) {
+			log_warning << "Unsupported large revision 2 setup loader offsets!";
+			return false;
+		}
+		exe_offset = static_cast<boost::uint32_t>(offset_exe);
+		exe_compressed_size = 0;
+		message_offset = 0;
+		header_offset = static_cast<boost::uint32_t>(offset0);
+		data_offset = static_cast<boost::uint32_t>(offset1);
+		boost::uint32_t expected = util::load<boost::uint32_t>(is);
+		if(is.fail()) {
+			is.clear();
+			debug("could not read revision 2 loader header checksum");
+			return false;
+		}
+		if(checksum.finalize() != expected) {
+			log_warning << "Setup loader checksum mismatch!";
+		}
+		return true;
 	}
 	
 	(void)checksum.load<boost::uint32_t>(is);
 	exe_offset = checksum.load<boost::uint32_t>(is);
-	
+
 	if(version >= INNO_VERSION(4, 1, 6)) {
 		exe_compressed_size = 0;
 	} else {

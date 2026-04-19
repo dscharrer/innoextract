@@ -26,6 +26,7 @@
 
 #include <boost/foreach.hpp>
 
+#include "crypto/crc32.hpp"
 #include "crypto/hasher.hpp"
 #include "crypto/pbkdf2.hpp"
 #include "crypto/sha256.hpp"
@@ -74,6 +75,15 @@ void info::load_entries(std::istream & is, entry_types entries, size_t count,
 
 namespace {
 
+struct issig_key_entry {
+	void load(std::istream & is, const setup::info & info) {
+		std::string ignore;
+		is >> util::encoded_string(ignore, info.codepage);
+		is >> util::encoded_string(ignore, info.codepage);
+		is >> util::encoded_string(ignore, info.codepage);
+	}
+};
+
 void load_wizard_images(std::istream & is, const setup::version & version,
                         std::vector<std::string> & images, info::entry_types entries) {
 	
@@ -98,12 +108,36 @@ void load_wizard_images(std::istream & is, const setup::version & version,
 	
 }
 
+void skip_stream(std::istream & is) {
+	std::string ignored;
+	is >> util::binary_string(ignored);
+}
+
 void load_wizard_and_decompressor(std::istream & is, const setup::version & version,
                                   const setup::header & header,
                                   setup::info & info, info::entry_types entries) {
 	
 	info.wizard_images.clear();
 	info.wizard_images_small.clear();
+
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		load_wizard_images(is, version, info.wizard_images, entries);
+		load_wizard_images(is, version, info.wizard_images_small, entries);
+		if(header.compression == stream::Zlib || header.compression == stream::BZip2) {
+			if(entries & (info::DecompressorDll | info::NoSkip)) {
+				is >> util::binary_string(info.decompressor_dll);
+			} else {
+				skip_stream(is);
+			}
+		} else {
+			info.decompressor_dll.clear();
+		}
+		if(!header.sevenzip_library_name.empty()) {
+			skip_stream(is);
+		}
+		info.decrypt_dll.clear();
+		return;
+	}
 	
 	load_wizard_images(is, version, info.wizard_images, entries);
 	
@@ -141,6 +175,43 @@ void check_is_end(stream::block_reader::pointer & is, const char * what) {
 	if(!is->get(dummy).eof()) {
 		throw std::ios_base::failure(what);
 	}
+}
+
+std::streampos skip_setup_encryption_header(std::istream & is, const setup::version & version) {
+	
+	if(version < INNO_VERSION(6, 5, 0)) {
+		return is.tellg();
+	}
+	
+	static const std::streamsize SetupEncryptionHeaderSize = 49;
+	std::streampos start = is.tellg();
+	boost::uint32_t expected_crc = util::load<boost::uint32_t>(is);
+	char header[SetupEncryptionHeaderSize];
+	is.read(header, SetupEncryptionHeaderSize);
+	if(is.fail()) {
+		is.clear();
+		is.seekg(start);
+		return start;
+	}
+	
+	// TSetupEncryptionHeader.EncryptionUse is a packed enum with values 0..2.
+	if(static_cast<unsigned char>(header[0]) > 2) {
+		is.clear();
+		is.seekg(start);
+		return start;
+	}
+	
+	crypto::crc32 actual_crc;
+	actual_crc.init();
+	actual_crc.update(header, SetupEncryptionHeaderSize);
+	if(actual_crc.finalize() != expected_crc) {
+		is.clear();
+		is.seekg(start);
+		return start;
+	}
+	
+	debug("skipping setup encryption header");
+	return is.tellg();
 }
 
 } // anonymous namespace
@@ -204,6 +275,13 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 	load_entries(*reader, entries, header.task_count, tasks, Tasks);
 	debug("loading directories");
 	load_entries(*reader, entries, header.directory_count, directories, Directories);
+	if(header.issig_key_count != 0) {
+		debug("loading issig keys");
+		for(size_t i = 0; i < header.issig_key_count; i++) {
+			issig_key_entry entry;
+			entry.load(*reader, *this);
+		}
+	}
 	debug("loading files");
 	load_entries(*reader, entries, header.file_count, files, Files);
 	debug("loading icons");
@@ -241,6 +319,7 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 void info::load(std::istream & is, entry_types entries, util::codepage_id force_codepage) {
 	
 	version.load(is);
+	std::streampos start = skip_setup_encryption_header(is, version);
 	
 	if(!version.known) {
 		if(entries & NoUnknownVersion) {
@@ -264,7 +343,6 @@ void info::load(std::istream & is, entry_types entries, util::codepage_id force_
 	}
 	
 	bool parsed_without_errors = false;
-	std::streampos start = is.tellg();
 	for(;;) {
 		
 		warning_suppressor warnings;
