@@ -188,7 +188,7 @@ if(NOT Boost_VERSION_MACRO)
 	set(Boost_VERSION_MACRO ${Boost_VERSION})
 endif()
 add_definitions(-DBOOST_SYSTEM_DISABLE_THREADS)
-if(win32)
+if(WIN32)
 	add_definitions(-DBOOST_SYSTEM_USE_UTF8)
 endif()
 
@@ -522,6 +522,20 @@ add_custom_target(manpage ALL DEPENDS ${MAN_FILE})
 
 
 # Main targets
+
+if(MINGW AND USE_LTO AND Boost_USE_STATIC_LIBS AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	message(STATUS "Disabling LTO for selected sources due to MinGW static Boost link issue")
+
+	# GCC/MinGW LTO may discard COMDAT/linkonce thunks emitted for Boost
+	# exceptions/wrapexcept, causing "defined in discarded section" link errors.
+	set_source_files_properties(
+		src/cli/main.cpp
+		src/cli/extract.cpp
+		src/cli/goggalaxy.cpp
+		src/stream/block.cpp
+		PROPERTIES COMPILE_OPTIONS "-fno-lto"
+	)
+endif()
 
 add_executable(innoextract ${INNOEXTRACT_SOURCES})
 target_link_libraries(innoextract ${LIBRARIES})
