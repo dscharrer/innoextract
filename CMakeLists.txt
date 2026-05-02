@@ -188,7 +188,7 @@ if(NOT Boost_VERSION_MACRO)
 	set(Boost_VERSION_MACRO ${Boost_VERSION})
 endif()
 add_definitions(-DBOOST_SYSTEM_DISABLE_THREADS)
-if(win32)
+if(WIN32)
 	add_definitions(-DBOOST_SYSTEM_USE_UTF8)
 endif()
 
