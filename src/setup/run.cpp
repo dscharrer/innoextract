@@ -69,6 +69,17 @@ void run_entry::load(std::istream & is, const info & i) {
 	
 	load_condition_data(is, i);
 	
+	if(i.version >= INNO_VERSION_EXT(7, 0, 0, 1)) {
+		// Inno Setup 7.0.0 (SetupID "7.0.0.1", first used by the
+		// 7.0.0-preview-2 build) appended an OnLog expression string to
+		// TSetupRunEntry after BeforeInstall, bumping SetupRunEntryStrings
+		// from 13 to 14. See Projects/Src/Shared.Struct.pas at tag
+		// is-7_0_0_1 in https://github.com/jrsoftware/issrc.
+		is >> util::encoded_string(on_log, i.codepage);
+	} else {
+		on_log.clear();
+	}
+	
 	load_version_data(is, i.version);
 	
 	if(i.version >= INNO_VERSION(1, 3, 24)) {
