@@ -157,6 +157,25 @@ void file_entry::load(std::istream & is, const info & i) {
 		permission = boost::int16_t(-1);
 	}
 	
+	if(i.version >= INNO_VERSION_EXT(7, 0, 0, 3)) {
+		// Inno Setup 7.0.0 (SetupID "7.0.0.3") removed the fo32Bit/fo64Bit
+		// flags from TSetupFileEntryOption and moved the target
+		// architecture into a dedicated TSetupEntryBitness byte enum
+		// (ebInstallDefault, eb32Bit, eb64Bit, ebNativeBit,
+		// ebCurrentProcessBit) stored before Options. See
+		// Projects/Src/Shared.Struct.pas at tag is-7_0_0 in
+		// https://github.com/jrsoftware/issrc. Translate the two
+		// fixed-architecture values back into the existing Bits32/Bits64
+		// flags so architecture-specific collision handling keeps working;
+		// the runtime-resolved values are treated as architecture-neutral.
+		boost::uint8_t bitness = util::load<boost::uint8_t>(is);
+		if(bitness == 1) {
+			options |= Bits32;
+		} else if(bitness == 2) {
+			options |= Bits64;
+		}
+	}
+	
 	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
 	flagreader.add(ConfirmOverwrite);
@@ -219,7 +238,7 @@ void file_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(5, 1, 0)) {
 		flagreader.add(CreateAllSubDirs);
 	}
-	if(i.version >= INNO_VERSION(5, 1, 2)) {
+	if(i.version >= INNO_VERSION(5, 1, 2) && i.version < INNO_VERSION_EXT(7, 0, 0, 3)) {
 		flagreader.add(Bits32);
 		flagreader.add(Bits64);
 	}

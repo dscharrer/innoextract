@@ -206,6 +206,8 @@ struct header {
 	size_t run_entry_count;
 	size_t uninstall_run_entry_count;
 	
+	boost::uint32_t compiled_code_version; //!< Inno Setup 7.0.0.3+ (CompiledCodeVersion)
+	
 	windows_version_range winver;
 	
 	typedef boost::uint32_t Color;

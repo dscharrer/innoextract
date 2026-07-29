@@ -390,6 +390,17 @@ void header::load(std::istream & is, const version & version) {
 		info_after_size = util::load<boost::int32_t>(is, version.bits());
 	}
 	
+	if(version >= INNO_VERSION_EXT(7, 0, 0, 3)) {
+		// Inno Setup 7.0.0 (SetupID "7.0.0.3") added a CompiledCodeVersion
+		// (Cardinal) field to TSetupHeader between the entry counts and
+		// MinVersion. See Projects/Src/Shared.Struct.pas at tag is-7_0_0 in
+		// https://github.com/jrsoftware/issrc. innoextract does not run the
+		// compiled [Code] script, so the value is only stored.
+		compiled_code_version = util::load<boost::uint32_t>(is);
+	} else {
+		compiled_code_version = 0;
+	}
+	
 	winver.load(is, version);
 	
 	if(version < INNO_VERSION_EXT(6, 4, 0, 1)) {

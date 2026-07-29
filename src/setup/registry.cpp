@@ -103,6 +103,17 @@ void registry_entry::load(std::istream & is, const info & i) {
 		type = stored_enum<stored_registry_entry_type_0>(is).get();
 	}
 	
+	boost::uint8_t bitness = 0;
+	if(i.version >= INNO_VERSION_EXT(7, 0, 0, 3)) {
+		// Inno Setup 7.0.0 (SetupID "7.0.0.3") removed the ro32Bit/ro64Bit
+		// flags from TSetupRegistryEntry.Options and moved the target
+		// registry view into a TSetupEntryBitness byte enum stored after
+		// Typ, before Options. See Projects/Src/Shared.Struct.pas at tag
+		// is-7_0_0 in https://github.com/jrsoftware/issrc. Translated to
+		// the existing Bits32/Bits64 flags after the flag set is read.
+		bitness = util::load<boost::uint8_t>(is);
+	}
+	
 	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
 	if(i.version.bits() != 16) {
@@ -125,12 +136,17 @@ void registry_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(1, 3, 16)) {
 		flagreader.add(DontCreateKey);
 	}
-	if(i.version >= INNO_VERSION(5, 1, 0)) {
+	if(i.version >= INNO_VERSION(5, 1, 0) && i.version < INNO_VERSION_EXT(7, 0, 0, 3)) {
 		flagreader.add(Bits32);
 		flagreader.add(Bits64);
 	}
 	
 	options = flagreader.finalize();
+	if(bitness == 1) {
+		options |= Bits32;
+	} else if(bitness == 2) {
+		options |= Bits64;
+	}
 }
 
 } // namespace setup
