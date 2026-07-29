@@ -244,6 +244,22 @@ public:
 		return result;
 	}
 	
+	//! Number of stored bytes already read from the stream.
+	size_t bytes_consumed() const { return bytes; }
+	
+	/*!
+	 * Discard padding bytes so that the total number of bytes read from
+	 * the stream is at least `target`. Used for setups (e.g. Inno Setup
+	 * 6.7.0) that always pad the bitset to a fixed width regardless of
+	 * the number of flags actually defined.
+	 */
+	void discard_padding_to(size_t target) {
+		while(bytes < target) {
+			(void)util::load<stored_type>(stream);
+			bytes++;
+		}
+	}
+	
 };
 
 template <class Enum>

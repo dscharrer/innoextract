@@ -67,6 +67,7 @@ struct run_entry : public item {
 	std::string status_message;
 	std::string verb;
 	std::string description;
+	std::string on_log;         //!< Inno Setup 7.0.0.1+ (OnLog)
 	
 	int show_command;
 	

@@ -50,7 +50,7 @@ const char slice_ids[][8] = {
 
 } // anonymous namespace
 
-slice_reader::slice_reader(std::istream * istream, boost::uint32_t offset)
+slice_reader::slice_reader(std::istream * istream, boost::uint64_t offset)
 	: data_offset(offset),
 	  slices_per_disk(1), current_slice(0), slice_size(0),
 	  is(istream) {
@@ -59,8 +59,8 @@ slice_reader::slice_reader(std::istream * istream, boost::uint32_t offset)
 	
 	std::streampos file_size = is->seekg(0, std::ios_base::end).tellg();
 	
-	slice_size = boost::uint32_t(std::min(file_size, max_size));
-	if(is->seekg(data_offset).fail()) {
+	slice_size = boost::uint64_t(std::min(file_size, max_size));
+	if(is->seekg(std::streamoff(data_offset)).fail()) {
 		throw slice_error("could not seek to data");
 	}
 }
@@ -125,12 +125,12 @@ bool slice_reader::open_file(const path_type & file) {
 	if(ifs.fail()) {
 		ifs.close();
 		throw slice_error("could not read slice size in \"" + file.string() + "\"");
-	} else if(std::streampos(slice_size) > file_size) {
+	} else if(std::streampos(std::streamoff(slice_size)) > file_size) {
 		ifs.close();
 		std::ostringstream oss;
 		oss << "bad slice size in " << file << ": " << slice_size << " > " << file_size;
 		throw slice_error(oss.str());
-	} else if(std::streampos(slice_size) < ifs.tellg()) {
+	} else if(std::streampos(std::streamoff(slice_size)) < ifs.tellg()) {
 		ifs.close();
 		std::ostringstream oss;
 		oss << "bad slice size in " << file << ": " << slice_size << " < " << ifs.tellg();
@@ -208,7 +208,7 @@ void slice_reader::open(size_t slice) {
 	throw slice_error(oss.str());
 }
 
-bool slice_reader::seek(size_t slice, boost::uint32_t offset) {
+bool slice_reader::seek(size_t slice, boost::uint64_t offset) {
 	
 	seek(slice);
 	
@@ -218,7 +218,7 @@ bool slice_reader::seek(size_t slice, boost::uint32_t offset) {
 		return false;
 	}
 	
-	if(is->seekg(offset).fail()) {
+	if(is->seekg(std::streamoff(offset)).fail()) {
 		return false;
 	}
 	
@@ -233,21 +233,21 @@ std::streamsize slice_reader::read(char * buffer, std::streamsize bytes) {
 	
 	while(bytes > 0) {
 		
-		boost::uint32_t read_pos = boost::uint32_t(is->tellg());
+		boost::uint64_t read_pos = boost::uint64_t(is->tellg());
 		if(read_pos > slice_size) {
 			break;
 		}
-		boost::uint32_t remaining = slice_size - read_pos;
+		boost::uint64_t remaining = slice_size - read_pos;
 		if(!remaining) {
 			seek(current_slice + 1);
-			read_pos = boost::uint32_t(is->tellg());
+			read_pos = boost::uint64_t(is->tellg());
 			if(read_pos > slice_size) {
 				break;
 			}
 			remaining = slice_size - read_pos;
 		}
 		
-		boost::uint64_t toread = std::min(boost::uint64_t(remaining), boost::uint64_t(bytes));
+		boost::uint64_t toread = std::min(remaining, boost::uint64_t(bytes));
 		toread = std::min(toread, boost::uint64_t(std::numeric_limits<std::streamsize>::max()));
 		if(is->read(buffer, std::streamsize(toread)).fail()) {
 			break;

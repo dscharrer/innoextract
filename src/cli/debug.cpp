@@ -652,7 +652,7 @@ static void dump_headers(std::istream & is, const setup::version & version, cons
 void dump_headers(std::istream & is, const loader::offsets & offsets, const extract_options & o) {
 	
 	setup::version version;
-	is.seekg(offsets.header_offset);
+	is.seekg(std::streamoff(offsets.header_offset));
 	version.load(is);
 	
 	dump_headers(is, version, o, 0);

@@ -946,7 +946,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	
 	if(o.data_version)  {
 		setup::version version;
-		ifs.seekg(offsets.header_offset);
+		ifs.seekg(std::streamoff(offsets.header_offset));
 		version.load(ifs);
 		if(o.silent) {
 			std::cout << version << '\n';
@@ -985,7 +985,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	}
 #endif
 	
-	ifs.seekg(offsets.header_offset);
+	ifs.seekg(std::streamoff(offsets.header_offset));
 	setup::info info;
 	try {
 		info.load(ifs, entries, o.codepage);
@@ -1100,7 +1100,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 		if(o.test || o.extract) {
 			boost::uint64_t offset = info.data_entries[file.entry().location].uncompressed_size;
 			boost::uint32_t sort_slice = info.data_entries[file.entry().location].chunk.first_slice;
-			boost::uint32_t sort_offset = info.data_entries[file.entry().location].chunk.sort_offset;
+			boost::uint64_t sort_offset = info.data_entries[file.entry().location].chunk.sort_offset;
 			BOOST_FOREACH(boost::uint32_t location, file.entry().additional_locations) {
 				setup::data_entry & data = info.data_entries[location];
 				files_for_location[location].push_back(output_location(&file, offset));

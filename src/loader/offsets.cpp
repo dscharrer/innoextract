@@ -109,9 +109,9 @@ bool offsets::load_from_exe_resource(std::istream & is) {
 	return load_offsets_at(is, resource.offset);
 }
 
-bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
+bool offsets::load_offsets_at(std::istream & is, boost::uint64_t pos) {
 	
-	if(is.seekg(pos).fail()) {
+	if(is.seekg(std::streamoff(pos)).fail()) {
 		is.clear();
 		debug("could not seek to loader header");
 		return false;
@@ -148,6 +148,51 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 			is.clear();
 			debug("could not read loader header revision");
 			return false;
+		} else if(revision == 2) {
+			/*
+			 * Inno Setup 6.5.0 introduced a wider TSetupLdrOffsetTable layout
+			 * (revision 2). The fields previously stored as 32-bit LongWord
+			 * are now Int64, allowing setup binaries larger than 4 GiB. A new
+			 * ReservedPadding UInt32 sits between Offset1 and TableCRC. The
+			 * record itself is no longer Delphi-`packed`, but with 32-bit
+			 * Delphi default alignment the on-disk layout remains contiguous
+			 * (Int64 has 4-byte alignment in 32-bit mode), so the total size
+			 * goes from 48 to 64 bytes. See Projects/Src/Shared.Struct.pas in
+			 * issrc.
+			 */
+			(void)checksum.load<boost::int64_t>(is); // TotalSize
+			boost::int64_t offset_exe = checksum.load<boost::int64_t>(is);
+			boost::uint32_t uncompressed_exe = checksum.load<boost::uint32_t>(is);
+			boost::uint32_t crc_exe = checksum.load<boost::uint32_t>(is);
+			boost::int64_t offset0 = checksum.load<boost::int64_t>(is);
+			boost::int64_t offset1 = checksum.load<boost::int64_t>(is);
+			(void)checksum.load<boost::uint32_t>(is); // ReservedPadding
+			if(is.fail()) {
+				is.clear();
+				debug("could not read loader header (revision 2)");
+				return false;
+			}
+			if(offset_exe < 0 || offset0 < 0 || offset1 < 0) {
+				log_warning << "Loader header has negative offset(s)";
+			}
+			exe_offset = boost::uint64_t(offset_exe);
+			exe_compressed_size = 0;
+			exe_uncompressed_size = uncompressed_exe;
+			exe_checksum.type = crypto::CRC32;
+			exe_checksum.crc32 = crc_exe;
+			message_offset = 0;
+			header_offset = boost::uint64_t(offset0);
+			data_offset = boost::uint64_t(offset1);
+			boost::uint32_t expected = util::load<boost::uint32_t>(is);
+			if(is.fail()) {
+				is.clear();
+				debug("could not read loader header checksum (revision 2)");
+				return false;
+			}
+			if(checksum.finalize() != expected) {
+				log_warning << "Setup loader checksum mismatch!";
+			}
+			return true;
 		} else if(revision != 1) {
 			log_warning << "Unexpected setup loader revision: " << revision;
 		}

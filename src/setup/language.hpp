@@ -56,6 +56,8 @@ struct language_entry {
 	boost::uint32_t codepage;
 	size_t dialog_font_size;
 	size_t dialog_font_standard_height;
+	size_t dialog_font_base_scale_height; //!< Inno Setup 6.6.0+
+	size_t dialog_font_base_scale_width;  //!< Inno Setup 6.6.0+
 	size_t title_font_size;
 	size_t welcome_font_size;
 	size_t copyright_font_size;

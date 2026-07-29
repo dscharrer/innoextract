@@ -56,6 +56,18 @@ STORED_ENUM_MAP(stored_setup_style, header::ClassicStyle,
 	header::ModernStyle
 );
 
+STORED_ENUM_MAP(stored_dark_style, header::LightStyle,
+	header::LightStyle,
+	header::DarkStyle,
+	header::DynamicStyle
+);
+
+STORED_ENUM_MAP(stored_light_control_styling, header::LightControlStyleAll,
+	header::LightControlStyleAll,
+	header::LightControlStyleAllButButtons,
+	header::LightControlStyleOnlyRequired
+);
+
 STORED_ENUM_MAP(stored_bool_auto_no_yes, header::Auto,
 	header::Auto,
 	header::No,
@@ -266,6 +278,34 @@ void header::load(std::istream & is, const version & version) {
 		is >> util::binary_string(architectures_allowed_expr);
 		is >> util::binary_string(architectures_installed_in_64bit_mode_expr);
 	}
+	if(version >= INNO_VERSION(6, 4, 2)) {
+		is >> util::binary_string(close_applications_filter_excludes);
+	} else {
+		close_applications_filter_excludes.clear();
+	}
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		is >> util::binary_string(seven_zip_library_name);
+	} else {
+		seven_zip_library_name.clear();
+	}
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		// Inno Setup 6.7.0 moved five settings out of the
+		// TSetupHeaderOption bitset into expression-string fields:
+		// UsePreviousAppDir, UsePreviousGroup, UsePreviousSetupType,
+		// UsePreviousTasks and UsePreviousUserInfo
+		// (Projects/Src/Shared.Struct.pas at tag is-6_7_0).
+		is >> util::binary_string(use_previous_app_dir);
+		is >> util::binary_string(use_previous_group);
+		is >> util::binary_string(use_previous_setup_type);
+		is >> util::binary_string(use_previous_tasks);
+		is >> util::binary_string(use_previous_user_info);
+	} else {
+		use_previous_app_dir.clear();
+		use_previous_group.clear();
+		use_previous_setup_type.clear();
+		use_previous_tasks.clear();
+		use_previous_user_info.clear();
+	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
@@ -319,6 +359,18 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	directory_count = util::load<boost::uint32_t>(is, version.bits());
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		// Inno Setup 6.5.0 inserted a NumISSigKeyEntries: Integer field
+		// between NumDirEntries and NumFileEntries
+		// (Projects/Src/Shared.Struct.pas at tag is-6_5_0). Each entry is a
+		// triple of binary strings (PublicX, PublicY, RuntimeID) describing
+		// an ISSigTool-issued public key the installer trusts; innoextract
+		// does not yet make use of the keys themselves but stores the count
+		// so info::try_load can skip the right number of entries.
+		issig_key_count = util::load<boost::uint32_t>(is, version.bits());
+	} else {
+		issig_key_count = 0;
+	}
 	file_count = util::load<boost::uint32_t>(is, version.bits());
 	data_entry_count = util::load<boost::uint32_t>(is, version.bits());
 	icon_count = util::load<boost::uint32_t>(is, version.bits());
@@ -336,6 +388,17 @@ void header::load(std::istream & is, const version & version) {
 		license_size = util::load<boost::int32_t>(is, version.bits());
 		info_before_size = util::load<boost::int32_t>(is, version.bits());
 		info_after_size = util::load<boost::int32_t>(is, version.bits());
+	}
+	
+	if(version >= INNO_VERSION_EXT(7, 0, 0, 3)) {
+		// Inno Setup 7.0.0 (SetupID "7.0.0.3") added a CompiledCodeVersion
+		// (Cardinal) field to TSetupHeader between the entry counts and
+		// MinVersion. See Projects/Src/Shared.Struct.pas at tag is-7_0_0 in
+		// https://github.com/jrsoftware/issrc. innoextract does not run the
+		// compiled [Code] script, so the value is only stored.
+		compiled_code_version = util::load<boost::uint32_t>(is);
+	} else {
+		compiled_code_version = 0;
 	}
 	
 	winver.load(is, version);
@@ -361,14 +424,25 @@ void header::load(std::istream & is, const version & version) {
 		small_image_back_color = 0;
 	}
 	
-	if(version >= INNO_VERSION(6, 0, 0)) {
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		// Inno Setup 6.6.0 removed WizardStyle (the classic/modern toggle is
+		// gone) and added WizardDarkStyle (light/dark/dynamic) in its place,
+		// after the WizardSizePercentX/Y pair instead of before it. See
+		// TSetupHeader in Projects/Src/Shared.Struct.pas at tag is-6_6_0.
+		wizard_style = ModernStyle;
+		wizard_resize_percent_x = util::load<boost::uint32_t>(is);
+		wizard_resize_percent_y = util::load<boost::uint32_t>(is);
+		wizard_dark_style = stored_enum<stored_dark_style>(is).get();
+	} else if(version >= INNO_VERSION(6, 0, 0)) {
 		wizard_style = stored_enum<stored_setup_style>(is).get();
 		wizard_resize_percent_x = util::load<boost::uint32_t>(is);
 		wizard_resize_percent_y = util::load<boost::uint32_t>(is);
+		wizard_dark_style = LightStyle;
 	} else {
 		wizard_style = ClassicStyle;
 		wizard_resize_percent_x = 0;
 		wizard_resize_percent_y = 0;
+		wizard_dark_style = LightStyle;
 	}
 	
 	if(version >= INNO_VERSION(5, 5, 7)) {
@@ -377,7 +451,64 @@ void header::load(std::istream & is, const version & version) {
 		image_alpha_format = AlphaIgnored;
 	}
 	
-	if(version >= INNO_VERSION(6, 4, 0)) {
+	if(version >= INNO_VERSION(6, 5, 2)) {
+		// Inno Setup 6.5.2 re-introduced WizardImageBackColor and
+		// WizardSmallImageBackColor as serialised header fields after
+		// WizardImageAlphaFormat; before 5.5.7 they sat much earlier
+		// in the struct (handled above).
+		image_back_color = util::load<boost::uint32_t>(is);
+		small_image_back_color = util::load<boost::uint32_t>(is);
+	}
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		// 6.7.0 inserted WizardBackColor between WizardSmallImageBackColor
+		// and the *DynamicDark colour pair.
+		wizard_back_color = util::load<boost::uint32_t>(is);
+	} else {
+		wizard_back_color = 0;
+	}
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		// 6.6.0 added the DynamicDark variants.
+		image_back_color_dynamic_dark = util::load<boost::uint32_t>(is);
+		small_image_back_color_dynamic_dark = util::load<boost::uint32_t>(is);
+	} else {
+		image_back_color_dynamic_dark = 0;
+		small_image_back_color_dynamic_dark = 0;
+	}
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		// 6.7.0 also added WizardBackColorDynamicDark, in the same
+		// position relative to its dynamic-dark companions.
+		wizard_back_color_dynamic_dark = util::load<boost::uint32_t>(is);
+	} else {
+		wizard_back_color_dynamic_dark = 0;
+	}
+	if(version >= INNO_VERSION(6, 6, 1)) {
+		// 6.6.1 added WizardImageOpacity (Byte). Default for older versions
+		// is fully opaque.
+		wizard_image_opacity = util::load<boost::uint8_t>(is);
+	} else {
+		wizard_image_opacity = 0xff;
+	}
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		// 6.7.0 added WizardBackImageOpacity (Byte) and
+		// WizardLightControlStyling (TSetupWizardLightControlStyling, byte
+		// enum: wcsAll / wcsAllButButtons / wcsOnlyRequired).
+		wizard_back_image_opacity = util::load<boost::uint8_t>(is);
+		wizard_light_control_styling = stored_enum<stored_light_control_styling>(is).get();
+	} else {
+		wizard_back_image_opacity = 0xff;
+		wizard_light_control_styling = LightControlStyleAll;
+	}
+	
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		// Inno Setup 6.5.0 moved the encryption fields (password test, KDF
+		// salt, KDF iterations, base nonce) out of TSetupHeader and into a
+		// separate TSetupEncryptionHeader stored elsewhere. innoextract
+		// does not yet parse encrypted 6.5.0+ installers; for unencrypted
+		// ones the right thing is to read no encryption bytes from the
+		// header stream at all.
+		password.type = crypto::None;
+		password_salt.clear();
+	} else if(version >= INNO_VERSION(6, 4, 0)) {
 		is.read(password.sha256, 4);
 		password.type = crypto::PBKDF2_SHA256_XChaCha20;
 	} else if(version >= INNO_VERSION(5, 3, 9)) {
@@ -390,7 +521,9 @@ void header::load(std::istream & is, const version & version) {
 		password.crc32 = util::load<boost::uint32_t>(is);
 		password.type = crypto::CRC32;
 	}
-	if(version >= INNO_VERSION(6, 4, 0)) {
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		// Already cleared above; nothing to read.
+	} else if(version >= INNO_VERSION(6, 4, 0)) {
 		password_salt.resize(44); // PBKDF2 salt + iteration count + ChaCha2 base nonce
 		is.read(&password_salt[0], std::streamsize(password_salt.length()));
 	} else if(version >= INNO_VERSION(4, 2, 2)) {
@@ -626,19 +759,20 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(1, 3, 0) && version < INNO_VERSION(5, 3, 8)) {
 		flagreader.add(CreateUninstallRegKey);
 	}
-	if(version >= INNO_VERSION(1, 3, 1)) {
+	if(version >= INNO_VERSION(1, 3, 1) && version < INNO_VERSION(6, 7, 0)) {
 		flagreader.add(UsePreviousAppDir);
 	}
 	if(version >= INNO_VERSION(1, 3, 3) && version < INNO_VERSION_EXT(6, 4, 0, 1)) {
 		flagreader.add(BackColorHorizontal);
 	}
-	if(version >= INNO_VERSION(1, 3, 10)) {
+	if(version >= INNO_VERSION(1, 3, 10) && version < INNO_VERSION(6, 7, 0)) {
 		flagreader.add(UsePreviousGroup);
 	}
 	if(version >= INNO_VERSION(1, 3, 20)) {
 		flagreader.add(UpdateUninstallLogAppName);
 	}
-	if(version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 10))) {
+	if((version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 10)))
+	   && version < INNO_VERSION(6, 7, 0)) {
 		flagreader.add(UsePreviousSetupType);
 	}
 	if(version >= INNO_VERSION(2, 0, 0)) {
@@ -646,7 +780,9 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 		flagreader.add(AlwaysShowComponentsList);
 		flagreader.add(FlatComponentsList);
 		flagreader.add(ShowComponentSizes);
-		flagreader.add(UsePreviousTasks);
+		if(version < INNO_VERSION(6, 7, 0)) {
+			flagreader.add(UsePreviousTasks);
+		}
 		flagreader.add(DisableReadyPage);
 	}
 	if(version >= INNO_VERSION(2, 0, 7)) {
@@ -661,7 +797,9 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 	}
 	if(version >= INNO_VERSION(3, 0, 0)) {
 		flagreader.add(UserInfoPage);
-		flagreader.add(UsePreviousUserInfo);
+		if(version < INNO_VERSION(6, 7, 0)) {
+			flagreader.add(UsePreviousUserInfo);
+		}
 	}
 	if(version >= INNO_VERSION(3, 0, 1)) {
 		flagreader.add(UninstallRestartComputer);
@@ -690,7 +828,7 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 		flagreader.add(AppendDefaultDirName);
 		flagreader.add(AppendDefaultGroupName);
 	}
-	if(version >= INNO_VERSION(4, 2, 2)) {
+	if(version >= INNO_VERSION(4, 2, 2) && version < INNO_VERSION(6, 5, 0)) {
 		flagreader.add(EncryptionUsed);
 	}
 	if(version >= INNO_VERSION(5, 0, 4) && version < INNO_VERSION(5, 6, 1)) {
@@ -724,10 +862,48 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(6, 0, 0)) {
 		flagreader.add(AppNameHasConsts);
 		flagreader.add(UsePreviousPrivileges);
+	}
+	if(version >= INNO_VERSION(6, 0, 0) && version < INNO_VERSION(6, 6, 0)) {
+		// Inno Setup 6.6.0 dropped shWizardResizable from
+		// TSetupHeaderOption (the wizard is unconditionally resizable in
+		// the new modern style; the four flags appended at the same
+		// position in the enum take its slot).
 		flagreader.add(WizardResizable);
 	}
 	if(version >= INNO_VERSION(6, 3, 0)) {
 		flagreader.add(UninstallLogging);
+	}
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		// Inno Setup 6.6.0 added four new wizard-styling flags after
+		// shUninstallLogging, three of which carry over into 6.7.0.
+		flagreader.add(WizardModern);
+		flagreader.add(WizardBorderStyled);
+		flagreader.add(WizardKeepAspectRatio);
+	}
+	if(version >= INNO_VERSION(6, 6, 0) && version < INNO_VERSION(6, 7, 0)) {
+		// shWizardLightButtonsUnstyled exists only in the 6.6.x series;
+		// 6.7.0 dropped it again in favour of the new
+		// TSetupWizardLightControlStyling enum stored further up in
+		// TSetupHeader.
+		flagreader.add(WizardLightButtonsUnstyled);
+	}
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		// Inno Setup 6.7.0 added two more wizard-related flags at the end
+		// of TSetupHeaderOption; see Projects/Src/Shared.Struct.pas at
+		// tag is-6_7_0 in https://github.com/jrsoftware/issrc.
+		flagreader.add(RedirectionGuard);
+		flagreader.add(WizardBevelsHidden);
+	}
+	
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		// Inno Setup 6.7.0 padded TSetupHeaderOption to 57 elements via a
+		// shUnusedPadding=56 sentinel so the set is always 8 bytes
+		// regardless of the actual flag count, in order to keep 32-bit
+		// and 64-bit Delphi builds bit-compatible (Projects/Src/Shared.Struct.pas
+		// at tag is-6_7_0). The flags above only fill 6 bytes; skip the
+		// remaining padding bytes so file_count and the rest of the
+		// header stay aligned.
+		flagreader.discard_padding_to(8);
 	}
 	
 	return flagreader.finalize();
@@ -762,6 +938,13 @@ void header::decode(util::codepage_id codepage) {
 	util::to_utf8(create_uninstall_registry_key, codepage, &lead_bytes);
 	util::to_utf8(uninstallable, codepage);
 	util::to_utf8(close_applications_filter, codepage);
+	util::to_utf8(close_applications_filter_excludes, codepage);
+	util::to_utf8(seven_zip_library_name, codepage);
+	util::to_utf8(use_previous_app_dir, codepage);
+	util::to_utf8(use_previous_group, codepage);
+	util::to_utf8(use_previous_setup_type, codepage);
+	util::to_utf8(use_previous_tasks, codepage);
+	util::to_utf8(use_previous_user_info, codepage);
 	util::to_utf8(setup_mutex, codepage, &lead_bytes);
 	util::to_utf8(changes_environment, codepage);
 	util::to_utf8(changes_associations, codepage);
@@ -823,6 +1006,12 @@ NAMES(setup::header::flags, "Setup Option",
 	"use_previous_privileges",
 	"wizard_resizable",
 	"uninstall_logging",
+	"wizard modern",
+	"wizard border styled",
+	"wizard keep aspect ratio",
+	"wizard light buttons unstyled",
+	"redirection guard",
+	"wizard bevels hidden",
 	"uninstallable",
 	"disable dir page",
 	"disable program group page",
@@ -873,6 +1062,18 @@ NAMES(setup::header::log_mode, "Uninstall Log Mode",
 NAMES(setup::header::style, "Style",
 	"classic",
 	"modern",
+)
+
+NAMES(setup::header::dark_style, "Dark Style",
+	"light",
+	"dark",
+	"dynamic",
+)
+
+NAMES(setup::header::light_control_styling, "Light Control Styling",
+	"all",
+	"all but buttons",
+	"only required",
 )
 
 NAMES(setup::header::auto_bool, "Auto Boolean",

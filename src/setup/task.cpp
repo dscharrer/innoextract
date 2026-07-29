@@ -45,7 +45,12 @@ void task_entry::load(std::istream & is, const info & i) {
 	} else {
 		check.clear();
 	}
-	if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(3, 0, 3))) {
+	if(i.version >= INNO_VERSION(6, 7, 0)) {
+		// Inno Setup 6.7.0 narrowed TSetupTaskEntry.Level from Integer
+		// (4 bytes) to Byte (1 byte). See Projects/Src/Shared.Struct.pas
+		// at tag is-6_7_0 in https://github.com/jrsoftware/issrc.
+		level = util::load<boost::uint8_t>(is);
+	} else if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(3, 0, 3))) {
 		level = util::load<boost::int32_t>(is);
 	} else {
 		level = 0;

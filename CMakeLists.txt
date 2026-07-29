@@ -416,6 +416,8 @@ set(INNOEXTRACT_SOURCES
 	src/setup/info.cpp
 	src/setup/ini.hpp
 	src/setup/ini.cpp
+	src/setup/issigkey.hpp
+	src/setup/issigkey.cpp
 	src/setup/item.hpp
 	src/setup/item.cpp
 	src/setup/language.hpp

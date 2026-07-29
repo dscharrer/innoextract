@@ -77,10 +77,18 @@ struct file_entry : public item {
 		SetNtfsCompression,
 		UnsetNtfsCompression,
 		GacInstall,
+		Download,
+		ExtractArchive,
 		
 		// obsolete options:
 		IsReadmeFile
 	);
+	
+	enum file_verification_type {
+		FileVerificationNone,
+		FileVerificationHash,
+		FileVerificationISSig,
+	};
 	
 	enum file_type {
 		UserFile,
@@ -96,6 +104,14 @@ struct file_entry : public item {
 	std::string destination;
 	std::string install_font_name;
 	std::string strong_assembly_name;
+	std::string excludes;                  //!< Inno Setup 6.5.0+
+	std::string download_source;           //!< DownloadISSigSource, 6.5.0+
+	std::string download_user;             //!< DownloadUserName, 6.5.0+
+	std::string download_password;         //!< 6.5.0+
+	std::string archive_password;          //!< ExtractArchivePassword, 6.5.0+
+	std::string issig_allowed_keys;        //!< 6.5.0+
+	
+	file_verification_type verification;   //!< 6.5.0+
 	
 	boost::uint32_t location; //!< index into the data entry list
 	boost::uint32_t attributes;
@@ -110,7 +126,7 @@ struct file_entry : public item {
 	// Information about GOG Galaxy multi-part files
 	// These are not used in normal Inno Setup installers
 	std::vector<boost::uint32_t> additional_locations;
-	crypto::checksum checksum;
+	crypto::checksum checksum; //!< Inno Setup 6.5.0+: SHA-256 from the per-file ISSig Verification block
 	boost::uint64_t size;
 	
 	void load(std::istream & is, const info & i);
@@ -121,5 +137,6 @@ struct file_entry : public item {
 
 NAMED_FLAGS(setup::file_entry::flags)
 NAMED_ENUM(setup::file_entry::file_type)
+NAMED_ENUM(setup::file_entry::file_verification_type)
 
 #endif // INNOEXTRACT_SETUP_FILE_HPP

@@ -56,7 +56,16 @@ void data_entry::load(std::istream & is, const info & i) {
 		}
 	}
 	
-	chunk.sort_offset = chunk.offset = util::load<boost::uint32_t>(is);
+	if(i.version >= INNO_VERSION(6, 5, 2)) {
+		// Inno Setup 6.5.2 widened TSetupFileLocationEntry.StartOffset
+		// from LongWord (4 bytes) to Int64 (8 bytes) so data offsets
+		// within a slice can exceed 4 GiB. See
+		// Projects/Src/Shared.Struct.pas at tag is-6_5_2 in
+		// https://github.com/jrsoftware/issrc.
+		chunk.sort_offset = chunk.offset = util::load<boost::uint64_t>(is);
+	} else {
+		chunk.sort_offset = chunk.offset = util::load<boost::uint32_t>(is);
+	}
 	
 	if(i.version >= INNO_VERSION(4, 0, 1)) {
 		file.offset = util::load<boost::uint64_t>(is);
@@ -136,20 +145,28 @@ void data_entry::load(std::istream & is, const info & i) {
 	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
 	flagreader.add(VersionInfoValid);
-	flagreader.add(VersionInfoNotValid);
+	if(i.version < INNO_VERSION(6, 4, 3)) {
+		// Inno Setup 6.4.3 dropped foVersionInfoNotValid, foIsUninstExe,
+		// foApplyTouchDateTime and foSolidBreak from
+		// TSetupFileLocationEntry.Flags. See
+		// Projects/Src/Shared.Struct.pas at tag is-6_4_3 in
+		// https://github.com/jrsoftware/issrc (issrc commit 6aec0a55,
+		// "Distinguish file options (fo) and file location options (flo).").
+		flagreader.add(VersionInfoNotValid);
+	}
 	if(i.version >= INNO_VERSION(2, 0, 17) && i.version < INNO_VERSION(4, 0, 1)) {
 		flagreader.add(BZipped);
 	}
 	if(i.version >= INNO_VERSION(4, 0, 10)) {
 		flagreader.add(TimeStampInUTC);
 	}
-	if(i.version >= INNO_VERSION(4, 1, 0)) {
+	if(i.version >= INNO_VERSION(4, 1, 0) && i.version < INNO_VERSION(6, 4, 3)) {
 		flagreader.add(IsUninstallerExe);
 	}
 	if(i.version >= INNO_VERSION(4, 1, 8)) {
 		flagreader.add(CallInstructionOptimized);
 	}
-	if(i.version >= INNO_VERSION(4, 2, 0)) {
+	if(i.version >= INNO_VERSION(4, 2, 0) && i.version < INNO_VERSION(6, 4, 3)) {
 		flagreader.add(Touch);
 	}
 	if(i.version >= INNO_VERSION(4, 2, 2)) {
@@ -160,7 +177,7 @@ void data_entry::load(std::istream & is, const info & i) {
 	} else {
 		options |= ChunkCompressed;
 	}
-	if(i.version >= INNO_VERSION(5, 1, 13)) {
+	if(i.version >= INNO_VERSION(5, 1, 13) && i.version < INNO_VERSION(6, 4, 3)) {
 		flagreader.add(SolidBreak);
 	}
 	if(i.version >= INNO_VERSION(5, 5, 7) && i.version < INNO_VERSION(6, 3, 0)) {
@@ -171,7 +188,16 @@ void data_entry::load(std::istream & is, const info & i) {
 	
 	options |= flagreader.finalize();
 	
-	if(i.version >= INNO_VERSION(6, 3, 0)) {
+	if(i.version >= INNO_VERSION(6, 4, 3)) {
+		// Inno Setup 6.4.3 dropped the standalone Sign field from
+		// TSetupFileLocationEntry. The compiler still records the source
+		// signing intent in the [Files] section, but it is no longer
+		// serialised per-file-location. See issrc commit 00d335b7
+		// ("Cleanup: TSetupFileLocationEntry contained a few things which
+		// Setup doesn't need and are only for the compiler.") first
+		// tagged in is-6_4_3.
+		sign = NoSetting;
+	} else if(i.version >= INNO_VERSION(6, 3, 0)) {
 		sign = stored_enum<stored_sign_mode>(is).get();
 	} else if(options & SignOnce) {
 		sign = Once;

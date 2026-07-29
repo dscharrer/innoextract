@@ -27,6 +27,7 @@
 #include <boost/foreach.hpp>
 
 #include "crypto/hasher.hpp"
+#include "crypto/crc32.hpp"
 #include "crypto/pbkdf2.hpp"
 #include "crypto/sha256.hpp"
 #include "crypto/xchacha20.hpp"
@@ -37,6 +38,7 @@
 #include "setup/file.hpp"
 #include "setup/icon.hpp"
 #include "setup/ini.hpp"
+#include "setup/issigkey.hpp"
 #include "setup/item.hpp"
 #include "setup/language.hpp"
 #include "setup/message.hpp"
@@ -104,11 +106,35 @@ void load_wizard_and_decompressor(std::istream & is, const setup::version & vers
 	
 	info.wizard_images.clear();
 	info.wizard_images_small.clear();
+	info.wizard_images_back.clear();
 	
 	load_wizard_images(is, version, info.wizard_images, entries);
 	
 	if(version >= INNO_VERSION(2, 0, 0) || version.is_isx()) {
 		load_wizard_images(is, version, info.wizard_images_small, entries);
+	}
+	
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		// Inno Setup 6.7.0 added a "back image" wizard image group (used
+		// for the new WizardBackImageFile directive), in addition to the
+		// existing main and small image groups. See the wizard-image read
+		// block in Projects/Src/Setup.MainFunc.pas at tag is-6_7_0 in
+		// https://github.com/jrsoftware/issrc.
+		load_wizard_images(is, version, info.wizard_images_back, entries);
+	}
+	
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		// Inno Setup 6.6.0 added a second copy of each wizard image
+		// group for the dynamic-dark theme. The on-disk format always
+		// includes both copies regardless of whether dark-mode images
+		// were actually configured; the runtime decides which set to
+		// use based on WantWizardImagesDynamicDark.
+		std::vector<std::string> dark_images, dark_images_small, dark_images_back;
+		load_wizard_images(is, version, dark_images, entries);
+		load_wizard_images(is, version, dark_images_small, entries);
+		if(version >= INNO_VERSION(6, 7, 0)) {
+			load_wizard_images(is, version, dark_images_back, entries);
+		}
 	}
 	
 	info.decompressor_dll.clear();
@@ -121,6 +147,16 @@ void load_wizard_and_decompressor(std::istream & is, const setup::version & vers
 			// decompressor dll - we don't need this
 			util::binary_string::skip(is);
 		}
+	}
+	
+	if(version >= INNO_VERSION(6, 5, 0) && !header.seven_zip_library_name.empty()) {
+		// Inno Setup 6.5.0 added an embedded 7-Zip decoder DLL stream
+		// after the decompressor DLL block, present whenever the [Setup]
+		// directive SevenZipLibraryName is set (which Setup uses to
+		// implement Extract7ZipArchive support added in 6.4.0). Skip it;
+		// innoextract does not need to decode 7-Zip archives during a
+		// listing.
+		util::binary_string::skip(is);
 	}
 	
 	info.decrypt_dll.clear();
@@ -204,6 +240,8 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 	load_entries(*reader, entries, header.task_count, tasks, Tasks);
 	debug("loading directories");
 	load_entries(*reader, entries, header.directory_count, directories, Directories);
+	debug("loading issig keys");
+	load_entries(*reader, entries, header.issig_key_count, issig_keys, ISSigKeys);
 	debug("loading files");
 	load_entries(*reader, entries, header.file_count, files, Files);
 	debug("loading icons");
@@ -261,6 +299,41 @@ void info::load(std::istream & is, entry_types entries, util::codepage_id force_
 	if(version.is_ambiguous()) {
 		// Force parsing all headers so that we don't miss any errors.
 		entries |= NoSkip;
+	}
+	
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		// Inno Setup 6.5.0 split the encryption metadata out of
+		// TSetupHeader into a standalone TSetupEncryptionHeader stored on
+		// the outer stream between the version magic and the first block
+		// (Projects/Src/Shared.Struct.pas at tag is-6_5_0 in
+		// https://github.com/jrsoftware/issrc). Read it here so the block
+		// reader starts at the right offset; innoextract does not yet
+		// support actually decrypting 6.5.0+ encrypted installers.
+		boost::uint32_t expected_crc = util::load<boost::uint32_t>(is);
+		crypto::crc32 checksum;
+		checksum.init();
+		boost::uint8_t encryption_use = checksum.load<boost::uint8_t>(is);
+		if(encryption_use != 0) {
+			log_warning << "Encrypted setup not supported; cannot decrypt files";
+		}
+		// 16-byte KDFSalt + 4-byte KDFIterations
+		// + 8-byte BaseNonce.RandomXorStartOffset
+		// + 4-byte BaseNonce.RandomXorFirstSlice
+		// + 12-byte BaseNonce.RemainingRandom (3 x 4 bytes)
+		// + 4-byte PasswordTest = 48 bytes after encryption_use.
+		for(int i = 0; i < 16; i++) {
+			(void)checksum.load<boost::uint8_t>(is);
+		}
+		(void)checksum.load<boost::uint32_t>(is);
+		(void)checksum.load<boost::uint64_t>(is);
+		(void)checksum.load<boost::uint32_t>(is);
+		for(int i = 0; i < 3; i++) {
+			(void)checksum.load<boost::uint32_t>(is);
+		}
+		(void)checksum.load<boost::uint32_t>(is);
+		if(checksum.finalize() != expected_crc) {
+			log_warning << "Encryption header checksum mismatch!";
+		}
 	}
 	
 	bool parsed_without_errors = false;

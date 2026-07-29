@@ -69,6 +69,17 @@ void run_entry::load(std::istream & is, const info & i) {
 	
 	load_condition_data(is, i);
 	
+	if(i.version >= INNO_VERSION_EXT(7, 0, 0, 1)) {
+		// Inno Setup 7.0.0 (SetupID "7.0.0.1", first used by the
+		// 7.0.0-preview-2 build) appended an OnLog expression string to
+		// TSetupRunEntry after BeforeInstall, bumping SetupRunEntryStrings
+		// from 13 to 14. See Projects/Src/Shared.Struct.pas at tag
+		// is-7_0_0_1 in https://github.com/jrsoftware/issrc.
+		is >> util::encoded_string(on_log, i.codepage);
+	} else {
+		on_log.clear();
+	}
+	
 	load_version_data(is, i.version);
 	
 	if(i.version >= INNO_VERSION(1, 3, 24)) {
@@ -78,6 +89,17 @@ void run_entry::load(std::istream & is, const info & i) {
 	}
 	
 	wait = stored_enum<stored_run_wait_condition>(is).get();
+	
+	boost::uint8_t bitness = 0;
+	if(i.version >= INNO_VERSION_EXT(7, 0, 0, 3)) {
+		// Inno Setup 7.0.0 (SetupID "7.0.0.3") removed the roRun32Bit/
+		// roRun64Bit flags from TSetupRunEntry.Options and moved the target
+		// architecture into a TSetupEntryBitness byte enum stored after
+		// Wait, before Options. See Projects/Src/Shared.Struct.pas at tag
+		// is-7_0_0 in https://github.com/jrsoftware/issrc. Translated to
+		// the existing Bits32/Bits64 flags after the flag set is read.
+		bitness = util::load<boost::uint8_t>(is);
+	}
 	
 	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
@@ -96,7 +118,7 @@ void run_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(2, 0, 8)) {
 		flagreader.add(HideWizard);
 	}
-	if(i.version >= INNO_VERSION(5, 1, 10)) {
+	if(i.version >= INNO_VERSION(5, 1, 10) && i.version < INNO_VERSION_EXT(7, 0, 0, 3)) {
 		flagreader.add(Bits32);
 		flagreader.add(Bits64);
 	}
@@ -111,6 +133,11 @@ void run_entry::load(std::istream & is, const info & i) {
 	}
 	
 	options = flagreader.finalize();
+	if(bitness == 1) {
+		options |= Bits32;
+	} else if(bitness == 2) {
+		options |= Bits64;
+	}
 }
 
 } // namespace setup
