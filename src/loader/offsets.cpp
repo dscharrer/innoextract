@@ -142,17 +142,39 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	checksum.init();
 	checksum.update(magic, sizeof(magic));
 	
+	boost::uint32_t revision = 1;
 	if(version >= INNO_VERSION(5, 1,  5)) {
-		boost::uint32_t revision = checksum.load<boost::uint32_t>(is);
+		revision = checksum.load<boost::uint32_t>(is);
 		if(is.fail()) {
 			is.clear();
 			debug("could not read loader header revision");
 			return false;
-		} else if(revision != 1) {
+		} else if(revision != 1 && revision != 2) {
 			log_warning << "Unexpected setup loader revision: " << revision;
 		}
 	}
-	
+
+	if(revision >= 2) {
+		// Inno Setup 6.5+: 64-bit offsets in the loader offset table
+		(void)checksum.load<boost::uint64_t>(is); // total size
+		exe_offset = boost::uint32_t(checksum.load<boost::uint64_t>(is));
+		exe_compressed_size = 0;
+		exe_uncompressed_size = checksum.load<boost::uint32_t>(is);
+		exe_checksum.type = crypto::CRC32;
+		exe_checksum.crc32 = checksum.load<boost::uint32_t>(is);
+		message_offset = 0;
+		header_offset = boost::uint32_t(checksum.load<boost::uint64_t>(is));
+		data_offset = boost::uint32_t(checksum.load<boost::uint64_t>(is));
+		if(is.fail()) {
+			is.clear();
+			debug("could not read loader header");
+			return false;
+		}
+		debug("loader rev2: header at " << print_hex(header_offset)
+		      << " data at " << print_hex(data_offset));
+		return true;
+	}
+
 	(void)checksum.load<boost::uint32_t>(is);
 	exe_offset = checksum.load<boost::uint32_t>(is);
 	

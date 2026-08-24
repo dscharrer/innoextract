@@ -91,7 +91,21 @@ void file_entry::load(std::istream & is, const info & i) {
 	}
 	
 	load_condition_data(is, i);
-	
+
+	if(i.version >= INNO_VERSION(6, 5, 0)) {
+		// Excludes, DownloadISSigSource, DownloadUserName, DownloadPassword,
+		// ExtractArchivePassword - we don't need these
+		util::binary_string::skip(is);
+		util::binary_string::skip(is);
+		util::binary_string::skip(is);
+		util::binary_string::skip(is);
+		util::binary_string::skip(is);
+		// Verification: ISSigAllowedKeys (AnsiString), SHA-256 hash, verification type
+		util::binary_string::skip(is);
+		char verification[32 + 1];
+		is.read(verification, std::streamsize(sizeof(verification)));
+	}
+
 	load_version_data(is, i.version);
 	
 	location = util::load<boost::uint32_t>(is, i.version.bits());
@@ -189,7 +203,11 @@ void file_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(5, 2, 5)) {
 		flagreader.add(GacInstall);
 	}
-	
+	if(i.version >= INNO_VERSION(6, 5, 0)) {
+		flagreader.add(Download);
+		flagreader.add(ExtractArchive);
+	}
+
 	options |= flagreader.finalize();
 	
 	if(i.version.bits() == 16 || i.version >= INNO_VERSION(5, 0, 0)) {
@@ -239,6 +257,8 @@ NAMES(setup::file_entry::flags, "File Option",
 	"set ntfs compression",
 	"unset ntfs compression",
 	"gac install",
+	"download",
+	"extract archive",
 	"readme",
 )
 

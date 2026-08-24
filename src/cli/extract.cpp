@@ -59,6 +59,11 @@
 #include "setup/file.hpp"
 #include "setup/info.hpp"
 #include "setup/language.hpp"
+#include "setup/component.hpp"
+#include "setup/task.hpp"
+#include "setup/registry.hpp"
+#include "setup/run.hpp"
+#include "setup/ini.hpp"
 
 #include "stream/chunk.hpp"
 #include "stream/file.hpp"
@@ -645,6 +650,64 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 	}
 	#endif
 	
+	if(const char * dump_path = std::getenv("INNOEXTRACT_DUMP_TEXT")) {
+		std::ofstream ofs(dump_path, std::ios::binary);
+		ofs << "### APP: " << info.header.app_name << " / " << info.header.app_versioned_name
+		    << " / version " << info.header.app_version << "\n";
+		ofs << "### PUBLISHER: " << info.header.app_publisher
+		    << " | URL: " << info.header.app_publisher_url
+		    << " | COPYRIGHT: " << info.header.app_copyright << "\n";
+		ofs << "### LICENSE TEXT ###\n" << info.header.license_text << "\n";
+		ofs << "### INFO BEFORE ###\n" << info.header.info_before << "\n";
+		ofs << "### INFO AFTER ###\n" << info.header.info_after << "\n";
+		BOOST_FOREACH(const setup::language_entry & language, info.languages) {
+			ofs << "### LANGUAGE " << language.name << " LICENSE ###\n"
+			    << language.license_text << "\n";
+		}
+		ofs << "### DEFAULT DIR: " << info.header.default_dir_name
+		    << " | GROUP: " << info.header.default_group_name
+		    << " | APPID: " << info.header.app_id << "\n";
+		ofs << "### COMPONENTS ###\n";
+		BOOST_FOREACH(const setup::component_entry & c, info.components) {
+			ofs << c.name << " | " << c.description << " | types=" << c.types << "\n";
+		}
+		ofs << "### TASKS ###\n";
+		BOOST_FOREACH(const setup::task_entry & t, info.tasks) {
+			ofs << t.name << " | " << t.description << " | " << t.group_description << "\n";
+		}
+		ofs << "### DIRECTORIES ###\n";
+		BOOST_FOREACH(const setup::directory_entry & d, info.directories) {
+			ofs << d.name << " | components=" << d.components << " tasks=" << d.tasks << "\n";
+		}
+		ofs << "### REGISTRY ###\n";
+		BOOST_FOREACH(const setup::registry_entry & r, info.registry_entries) {
+			ofs << int(r.hive) << " \\ " << r.key << " \\ " << r.name
+			    << " = [" << int(r.type) << "] " << r.value
+			    << " | components=" << r.components << "\n";
+		}
+		ofs << "### RUN ###\n";
+		BOOST_FOREACH(const setup::run_entry & r, info.run_entries) {
+			ofs << r.name << " | args=" << r.parameters << " | wd=" << r.working_dir
+			    << " | status=" << r.status_message << " | verb=" << r.verb
+			    << " | desc=" << r.description
+			    << " | components=" << r.components << " tasks=" << r.tasks << "\n";
+		}
+		ofs << "### UNINSTALL RUN ###\n";
+		BOOST_FOREACH(const setup::run_entry & r, info.uninstall_run_entries) {
+			ofs << r.name << " | args=" << r.parameters << " | wd=" << r.working_dir << "\n";
+		}
+		ofs << "### FILES (source -> destination) ###\n";
+		BOOST_FOREACH(const setup::file_entry & f, info.files) {
+			ofs << f.destination << " | attribs=" << f.attributes
+			    << " | components=" << f.components << " tasks=" << f.tasks
+			    << " | options=" << f.options << "\n";
+		}
+		ofs << "### INI ###\n";
+		BOOST_FOREACH(const setup::ini_entry & e, info.ini_entries) {
+			ofs << e.inifile << " [" << e.section << "] " << e.key << " = " << e.value << "\n";
+		}
+	}
+
 	bool multiple_sections = (o.list_languages + o.gog_game_id + o.list + o.show_password > 1);
 	if(!o.quiet && multiple_sections) {
 		std::cout << '\n';

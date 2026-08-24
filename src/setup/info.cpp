@@ -123,6 +123,11 @@ void load_wizard_and_decompressor(std::istream & is, const setup::version & vers
 		}
 	}
 	
+	if(version >= INNO_VERSION(6, 5, 0) && !header.seven_zip_library_name.empty()) {
+		// 7-Zip library - we don't need this
+		util::binary_string::skip(is);
+	}
+
 	info.decrypt_dll.clear();
 	if((header.options & header::EncryptionUsed) && version < INNO_VERSION(6, 4, 0)) {
 		if(entries & (info::DecryptDll | info::NoSkip)) {
@@ -152,7 +157,21 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 	if((entries & (Messages | NoSkip)) || (!version.is_unicode() && !force_codepage)) {
 		entries |= Languages;
 	}
-	
+
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		// Inno Setup 6.5+ stores a plaintext encryption header after the version string:
+		// CRC32 (4) + EncryptionUse (1) + KDFSalt (16) + KDFIterations (4)
+		//           + BaseNonce (24) + PasswordTest (4)
+		char encryption_header[4 + 49];
+		is.read(encryption_header, std::streamsize(sizeof(encryption_header)));
+		if(is.fail()) {
+			throw std::runtime_error("could not read encryption header");
+		}
+		if(encryption_header[4] != 0) {
+			log_warning << "Installer is encrypted";
+		}
+	}
+
 	stream::block_reader::pointer reader = stream::block_reader::get(is, version);
 	
 	debug("loading main header");
@@ -204,6 +223,15 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 	load_entries(*reader, entries, header.task_count, tasks, Tasks);
 	debug("loading directories");
 	load_entries(*reader, entries, header.directory_count, directories, Directories);
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		debug("skipping ISSig keys");
+		for(size_t i = 0; i < header.issig_key_count; i++) {
+			// PublicX, PublicY, RuntimeID - we don't need these
+			util::binary_string::skip(*reader);
+			util::binary_string::skip(*reader);
+			util::binary_string::skip(*reader);
+		}
+	}
 	debug("loading files");
 	load_entries(*reader, entries, header.file_count, files, Files);
 	debug("loading icons");

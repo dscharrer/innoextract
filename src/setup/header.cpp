@@ -266,6 +266,13 @@ void header::load(std::istream & is, const version & version) {
 		is >> util::binary_string(architectures_allowed_expr);
 		is >> util::binary_string(architectures_installed_in_64bit_mode_expr);
 	}
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		is >> util::binary_string(close_applications_filter_excludes);
+		is >> util::binary_string(seven_zip_library_name);
+	} else {
+		close_applications_filter_excludes.clear();
+		seven_zip_library_name.clear();
+	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
@@ -319,6 +326,11 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	directory_count = util::load<boost::uint32_t>(is, version.bits());
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		issig_key_count = util::load<boost::uint32_t>(is, version.bits());
+	} else {
+		issig_key_count = 0;
+	}
 	file_count = util::load<boost::uint32_t>(is, version.bits());
 	data_entry_count = util::load<boost::uint32_t>(is, version.bits());
 	icon_count = util::load<boost::uint32_t>(is, version.bits());
@@ -377,7 +389,16 @@ void header::load(std::istream & is, const version & version) {
 		image_alpha_format = AlphaIgnored;
 	}
 	
-	if(version >= INNO_VERSION(6, 4, 0)) {
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		// Inno Setup 6.5+ stores the image background colors here again
+		image_back_color = util::load<boost::uint32_t>(is);
+		small_image_back_color = util::load<boost::uint32_t>(is);
+	}
+
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		// password test / KDF salt / nonce moved to the plaintext encryption header
+		password.type = crypto::PBKDF2_SHA256_XChaCha20;
+	} else if(version >= INNO_VERSION(6, 4, 0)) {
 		is.read(password.sha256, 4);
 		password.type = crypto::PBKDF2_SHA256_XChaCha20;
 	} else if(version >= INNO_VERSION(5, 3, 9)) {
@@ -390,7 +411,9 @@ void header::load(std::istream & is, const version & version) {
 		password.crc32 = util::load<boost::uint32_t>(is);
 		password.type = crypto::CRC32;
 	}
-	if(version >= INNO_VERSION(6, 4, 0)) {
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		password_salt.clear(); // stored in the plaintext encryption header
+	} else if(version >= INNO_VERSION(6, 4, 0)) {
 		password_salt.resize(44); // PBKDF2 salt + iteration count + ChaCha2 base nonce
 		is.read(&password_salt[0], std::streamsize(password_salt.length()));
 	} else if(version >= INNO_VERSION(4, 2, 2)) {
@@ -690,7 +713,7 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 		flagreader.add(AppendDefaultDirName);
 		flagreader.add(AppendDefaultGroupName);
 	}
-	if(version >= INNO_VERSION(4, 2, 2)) {
+	if(version >= INNO_VERSION(4, 2, 2) && version < INNO_VERSION(6, 5, 0)) {
 		flagreader.add(EncryptionUsed);
 	}
 	if(version >= INNO_VERSION(5, 0, 4) && version < INNO_VERSION(5, 6, 1)) {
