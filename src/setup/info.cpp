@@ -111,6 +111,15 @@ void load_wizard_and_decompressor(std::istream & is, const setup::version & vers
 		load_wizard_images(is, version, info.wizard_images_small, entries);
 	}
 	
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		/*
+		 * 6.6 stores a second pair of wizard image sets for the dynamic dark
+		 * theme, always written even when empty (Setup.MainFunc.pas).
+		 */
+		load_wizard_images(is, version, info.wizard_images, entries);
+		load_wizard_images(is, version, info.wizard_images_small, entries);
+	}
+	
 	info.decompressor_dll.clear();
 	if(header.compression == stream::BZip2
 	   || (header.compression == stream::LZMA1 && version == INNO_VERSION(4, 1, 5))
@@ -121,6 +130,11 @@ void load_wizard_and_decompressor(std::istream & is, const setup::version & vers
 			// decompressor dll - we don't need this
 			util::binary_string::skip(is);
 		}
+	}
+	
+	if(!header.seven_zip_library_name.empty()) {
+		// 7-Zip library shipped with the installer - we don't need this
+		util::binary_string::skip(is);
 	}
 	
 	info.decrypt_dll.clear();
@@ -153,7 +167,8 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 		entries |= Languages;
 	}
 	
-	stream::block_reader::pointer reader = stream::block_reader::get(is, version);
+	// Only the first block is preceded by the encryption header (Inno Setup 6.4+).
+	stream::block_reader::pointer reader = stream::block_reader::get(is, version, true);
 	
 	debug("loading main header");
 	header.load(*reader, version);
@@ -204,6 +219,21 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 	load_entries(*reader, entries, header.task_count, tasks, Tasks);
 	debug("loading directories");
 	load_entries(*reader, entries, header.directory_count, directories, Directories);
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		/*
+		 * ISSigKey entries sit between the directory and file entries
+		 * (Setup.MainFunc.pas). They only carry public keys used to verify
+		 * downloaded files, so they are skipped - but they still have to be
+		 * read to keep the stream in sync.
+		 */
+		debug("skipping " << header.iss_sig_key_count << " ISSigKey entries");
+		for(boost::uint32_t n = 0; n < header.iss_sig_key_count; n++) {
+			util::binary_string::skip(*reader); // PublicX
+			util::binary_string::skip(*reader); // PublicY
+			util::binary_string::skip(*reader); // RuntimeID
+		}
+	}
+	
 	debug("loading files");
 	load_entries(*reader, entries, header.file_count, files, Files);
 	debug("loading icons");

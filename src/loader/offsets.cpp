@@ -142,44 +142,97 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	checksum.init();
 	checksum.update(magic, sizeof(magic));
 	
+	boost::uint32_t revision = 0;
 	if(version >= INNO_VERSION(5, 1,  5)) {
-		boost::uint32_t revision = checksum.load<boost::uint32_t>(is);
+		revision = checksum.load<boost::uint32_t>(is);
 		if(is.fail()) {
 			is.clear();
 			debug("could not read loader header revision");
 			return false;
-		} else if(revision != 1) {
+		} else if(revision != 1 && revision != 2) {
 			log_warning << "Unexpected setup loader revision: " << revision;
 		}
 	}
 	
-	(void)checksum.load<boost::uint32_t>(is);
-	exe_offset = checksum.load<boost::uint32_t>(is);
-	
-	if(version >= INNO_VERSION(4, 1, 6)) {
+	if(revision >= 2) {
+		
+		/*
+		 * Revision 2 (Inno Setup 6.5 and later) widens the file offsets to 64 bits so that
+		 * installers can grow past 4 GiB, and prefixes them with the total size of the
+		 * installer. The two sizes describing setup.e32 stay 32-bit, as does its checksum:
+		 *
+		 *   uint64 total_size
+		 *   uint64 exe_offset
+		 *   uint32 exe_uncompressed_size
+		 *   uint32 exe_checksum (CRC32)
+		 *   uint64 header_offset
+		 *   uint64 data_offset
+		 */
+		
+		boost::uint64_t total_size = checksum.load<boost::uint64_t>(is);
+		(void)total_size;
+		
+		boost::uint64_t exe_offset64 = checksum.load<boost::uint64_t>(is);
+		
 		exe_compressed_size = 0;
-	} else {
-		exe_compressed_size = checksum.load<boost::uint32_t>(is);
-	}
-	
-	exe_uncompressed_size = checksum.load<boost::uint32_t>(is);
-	
-	if(version >= INNO_VERSION(4, 0, 3)) {
+		exe_uncompressed_size = checksum.load<boost::uint32_t>(is);
+		
 		exe_checksum.type = crypto::CRC32;
 		exe_checksum.crc32 = checksum.load<boost::uint32_t>(is);
-	} else {
-		exe_checksum.type = crypto::Adler32;
-		exe_checksum.adler32 = checksum.load<boost::uint32_t>(is);
-	}
-	
-	if(version >= INNO_VERSION(4, 0, 0)) {
+		
 		message_offset = 0;
+		
+		boost::uint64_t header_offset64 = checksum.load<boost::uint64_t>(is);
+		boost::uint64_t data_offset64 = checksum.load<boost::uint64_t>(is);
+		
+		// Trailing field, zero in every installer seen so far. It is covered by the
+		// loader checksum, so it has to be read even though it is unused.
+		(void)checksum.load<boost::uint32_t>(is);
+		
+		// The offsets are kept in 32-bit fields, so reject anything that would not fit
+		// rather than silently truncating.
+		const boost::uint64_t max_offset = std::numeric_limits<boost::uint32_t>::max();
+		if(exe_offset64 > max_offset || header_offset64 > max_offset
+		   || data_offset64 > max_offset) {
+			log_warning << "Setup loader offsets exceed 4 GiB - not supported";
+			return false;
+		}
+		
+		exe_offset = boost::uint32_t(exe_offset64);
+		header_offset = boost::uint32_t(header_offset64);
+		data_offset = boost::uint32_t(data_offset64);
+		
 	} else {
-		message_offset = util::load<boost::uint32_t>(is);
+		
+		(void)checksum.load<boost::uint32_t>(is);
+		exe_offset = checksum.load<boost::uint32_t>(is);
+		
+		if(version >= INNO_VERSION(4, 1, 6)) {
+			exe_compressed_size = 0;
+		} else {
+			exe_compressed_size = checksum.load<boost::uint32_t>(is);
+		}
+		
+		exe_uncompressed_size = checksum.load<boost::uint32_t>(is);
+		
+		if(version >= INNO_VERSION(4, 0, 3)) {
+			exe_checksum.type = crypto::CRC32;
+			exe_checksum.crc32 = checksum.load<boost::uint32_t>(is);
+		} else {
+			exe_checksum.type = crypto::Adler32;
+			exe_checksum.adler32 = checksum.load<boost::uint32_t>(is);
+		}
+		
+		if(version >= INNO_VERSION(4, 0, 0)) {
+			message_offset = 0;
+		} else {
+			message_offset = util::load<boost::uint32_t>(is);
+		}
+		
+		header_offset = checksum.load<boost::uint32_t>(is);
+		data_offset = checksum.load<boost::uint32_t>(is);
+		
 	}
-	
-	header_offset = checksum.load<boost::uint32_t>(is);
-	data_offset = checksum.load<boost::uint32_t>(is);
 	
 	if(is.fail()) {
 		is.clear();

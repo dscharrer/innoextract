@@ -173,13 +173,61 @@ else()
 	set(INNOEXTRACT_HAVE_LZMA 0)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS
+set(INNOEXTRACT_BOOST_COMPONENTS
 	iostreams
 	filesystem
 	date_time
-	system
 	program_options
 )
+
+# CMake 3.30 deprecated the bundled FindBoost module and CMP0167 defaults to NEW
+# from CMake 4.0 on, so find_package(Boost) only looks for the BoostConfig.cmake
+# that upstream Boost ships from 1.70 onwards. Boost before that has no such
+# config and can only be found through the module, so try the config first and
+# fall back to the module - otherwise a new CMake cannot find an old Boost at
+# all, while an old CMake still works either way.
+# find_package() searches Boost_ROOT but not the older BOOST_ROOT that
+# FindBoost used to honour, so pass it on - build environments that only set
+# BOOST_ROOT (AppVeyor's Windows images, for one) would otherwise find nothing
+# in config mode.
+if(NOT Boost_ROOT)
+	if(BOOST_ROOT)
+		set(Boost_ROOT "${BOOST_ROOT}")
+	elseif(DEFINED ENV{BOOST_ROOT})
+		set(Boost_ROOT "$ENV{BOOST_ROOT}")
+	elseif(DEFINED ENV{BOOSTROOT})
+		set(Boost_ROOT "$ENV{BOOSTROOT}")
+	endif()
+endif()
+
+find_package(Boost QUIET CONFIG COMPONENTS ${INNOEXTRACT_BOOST_COMPONENTS}
+                                OPTIONAL_COMPONENTS system)
+if(NOT Boost_FOUND)
+	# The module is only reachable while CMP0167 is not set to NEW.
+	if(POLICY CMP0167)
+		cmake_policy(PUSH)
+		cmake_policy(SET CMP0167 OLD)
+	endif()
+	find_package(Boost MODULE COMPONENTS ${INNOEXTRACT_BOOST_COMPONENTS}
+	                          OPTIONAL_COMPONENTS system)
+	if(POLICY CMP0167)
+		cmake_policy(POP)
+	endif()
+endif()
+if(NOT Boost_FOUND)
+	# Report where we looked - a bare "not found" gives no way to tell whether
+	# the hint variables were unset, pointed somewhere wrong, or the install is
+	# simply incomplete.
+	message(STATUS "Boost_ROOT: '${Boost_ROOT}'")
+	message(STATUS "BOOST_ROOT variable: '${BOOST_ROOT}'")
+	message(STATUS "BOOST_ROOT environment: '$ENV{BOOST_ROOT}'")
+	message(STATUS "BOOSTROOT environment: '$ENV{BOOSTROOT}'")
+	message(STATUS "BOOST_INCLUDEDIR environment: '$ENV{BOOST_INCLUDEDIR}'")
+	message(STATUS "BOOST_LIBRARYDIR environment: '$ENV{BOOST_LIBRARYDIR}'")
+	message(STATUS "CMAKE_PREFIX_PATH: '${CMAKE_PREFIX_PATH}'")
+	message(FATAL_ERROR "Could not find Boost with the "
+	                    "${INNOEXTRACT_BOOST_COMPONENTS} components.")
+endif()
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})

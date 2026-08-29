@@ -77,6 +77,8 @@ struct file_entry : public item {
 		SetNtfsCompression,
 		UnsetNtfsCompression,
 		GacInstall,
+		Download,
+		ExtractArchive,
 		
 		// obsolete options:
 		IsReadmeFile

@@ -78,7 +78,8 @@ public:
 	 *         Reading from this stream may throw a \ref block_error if a block checksum
 	 *         was invalid.
 	 */
-	static pointer get(std::istream & base, const setup::version & version);
+	static pointer get(std::istream & base, const setup::version & version,
+	                   bool has_encryption_header = false);
 	
 };
 

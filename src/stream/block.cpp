@@ -150,9 +150,59 @@ NAMES(stream::block_compression, "Compression",
 
 namespace stream {
 
-block_reader::pointer block_reader::get(std::istream & base, const setup::version & version) {
+block_reader::pointer block_reader::get(std::istream & base, const setup::version & version,
+                                       bool has_encryption_header) {
 	
 	USE_ENUM_NAMES(block_compression)
+	
+	if(has_encryption_header && version >= INNO_VERSION(6, 5, 0)) {
+		
+		/*
+		 * Inno Setup 6.5 inserts a TSetupEncryptionHeader before the compressed block,
+		 * preceded by its own CRC32 (Setup.MainFunc.pas, and Shared.Struct.pas for the
+		 * record itself):
+		 *
+		 *   uint8  EncryptionUse   (0 = none, 1 = files, 2 = full)
+		 *   uint8  KDFSalt[16]
+		 *   int32  KDFIterations
+		 *   struct BaseNonce { int64 RandomXorStartOffset; int32 RandomXorFirstSlice;
+		 *                      int32 RemainingRandom[3]; }
+		 *   int32  PasswordTest
+		 *
+		 * That is 49 bytes packed. innoextract cannot decrypt, so the contents are only
+		 * inspected far enough to report encrypted installers clearly; the block itself
+		 * follows immediately afterwards and is unchanged.
+		 */
+		
+		boost::uint32_t expected_encryption_checksum = util::load<boost::uint32_t>(base);
+		crypto::crc32 encryption_checksum;
+		encryption_checksum.init();
+		
+		boost::uint8_t encryption_use = encryption_checksum.load<boost::uint8_t>(base);
+		for(size_t i = 0; i < 16; i++) {
+			(void)encryption_checksum.load<boost::uint8_t>(base); // KDFSalt
+		}
+		(void)encryption_checksum.load<boost::uint32_t>(base); // KDFIterations
+		(void)encryption_checksum.load<boost::uint64_t>(base); // BaseNonce.RandomXorStartOffset
+		(void)encryption_checksum.load<boost::uint32_t>(base); // BaseNonce.RandomXorFirstSlice
+		for(size_t i = 0; i < 3; i++) {
+			(void)encryption_checksum.load<boost::uint32_t>(base); // BaseNonce.RemainingRandom
+		}
+		(void)encryption_checksum.load<boost::uint32_t>(base); // PasswordTest
+		
+		if(base.fail()) {
+			throw block_error("could not read encryption header");
+		}
+		
+		if(encryption_checksum.finalize() != expected_encryption_checksum) {
+			throw block_error("encryption header CRC32 mismatch");
+		}
+		
+		if(encryption_use == 2 /* euFull */) {
+			throw block_error("encrypted setup headers are not supported");
+		}
+		
+	}
 	
 	boost::uint32_t expected_checksum = util::load<boost::uint32_t>(base);
 	crypto::crc32 actual_checksum;

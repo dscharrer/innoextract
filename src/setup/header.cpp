@@ -266,6 +266,15 @@ void header::load(std::istream & is, const version & version) {
 		is >> util::binary_string(architectures_allowed_expr);
 		is >> util::binary_string(architectures_installed_in_64bit_mode_expr);
 	}
+	if(version >= INNO_VERSION(6, 4, 2)) {
+		std::string close_applications_filter_excludes;
+		is >> util::binary_string(close_applications_filter_excludes);
+	}
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		is >> util::binary_string(seven_zip_library_name);
+	} else {
+		seven_zip_library_name.clear();
+	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
@@ -319,6 +328,11 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	directory_count = util::load<boost::uint32_t>(is, version.bits());
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		iss_sig_key_count = util::load<boost::uint32_t>(is, version.bits());
+	} else {
+		iss_sig_key_count = 0;
+	}
 	file_count = util::load<boost::uint32_t>(is, version.bits());
 	data_entry_count = util::load<boost::uint32_t>(is, version.bits());
 	icon_count = util::load<boost::uint32_t>(is, version.bits());
@@ -361,7 +375,18 @@ void header::load(std::istream & is, const version & version) {
 		small_image_back_color = 0;
 	}
 	
-	if(version >= INNO_VERSION(6, 0, 0)) {
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		/*
+		 * 6.6 drops WizardStyle and adds WizardDarkStyle after the size
+		 * percentages (Shared.Struct.pas):
+		 *   WizardSizePercentX, WizardSizePercentY: Integer
+		 *   WizardDarkStyle: TSetupWizardDarkStyle
+		 */
+		wizard_style = ClassicStyle;
+		wizard_resize_percent_x = util::load<boost::uint32_t>(is);
+		wizard_resize_percent_y = util::load<boost::uint32_t>(is);
+		(void)util::load<boost::uint8_t>(is); // WizardDarkStyle
+	} else if(version >= INNO_VERSION(6, 0, 0)) {
 		wizard_style = stored_enum<stored_setup_style>(is).get();
 		wizard_resize_percent_x = util::load<boost::uint32_t>(is);
 		wizard_resize_percent_y = util::load<boost::uint32_t>(is);
@@ -377,7 +402,28 @@ void header::load(std::istream & is, const version & version) {
 		image_alpha_format = AlphaIgnored;
 	}
 	
-	if(version >= INNO_VERSION(6, 4, 0)) {
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		/*
+		 * 6.6 moves the wizard image colours here, replacing BackColor/BackColor2,
+		 * and 6.6.1 adds WizardImageOpacity.
+		 */
+		image_back_color = util::load<boost::uint32_t>(is);
+		small_image_back_color = util::load<boost::uint32_t>(is);
+		(void)util::load<boost::uint32_t>(is); // WizardImageBackColorDynamicDark
+		(void)util::load<boost::uint32_t>(is); // WizardSmallImageBackColorDynamicDark
+		if(version >= INNO_VERSION(6, 6, 1)) {
+			(void)util::load<boost::uint8_t>(is); // WizardImageOpacity
+		}
+	}
+	
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		/*
+		 * 6.5 moves PasswordTest and the KDF salt/iterations/nonce out of
+		 * TSetupHeader and into the TSetupEncryptionHeader that now precedes the
+		 * compressed block (see stream/block.cpp), so nothing is read here.
+		 */
+		password.type = crypto::PBKDF2_SHA256_XChaCha20;
+	} else if(version >= INNO_VERSION(6, 4, 0)) {
 		is.read(password.sha256, 4);
 		password.type = crypto::PBKDF2_SHA256_XChaCha20;
 	} else if(version >= INNO_VERSION(5, 3, 9)) {
@@ -390,7 +436,9 @@ void header::load(std::istream & is, const version & version) {
 		password.crc32 = util::load<boost::uint32_t>(is);
 		password.type = crypto::CRC32;
 	}
-	if(version >= INNO_VERSION(6, 4, 0)) {
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		password_salt.clear(); // now part of the encryption header
+	} else if(version >= INNO_VERSION(6, 4, 0)) {
 		password_salt.resize(44); // PBKDF2 salt + iteration count + ChaCha2 base nonce
 		is.read(&password_salt[0], std::streamsize(password_salt.length()));
 	} else if(version >= INNO_VERSION(4, 2, 2)) {
@@ -690,7 +738,7 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 		flagreader.add(AppendDefaultDirName);
 		flagreader.add(AppendDefaultGroupName);
 	}
-	if(version >= INNO_VERSION(4, 2, 2)) {
+	if(version >= INNO_VERSION(4, 2, 2) && version < INNO_VERSION(6, 5, 0)) {
 		flagreader.add(EncryptionUsed);
 	}
 	if(version >= INNO_VERSION(5, 0, 4) && version < INNO_VERSION(5, 6, 1)) {
@@ -724,10 +772,20 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(6, 0, 0)) {
 		flagreader.add(AppNameHasConsts);
 		flagreader.add(UsePreviousPrivileges);
-		flagreader.add(WizardResizable);
+		if(version < INNO_VERSION(6, 6, 0)) {
+			flagreader.add(WizardResizable);
+		}
 	}
 	if(version >= INNO_VERSION(6, 3, 0)) {
 		flagreader.add(UninstallLogging);
+	}
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		// shWizardModern, shWizardBorderStyled, shWizardKeepAspectRatio and
+		// shWizardLightButtonsUnstyled replace shWizardResizable.
+		flagreader.add(WizardModern);
+		flagreader.add(WizardBorderStyled);
+		flagreader.add(WizardKeepAspectRatio);
+		flagreader.add(WizardLightButtonsUnstyled);
 	}
 	
 	return flagreader.finalize();
@@ -822,6 +880,10 @@ NAMES(setup::header::flags, "Setup Option",
 	"app name_has_consts",
 	"use_previous_privileges",
 	"wizard_resizable",
+	"wizard_modern",
+	"wizard_border_styled",
+	"wizard_keep_aspect_ratio",
+	"wizard_light_buttons_unstyled",
 	"uninstall_logging",
 	"uninstallable",
 	"disable dir page",

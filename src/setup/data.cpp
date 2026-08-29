@@ -21,6 +21,7 @@
 #include "setup/data.hpp"
 
 #include <cstring>
+#include <limits>
 
 #include "setup/info.hpp"
 #include "setup/version.hpp"
@@ -56,7 +57,19 @@ void data_entry::load(std::istream & is, const info & i) {
 		}
 	}
 	
-	chunk.sort_offset = chunk.offset = util::load<boost::uint32_t>(is);
+	if(i.version >= INNO_VERSION(6, 6, 0)) {
+		// StartOffset widened from Longint to Int64 (Shared.Struct.pas). The
+		// offset is kept in a 32-bit field, so anything that would not fit is
+		// clamped and reported rather than silently truncated.
+		boost::uint64_t start_offset = util::load<boost::uint64_t>(is);
+		if(start_offset > std::numeric_limits<boost::uint32_t>::max()) {
+			log_warning << "Chunk offset exceeds 4 GiB: " << start_offset;
+			start_offset = std::numeric_limits<boost::uint32_t>::max();
+		}
+		chunk.sort_offset = chunk.offset = boost::uint32_t(start_offset);
+	} else {
+		chunk.sort_offset = chunk.offset = util::load<boost::uint32_t>(is);
+	}
 	
 	if(i.version >= INNO_VERSION(4, 0, 1)) {
 		file.offset = util::load<boost::uint64_t>(is);
@@ -136,20 +149,22 @@ void data_entry::load(std::istream & is, const info & i) {
 	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
 	flagreader.add(VersionInfoValid);
-	flagreader.add(VersionInfoNotValid);
+	if(i.version < INNO_VERSION(6, 4, 3)) {
+		flagreader.add(VersionInfoNotValid);
+	}
 	if(i.version >= INNO_VERSION(2, 0, 17) && i.version < INNO_VERSION(4, 0, 1)) {
 		flagreader.add(BZipped);
 	}
 	if(i.version >= INNO_VERSION(4, 0, 10)) {
 		flagreader.add(TimeStampInUTC);
 	}
-	if(i.version >= INNO_VERSION(4, 1, 0)) {
+	if(i.version >= INNO_VERSION(4, 1, 0) && i.version < INNO_VERSION(6, 4, 3)) {
 		flagreader.add(IsUninstallerExe);
 	}
 	if(i.version >= INNO_VERSION(4, 1, 8)) {
 		flagreader.add(CallInstructionOptimized);
 	}
-	if(i.version >= INNO_VERSION(4, 2, 0)) {
+	if(i.version >= INNO_VERSION(4, 2, 0) && i.version < INNO_VERSION(6, 4, 3)) {
 		flagreader.add(Touch);
 	}
 	if(i.version >= INNO_VERSION(4, 2, 2)) {
@@ -160,7 +175,7 @@ void data_entry::load(std::istream & is, const info & i) {
 	} else {
 		options |= ChunkCompressed;
 	}
-	if(i.version >= INNO_VERSION(5, 1, 13)) {
+	if(i.version >= INNO_VERSION(5, 1, 13) && i.version < INNO_VERSION(6, 4, 3)) {
 		flagreader.add(SolidBreak);
 	}
 	if(i.version >= INNO_VERSION(5, 5, 7) && i.version < INNO_VERSION(6, 3, 0)) {
@@ -171,7 +186,10 @@ void data_entry::load(std::istream & is, const info & i) {
 	
 	options |= flagreader.finalize();
 	
-	if(i.version >= INNO_VERSION(6, 3, 0)) {
+	if(i.version >= INNO_VERSION(6, 4, 3)) {
+		// The Sign field was removed again in 6.4.3 (Shared.Struct.pas)
+		sign = NoSetting;
+	} else if(i.version >= INNO_VERSION(6, 3, 0)) {
 		sign = stored_enum<stored_sign_mode>(is).get();
 	} else if(options & SignOnce) {
 		sign = Once;

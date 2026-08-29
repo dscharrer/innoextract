@@ -92,6 +92,26 @@ void file_entry::load(std::istream & is, const info & i) {
 	
 	load_condition_data(is, i);
 	
+	if(i.version >= INNO_VERSION(6, 5, 0)) {
+		/*
+		 * 6.5 adds download/archive support (Shared.Struct.pas):
+		 *   Excludes, DownloadISSigSource, DownloadUserName, DownloadPassword,
+		 *   ExtractArchivePassword: String
+		 *   Verification: record { ISSigAllowedKeys: AnsiString;
+		 *                          Hash: TSHA256Digest; Typ: Byte }
+		 */
+		std::string ignored;
+		is >> util::encoded_string(ignored, i.codepage, i.header.lead_bytes); // Excludes
+		is >> util::encoded_string(ignored, i.codepage, i.header.lead_bytes); // DownloadISSigSource
+		is >> util::encoded_string(ignored, i.codepage, i.header.lead_bytes); // DownloadUserName
+		is >> util::encoded_string(ignored, i.codepage, i.header.lead_bytes); // DownloadPassword
+		is >> util::encoded_string(ignored, i.codepage, i.header.lead_bytes); // ExtractArchivePassword
+		util::binary_string::skip(is); // Verification.ISSigAllowedKeys
+		char sha256[32];
+		is.read(sha256, std::streamsize(sizeof(sha256))); // Verification.Hash
+		(void)util::load<boost::uint8_t>(is); // Verification.Typ
+	}
+	
 	load_version_data(is, i.version);
 	
 	location = util::load<boost::uint32_t>(is, i.version.bits());
@@ -189,6 +209,10 @@ void file_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(5, 2, 5)) {
 		flagreader.add(GacInstall);
 	}
+	if(i.version >= INNO_VERSION(6, 5, 0)) {
+		flagreader.add(Download);
+		flagreader.add(ExtractArchive);
+	}
 	
 	options |= flagreader.finalize();
 	
@@ -239,6 +263,8 @@ NAMES(setup::file_entry::flags, "File Option",
 	"set ntfs compression",
 	"unset ntfs compression",
 	"gac install",
+	"download",
+	"extract archive",
 	"readme",
 )
 

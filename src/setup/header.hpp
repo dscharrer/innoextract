@@ -101,6 +101,10 @@ struct header {
 		AppNameHasConsts,
 		UsePreviousPrivileges,
 		WizardResizable,
+		WizardModern,
+		WizardBorderStyled,
+		WizardKeepAspectRatio,
+		WizardLightButtonsUnstyled,
 		UninstallLogging,
 		
 		// Obsolete flags
@@ -167,6 +171,16 @@ struct header {
 	std::string changes_associations;
 	std::string architectures_allowed_expr;
 	std::string architectures_installed_in_64bit_mode_expr;
+	
+	/*!
+	 * Name of the 7-Zip library shipped with the installer (Inno Setup 6.5 and
+	 * later). Non-empty means a 7-Zip DLL follows the wizard images.
+	 */
+	std::string seven_zip_library_name;
+	
+	//! Number of ISSigKey entries (Inno Setup 6.5 and later). These are only
+	//! used to verify downloaded files, so they are skipped rather than stored.
+	boost::uint32_t iss_sig_key_count;
 	std::string license_text;
 	std::string info_before;
 	std::string info_after;
