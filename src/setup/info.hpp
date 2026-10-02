@@ -132,6 +132,10 @@ struct info {
 	 */
 	void load(std::istream & is, entry_types entries, util::codepage_id force_codepage = 0);
 	
+	std::string get_key(const std::string & password);
+	
+	bool check_key(const std::string & key);
+	
 private:
 	
 	/*!

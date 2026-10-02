@@ -138,6 +138,8 @@ static void print_entry(const setup::info & info, size_t i,
 	std::cout << " - " << quoted(entry.name);
 	if(entry.language < 0) {
 		std::cout << " (default) = ";
+	} else if(size_t(entry.language) >= info.languages.size()) {
+		std::cout << " [" << color::red << size_t(entry.language) << color::reset << "] = ";
 	} else {
 		std::cout << " (" << color::cyan << info.languages[size_t(entry.language)].name
 		          << color::reset << ") = ";
@@ -477,7 +479,7 @@ static void print_header(const setup::header & header) {
 	std::cout << std::dec;
 	
 	if(header.options & (setup::header::Password | setup::header::EncryptionUsed)) {
-		std::cout << "Password: " << color::cyan << header.password << color::reset << '\n';
+		std::cout << "Password hash: " << color::cyan << header.password << color::reset << '\n';
 		if(!header.password_salt.empty()) {
 			std::cout << "Password salt: " << color::cyan
 			          << print_hex(header.password_salt) << color::reset << '\n';

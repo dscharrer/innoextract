@@ -39,9 +39,11 @@ public:
 	
 	typedef boost::uint32_t hash_word;
 	typedef util::big_endian byte_order;
-	static const size_t offset = 1;
-	static const size_t block_size = 64;
-	static const size_t hash_size = 20;
+	enum constants {
+		offset = 1,
+		block_size = 64,
+		hash_size = 20,
+	};
 	
 	static void init(hash_word * state);
 	

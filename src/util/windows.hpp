@@ -30,7 +30,7 @@
  *    For those, there are UTF-8 aware implementations in util/fstream.hpp
  *  - Converts UTF-8 to UTF-16 in std::cout and std::cerr if attached to a console
  *  - Interprets ANSI escape sequences in std::cout and std::cerr if attached to a console
- *  - Provides a Windows implementation of \ref isatty()
+ *  - Provides a Windows implementation of \c isatty()
  */
 #ifndef INNOEXTRACT_UTIL_WINDOWS_HPP
 #define INNOEXTRACT_UTIL_WINDOWS_HPP

@@ -1,9 +1,18 @@
 
 include(CompileCheck)
 
-if(NOT CMAKE_VERSION VERSION_LESS 2.8.6)
+if(NOT MSVC AND NOT CMAKE_VERSION VERSION_LESS 2.8.6)
 	include(CheckCXXSymbolExists)
 	check_cxx_symbol_exists(_LIBCPP_VERSION "cstddef" IS_LIBCXX)
+	if(IS_LIBCXX AND (DEBUG OR DEBUG_EXTRA))
+		check_cxx_symbol_exists(_LIBCPP_HARDENING_MODE "version" ARX_HAVE_LIBCPP_HARDENING_MODE)
+		if(NOT ARX_HAVE_LIBCPP_HARDENING_MODE)
+			check_cxx_symbol_exists(_LIBCPP_ENABLE_HARDENED_MODE "version" ARX_HAVE_LIBCPP_ENABLE_HARDENED_MODE)
+			if(NOT ARX_HAVE_LIBCPP_ENABLE_HARDENED_MODE)
+				check_cxx_symbol_exists(_LIBCPP_ENABLE_ASSERTIONS "version" ARX_HAVE_LIBCPP_ENABLE_ASSERTIONS)
+			endif()
+		endif()
+	endif()
 else()
 	set(IS_LIBCXX OFF)
 endif()
@@ -130,12 +139,67 @@ if(MSVC)
 	
 else(MSVC)
 	
-	if(USE_LDGOLD)
+	set(linker_used)
+	if(NOT linker_used AND (USE_LD STREQUAL "mold" OR USE_LD STREQUAL "best"))
+		# Old versions are unstable or don't support LTO
+		if(USE_LD STREQUAL "best")
+			execute_process(COMMAND ${CMAKE_CXX_COMPILER} "-fuse-ld=mold" "-Wl,-version"
+			                OUTPUT_VARIABLE _Mold_Version ERROR_QUIET)
+		endif()
+		if(USE_LD STREQUAL "best" AND _Mold_Version MATCHES "mold [0-1]\\.*")
+			message(STATUS "Not using ancient ${CMAKE_MATCH_0}")
+		else()
+			add_ldflag("-fuse-ld=mold")
+			if(FLAG_FOUND)
+				set(linker_used "mold")
+			elseif(STRICT_USE AND NOT USE_LD STREQUAL "best")
+				message(FATAL_ERROR "Requested linker is not available")
+			endif()
+		endif()
+	endif()
+	if(NOT linker_used AND (USE_LD STREQUAL "lld" OR
+	                        (USE_LD STREQUAL "best" AND (NOT USE_LTO OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"))))
+		# Only supports LTO with LLVM-based compilers and old versions are unstable
+		if(USE_LD STREQUAL "best")
+			execute_process(COMMAND ${CMAKE_CXX_COMPILER} "-fuse-ld=lld" "-Wl,-version"
+			                OUTPUT_VARIABLE _LLD_Version ERROR_QUIET)
+		endif()
+		if(USE_LD STREQUAL "best" AND _LLD_Version MATCHES "LLD [0-8]\\.[0-9\\.]*")
+			message(STATUS "Not using ancient ${CMAKE_MATCH_0}")
+		elseif(USE_LD STREQUAL "best" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND
+		       CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
+			message(STATUS "Not using ancient Clang ${CMAKE_CXX_COMPILER_VERSION}")
+		else()
+			add_ldflag("-fuse-ld=lld")
+			if(FLAG_FOUND)
+				set(linker_used "lld")
+			elseif(STRICT_USE AND NOT USE_LD STREQUAL "best")
+				message(FATAL_ERROR "Requested linker is not available")
+			endif()
+		endif()
+	endif()
+	if(NOT linker_used AND (USE_LD STREQUAL "gold" OR USE_LD STREQUAL "best"))
 		add_ldflag("-fuse-ld=gold")
+		if(FLAG_FOUND)
+			set(linker_used "gold")
+		elseif(STRICT_USE AND NOT USE_LD STREQUAL "best")
+			message(FATAL_ERROR "Requested linker is not available")
+		endif()
+	endif()
+	if(NOT linker_used AND (USE_LD STREQUAL "bfd"))
+		add_ldflag("-fuse-ld=bfd")
+		if(FLAG_FOUND)
+			set(linker_used "bfd")
+		elseif(STRICT_USE AND NOT USE_LD STREQUAL "best")
+			message(FATAL_ERROR "Requested linker is not available")
+		endif()
 	endif()
 	
 	if(USE_LTO)
-		add_cxxflag("-flto")
+		add_cxxflag("-flto=auto")
+		if(NOT FLAG_FOUND)
+			add_cxxflag("-flto")
+		endif()
 		# TODO set CMAKE_INTERPROCEDURAL_OPTIMIZATION instead
 		add_ldflag("-fuse-linker-plugin")
 	endif()
@@ -143,7 +207,12 @@ else(MSVC)
 	if(FASTLINK)
 		
 		# Optimize for link speed in developer builds
-		add_cxxflag("-gsplit-dwarf")
+		if(linker_used STREQUAL "mold" OR linker_used STREQUAL "lld")
+			# mold and lld are fast enough without -gsplit-dwarf that we don't need to deal with its issues
+		else()
+			add_cxxflag("-gsplit-dwarf")
+			add_cxxflag("-gdwarf-4") # -gsplit-dwarf is broken with DWARF 5
+		endif()
 		
 	elseif(SET_OPTIMIZATION_FLAGS)
 		
@@ -172,6 +241,7 @@ else(MSVC)
 		add_cxxflag("-Wextra-semi")
 		add_cxxflag("-Wformat=2")
 		add_cxxflag("-Wheader-guard")
+		add_cxxflag("-Wheader-hygiene")
 		add_cxxflag("-Winit-self")
 		add_cxxflag("-Wkeyword-macro")
 		add_cxxflag("-Wliteral-conversion")
@@ -267,6 +337,7 @@ else(MSVC)
 		
 		if(IS_LIBCXX)
 			add_definitions(-D_LIBCPP_ENABLE_NODISCARD)
+			add_definitions(-D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS)
 		endif()
 		
 	endif(SET_WARNING_FLAGS)
@@ -281,16 +352,46 @@ else(MSVC)
 		add_cxxflag("-fcatch-undefined-behavior")
 		add_cxxflag("-fstack-protector-all")
 		add_cxxflag("-fsanitize=address")
-		add_cxxflag("-fsanitize=thread")
+		# add_cxxflag("-fsanitize=thread") does not work together with -fsanitize=address
 		add_cxxflag("-fsanitize=leak")
-		if(IS_LIBCXX)
-			add_definitions(-D_LIBCPP_DEBUG=1) # libc++
-			# libc++'s debug checks fail with -fsanitize=undefined
+		add_cxxflag("-fsanitize=undefined")
+		if(ARX_HAVE_LIBCPP_HARDENING_MODE)
+			# libc++ 18+
+			add_definitions(-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
+		elseif(ARX_HAVE_LIBCPP_ENABLE_HARDENED_MODE)
+			# libc++ 17 - Full debug mode is now a compile-time option and all -D_LIBCPP_DEBUG=1 does is
+			# generate an #error if the library was not built in debug mode :|
+			add_definitions(-D_LIBCPP_ENABLE_HARDENED_MODE=1)
+		elseif(ARX_HAVE_LIBCPP_ENABLE_ASSERTIONS)
+			# libc++ 15-16 - Full debug mode is now a compile-time option and all -D_LIBCPP_DEBUG=1 does is
+			# generate an #error if the library was not built in debug mode :|
+			add_definitions(-D_LIBCPP_ENABLE_ASSERTIONS=1)
+		elseif(IS_LIBCXX)
+			# older libc++
+			add_definitions(-D_LIBCPP_DEBUG=1)
 		else()
-			add_definitions(-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC) # libstdc++
-			add_cxxflag("-fsanitize=undefined")
+			# libstdc++
+			add_definitions(-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_SANITIZE_VECTOR)
+			set(disable_libstdcxx_debug "-U_GLIBCXX_DEBUG -U_GLIBCXX_DEBUG_PEDANTIC")
 		endif()
-	endif(DEBUG_EXTRA)
+	elseif(DEBUG)
+		if(ARX_HAVE_LIBCPP_HARDENING_MODE)
+			#libc++ 18+
+			add_definitions(-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE)
+		elseif(ARX_HAVE_LIBCPP_ENABLE_HARDENED_MODE)
+			# libc++ 17
+			add_definitions(-D_LIBCPP_ENABLE_HARDENED_MODE=1)
+		elseif(ARX_HAVE_LIBCPP_ENABLE_ASSERTIONS)
+			# libc++ 15-16
+			add_definitions(-D_LIBCPP_ENABLE_ASSERTIONS=1)
+		elseif(IS_LIBCXX)
+			# older libc++ - 0 means light checks only, it does not mean no checks
+			add_definitions(-D_LIBCPP_DEBUG=0)
+		else()
+			# libstdc++
+			add_definitions(-D_GLIBCXX_ASSERTIONS=1)
+		endif()
+	endif()
 	
 	if(CMAKE_BUILD_TYPE STREQUAL "")
 		set(CMAKE_BUILD_TYPE "Release")

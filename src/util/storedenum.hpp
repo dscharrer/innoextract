@@ -236,7 +236,7 @@ public:
 		pos = (pos + 1) % stored_bits;
 	}
 	
-	operator flag_type() const {
+	flag_type finalize() const {
 		if(bytes == 3 && pad_bits == 32) {
 			// 3-byte sets are padded to 4 bytes
 			(void)util::load<stored_type>(stream);

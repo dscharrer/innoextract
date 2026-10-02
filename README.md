@@ -1,7 +1,7 @@
 
 # innoextract - A tool to unpack installers created by Inno Setup
 
-[Inno Setup](https://jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. innoextract allows to extract such installers under non-Windows systems without running the actual installer using wine. innoextract currently supports installers created by Inno Setup 1.2.10 to 6.2.2.
+[Inno Setup](https://jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. innoextract allows to extract such installers under non-Windows systems without running the actual installer using wine. innoextract currently supports installers created by Inno Setup 1.2.10 to 6.3.3.
 
 In addition to standard Inno Setup installers, innoextract also supports some modified Inno Setup variants including Martijn Laan's My Inno Setup Extensions 1.3.10 to 3.0.6.1 as well as GOG.com's Inno Setup-based game installers. innoextract is able to unpack Wadjet Eye Games installers (to play with AGS), Arx Fatalis patches (for use with Arx Libertatis) as well as various other Inno Setup executables.
 
@@ -47,7 +47,7 @@ The default build settings are tuned for users - if you plan to make changes to 
 
 | Option                    | Default   | Description |
 |:------------------------- |:---------:|:----------- |
-| `USE_ARC4`                | `ON`      | Build ARC4 decryption support.
+| `BUILD_DECRYPTION`        | `ON`      | Build decryption support.
 | `USE_LZMA`                | `ON`      | Use `liblzma`.
 | `WITH_CONV`               | *not set* | The charset conversion library to use. Valid values are `iconv`, `win32` and `builtin`¹. If not set, a library appropriate for the target platform will be chosen.
 | `CMAKE_BUILD_TYPE`        | `Release` | Set to `Debug` to enable debug output.
@@ -68,13 +68,18 @@ The default build settings are tuned for users - if you plan to make changes to 
 | `DEVELOPER`               | `OFF`     | Enable build options suitable for developers⁵.
 | `FASTLINK`                | `OFF`⁶    | Optimize for link speed.
 | `USE_LTO`                 | `ON`²     | Use link-time code generation.
+| `USE_LD`                  | `best`⁸   | Linker to use - `default`, `mold`, `lld`, `gold`, `bfd` or `best`
+| `BUILD_TESTS`             | `OFF`⁶    | Build unit tests that can be run using `make check`
+| `RUN_TESTS`               | `OFF`⁷    | Automatically run tests
+| `RUN_TARGET`              | (none)    | Wrapper to run binaries produced in the build process
 1. The builtin charset conversion only supports Windows-1252 and UTF-16LE. This is normally enough for filenames, but custom message strings (which can be included in filenames) may use arbitrary encodings.
 2. Enabled automatically if `CMAKE_BUILD_TYPE` is set to `Debug`.
 3. Under Windows, the default is `ON`.
 4. Default is `ON` if `USE_STATIC_LIBS` is enabled.
-5. Currently this and enables `DEBUG` and `FASTLINK` for faster incremental builds and improved debug output, unless those options have been explicitly specified by the user.
+5. Currently this and enables `DEBUG`, `BUILD_TESTS`, `RUN_TESTS` and `FASTLINK` for faster incremental builds and improved debug output, unless those options have been explicitly specified by the user.
 6. Enabled automatically if `DEVELOPER` is enabled.
-7. Disabled automatically if `SET_OPTIMIZATION_FLAGS` is disabled or `FASTLINK` is enabled.
+7. Enabled automatically if `DEVELOPER` is enabled unless cross-compiling without `RUN_TARGET` set
+8. Disabled automatically (set to `default`) if both `SET_OPTIMIZATION_FLAGS` and `FASTLINK` are disabled. `best` will select the most suited linker based on availability and other settings such as `USE_LTO`.
 
 Install options:
 

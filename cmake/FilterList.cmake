@@ -131,6 +131,10 @@ function(filter_list LIST_NAME)
 		message(FATAL_ERROR "bad filter_list syntax: unexpected end, expected }")
 	endif()
 	
+	if(last_item)
+		list(APPEND filtered ${last_item})
+	endif()
+	
 	list(SORT filtered)
 	list(REMOVE_DUPLICATES filtered)
 	set(${LIST_NAME} ${filtered} PARENT_SCOPE)

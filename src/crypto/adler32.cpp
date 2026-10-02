@@ -23,6 +23,8 @@
 
 #include "crypto/adler32.hpp"
 
+#include "util/test.hpp"
+
 namespace crypto {
 
 void adler32::update(const char * data, size_t length) {
@@ -73,5 +75,14 @@ void adler32::update(const char * data, size_t length) {
 	state  = (boost::uint32_t(s2) << 16) | boost::uint16_t(s1);
 	
 }
+
+INNOEXTRACT_TEST(adler32,
+	
+	adler32 checksum;
+	checksum.init();
+	checksum.update(testdata, testlen);
+	test("checksum", checksum.finalize() == 0xb8a36c4a);
+	
+)
 
 } // namespace crypto

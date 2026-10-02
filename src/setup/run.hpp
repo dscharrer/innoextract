@@ -50,7 +50,8 @@ struct run_entry : public item {
 		Bits32,
 		Bits64,
 		RunAsOriginalUser,
-		DontLogParameters
+		DontLogParameters,
+		LogOutput
 	);
 	
 	enum wait_condition {

@@ -59,7 +59,7 @@ foreach(static IN ITEMS 1 0)
 	string(REGEX REPLACE "(.*)/include/?" "\\1" LZMA_BASE_DIR ${LZMA_INCLUDE_DIR})
 	
 	find_library(LZMA_LIBRARY lzma liblzma
-		HINTS
+		PATHS
 			${_PC_LZMA_LIBRARY_DIRS}
 			"${LZMA_BASE_DIR}/lib"
 		DOC "The LZMA library"

@@ -24,6 +24,7 @@
 #include "crypto/crc32.hpp"
 
 #include "util/endian.hpp"
+#include "util/test.hpp"
 
 namespace crypto {
 
@@ -112,5 +113,14 @@ void crc32::update(const char * data, size_t length) {
 	}
 	
 }
+
+INNOEXTRACT_TEST(crc32,
+	
+	crc32 checksum;
+	checksum.init();
+	checksum.update(testdata, testlen);
+	test("checksum", checksum.finalize() == 0x01f29e81);
+	
+)
 
 } // namespace crypto

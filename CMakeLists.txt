@@ -1,7 +1,11 @@
-cmake_minimum_required(VERSION 2.8...3.19)
+cmake_minimum_required(VERSION 2.8...3.31)
 
 if(CMAKE_VERSION VERSION_LESS 3.12)
 	cmake_policy(VERSION ${CMAKE_VERSION})
+endif()
+
+if(DEFINED CMAKE_POLICY_DEFAULT_CMP0167 AND POLICY CMP0167)
+	cmake_policy(SET CMP0167 ${CMAKE_POLICY_DEFAULT_CMP0167})
 endif()
 
 project(innoextract)
@@ -27,7 +31,12 @@ option(DEVELOPER "Use build settings suitable for developers" OFF)
 option(CONTINUOUS_INTEGRATION "Use build settings suitable for CI" OFF)
 
 # Components
-option(USE_ARC4 "Build ARC4 decryption support" ON)
+set(default_BUILD_TESTS OFF)
+if(CONTINUOUS_INTEGRATION OR DEVELOPER)
+	set(default_BUILD_TESTS ON)
+endif()
+suboption(BUILD_TESTS "Build tests" BOOL ${default_BUILD_TESTS})
+option(BUILD_DECRYPTION "Build decryption support" ON)
 
 # Optional dependencies
 option(USE_LZMA "Build LZMA decompression support" ON)
@@ -41,12 +50,16 @@ option(DEBUG_EXTRA "Expensive debug options" OFF)
 option(SET_WARNING_FLAGS "Adjust compiler warning flags" ON)
 option(SET_NOISY_WARNING_FLAGS "Enable noisy compiler warnings" OFF)
 option(SET_OPTIMIZATION_FLAGS "Adjust compiler optimization flags" ON)
-suboption(USE_LDGOLD "Use the Gold linker" BOOL ${SET_OPTIMIZATION_FLAGS})
 set(default_FASTLINK OFF)
 if(DEVELOPER OR CONTINUOUS_INTEGRATION)
 	set(default_FASTLINK ON)
 endif()
 suboption(FASTLINK "Optimize (incremental) linking speed" BOOL ${default_FASTLINK})
+set(default_USE_LD "default")
+if(SET_OPTIMIZATION_FLAGS OR FASTLINK)
+	set(default_USE_LD "best")
+endif()
+suboption(USE_LD "The linker to use (mold, lld, gold, bfd, best or default)" STRING "${default_USE_LD}")
 set(default_USE_LTO OFF)
 if(SET_OPTIMIZATION_FLAGS AND NOT FASTLINK)
 	set(default_USE_LTO ON)
@@ -82,6 +95,15 @@ if(STRICT_USE)
 else()
 	set(OPTIONAL_DEPENDENCY)
 endif()
+
+# Test configuration
+set(RUN_TARGET CACHE STRING "Wrapper to run built targets")
+mark_as_advanced(RUN_TARGET)
+set(default_RUN_TESTS OFF)
+if((DEVELOPER OR CONTINUOUS_INTEGRATION) AND (NOT CMAKE_CROSSCOMPILING OR NOT RUN_TARGET STREQUAL ""))
+	set(default_RUN_TESTS ON)
+endif()
+suboption(RUN_TESTS "Run tests as part of the default build target" BOOL ${default_RUN_TESTS})
 
 # Install destinations
 if(CMAKE_VERSION VERSION_LESS 2.8.5)
@@ -135,8 +157,8 @@ endif()
 
 unset(LIBRARIES)
 
-if(USE_ARC4)
-	set(INNOEXTRACT_HAVE_ARC4 1)
+if(BUILD_DECRYPTION)
+	set(INNOEXTRACT_HAVE_DECRYPTION 1)
 endif()
 
 if(USE_LZMA)
@@ -164,6 +186,10 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 if(NOT Boost_VERSION_MACRO)
 	# CMP0093 changed Boost_VERSION to x.y.z format and provide the old format in Boost_VERSION_MACRO
 	set(Boost_VERSION_MACRO ${Boost_VERSION})
+endif()
+add_definitions(-DBOOST_SYSTEM_DISABLE_THREADS)
+if(win32)
+	add_definitions(-DBOOST_SYSTEM_USE_UTF8)
 endif()
 
 has_static_libs(Boost Boost_LIBRARIES)
@@ -345,8 +371,8 @@ set(INNOEXTRACT_SOURCES
 	
 	src/crypto/adler32.hpp
 	src/crypto/adler32.cpp
-	src/crypto/arc4.hpp if INNOEXTRACT_HAVE_ARC4
-	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_ARC4
+	src/crypto/arc4.hpp if INNOEXTRACT_HAVE_DECRYPTION
+	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_DECRYPTION
 	src/crypto/checksum.hpp
 	src/crypto/checksum.cpp
 	src/crypto/crc32.hpp
@@ -356,8 +382,14 @@ set(INNOEXTRACT_SOURCES
 	src/crypto/iteratedhash.hpp
 	src/crypto/md5.hpp
 	src/crypto/md5.cpp
+	src/crypto/pbkdf2.hpp if INNOEXTRACT_HAVE_DECRYPTION
+	src/crypto/pbkdf2.cpp if INNOEXTRACT_HAVE_DECRYPTION
 	src/crypto/sha1.hpp
 	src/crypto/sha1.cpp
+	src/crypto/sha256.hpp
+	src/crypto/sha256.cpp
+	src/crypto/xchacha20.hpp if INNOEXTRACT_HAVE_DECRYPTION
+	src/crypto/xchacha20.cpp if INNOEXTRACT_HAVE_DECRYPTION
 	
 	src/loader/exereader.hpp
 	src/loader/exereader.cpp
@@ -443,6 +475,7 @@ set(INNOEXTRACT_SOURCES
 	src/util/storedenum.hpp
 	src/util/time.hpp
 	src/util/time.cpp
+	src/util/test.hpp
 	src/util/types.hpp
 	src/util/unique_ptr.hpp
 	src/util/windows.hpp
@@ -453,7 +486,24 @@ if(WIN32 AND NOT CYGWIN)
 	list(APPEND INNOEXTRACT_SOURCES src/util/windows.cpp)
 endif()
 
+set(UNITTEST_SOURCES
+	
+	src/crypto/adler32.cpp
+	src/crypto/arc4.cpp if INNOEXTRACT_HAVE_DECRYPTION
+	src/crypto/crc32.cpp
+	src/crypto/md5.cpp
+	src/crypto/pbkdf2.cpp if INNOEXTRACT_HAVE_DECRYPTION
+	src/crypto/sha1.cpp
+	src/crypto/sha256.cpp
+	src/crypto/xchacha20.cpp if INNOEXTRACT_HAVE_DECRYPTION
+	
+	src/util/test.hpp
+	src/util/test.cpp
+	
+)
+
 filter_list(INNOEXTRACT_SOURCES ALL_INNOEXTRACT_SOURCES)
+filter_list(UNITTEST_SOURCES ALL_UNITTEST_SOURCES)
 
 create_source_groups(ALL_INNOEXTRACT_SOURCES)
 
@@ -486,6 +536,49 @@ install(TARGETS innoextract RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES ${MAN_FILE} DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL)
 
 
+# Test target
+
+if(BUILD_TESTS)
+	
+	enable_testing()
+	
+	set(run_tests)
+	if(RUN_TESTS)
+		set(run_tests ALL)
+	endif()
+	
+	add_executable(unittest ${UNITTEST_SOURCES})
+	target_link_libraries(unittest ${LIBRARIES})
+	
+	if(CMAKE_VERSION VERSION_LESS 3.0)
+		set_target_properties(unittest PROPERTIES COMPILE_DEFINITIONS INNOEXTRACT_BUILD_TESTS)
+		get_property(unittest_binary TARGET unittest PROPERTY LOCATION)
+	else()
+		target_compile_definitions(unittest PRIVATE INNOEXTRACT_BUILD_TESTS)
+		set(unittest_binary "$<TARGET_FILE:unittest>")
+	endif()
+	
+	add_test(NAME "unittest"
+		COMMAND ${RUN_TARGET} "${unittest_binary}" --verbose
+		WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+	)
+	
+	add_custom_command(
+		OUTPUT "${PROJECT_BINARY_DIR}/unittest.check"
+		COMMAND ${RUN_TARGET} "${unittest_binary}"
+		COMMAND ${CMAKE_COMMAND} -E touch "${PROJECT_BINARY_DIR}/unittest.check"
+		DEPENDS unittest
+		WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+		COMMENT "Running unit tests" VERBATIM
+	)
+	
+	add_custom_target(check ${run_tests}
+		DEPENDS "${PROJECT_BINARY_DIR}/unittest.check"
+	)
+	
+endif()
+
+
 # Additional targets.
 
 add_style_check_target(style "${ALL_INNOEXTRACT_SOURCES}" innoextract)
@@ -504,9 +597,9 @@ elseif(NOT DEBUG AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(BUILD_TYPE_SUFFIX "${BUILD_TYPE_SUFFIX} without debug output")
 endif()
 message(" - Build type: ${CMAKE_BUILD_TYPE}${BUILD_TYPE_SUFFIX}")
-print_configuration("ARC4 decryption" FIRST
-	INNOEXTRACT_HAVE_ARC4 "enabled"
-	1                     "disabled"
+print_configuration("Decryption support" FIRST
+	INNOEXTRACT_HAVE_DECRYPTION "enabled"
+	1                           "disabled"
 )
 print_configuration("LZMA decompression" FIRST
 	INNOEXTRACT_HAVE_LZMA "enabled"
@@ -530,10 +623,22 @@ print_configuration("Charset conversion"
 message("")
 
 if(DEVELOPER)
+	
 	file(READ "README.md" readme)
 	parse_version_file("VERSION" "VERSION")
 	string(REPLACE "${VERSION_2}" "" readme_without_version "${readme}")
 	if(readme_without_version STREQUAL readme)
 		message(WARNING "Could not find '${VERSION_2}' in README.md.")
 	endif()
+	
+	foreach(file IN LISTS ALL_INNOEXTRACT_SOURCES)
+		file(READ "${file}" source)
+		if(source MATCHES ".*INNOEXTRACT_TEST.*")
+			list(FIND ALL_UNITTEST_SOURCES ${file} result)
+			if(result EQUAL -1)
+				message(WARNING "Could not find '${file}' in UNITTEST_SOURCES")
+			endif()
+		endif()
+	endforeach()
+	
 endif()

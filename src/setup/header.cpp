@@ -261,6 +261,11 @@ void header::load(std::istream & is, const version & version) {
 		changes_environment.clear();
 		changes_associations.clear();
 	}
+	if(version >= INNO_VERSION(6, 3, 0)) {
+		// Valid architectures: 'Unknown', 'x86', 'x64', 'Arm32', 'Arm64'
+		is >> util::binary_string(architectures_allowed_expr);
+		is >> util::binary_string(architectures_installed_in_64bit_mode_expr);
+	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
@@ -335,8 +340,12 @@ void header::load(std::istream & is, const version & version) {
 	
 	winver.load(is, version);
 	
-	back_color = util::load<boost::uint32_t>(is);
-	if(version >= INNO_VERSION(1, 3, 3)) {
+	if(version < INNO_VERSION_EXT(6, 4, 0, 1)) {
+		back_color = util::load<boost::uint32_t>(is);
+	} else {
+		back_color = 0;
+	}
+	if(version >= INNO_VERSION(1, 3, 3) && version < INNO_VERSION_EXT(6, 4, 0, 1)) {
 		back_color2 = util::load<boost::uint32_t>(is);
 	} else {
 		back_color2 = 0;
@@ -368,17 +377,23 @@ void header::load(std::istream & is, const version & version) {
 		image_alpha_format = AlphaIgnored;
 	}
 	
-	if(version < INNO_VERSION(4, 2, 0)) {
-		password.crc32 = util::load<boost::uint32_t>(is);
-		password.type = crypto::CRC32;
-	} else if(version < INNO_VERSION(5, 3, 9)) {
+	if(version >= INNO_VERSION(6, 4, 0)) {
+		is.read(password.sha256, 4);
+		password.type = crypto::PBKDF2_SHA256_XChaCha20;
+	} else if(version >= INNO_VERSION(5, 3, 9)) {
+		is.read(password.sha1, std::streamsize(sizeof(password.sha1)));
+		password.type = crypto::SHA1;
+	} else if(version >= INNO_VERSION(4, 2, 0)) {
 		is.read(password.md5, std::streamsize(sizeof(password.md5)));
 		password.type = crypto::MD5;
 	} else {
-		is.read(password.sha1, std::streamsize(sizeof(password.sha1)));
-		password.type = crypto::SHA1;
+		password.crc32 = util::load<boost::uint32_t>(is);
+		password.type = crypto::CRC32;
 	}
-	if(version >= INNO_VERSION(4, 2, 2)) {
+	if(version >= INNO_VERSION(6, 4, 0)) {
+		password_salt.resize(44); // PBKDF2 salt + iteration count + ChaCha2 base nonce
+		is.read(&password_salt[0], std::streamsize(password_salt.length()));
+	} else if(version >= INNO_VERSION(4, 2, 2)) {
 		password_salt.resize(8);
 		is.read(&password_salt[0], std::streamsize(password_salt.length()));
 		password_salt.insert(0, "PasswordCheckHash");
@@ -462,7 +477,10 @@ void header::load(std::istream & is, const version & version) {
 		compression = stored_enum<stored_compression_method_0>(is).get();
 	}
 	
-	if(version >= INNO_VERSION(5, 6, 0)) {
+	if(version >= INNO_VERSION(6, 3, 0)) {
+		architectures_allowed = 0; // see architectures_allowed_expr
+		architectures_installed_in_64bit_mode = 0; // see architectures_installed_in_64bit_mode_expr
+	} else if(version >= INNO_VERSION(5, 6, 0)) {
 		architectures_allowed = stored_flags<stored_architectures_1>(is).get();
 		architectures_installed_in_64bit_mode = stored_flags<stored_architectures_1>(is).get();
 	} else if(version >= INNO_VERSION(5, 1, 0)) {
@@ -493,7 +511,9 @@ void header::load(std::istream & is, const version & version) {
 		uninstall_display_size = 0;
 	}
 	
-	if(version == INNO_VERSION_EXT(5, 3, 10, 1) || version == INNO_VERSION_EXT(5, 4,  2, 1) || version == INNO_VERSION_EXT(5, 5, 0, 1)) {
+	if(version == INNO_VERSION_EXT(5, 3, 10, 1) ||
+	   version == INNO_VERSION_EXT(5, 4,  2, 1) ||
+	   version == INNO_VERSION_EXT(5, 5, 0, 1)) {
 		/*
 		 * This is needed to extract an Inno Setup variant (BlackBox v2?) that uses
 		 * the 5.3.10, 5.4.2 or 5.5.0 (unicode) data version string while the format differs:
@@ -505,6 +525,48 @@ void header::load(std::istream & is, const version & version) {
 		 */
 		(void)util::load<boost::uint8_t>(is);
 	}
+	
+	options |= load_flags(is, version);
+	
+	if(version < INNO_VERSION(3, 0, 4)) {
+		privileges_required = (options & AdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;
+	}
+	
+	if(version < INNO_VERSION(4, 0, 10)) {
+		show_language_dialog = (options & ShowLanguageDialog) ? Yes : No;
+		language_detection = (options & DetectLanguageUsingLocale) ? LocaleLanguage : UILanguage;
+	}
+	
+	if(version < INNO_VERSION(4, 1, 5)) {
+		compression = (options & BzipUsed) ? stream::BZip2 : stream::Zlib;
+	}
+	
+	if(version < INNO_VERSION(5, 3, 3)) {
+		disable_dir_page = (options & DisableDirPage) ? Yes : No;
+		disable_program_group_page = (options & DisableProgramGroupPage) ? Yes : No;
+	}
+	
+	if(version < INNO_VERSION(1, 3, 0)) {
+		if(license_size > 0) {
+			license_text.resize(size_t(license_size));
+			is.read(&license_text[0], license_size);
+			util::to_utf8(license_text);
+		}
+		if(info_before_size > 0) {
+			info_before.resize(size_t(info_before_size));
+			is.read(&info_before[0], info_before_size);
+			util::to_utf8(info_before);
+		}
+		if(info_after_size > 0) {
+			info_after.resize(size_t(info_after_size));
+			is.read(&info_after[0], info_after_size);
+			util::to_utf8(info_after);
+		}
+	}
+	
+}
+
+header::flags header::load_flags(std::istream & is, const version & version) {
 	
 	stored_flag_reader<flags> flagreader(is, version.bits());
 	
@@ -530,10 +592,12 @@ void header::load(std::istream & is, const version & version) {
 		flagreader.add(BackSolid);
 	}
 	flagreader.add(AlwaysUsePersonalGroup);
-	flagreader.add(WindowVisible);
-	flagreader.add(WindowShowCaption);
-	flagreader.add(WindowResizable);
-	flagreader.add(WindowStartMaximized);
+	if(version < INNO_VERSION_EXT(6, 4, 0, 1)) {
+		flagreader.add(WindowVisible);
+		flagreader.add(WindowShowCaption);
+		flagreader.add(WindowResizable);
+		flagreader.add(WindowStartMaximized);
+	}
 	flagreader.add(EnableDirDoesntExistWarning);
 	if(version < INNO_VERSION(4, 1, 2)) {
 		flagreader.add(DisableAppendDir);
@@ -565,7 +629,7 @@ void header::load(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(1, 3, 1)) {
 		flagreader.add(UsePreviousAppDir);
 	}
-	if(version >= INNO_VERSION(1, 3, 3)) {
+	if(version >= INNO_VERSION(1, 3, 3) && version < INNO_VERSION_EXT(6, 4, 0, 1)) {
 		flagreader.add(BackColorHorizontal);
 	}
 	if(version >= INNO_VERSION(1, 3, 10)) {
@@ -662,45 +726,11 @@ void header::load(std::istream & is, const version & version) {
 		flagreader.add(UsePreviousPrivileges);
 		flagreader.add(WizardResizable);
 	}
-	
-	options |= flagreader;
-	
-	if(version < INNO_VERSION(3, 0, 4)) {
-		privileges_required = (options & AdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;
+	if(version >= INNO_VERSION(6, 3, 0)) {
+		flagreader.add(UninstallLogging);
 	}
 	
-	if(version < INNO_VERSION(4, 0, 10)) {
-		show_language_dialog = (options & ShowLanguageDialog) ? Yes : No;
-		language_detection = (options & DetectLanguageUsingLocale) ? LocaleLanguage : UILanguage;
-	}
-	
-	if(version < INNO_VERSION(4, 1, 5)) {
-		compression = (options & BzipUsed) ? stream::BZip2 : stream::Zlib;
-	}
-	
-	if(version < INNO_VERSION(5, 3, 3)) {
-		disable_dir_page = (options & DisableDirPage) ? Yes : No;
-		disable_program_group_page = (options & DisableProgramGroupPage) ? Yes : No;
-	}
-	
-	if(version < INNO_VERSION(1, 3, 0)) {
-		if(license_size > 0) {
-			license_text.resize(size_t(license_size));
-			is.read(&license_text[0], license_size);
-			util::to_utf8(license_text);
-		}
-		if(info_before_size > 0) {
-			info_before.resize(size_t(info_before_size));
-			is.read(&info_before[0], info_before_size);
-			util::to_utf8(info_before);
-		}
-		if(info_after_size > 0) {
-			info_after.resize(size_t(info_after_size));
-			is.read(&info_after[0], info_after_size);
-			util::to_utf8(info_after);
-		}
-	}
-	
+	return flagreader.finalize();
 }
 
 void header::decode(util::codepage_id codepage) {
@@ -789,6 +819,10 @@ NAMES(setup::header::flags, "Setup Option",
 	"restart applications",
 	"allow network drive",
 	"force close applications",
+	"app name_has_consts",
+	"use_previous_privileges",
+	"wizard_resizable",
+	"uninstall_logging",
 	"uninstallable",
 	"disable dir page",
 	"disable program group page",
@@ -807,9 +841,10 @@ NAMES(setup::header::flags, "Setup Option",
 NAMES(setup::header::architecture_types, "Architecture",
 	"unknown",
 	"x86",
-	"amd64",
-	"IA64",
-	"ARM64",
+	"x64",
+	"Itanium",
+	"Arm32",
+	"Arm64",
 )
 
 NAMES(setup::header::privileges_required_overrides, "Privilege Override"

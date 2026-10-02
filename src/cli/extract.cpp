@@ -366,6 +366,23 @@ void print_checksum_info(const stream::file & file, const crypto::checksum * che
 	std::cout << color::dim_magenta << *checksum << color::reset;
 }
 
+void print_file_details(const extract_options & o, const stream::file & file, const stream::chunk & chunk,
+                        boost::uint64_t size, const crypto::checksum * checksum, const std::string & key) {
+	
+	if(o.list_sizes) {
+		print_size_info(file, size);
+	}
+	if(o.list_checksums) {
+		std::cout << ' ';
+		print_checksum_info(file, checksum);
+	}
+	if(chunk.encryption != stream::Plaintext && key.empty()) {
+		std::cout << " - encrypted";
+	}
+	std::cout << '\n';
+	
+}
+
 bool prompt_overwrite() {
 	return true; // TODO the user always overwrites
 }
@@ -687,7 +704,11 @@ bool print_file_info(const extract_options & o, const setup::info & info) {
 				std::cout << "Password salt: " << color::yellow
 				          << print_hex(info.header.password_salt) << color::reset;
 				if(!o.quiet) {
-					std::cout << " (hex bytes, prepended to password)";
+					if(info.header.password.type == crypto::PBKDF2_SHA256_XChaCha20) {
+						std::cout << " (PBKDF2 salt, iteration count and XChaCha base nonce)";
+					} else {
+						std::cout << " (hex bytes, prepended to password)";
+					}
 				}
 				std::cout << '\n';
 			}
@@ -998,30 +1019,25 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	
 	bool multiple_sections = print_file_info(o, info);
 	
-	std::string password;
+	std::string key;
 	if(o.password.empty()) {
 		if(!o.quiet && (o.list || o.test || o.extract) && (info.header.options & setup::header::EncryptionUsed)) {
 			log_warning << "Setup contains encrypted files, use the --password option to extract them";
 		}
 	} else {
-		util::from_utf8(o.password, password, info.codepage);
-		if(info.header.options & setup::header::Password) {
-			crypto::hasher checksum(info.header.password.type);
-			checksum.update(info.header.password_salt.c_str(), info.header.password_salt.length());
-			checksum.update(password.c_str(), password.length());
-			if(checksum.finalize() != info.header.password) {
-				if(o.check_password) {
-					throw std::runtime_error("Incorrect password provided");
-				}
-				log_error << "Incorrect password provided";
-				password.clear();
+		key = info.get_key(o.password);
+		if((info.header.options & setup::header::Password) && !info.check_key(key)) {
+			if(o.check_password) {
+				throw std::runtime_error("Incorrect password provided");
 			}
+			log_error << "Incorrect password provided";
+			key.clear();
 		}
-		#if !INNOEXTRACT_HAVE_ARC4
+		#if !INNOEXTRACT_HAVE_DECRYPTION
 		if((o.extract || o.test) && (info.header.options & setup::header::EncryptionUsed)) {
-			log_warning << "ARC4 decryption not supported in this build, skipping compressed chunks";
+			log_warning << "Decryption not supported in this build, skipping compressed chunks";
 		}
-		password.clear();
+		key.clear();
 		#endif
 	}
 	
@@ -1147,8 +1163,8 @@ void process_file(const fs::path & installer, const extract_options & o) {
 		      << ']');
 		
 		stream::chunk_reader::pointer chunk_source;
-		if((o.extract || o.test) && (chunk.first.encryption == stream::Plaintext || !password.empty())) {
-			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first, password);
+		if((o.extract || o.test) && (chunk.first.encryption == stream::Plaintext || !key.empty())) {
+			chunk_source = stream::chunk_reader::get(*slice_reader, chunk.first, key);
 		}
 		boost::uint64_t offset = 0;
 		
@@ -1178,17 +1194,25 @@ void process_file(const fs::path & installer, const extract_options & o) {
 						if(output.second != 0) {
 							continue;
 						}
+						bool mismatch = false;
 						if(output.first->entry().size != 0) {
 							if(size != 0 && size != output.first->entry().size) {
-								log_warning << "Mismatched output sizes";
+								mismatch = true;
 							}
 							size = output.first->entry().size;
 						}
 						if(output.first->entry().checksum.type != crypto::None) {
 							if(checksum && *checksum != output.first->entry().checksum) {
-								log_warning << "Mismatched output checksums";
+								mismatch = true;
 							}
 							checksum = &output.first->entry().checksum;
+						}
+						if(mismatch) {
+							// Different file even though the starting location is the same
+							if(named) {
+								print_file_details(o, file, chunk.first, size, checksum, key);
+								named = false;
+							}
 						}
 						if(named) {
 							std::cout << ", ";
@@ -1197,7 +1221,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 							named = true;
 						}
 						if(chunk.first.encryption != stream::Plaintext) {
-							if(password.empty()) {
+							if(key.empty()) {
 								std::cout << '"' << color::dim_yellow << output.first->path() << color::reset << '"';
 							} else {
 								std::cout << '"' << color::yellow << output.first->path() << color::reset << '"';
@@ -1209,17 +1233,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 					}
 					
 					if(named) {
-						if(o.list_sizes) {
-							print_size_info(file, size);
-						}
-						if(o.list_checksums) {
-							std::cout << ' ';
-							print_checksum_info(file, checksum);
-						}
-						if(chunk.first.encryption != stream::Plaintext && password.empty()) {
-							std::cout << " - encrypted";
-						}
-						std::cout << '\n';
+						print_file_details(o, file, chunk.first, size, checksum, key);
 					}
 					
 				} else {
@@ -1267,7 +1281,8 @@ void process_file(const fs::path & installer, const extract_options & o) {
 			
 			// Open output files
 			boost::ptr_vector<file_output> single_outputs;
-			std::vector<file_output *> outputs;
+			typedef std::pair<file_output *, boost::uint64_t> file_output_location;
+			std::vector<file_output_location> outputs;
 			BOOST_FOREACH(const output_location & output_loc, output_locations) {
 				const processed_file * fileinfo = output_loc.first;
 				try {
@@ -1294,9 +1309,7 @@ void process_file(const fs::path & installer, const extract_options & o) {
 						}
 					}
 					
-					outputs.push_back(output);
-					
-					output->seek(output_loc.second);
+					outputs.push_back(file_output_location(output, output_loc.second));
 					
 				} catch(boost::bad_pointer &) {
 					// should never happen
@@ -1311,7 +1324,9 @@ void process_file(const fs::path & installer, const extract_options & o) {
 				std::streamsize buffer_size = std::streamsize(boost::size(buffer));
 				std::streamsize n = file_source->read(buffer, buffer_size).gcount();
 				if(n > 0) {
-					BOOST_FOREACH(file_output * output, outputs) {
+					BOOST_FOREACH(file_output_location & out, outputs) {
+						file_output * output = out.first;
+						output->seek(out.second + output_size);
 						bool success = output->write(buffer, size_t(n));
 						if(!success) {
 							throw std::runtime_error("Error writing file \"" + output->path().string() + '"');
@@ -1333,9 +1348,10 @@ void process_file(const fs::path & installer, const extract_options & o) {
 				filetime = util::to_local_time(filetime);
 			}
 			
-			BOOST_FOREACH(file_output * output, outputs) {
+			BOOST_FOREACH(file_output_location & out, outputs) {
+				file_output * output = out.first;
 				
-				if(output->file()->is_multipart() && !output->is_complete()) {
+				if(!output || (output->file()->is_multipart() && !output->is_complete())) {
 					continue;
 				}
 				
@@ -1357,6 +1373,12 @@ void process_file(const fs::path & installer, const extract_options & o) {
 					output->close();
 					if(!util::set_file_time(output->path(), filetime, data.timestamp_nsec)) {
 						log_warning << "Error setting timestamp on file " << output->path();
+					}
+				}
+				
+				BOOST_FOREACH(file_output_location & other, outputs) {
+					if(other.first == output) {
+						other.first = NULL;
 					}
 				}
 				

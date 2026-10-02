@@ -130,7 +130,7 @@ void registry_entry::load(std::istream & is, const info & i) {
 		flagreader.add(Bits64);
 	}
 	
-	options = flagreader;
+	options = flagreader.finalize();
 }
 
 } // namespace setup

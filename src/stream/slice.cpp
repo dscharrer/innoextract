@@ -24,10 +24,16 @@
 #include <cstring>
 #include <limits>
 
+
 #include <boost/cstdint.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/range/size.hpp>
+
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 107200
+#include <boost/filesystem/directory.hpp>
+#endif
 
 #include "util/console.hpp"
 #include "util/load.hpp"

@@ -74,6 +74,14 @@ struct data_entry {
 	
 	flags options;
 	
+	enum sign_mode {
+		NoSetting,
+		Yes,
+		Once,
+		Check
+	};
+	sign_mode sign;
+	
 	/*!
 	 * Load one data entry.
 	 *
@@ -86,5 +94,6 @@ struct data_entry {
 } // namespace setup
 
 NAMED_FLAGS(setup::data_entry::flags)
+NAMED_ENUM(setup::data_entry::sign_mode)
 
 #endif // INNOEXTRACT_SETUP_DATA_HPP

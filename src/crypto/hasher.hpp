@@ -31,6 +31,7 @@
 #include "crypto/crc32.hpp"
 #include "crypto/md5.hpp"
 #include "crypto/sha1.hpp"
+#include "crypto/sha256.hpp"
 #include "util/enum.hpp"
 
 struct checksum_uninitialized_error { };
@@ -56,6 +57,7 @@ private:
 		crypto::crc32 crc32;
 		crypto::md5 md5;
 		crypto::sha1 sha1;
+		crypto::sha256 sha256;
 	};
 	
 };
