@@ -10,6 +10,11 @@ endif()
 
 project(innoextract)
 
+# Cygwin's stable Boost development package does not provide BoostConfig.cmake.
+# Use CMake's FindBoost module unless the user explicitly selected a policy.
+if(CYGWIN AND POLICY CMP0167 AND NOT DEFINED CMAKE_POLICY_DEFAULT_CMP0167)
+    cmake_policy(SET CMP0167 OLD)
+endif()
 
 # Define configuration options
 
@@ -78,7 +83,7 @@ if(DEBUG)
 endif()
 
 set(default_USE_STATIC_LIBS OFF)
-if(WIN32)
+if(WIN32 AND NOT CYGWIN)
 	set(default_USE_STATIC_LIBS ON)
 endif()
 option(USE_STATIC_LIBS       "Statically link libraries" ${default_USE_STATIC_LIBS})
@@ -143,7 +148,7 @@ include(VersionString)
 # Find required libraries
 
 # Win32 API
-if(WIN32)
+if(WIN32 AND NOT CYGWIN)
 	# Ensure we aren't using functionalities not found under Window XP SP1
 	add_definitions(-D_WIN32_WINNT=0x0502)
 	add_definitions(-DNOMINMAX)
@@ -201,7 +206,7 @@ if(Boost_HAS_STATIC_LIBS)
 			if(static)
 				use_static_libs(${Lib})
 			endif()
-			if(WIN32)
+			if(WIN32 AND NOT CYGWIN)
 				find_package(Boost COMPONENTS ${lib} QUIET)
 			endif()
 			if(Boost_${LIB}_FOUND)
@@ -222,8 +227,10 @@ if(Boost_HAS_STATIC_LIBS)
 endif()
 
 set(INNOEXTRACT_HAVE_ICONV 0)
-set(INNOEXTRACT_HAVE_WIN32_CONV 0)
-if(WIN32 AND (NOT WITH_CONV OR WITH_CONV STREQUAL "win32"))
+if(NOT CYGWIN)
+	set(INNOEXTRACT_HAVE_WIN32_CONV 0)
+endif()
+if(WIN32 AND (NOT WITH_CONV OR WITH_CONV STREQUAL "win32") AND NOT CYGWIN)
 	set(INNOEXTRACT_HAVE_WIN32_CONV 1)
 elseif(NOT WITH_CONV OR WITH_CONV STREQUAL "iconv")
 	if(STRICT_USE)
@@ -250,7 +257,7 @@ if(Boost_VERSION_MACRO LESS 104800)
 elseif(NOT CXX_STD_VERSION LESS 2011)
 	enable_cxx_version(${CXX_STD_VERSION})
 	check_cxx11("alignof" INNOEXTRACT_HAVE_ALIGNOF)
-	if(WIN32)
+	if(WIN32 AND NOT CYGWIN)
 		check_cxx11("std::codecvt_utf8_utf16" INNOEXTRACT_HAVE_STD_CODECVT_UTF8_UTF16 1600)
 	endif()
 	check_cxx11("std::unique_ptr" INNOEXTRACT_HAVE_STD_UNIQUE_PTR 1600)
@@ -264,7 +271,7 @@ endif()
 
 # Older glibc versions won't provide some useful symbols by default - request them
 # This flag is currently also set by gcc when compiling C++, but not for plain C
-if(NOT WIN32)
+if(NOT WIN32 OR CYGWIN)
 	check_symbol_exists(__GLIBC__ "features.h" HAVE_GLIBC)
 	if(HAVE_GLIBC)
 		set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE=1")
@@ -272,7 +279,7 @@ if(NOT WIN32)
 	endif()
 endif()
 
-if(WIN32)
+if(WIN32 AND NOT CYGWIN)
 	# Define this so that we don't accitenally use ANSI functions
 	add_definitions(-DUNICODE)
 	add_definitions(-D_UNICODE)
@@ -281,7 +288,7 @@ endif()
 
 # Check for optional functionality and system configuration
 
-if(NOT WIN32)
+if(NOT WIN32 OR CYGWIN)
 	
 	check_symbol_exists(isatty "unistd.h" INNOEXTRACT_HAVE_ISATTY)
 	check_symbol_exists(ioctl "sys/ioctl.h" INNOEXTRACT_HAVE_IOCTL)
@@ -477,9 +484,12 @@ set(INNOEXTRACT_SOURCES
 	src/util/types.hpp
 	src/util/unique_ptr.hpp
 	src/util/windows.hpp
-	src/util/windows.cpp if WIN32
 	
 )
+
+if(WIN32 AND NOT CYGWIN)
+	list(APPEND INNOEXTRACT_SOURCES src/util/windows.cpp)
+endif()
 
 set(UNITTEST_SOURCES
 	

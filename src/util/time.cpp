@@ -18,6 +18,10 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+#if defined(__CYGWIN__) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "util/time.hpp"
 
 #include "configure.hpp"
