@@ -10,6 +10,11 @@ endif()
 
 project(innoextract)
 
+# Cygwin's stable Boost development package does not provide BoostConfig.cmake.
+# Use CMake's FindBoost module unless the user explicitly selected a policy.
+if(CYGWIN AND POLICY CMP0167 AND NOT DEFINED CMAKE_POLICY_DEFAULT_CMP0167)
+    cmake_policy(SET CMP0167 OLD)
+endif()
 
 # Define configuration options
 
