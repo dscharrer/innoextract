@@ -1,0 +1,12 @@
+{
+  "6.2.2": "compilers/6.2.2/ISCC.exe",
+  "6.4.2": "compilers/6.4.2/ISCC.exe",
+  "6.4.3": "compilers/6.4.3/ISCC.exe",
+  "6.5.0": "compilers/6.5.0/ISCC.exe",
+  "6.5.2": "compilers/6.5.2/ISCC.exe",
+  "6.6.0": "compilers/6.6.0/ISCC.exe",
+  "6.6.1": "compilers/6.6.1/ISCC.exe",
+  "6.7.0": "compilers/6.7.0/ISCC.exe",
+  "7.1.0-x64": "compilers/7.1.0-x64/ISCC.exe",
+  "7.1.0-x86": "compilers/7.1.0-x86/ISCC.exe"
+}

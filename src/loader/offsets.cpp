@@ -142,19 +142,27 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 	checksum.init();
 	checksum.update(magic, sizeof(magic));
 	
+	// Inno 6.5 added loader table revision 2 with 64-bit offsets.
+	boost::uint32_t revision = 1;
 	if(version >= INNO_VERSION(5, 1,  5)) {
-		boost::uint32_t revision = checksum.load<boost::uint32_t>(is);
+		revision = checksum.load<boost::uint32_t>(is);
 		if(is.fail()) {
 			is.clear();
 			debug("could not read loader header revision");
 			return false;
-		} else if(revision != 1) {
+		} else if(revision != 1 && revision != 2) {
 			log_warning << "Unexpected setup loader revision: " << revision;
+			return false;
 		}
 	}
 	
-	(void)checksum.load<boost::uint32_t>(is);
-	exe_offset = checksum.load<boost::uint32_t>(is);
+	if(revision == 2) {
+		(void)checksum.load<boost::uint64_t>(is); // TotalSize
+		exe_offset = checksum.load<boost::uint64_t>(is);
+	} else {
+		(void)checksum.load<boost::uint32_t>(is);
+		exe_offset = checksum.load<boost::uint32_t>(is);
+	}
 	
 	if(version >= INNO_VERSION(4, 1, 6)) {
 		exe_compressed_size = 0;
@@ -178,8 +186,14 @@ bool offsets::load_offsets_at(std::istream & is, boost::uint32_t pos) {
 		message_offset = util::load<boost::uint32_t>(is);
 	}
 	
-	header_offset = checksum.load<boost::uint32_t>(is);
-	data_offset = checksum.load<boost::uint32_t>(is);
+	if(revision == 2) {
+		header_offset = checksum.load<boost::uint64_t>(is);
+		data_offset = checksum.load<boost::uint64_t>(is);
+		(void)checksum.load<boost::uint32_t>(is); // ReservedPadding
+	} else {
+		header_offset = checksum.load<boost::uint32_t>(is);
+		data_offset = checksum.load<boost::uint32_t>(is);
+	}
 	
 	if(is.fail()) {
 		is.clear();

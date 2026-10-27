@@ -266,6 +266,24 @@ void header::load(std::istream & is, const version & version) {
 		is >> util::binary_string(architectures_allowed_expr);
 		is >> util::binary_string(architectures_installed_in_64bit_mode_expr);
 	}
+	// Header fields added in Inno Setup 6.4.2 through 7.1.
+	close_applications_filter_excludes.clear();
+	seven_zip_library_name.clear();
+	use_previous_app_dir.clear(), use_previous_group.clear(), use_previous_setup_type.clear();
+	use_previous_tasks.clear(), use_previous_user_info.clear();
+	if(version >= INNO_VERSION(6, 4, 2)) {
+		is >> util::binary_string(close_applications_filter_excludes);
+	}
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		is >> util::binary_string(seven_zip_library_name);
+	}
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		is >> util::binary_string(use_previous_app_dir);
+		is >> util::binary_string(use_previous_group);
+		is >> util::binary_string(use_previous_setup_type);
+		is >> util::binary_string(use_previous_tasks);
+		is >> util::binary_string(use_previous_user_info);
+	}
 	if(version >= INNO_VERSION(5, 2, 5)) {
 		is >> util::ansi_string(license_text);
 		is >> util::ansi_string(info_before);
@@ -319,6 +337,7 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	directory_count = util::load<boost::uint32_t>(is, version.bits());
+	issig_key_count = version >= INNO_VERSION(6, 5, 0) ? util::load<boost::uint32_t>(is) : 0;
 	file_count = util::load<boost::uint32_t>(is, version.bits());
 	data_entry_count = util::load<boost::uint32_t>(is, version.bits());
 	icon_count = util::load<boost::uint32_t>(is, version.bits());
@@ -338,6 +357,8 @@ void header::load(std::istream & is, const version & version) {
 		info_after_size = util::load<boost::int32_t>(is, version.bits());
 	}
 	
+	compiled_code_version = version >= INNO_VERSION(7, 0, 0)
+	                      ? util::load<boost::uint32_t>(is) : 0;
 	winver.load(is, version);
 	
 	if(version < INNO_VERSION_EXT(6, 4, 0, 1)) {
@@ -362,7 +383,8 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	if(version >= INNO_VERSION(6, 0, 0)) {
-		wizard_style = stored_enum<stored_setup_style>(is).get();
+		wizard_style = version < INNO_VERSION(6, 6, 0)
+		             ? stored_enum<stored_setup_style>(is).get() : ClassicStyle;
 		wizard_resize_percent_x = util::load<boost::uint32_t>(is);
 		wizard_resize_percent_y = util::load<boost::uint32_t>(is);
 	} else {
@@ -371,36 +393,66 @@ void header::load(std::istream & is, const version & version) {
 		wizard_resize_percent_y = 0;
 	}
 	
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		(void)util::load<boost::uint8_t>(is); // WizardDarkStyle
+	}
 	if(version >= INNO_VERSION(5, 5, 7)) {
 		image_alpha_format = stored_enum<stored_alpha_format>(is).get();
 	} else {
 		image_alpha_format = AlphaIgnored;
 	}
 	
-	if(version >= INNO_VERSION(6, 4, 0)) {
-		is.read(password.sha256, 4);
-		password.type = crypto::PBKDF2_SHA256_XChaCha20;
-	} else if(version >= INNO_VERSION(5, 3, 9)) {
-		is.read(password.sha1, std::streamsize(sizeof(password.sha1)));
-		password.type = crypto::SHA1;
-	} else if(version >= INNO_VERSION(4, 2, 0)) {
-		is.read(password.md5, std::streamsize(sizeof(password.md5)));
-		password.type = crypto::MD5;
-	} else {
-		password.crc32 = util::load<boost::uint32_t>(is);
-		password.type = crypto::CRC32;
+	if(version >= INNO_VERSION(6, 5, 2)) {
+		image_back_color = util::load<boost::uint32_t>(is);
+		small_image_back_color = util::load<boost::uint32_t>(is);
 	}
-	if(version >= INNO_VERSION(6, 4, 0)) {
-		password_salt.resize(44); // PBKDF2 salt + iteration count + ChaCha2 base nonce
-		is.read(&password_salt[0], std::streamsize(password_salt.length()));
-	} else if(version >= INNO_VERSION(4, 2, 2)) {
-		password_salt.resize(8);
-		is.read(&password_salt[0], std::streamsize(password_salt.length()));
-		password_salt.insert(0, "PasswordCheckHash");
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		back_color = util::load<boost::uint32_t>(is);
+	}
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		(void)util::load<boost::uint32_t>(is); // dark image background
+		(void)util::load<boost::uint32_t>(is); // dark small-image background
+	}
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		(void)util::load<boost::uint32_t>(is); // dark wizard background
+	}
+	if(version >= INNO_VERSION(6, 6, 1)) {
+		(void)util::load<boost::uint8_t>(is); // WizardImageOpacity
+	}
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		(void)util::load<boost::uint8_t>(is); // WizardBackImageOpacity
+		(void)util::load<boost::uint8_t>(is); // WizardLightControlStyling
+	}
+	if(version < INNO_VERSION(6, 5, 0)) {
+		if(version >= INNO_VERSION(6, 4, 0)) {
+			is.read(password.sha256, 4);
+			password.type = crypto::PBKDF2_SHA256_XChaCha20;
+		} else if(version >= INNO_VERSION(5, 3, 9)) {
+			is.read(password.sha1, std::streamsize(sizeof(password.sha1)));
+			password.type = crypto::SHA1;
+		} else if(version >= INNO_VERSION(4, 2, 0)) {
+			is.read(password.md5, std::streamsize(sizeof(password.md5)));
+			password.type = crypto::MD5;
+		} else {
+			password.crc32 = util::load<boost::uint32_t>(is);
+			password.type = crypto::CRC32;
+		}
+		if(version >= INNO_VERSION(6, 4, 0)) {
+			password_salt.resize(44); // PBKDF2 salt + iteration count + ChaCha2 base nonce
+			is.read(&password_salt[0], std::streamsize(password_salt.length()));
+		} else if(version >= INNO_VERSION(4, 2, 2)) {
+			password_salt.resize(8);
+			is.read(&password_salt[0], std::streamsize(password_salt.length()));
+			password_salt.insert(0, "PasswordCheckHash");
+		} else {
+			password_salt.clear();
+		}
 	} else {
+		// Inno 6.5 moved this data outside the compressed header.
+		password.type = crypto::None;
 		password_salt.clear();
 	}
-	
+
 	if(version >= INNO_VERSION(4, 0, 0)) {
 		extra_disk_space_required = util::load<boost::int64_t>(is);
 		slices_per_disk = util::load<boost::uint32_t>(is);
@@ -527,6 +579,9 @@ void header::load(std::istream & is, const version & version) {
 	}
 	
 	options |= load_flags(is, version);
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		wizard_style = (options & WizardModern) ? ModernStyle : ClassicStyle;
+	}
 	
 	if(version < INNO_VERSION(3, 0, 4)) {
 		privileges_required = (options & AdminPrivilegesRequired) ? AdminPriviliges : NoPrivileges;
@@ -626,19 +681,20 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(1, 3, 0) && version < INNO_VERSION(5, 3, 8)) {
 		flagreader.add(CreateUninstallRegKey);
 	}
-	if(version >= INNO_VERSION(1, 3, 1)) {
+	if(version >= INNO_VERSION(1, 3, 1) && version < INNO_VERSION(6, 7, 0)) {
 		flagreader.add(UsePreviousAppDir);
 	}
 	if(version >= INNO_VERSION(1, 3, 3) && version < INNO_VERSION_EXT(6, 4, 0, 1)) {
 		flagreader.add(BackColorHorizontal);
 	}
-	if(version >= INNO_VERSION(1, 3, 10)) {
+	if(version >= INNO_VERSION(1, 3, 10) && version < INNO_VERSION(6, 7, 0)) {
 		flagreader.add(UsePreviousGroup);
 	}
 	if(version >= INNO_VERSION(1, 3, 20)) {
 		flagreader.add(UpdateUninstallLogAppName);
 	}
-	if(version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 10))) {
+	if((version >= INNO_VERSION(2, 0, 0) || (version.is_isx() && version >= INNO_VERSION(1, 3, 10)))
+	   && version < INNO_VERSION(6, 7, 0)) {
 		flagreader.add(UsePreviousSetupType);
 	}
 	if(version >= INNO_VERSION(2, 0, 0)) {
@@ -646,7 +702,7 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 		flagreader.add(AlwaysShowComponentsList);
 		flagreader.add(FlatComponentsList);
 		flagreader.add(ShowComponentSizes);
-		flagreader.add(UsePreviousTasks);
+		if(version < INNO_VERSION(6, 7, 0)) { flagreader.add(UsePreviousTasks); }
 		flagreader.add(DisableReadyPage);
 	}
 	if(version >= INNO_VERSION(2, 0, 7)) {
@@ -661,7 +717,7 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 	}
 	if(version >= INNO_VERSION(3, 0, 0)) {
 		flagreader.add(UserInfoPage);
-		flagreader.add(UsePreviousUserInfo);
+		if(version < INNO_VERSION(6, 7, 0)) { flagreader.add(UsePreviousUserInfo); }
 	}
 	if(version >= INNO_VERSION(3, 0, 1)) {
 		flagreader.add(UninstallRestartComputer);
@@ -690,7 +746,7 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 		flagreader.add(AppendDefaultDirName);
 		flagreader.add(AppendDefaultGroupName);
 	}
-	if(version >= INNO_VERSION(4, 2, 2)) {
+	if(version >= INNO_VERSION(4, 2, 2) && version < INNO_VERSION(6, 5, 0)) {
 		flagreader.add(EncryptionUsed);
 	}
 	if(version >= INNO_VERSION(5, 0, 4) && version < INNO_VERSION(5, 6, 1)) {
@@ -724,17 +780,35 @@ header::flags header::load_flags(std::istream & is, const version & version) {
 	if(version >= INNO_VERSION(6, 0, 0)) {
 		flagreader.add(AppNameHasConsts);
 		flagreader.add(UsePreviousPrivileges);
-		flagreader.add(WizardResizable);
+		if(version < INNO_VERSION(6, 6, 0)) { flagreader.add(WizardResizable); }
 	}
 	if(version >= INNO_VERSION(6, 3, 0)) {
 		flagreader.add(UninstallLogging);
 	}
 	
-	return flagreader.finalize();
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		flagreader.add(WizardModern);
+		flagreader.add(WizardBorderStyled);
+		flagreader.add(WizardKeepAspectRatio);
+		if(version < INNO_VERSION(6, 7, 0)) {
+			flagreader.add(WizardLightButtonsUnstyled);
+		} else {
+			flagreader.add(RedirectionGuard);
+			flagreader.add(WizardBevelsHidden);
+		}
+	}
+	return flagreader.finalize(version >= INNO_VERSION(6, 7, 0) ? 8 : 0);
 }
 
 void header::decode(util::codepage_id codepage) {
 	
+	util::to_utf8(close_applications_filter_excludes, codepage);
+	util::to_utf8(seven_zip_library_name, codepage);
+	util::to_utf8(use_previous_app_dir, codepage);
+	util::to_utf8(use_previous_group, codepage);
+	util::to_utf8(use_previous_setup_type, codepage);
+	util::to_utf8(use_previous_tasks, codepage);
+	util::to_utf8(use_previous_user_info, codepage);
 	util::to_utf8(app_name, codepage);
 	util::to_utf8(app_versioned_name, codepage);
 	util::to_utf8(app_id, codepage);
@@ -823,6 +897,12 @@ NAMES(setup::header::flags, "Setup Option",
 	"use_previous_privileges",
 	"wizard_resizable",
 	"uninstall_logging",
+	"wizard modern",
+	"wizard border styled",
+	"wizard keep aspect ratio",
+	"wizard light buttons unstyled",
+	"redirection guard",
+	"wizard bevels hidden",
 	"uninstallable",
 	"disable dir page",
 	"disable program group page",

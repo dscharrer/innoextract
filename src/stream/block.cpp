@@ -20,6 +20,8 @@
 
 #include "stream/block.hpp"
 
+#include <limits>
+
 #include <cstring>
 #include <string>
 #include <istream>
@@ -158,12 +160,15 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 	crypto::crc32 actual_checksum;
 	actual_checksum.init();
 	
-	boost::uint32_t stored_size;
+	boost::uint64_t stored_size;
 	block_compression compression;
 	
 	if(version >= INNO_VERSION(4, 0, 9)) {
 		
-		stored_size = actual_checksum.load<boost::uint32_t>(base);
+		// Inno 6.7 uses an Int64 compressed-header StoredSize.
+		stored_size = version >= INNO_VERSION(6, 7, 0)
+		            ? actual_checksum.load<boost::uint64_t>(base)
+		            : actual_checksum.load<boost::uint32_t>(base);
 		boost::uint8_t compressed = actual_checksum.load<boost::uint8_t>(base);
 		
 		compression = compressed ? (version >= INNO_VERSION(4, 1, 6) ? LZMA1 : Zlib) : Stored;
@@ -187,6 +192,10 @@ block_reader::pointer block_reader::get(std::istream & base, const setup::versio
 		throw block_error("block header CRC32 mismatch");
 	}
 	
+	if(stored_size > boost::uint64_t(std::numeric_limits<std::streamoff>::max())) {
+		throw block_error("invalid stored block size");
+	}
+
 	debug("[block] size: " << stored_size << "  compression: " << compression);
 	
 	util::unique_ptr<io::filtering_istream>::type fis(new io::filtering_istream);

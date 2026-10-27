@@ -236,10 +236,17 @@ public:
 		pos = (pos + 1) % stored_bits;
 	}
 	
-	flag_type finalize() const {
+	flag_type finalize(size_t minimum_bytes = 0) const {
+		size_t consumed = bytes;
 		if(bytes == 3 && pad_bits == 32) {
 			// 3-byte sets are padded to 4 bytes
 			(void)util::load<stored_type>(stream);
+			consumed++;
+		}
+		// Inno 6.7 pads shared header/file sets to 8 bytes on x86 and x64.
+		while(consumed < minimum_bytes) {
+			(void)util::load<stored_type>(stream);
+			consumed++;
 		}
 		return result;
 	}

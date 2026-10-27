@@ -88,6 +88,7 @@ struct registry_entry : public item {
 	
 	value_type type;
 	
+	boost::uint8_t bitness;
 	flags options;
 	
 	void load(std::istream & is, const info & i);

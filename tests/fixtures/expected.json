@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "profiles": {
+    "single": [
+      {
+        "path": "app/hello.txt",
+        "bytes": 38,
+        "sha256": "18ce5722e126cbe6a756258767531a02ece36ac6504ae193e01acc081b25148c"
+      },
+      {
+        "path": "app/nested/data.bin",
+        "bytes": 8192,
+        "sha256": "3b1ca569e7021f5d25ed0b9b92dabe731b87b225ddcfb522448db79ac02e2474"
+      },
+      {
+        "path": "app/unicod\u00e9/na\u00efve.txt",
+        "bytes": 57,
+        "sha256": "edd03747611f3f93e25d7f75c927d87c0ac9b2daeecbe09dd00add612cfb1590"
+      },
+      {
+        "path": "app/architecture32.txt",
+        "bytes": 38,
+        "sha256": "18ce5722e126cbe6a756258767531a02ece36ac6504ae193e01acc081b25148c"
+      },
+      {
+        "path": "app/architecture64.txt",
+        "bytes": 38,
+        "sha256": "18ce5722e126cbe6a756258767531a02ece36ac6504ae193e01acc081b25148c"
+      }
+    ],
+    "spanning": [
+      {
+        "path": "app/hello.txt",
+        "bytes": 38,
+        "sha256": "18ce5722e126cbe6a756258767531a02ece36ac6504ae193e01acc081b25148c"
+      },
+      {
+        "path": "app/nested/data.bin",
+        "bytes": 9000000,
+        "sha256": "b2f9bbee05c6c3e574fea9dd8f903ef9cd0bd8dfcf1826ace2e932e4b1c96b3b"
+      },
+      {
+        "path": "app/unicod\u00e9/na\u00efve.txt",
+        "bytes": 57,
+        "sha256": "edd03747611f3f93e25d7f75c927d87c0ac9b2daeecbe09dd00add612cfb1590"
+      },
+      {
+        "path": "app/architecture32.txt",
+        "bytes": 38,
+        "sha256": "18ce5722e126cbe6a756258767531a02ece36ac6504ae193e01acc081b25148c"
+      },
+      {
+        "path": "app/architecture64.txt",
+        "bytes": 38,
+        "sha256": "18ce5722e126cbe6a756258767531a02ece36ac6504ae193e01acc081b25148c"
+      }
+    ]
+  }
+}

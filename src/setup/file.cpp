@@ -91,7 +91,22 @@ void file_entry::load(std::istream & is, const info & i) {
 	}
 	
 	load_condition_data(is, i);
-	
+	// Inno 6.5 appends download/archive and verification fields.
+	excludes.clear(), download_issig_source.clear(), download_user.clear();
+	download_password.clear(), archive_password.clear();
+	external_verification_keys.clear(), external_verification_hash.clear();
+	external_verification_type = 0;
+	if(i.version >= INNO_VERSION(6, 5, 0)) {
+		is >> util::encoded_string(excludes, i.codepage);
+		is >> util::encoded_string(download_issig_source, i.codepage);
+		is >> util::encoded_string(download_user, i.codepage);
+		is >> util::encoded_string(download_password, i.codepage);
+		is >> util::encoded_string(archive_password, i.codepage);
+		is >> util::binary_string(external_verification_keys);
+		external_verification_hash.resize(32);
+		is.read(&external_verification_hash[0], 32);
+		external_verification_type = util::load<boost::uint8_t>(is);
+	}
 	load_version_data(is, i.version);
 	
 	location = util::load<boost::uint32_t>(is, i.version.bits());
@@ -115,6 +130,7 @@ void file_entry::load(std::istream & is, const info & i) {
 		permission = boost::int16_t(-1);
 	}
 	
+	bitness = i.version >= INNO_VERSION(7, 0, 0) ? util::load<boost::uint8_t>(is) : 0;
 	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
 	flagreader.add(ConfirmOverwrite);
@@ -177,7 +193,7 @@ void file_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(5, 1, 0)) {
 		flagreader.add(CreateAllSubDirs);
 	}
-	if(i.version >= INNO_VERSION(5, 1, 2)) {
+	if(i.version >= INNO_VERSION(5, 1, 2) && i.version < INNO_VERSION(7, 0, 0)) {
 		flagreader.add(Bits32);
 		flagreader.add(Bits64);
 	}
@@ -190,7 +206,13 @@ void file_entry::load(std::istream & is, const info & i) {
 		flagreader.add(GacInstall);
 	}
 	
-	options |= flagreader.finalize();
+	if(i.version >= INNO_VERSION(6, 5, 0)) {
+		flagreader.add(Download);
+		flagreader.add(ExtractArchive);
+	}
+	options |= flagreader.finalize(i.version >= INNO_VERSION(6, 7, 0) ? 8 : 0);
+	if(bitness == 1) { options |= Bits32; }
+	if(bitness == 2) { options |= Bits64; }
 	
 	if(i.version.bits() == 16 || i.version >= INNO_VERSION(5, 0, 0)) {
 		type = stored_enum<stored_file_type_0>(is).get();
@@ -239,6 +261,8 @@ NAMES(setup::file_entry::flags, "File Option",
 	"set ntfs compression",
 	"unset ntfs compression",
 	"gac install",
+	"download",
+	"extract archive",
 	"readme",
 )
 

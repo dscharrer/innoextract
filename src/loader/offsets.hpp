@@ -60,7 +60,7 @@ struct offsets {
 	 *
 	 * A value of \c 0 means there is no setup.e32 embedded in this file
 	 */
-	boost::uint32_t exe_offset;
+	boost::uint64_t exe_offset;
 	
 	/*!
 	 * Size of `setup.e32` after compression, in bytes
@@ -93,7 +93,7 @@ struct offsets {
 	 *
 	 * Loading the version and headers is done in \ref setup::info.
 	 */
-	boost::uint32_t header_offset;
+	boost::uint64_t header_offset;
 	
 	/*!
 	 * Offset of embedded `setup-1.bin` data
@@ -109,7 +109,7 @@ struct offsets {
 	 * The layout of the chunks and files is stored in the \ref setup::data_entry headers
 	 * while the \ref setup::file_entry headers provide the filenames and meta information.
 	 */
-	boost::uint32_t data_offset;
+	boost::uint64_t data_offset;
 	
 	/*!
 	 * \brief Find the setup loader offsets in a file

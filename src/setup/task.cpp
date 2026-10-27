@@ -46,7 +46,8 @@ void task_entry::load(std::istream & is, const info & i) {
 		check.clear();
 	}
 	if(i.version >= INNO_VERSION(4, 0, 0) || (i.version.is_isx() && i.version >= INNO_VERSION(3, 0, 3))) {
-		level = util::load<boost::int32_t>(is);
+		level = i.version >= INNO_VERSION(6, 7, 0)
+		      ? util::load<boost::uint8_t>(is) : util::load<boost::int32_t>(is);
 	} else {
 		level = 0;
 	}

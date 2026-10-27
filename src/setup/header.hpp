@@ -102,6 +102,12 @@ struct header {
 		UsePreviousPrivileges,
 		WizardResizable,
 		UninstallLogging,
+		WizardModern,
+		WizardBorderStyled,
+		WizardKeepAspectRatio,
+		WizardLightButtonsUnstyled,
+		RedirectionGuard,
+		WizardBevelsHidden,
 		
 		// Obsolete flags
 		Uninstallable,
@@ -167,6 +173,10 @@ struct header {
 	std::string changes_associations;
 	std::string architectures_allowed_expr;
 	std::string architectures_installed_in_64bit_mode_expr;
+	std::string close_applications_filter_excludes;
+	std::string seven_zip_library_name;
+	std::string use_previous_app_dir, use_previous_group, use_previous_setup_type;
+	std::string use_previous_tasks, use_previous_user_info;
 	std::string license_text;
 	std::string info_before;
 	std::string info_after;
@@ -182,6 +192,7 @@ struct header {
 	size_t component_count;
 	size_t task_count;
 	size_t directory_count;
+	size_t issig_key_count;
 	size_t file_count;
 	size_t data_entry_count;
 	size_t icon_count;
@@ -192,6 +203,7 @@ struct header {
 	size_t run_entry_count;
 	size_t uninstall_run_entry_count;
 	
+	boost::uint32_t compiled_code_version;
 	windows_version_range winver;
 	
 	typedef boost::uint32_t Color;

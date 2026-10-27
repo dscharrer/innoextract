@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "inno-6.2.2",
+      "version": "6.2.2",
+      "compiler": "6.2.2",
+      "architecture": "x86",
+      "spanning": false,
+      "dataSignature": "Inno Setup Setup Data (6.1.0) (u)"
+    },
+    {
+      "id": "inno-6.4.2",
+      "version": "6.4.2",
+      "compiler": "6.4.2",
+      "architecture": "x86",
+      "spanning": false,
+      "dataSignature": "Inno Setup Setup Data (6.4.2)"
+    },
+    {
+      "id": "inno-6.4.3",
+      "version": "6.4.3",
+      "compiler": "6.4.3",
+      "architecture": "x86",
+      "spanning": false,
+      "dataSignature": "Inno Setup Setup Data (6.4.3)"
+    },
+    {
+      "id": "inno-6.5.0",
+      "version": "6.5.0",
+      "compiler": "6.5.0",
+      "architecture": "x86",
+      "spanning": false,
+      "dataSignature": "Inno Setup Setup Data (6.5.0)"
+    },
+    {
+      "id": "inno-6.5.2",
+      "version": "6.5.2",
+      "compiler": "6.5.2",
+      "architecture": "x86",
+      "spanning": false,
+      "dataSignature": "Inno Setup Setup Data (6.5.2)"
+    },
+    {
+      "id": "inno-6.6.0",
+      "version": "6.6.0",
+      "compiler": "6.6.0",
+      "architecture": "x86",
+      "spanning": false,
+      "dataSignature": "Inno Setup Setup Data (6.6.0)"
+    },
+    {
+      "id": "inno-6.6.1",
+      "version": "6.6.1",
+      "compiler": "6.6.1",
+      "architecture": "x86",
+      "spanning": false,
+      "dataSignature": "Inno Setup Setup Data (6.6.1)"
+    },
+    {
+      "id": "inno-6.7.0",
+      "version": "6.7.0",
+      "compiler": "6.7.0",
+      "architecture": "x86",
+      "spanning": false,
+      "dataSignature": "Inno Setup Setup Data (6.7.0)"
+    },
+    {
+      "id": "inno-7.1.0-x86",
+      "version": "7.1.0",
+      "compiler": "7.1.0-x86",
+      "architecture": "x86",
+      "spanning": false,
+      "dataSignature": "Inno Setup Setup Data (7.0.0.3)"
+    },
+    {
+      "id": "inno-7.1.0-x64",
+      "version": "7.1.0",
+      "compiler": "7.1.0-x64",
+      "architecture": "x64",
+      "spanning": false,
+      "dataSignature": "Inno Setup Setup Data (7.0.0.3)"
+    },
+    {
+      "id": "inno-6.5.2-spanning",
+      "version": "6.5.2",
+      "compiler": "6.5.2",
+      "architecture": "x86",
+      "spanning": true,
+      "dataSignature": "Inno Setup Setup Data (6.5.2)"
+    },
+    {
+      "id": "inno-7.1.0-spanning",
+      "version": "7.1.0",
+      "compiler": "7.1.0-x64",
+      "architecture": "x64",
+      "spanning": true,
+      "dataSignature": "Inno Setup Setup Data (7.0.0.3)"
+    }
+  ]
+}
