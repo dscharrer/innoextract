@@ -103,6 +103,7 @@ void registry_entry::load(std::istream & is, const info & i) {
 		type = stored_enum<stored_registry_entry_type_0>(is).get();
 	}
 	
+	bitness = i.version >= INNO_VERSION(7, 0, 0) ? util::load<boost::uint8_t>(is) : 0;
 	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
 	if(i.version.bits() != 16) {
@@ -125,12 +126,14 @@ void registry_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(1, 3, 16)) {
 		flagreader.add(DontCreateKey);
 	}
-	if(i.version >= INNO_VERSION(5, 1, 0)) {
+	if(i.version >= INNO_VERSION(5, 1, 0) && i.version < INNO_VERSION(7, 0, 0)) {
 		flagreader.add(Bits32);
 		flagreader.add(Bits64);
 	}
 	
 	options = flagreader.finalize();
+	if(bitness == 1) { options |= Bits32; }
+	if(bitness == 2) { options |= Bits64; }
 }
 
 } // namespace setup

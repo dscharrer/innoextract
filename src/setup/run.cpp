@@ -68,6 +68,10 @@ void run_entry::load(std::istream & is, const info & i) {
 	}
 	
 	load_condition_data(is, i);
+	on_log.clear();
+	if(i.version >= INNO_VERSION(7, 0, 0)) {
+		is >> util::encoded_string(on_log, i.codepage);
+	}
 	
 	load_version_data(is, i.version);
 	
@@ -79,6 +83,7 @@ void run_entry::load(std::istream & is, const info & i) {
 	
 	wait = stored_enum<stored_run_wait_condition>(is).get();
 	
+	bitness = i.version >= INNO_VERSION(7, 0, 0) ? util::load<boost::uint8_t>(is) : 0;
 	stored_flag_reader<flags> flagreader(is, i.version.bits());
 	
 	if(i.version >= INNO_VERSION(1, 2, 3)) {
@@ -96,7 +101,7 @@ void run_entry::load(std::istream & is, const info & i) {
 	if(i.version >= INNO_VERSION(2, 0, 8)) {
 		flagreader.add(HideWizard);
 	}
-	if(i.version >= INNO_VERSION(5, 1, 10)) {
+	if(i.version >= INNO_VERSION(5, 1, 10) && i.version < INNO_VERSION(7, 0, 0)) {
 		flagreader.add(Bits32);
 		flagreader.add(Bits64);
 	}
@@ -111,6 +116,8 @@ void run_entry::load(std::istream & is, const info & i) {
 	}
 	
 	options = flagreader.finalize();
+	if(bitness == 1) { options |= Bits32; }
+	if(bitness == 2) { options |= Bits64; }
 }
 
 } // namespace setup

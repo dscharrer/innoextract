@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "compilers": {
+    "6.2.2": {
+      "version": "6.2.2",
+      "compilerSha256": "29856cf82d9a993afd7da8f99fb89f24d65ce3271c5b042cf387257c8fd7660f",
+      "package": {
+        "filename": "innosetup-6.2.2.exe",
+        "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_2_2/innosetup-6.2.2.exe",
+        "sha256": "8117d10d00a2ad33a1390978ea3872861c330e087914410a6377b22c4c5b8563"
+      }
+    },
+    "6.4.2": {
+      "version": "6.4.2",
+      "compilerSha256": "8a84f6bd49ddf40f42ff82b2a58a0181f42824fbf77353d5554fe59017a7b587",
+      "package": {
+        "filename": "innosetup-6.4.2.exe",
+        "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_4_2/innosetup-6.4.2.exe",
+        "sha256": "238e2cf82c212a3879a050e02d787283c54bcb72d5cb6070830942de56627d5b"
+      }
+    },
+    "6.4.3": {
+      "version": "6.4.3",
+      "compilerSha256": "8a430b74fd1ecef5651f514a62b5341b0c65e1a53ffe5ba33cc26cf57e67029f",
+      "package": {
+        "filename": "innosetup-6.4.3.exe",
+        "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_4_3/innosetup-6.4.3.exe",
+        "sha256": "f3c42116542c4cc57263c5ba6c4feabfc49fe771f2f98a79d2f7628b8762723b"
+      }
+    },
+    "6.5.0": {
+      "version": "6.5.0",
+      "compilerSha256": "caa365437106febe79cfab0f65ddc4187a619d2d0fc273aa36f877a2a128643c",
+      "package": {
+        "filename": "innosetup-6.5.0.exe",
+        "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_5_0/innosetup-6.5.0.exe",
+        "sha256": "79b7a1063b3888bb8eceb44a8c28e90ccdaa22ac71f9272de1dac79b42941dbd"
+      }
+    },
+    "6.5.2": {
+      "version": "6.5.2",
+      "compilerSha256": "66c13d79c2da44e6451184cf30d381a4962e18dce16cd92449c971650cd14c7c",
+      "package": {
+        "filename": "innosetup-6.5.2.exe",
+        "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_5_2/innosetup-6.5.2.exe",
+        "sha256": "8582879760b6e0e42e00f2e28ce904afac0d739941a130d3da3573c3cbf2d75b"
+      }
+    },
+    "6.6.0": {
+      "version": "6.6.0",
+      "compilerSha256": "7e52a23553490619ba57c726d980a953480bcabe25f4ff2de72d14fc828db007",
+      "package": {
+        "filename": "innosetup-6.6.0.exe",
+        "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_6_0/innosetup-6.6.0.exe",
+        "sha256": "fa39687070ba17cf1c6a179f8671af73375254b63e97948e6b9532fc46302cec"
+      }
+    },
+    "6.6.1": {
+      "version": "6.6.1",
+      "compilerSha256": "f8deb3e9e54303c178fd3513357ebc4d580a63bd072e24c221442b06f884b8fc",
+      "package": {
+        "filename": "innosetup-6.6.1.exe",
+        "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_6_1/innosetup-6.6.1.exe",
+        "sha256": "d243ce440c02705530699554fb9612b9b2bd7a2a90629cdb7f41e66f5faeb91f"
+      }
+    },
+    "6.7.0": {
+      "version": "6.7.0",
+      "compilerSha256": "a7472a35be9cd63da59e54c2622a0d8b048ab2ec85382e2b2d47a5a79dbf9bef",
+      "package": {
+        "filename": "innosetup-6.7.0.exe",
+        "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_7_0/innosetup-6.7.0.exe",
+        "sha256": "f45c7d68d1e660cf13877ec36738a5179ce72a33414f9959d35e99b68c52a697"
+      }
+    },
+    "7.1.0-x64": {
+      "version": "7.1.0",
+      "compilerSha256": "d06ebd38f38e3cee60a3c50cc45bd449d77e0bc6a5cabc607ea9886808e4de1a",
+      "package": {
+        "filename": "innosetup-7.1.0-x64.exe",
+        "url": "https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-7.1.0-x64.exe",
+        "sha256": "0362a383ed217d4c4239b5933866dd96d3eb2102737da92f80f6057a4b40df2f"
+      }
+    },
+    "7.1.0-x86": {
+      "version": "7.1.0",
+      "compilerSha256": "f87212f64f08e0b57b53829c7441719cda73dffbfcfdcf851031b74ee0f9f2f8",
+      "package": {
+        "filename": "innosetup-7.1.0-x86.exe",
+        "url": "https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-7.1.0-x86.exe",
+        "sha256": "f9671174e0d15ba9b4f6b56564c6aed32ea8db9c3cb9bf6f2af0850fe7894f60"
+      }
+    }
+  }
+}

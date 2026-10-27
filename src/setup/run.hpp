@@ -67,6 +67,8 @@ struct run_entry : public item {
 	std::string status_message;
 	std::string verb;
 	std::string description;
+	std::string on_log;
+	boost::uint8_t bitness;
 	
 	int show_command;
 	

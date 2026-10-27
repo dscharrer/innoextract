@@ -46,6 +46,8 @@
 #include "setup/task.hpp"
 #include "setup/type.hpp"
 #include "stream/block.hpp"
+#include "crypto/crc32.hpp"
+#include <cstring>
 #include "util/endian.hpp"
 #include "util/fstream.hpp"
 #include "util/load.hpp"
@@ -79,7 +81,10 @@ void load_wizard_images(std::istream & is, const setup::version & version,
 	
 	size_t count = 1;
 	if(version >= INNO_VERSION(5, 6, 0)) {
-		count = util::load<boost::uint32_t>(is);
+		boost::int32_t value = util::load<boost::int32_t>(is);
+		if(value == -1 && version >= INNO_VERSION(6, 7, 0)) { return; }
+		if(value < 0) { throw std::ios_base::failure("invalid wizard image count"); }
+		count = size_t(value);
 	}
 	
 	if(entries & (info::WizardImages | info::NoSkip)) {
@@ -111,6 +116,18 @@ void load_wizard_and_decompressor(std::istream & is, const setup::version & vers
 		load_wizard_images(is, version, info.wizard_images_small, entries);
 	}
 	
+	// Inno 6.6 added dark image sets; 6.7 also added background sets.
+	std::vector<std::string> unused_images;
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		load_wizard_images(is, version, unused_images, info::entry_types(0));
+	}
+	if(version >= INNO_VERSION(6, 6, 0)) {
+		load_wizard_images(is, version, unused_images, info::entry_types(0));
+		load_wizard_images(is, version, unused_images, info::entry_types(0));
+	}
+	if(version >= INNO_VERSION(6, 7, 0)) {
+		load_wizard_images(is, version, unused_images, info::entry_types(0));
+	}
 	info.decompressor_dll.clear();
 	if(header.compression == stream::BZip2
 	   || (header.compression == stream::LZMA1 && version == INNO_VERSION(4, 1, 5))
@@ -123,6 +140,9 @@ void load_wizard_and_decompressor(std::istream & is, const setup::version & vers
 		}
 	}
 	
+	if(version >= INNO_VERSION(6, 5, 0) && !header.seven_zip_library_name.empty()) {
+		util::binary_string::skip(is); // optional embedded archive extractor
+	}
 	info.decrypt_dll.clear();
 	if((header.options & header::EncryptionUsed) && version < INNO_VERSION(6, 4, 0)) {
 		if(entries & (info::DecryptDll | info::NoSkip)) {
@@ -153,10 +173,38 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 		entries |= Languages;
 	}
 	
+	// Inno 6.5 moved encryption settings into a CRC-protected
+	// 49-byte record before the primary compressed stream.
+	boost::uint8_t encryption_use = 0;
+	crypto::checksum encryption_password = {};
+	std::string encryption_salt;
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		boost::uint32_t expected_crc = util::load<boost::uint32_t>(is);
+		char data[49] = { 0 };
+		is.read(data, sizeof(data));
+		crypto::crc32 crc;
+		crc.init(), crc.update(data, sizeof(data));
+		if(is.fail() || crc.finalize() != expected_crc) {
+			throw std::ios_base::failure("encryption header CRC32 mismatch");
+		}
+		encryption_use = boost::uint8_t(data[0]);
+		if(encryption_use > 2) { throw std::ios_base::failure("unknown encryption mode"); }
+		if(encryption_use == 2) {
+			throw std::ios_base::failure("encrypted setup headers are not supported");
+		}
+		encryption_salt.assign(data + 1, 44);
+		encryption_password.type = crypto::PBKDF2_SHA256_XChaCha20;
+		std::memcpy(encryption_password.sha256, data + 45, 4);
+	}
 	stream::block_reader::pointer reader = stream::block_reader::get(is, version);
 	
 	debug("loading main header");
 	header.load(*reader, version);
+	if(version >= INNO_VERSION(6, 5, 0)) {
+		header.password = encryption_password;
+		header.password_salt = encryption_salt;
+		if(encryption_use != 0) { header.options |= header::EncryptionUsed; }
+	}
 	
 	debug("loading languages");
 	load_entries(*reader, entries, header.language_count, languages, Languages);
@@ -204,6 +252,10 @@ void info::try_load(std::istream & is, entry_types entries, util::codepage_id fo
 	load_entries(*reader, entries, header.task_count, tasks, Tasks);
 	debug("loading directories");
 	load_entries(*reader, entries, header.directory_count, directories, Directories);
+	// ISSig public keys describe external downloads, not embedded payloads.
+	for(size_t k = 0; k < header.issig_key_count; ++k) {
+		for(size_t field = 0; field < 3; ++field) { util::binary_string::skip(*reader); }
+	}
 	debug("loading files");
 	load_entries(*reader, entries, header.file_count, files, Files);
 	debug("loading icons");

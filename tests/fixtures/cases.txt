@@ -1,0 +1,12 @@
+inno-6.2.2
+inno-6.4.2
+inno-6.4.3
+inno-6.5.0
+inno-6.5.2
+inno-6.6.0
+inno-6.6.1
+inno-6.7.0
+inno-7.1.0-x86
+inno-7.1.0-x64
+inno-6.5.2-spanning
+inno-7.1.0-spanning

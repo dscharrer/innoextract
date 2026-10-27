@@ -46,20 +46,21 @@ namespace {
 const char slice_ids[][8] = {
 	{ 'i', 'd', 's', 'k', 'a', '1', '6', 0x1a },
 	{ 'i', 'd', 's', 'k', 'a', '3', '2', 0x1a },
+	{ 'i', 'd', 's', 'k', 'b', '3', '2', 0x1a },
 };
 
 } // anonymous namespace
 
-slice_reader::slice_reader(std::istream * istream, boost::uint32_t offset)
+slice_reader::slice_reader(std::istream * istream, boost::uint64_t offset)
 	: data_offset(offset),
 	  slices_per_disk(1), current_slice(0), slice_size(0),
 	  is(istream) {
 	
-	std::streampos max_size = std::streampos(std::numeric_limits<boost::int32_t>::max());
-	
 	std::streampos file_size = is->seekg(0, std::ios_base::end).tellg();
-	
-	slice_size = boost::uint32_t(std::min(file_size, max_size));
+	if(file_size < std::streampos(0)) {
+		throw slice_error("could not determine embedded data size");
+	}
+	slice_size = boost::uint64_t(file_size);
 	if(is->seekg(data_offset).fail()) {
 		throw slice_error("could not seek to data");
 	}
@@ -110,9 +111,11 @@ bool slice_reader::open_file(const path_type & file) {
 		throw slice_error("could not read slice magic number in \"" + file.string() + "\"");
 	}
 	bool found = false;
-	for(size_t i = 0; boost::size(slice_ids); i++) {
+	bool wide_size = false;
+	for(size_t i = 0; i < boost::size(slice_ids); i++) {
 		if(!std::memcmp(magic, slice_ids[i], 8)) {
 			found = true;
+			wide_size = (i == 2); // Inno 6.5.2: idskb32 and Int64 TotalSize
 			break;
 		}
 	}
@@ -121,7 +124,8 @@ bool slice_reader::open_file(const path_type & file) {
 		throw slice_error("bad slice magic number in \"" + file.string() + "\"");
 	}
 	
-	slice_size = util::load<boost::uint32_t>(ifs);
+	slice_size = wide_size ? util::load<boost::uint64_t>(ifs)
+	                       : util::load<boost::uint32_t>(ifs);
 	if(ifs.fail()) {
 		ifs.close();
 		throw slice_error("could not read slice size in \"" + file.string() + "\"");
@@ -208,10 +212,13 @@ void slice_reader::open(size_t slice) {
 	throw slice_error(oss.str());
 }
 
-bool slice_reader::seek(size_t slice, boost::uint32_t offset) {
+bool slice_reader::seek(size_t slice, boost::uint64_t offset) {
 	
 	seek(slice);
 	
+	if(data_offset > slice_size || offset > slice_size - data_offset) {
+		return false;
+	}
 	offset += data_offset;
 	
 	if(offset > slice_size) {
@@ -233,14 +240,14 @@ std::streamsize slice_reader::read(char * buffer, std::streamsize bytes) {
 	
 	while(bytes > 0) {
 		
-		boost::uint32_t read_pos = boost::uint32_t(is->tellg());
+		boost::uint64_t read_pos = boost::uint64_t(is->tellg());
 		if(read_pos > slice_size) {
 			break;
 		}
-		boost::uint32_t remaining = slice_size - read_pos;
+		boost::uint64_t remaining = slice_size - read_pos;
 		if(!remaining) {
 			seek(current_slice + 1);
-			read_pos = boost::uint32_t(is->tellg());
+			read_pos = boost::uint64_t(is->tellg());
 			if(read_pos > slice_size) {
 				break;
 			}

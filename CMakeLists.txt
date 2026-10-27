@@ -98,6 +98,7 @@ endif()
 
 # Test configuration
 set(RUN_TARGET CACHE STRING "Wrapper to run built targets")
+set(INNOEXTRACT_TEST_FIXTURES_DIR "" CACHE PATH "Compiled format regression fixtures")
 mark_as_advanced(RUN_TARGET)
 set(default_RUN_TESTS OFF)
 if((DEVELOPER OR CONTINUOUS_INTEGRATION) AND (NOT CMAKE_CROSSCOMPILING OR NOT RUN_TARGET STREQUAL ""))
@@ -494,6 +495,7 @@ set(UNITTEST_SOURCES
 	
 	src/util/test.hpp
 	src/util/test.cpp
+	src/util/storedenum_test.cpp
 	
 )
 
@@ -571,6 +573,7 @@ if(BUILD_TESTS)
 		DEPENDS "${PROJECT_BINARY_DIR}/unittest.check"
 	)
 	
+	include(cmake/FormatTests.cmake)
 endif()
 
 
