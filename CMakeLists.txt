@@ -492,6 +492,8 @@ set(UNITTEST_SOURCES
 	src/crypto/sha256.cpp
 	src/crypto/xchacha20.cpp if INNOEXTRACT_HAVE_DECRYPTION
 	
+	src/stream/test_slice.cpp
+	
 	src/util/test.hpp
 	src/util/test.cpp
 	

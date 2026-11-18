@@ -21,14 +21,12 @@
 #include "stream/slice.hpp"
 
 #include <sstream>
-#include <cstring>
 #include <limits>
 
 
 #include <boost/cstdint.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/range/size.hpp>
 
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 107200
@@ -40,15 +38,6 @@
 #include "util/log.hpp"
 
 namespace stream {
-
-namespace {
-
-const char slice_ids[][8] = {
-	{ 'i', 'd', 's', 'k', 'a', '1', '6', 0x1a },
-	{ 'i', 'd', 's', 'k', 'a', '3', '2', 0x1a },
-};
-
-} // anonymous namespace
 
 slice_reader::slice_reader(std::istream * istream, boost::uint32_t offset)
 	: data_offset(offset),
@@ -109,28 +98,27 @@ bool slice_reader::open_file(const path_type & file) {
 		ifs.close();
 		throw slice_error("could not read slice magic number in \"" + file.string() + "\"");
 	}
-	bool found = false;
-	for(size_t i = 0; boost::size(slice_ids); i++) {
-		if(!std::memcmp(magic, slice_ids[i], 8)) {
-			found = true;
-			break;
-		}
-	}
-	if(!found) {
+	const size_t size_width = slice_size_field_width(magic);
+	if(!size_width) {
 		ifs.close();
 		throw slice_error("bad slice magic number in \"" + file.string() + "\"");
 	}
 	
-	slice_size = util::load<boost::uint32_t>(ifs);
+	// Inno Setup >= 6.6.0 ('idskb32') uses a 64-bit size, older slices a 32-bit one.
+	if(size_width == 8) {
+		slice_size = util::load<boost::uint64_t>(ifs);
+	} else {
+		slice_size = util::load<boost::uint32_t>(ifs);
+	}
 	if(ifs.fail()) {
 		ifs.close();
 		throw slice_error("could not read slice size in \"" + file.string() + "\"");
-	} else if(std::streampos(slice_size) > file_size) {
+	} else if(std::streampos(std::streamoff(slice_size)) > file_size) {
 		ifs.close();
 		std::ostringstream oss;
 		oss << "bad slice size in " << file << ": " << slice_size << " > " << file_size;
 		throw slice_error(oss.str());
-	} else if(std::streampos(slice_size) < ifs.tellg()) {
+	} else if(std::streampos(std::streamoff(slice_size)) < ifs.tellg()) {
 		ifs.close();
 		std::ostringstream oss;
 		oss << "bad slice size in " << file << ": " << slice_size << " < " << ifs.tellg();
@@ -233,21 +221,22 @@ std::streamsize slice_reader::read(char * buffer, std::streamsize bytes) {
 	
 	while(bytes > 0) {
 		
-		boost::uint32_t read_pos = boost::uint32_t(is->tellg());
+		// Positions within a slice are 64-bit: a slice may be larger than 4 GiB.
+		boost::uint64_t read_pos = boost::uint64_t(is->tellg());
 		if(read_pos > slice_size) {
 			break;
 		}
-		boost::uint32_t remaining = slice_size - read_pos;
+		boost::uint64_t remaining = slice_size - read_pos;
 		if(!remaining) {
 			seek(current_slice + 1);
-			read_pos = boost::uint32_t(is->tellg());
+			read_pos = boost::uint64_t(is->tellg());
 			if(read_pos > slice_size) {
 				break;
 			}
 			remaining = slice_size - read_pos;
 		}
 		
-		boost::uint64_t toread = std::min(boost::uint64_t(remaining), boost::uint64_t(bytes));
+		boost::uint64_t toread = std::min(remaining, boost::uint64_t(bytes));
 		toread = std::min(toread, boost::uint64_t(std::numeric_limits<std::streamsize>::max()));
 		if(is->read(buffer, std::streamsize(toread)).fail()) {
 			break;

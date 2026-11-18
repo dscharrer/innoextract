@@ -44,6 +44,37 @@ struct slice_error : public std::ios_base::failure {
 };
 
 /*!
+ * Width in bytes of the slice size field that follows the disk slice magic.
+ *
+ * Inno Setup wrote a 32-bit `Cardinal` size ('idska32' / 'idska16' slices) up to
+ * and including 6.5.x. Starting with 6.6.0 the slice id is 'idskb32' and the
+ * size is a 64-bit `Int64`, which allows slices larger than 4 GiB.
+ *
+ * Returns 0 if \p magic is not a known disk slice id.
+ */
+inline size_t slice_size_field_width(const char (&magic)[8]) {
+	
+	if(magic[0] != 'i' || magic[1] != 'd' || magic[2] != 's' || magic[3] != 'k'
+	   || magic[7] != 0x1a) {
+		return 0;
+	}
+	
+	if(magic[4] == 'b' && magic[5] == '3' && magic[6] == '2') {
+		return 8; // Inno Setup >= 6.6.0
+	}
+	
+	if(magic[4] == 'a' && magic[5] == '3' && magic[6] == '2') {
+		return 4; // Inno Setup <= 6.5.x
+	}
+	
+	if(magic[4] == 'a' && magic[5] == '1' && magic[6] == '6') {
+		return 4; // legacy 16-bit setup slices
+	}
+	
+	return 0;
+}
+
+/*!
  * Abstraction for reading either data embedded inside the setup executable or from
  * multiple external slices.
  *
@@ -69,7 +100,7 @@ class slice_reader : public boost::iostreams::source {
 	
 	// Information about the current slice
 	size_t          current_slice; //!< Number of the currently opened slice.
-	boost::uint32_t slice_size;    //!< Size in bytes of the currently opened slice.
+	boost::uint64_t slice_size;    //!< Size in bytes of the currently opened slice.
 	
 	// Streams
 	util::ifstream ifs; //!< File input stream used when reading from external slices.
