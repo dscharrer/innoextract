@@ -1,5 +1,7 @@
 
 innoextract 1.10 (TBD)
+ - Added support for the 64-bit disk slice format used by Inno Setup 6.6.0 and newer
+ - Fixed an out-of-bounds read when checking the disk slice magic number
  - Added support for Inno Setup 6.3.x installers
  - Added support for Inno Setup 6.4.0 installers
  - Added support for a modified Inno Setup 5.3.10 variant
